@@ -4,9 +4,9 @@
 
 In the hands of a team with vision and imagination, however, Paige is much more than that. For instance, think of a Markdown editor: in most cases, it presents the user with a two-pane view, with raw Markdown in the left pane and styled text in the right. In many cases, both panes are editable; sometimes, however, only the raw syntax is. No matter the paradigm the developer chooses in this case, and no matter his creative decisions, Paige is the ideal choice to power this application at both ends.
 
-Likewise, Paige is a great option for cross-platform apps. The Microsoft Foundation Classes include the CRichEditCtrl class, making this the natural choice for developers of Windows applications, and likewise the Haiku operating system implements the BTextView class, but both of these are platform-specific. Realistically, for a cross-platform application, there are two alternatives: the Scribe framework available in Qt (and its QTextDocument class), and GTK with its combination of GtkTextBuffer and GtkTextView.
+Likewise, Paige is a great option for cross-platform apps. The Microsoft Foundation Classes include the `CRichEditCtrl` class, making this the natural choice for developers of Windows applications, and likewise the Haiku operating system implements the BTextView class, but both of these are platform-specific. Realistically, for a cross-platform application, there are two alternatives: the Scribe framework available in Qt (and its `QTextDocument` class), and GTK with its combination of `GtkTextBuffer` and `GtkTextView`.
  
-There are two important differences between Qt/GTK and Paige. First of all, Qt and Gtk originally arose from the UNIX ecosystem, and thus use UNIX conventions; meanwhile, Paige was cross-platform for Windows and Macintosh from the get-go, and thus may be more comfortable for the Windows programmer to get used to. Second, Qt and Gtk are *generalist* toolkits, and their rich-edit controls are similarly limited; Paige is designed specifically for working with styled text---and nothing else.
+There are two important differences between Qt/GTK and Paige. First of all, Qt and GTK originally arose from the UNIX ecosystem, and thus use UNIX conventions; meanwhile, Paige was cross-platform for Windows and Macintosh from the get-go, and thus may be more comfortable for the Windows programmer to get used to. Second, Qt and GTK are *generalist* toolkits, and their rich-edit controls are similarly limited; Paige is designed specifically for working with styled text---and nothing else.
 
 Finally, HERMES Paige is **meticulously** documented. The programmer's manual for the latest release, Version 3.0, runs to over 800 pages; it is slated to be published in May 2024 on Lulu and Amazon, but is also included as a soft copy here.
 
@@ -24,6 +24,10 @@ During its previous life as a product of DataPak Software in Vancouver, Washingt
 
 
 # Supplied Materials
+
+## 3.0b - 26 Apr 2024
+
+* 32 bit, Unicode binary distribution as W
 
 ## 3.0a - 22 Apr 2024
 
