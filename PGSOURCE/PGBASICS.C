@@ -213,13 +213,13 @@ PG_PASCAL (long) pgCacheFree (pgm_globals_ptr mem_globals, memory_ref dont_free,
 	if (mem_globals->freemem_info) {
 		
 		num_refs = GetMemorySize(mem_globals->freemem_info);
-		paige_refs = UseMemory(mem_globals->freemem_info);
+		paige_refs = (pg_ref PG_FAR*) UseMemory(mem_globals->freemem_info);
 		
 		while (num_refs) {
 			
 			if (*paige_refs && (*paige_refs != dont_free)) {
 				
-				pg_rec = UseMemory(*paige_refs);
+				pg_rec = (paige_rec_ptr) UseMemory(*paige_refs);
 				
 				if (pg_rec->cache_file)
 					freed_memory += free_cached_blocks(pg_rec, dont_free, desired_free - freed_memory);
@@ -415,7 +415,7 @@ PG_PASCAL (void) pgDrawPageProc (paige_rec_ptr pg, shape_ptr page_shape,
 				pgDiffShape(vis_page_ref, pg->vis_area, gutter_shape);
 				
 				num_rects = GetMemorySize(gutter_shape) - 1;
-				page_ptr = UseMemory(gutter_shape);
+				page_ptr = (rectangle_ptr) UseMemory(gutter_shape);
 				
 				while (num_rects) {
 
@@ -435,7 +435,7 @@ PG_PASCAL (void) pgDrawPageProc (paige_rec_ptr pg, shape_ptr page_shape,
 		if (pg->doc_info.page_borders && !pgEmptyShape(vis_page_ref)) {
 
 				num_rects = GetMemorySize(vis_page_ref) - 1;
-				page_ptr = UseMemory(vis_page_ref);
+				page_ptr = (rectangle_ptr) UseMemory(vis_page_ref);
 
 				while (num_rects) {
 
@@ -532,7 +532,7 @@ PG_PASCAL (void) pgSetAuthor (pg_ref pg, long author)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->author = author;
 	UnuseMemory(pg);
 }
@@ -544,7 +544,7 @@ PG_PASCAL (long) pgGetAuthor (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	long				author;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	author = pg_rec->author;
 	UnuseMemory(pg);
 	
@@ -561,7 +561,7 @@ PG_PASCAL (pg_boolean) pgSetLockID (pg_ref pg, long ID)
 	paige_rec_ptr		pg_rec;
 	long				cur_id;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	cur_id = pg_rec->lock_id;
 
@@ -581,7 +581,7 @@ PG_PASCAL (long) pgGetLockID (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	long				result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->lock_id;
 	UnuseMemory(pg);
 	
@@ -616,7 +616,7 @@ PG_PASCAL (pg_ref) pgNew (const pg_globals_ptr globals, const generic_var def_de
 		globals->mem_globals->current_id = globals->mem_globals->next_mem_id;
 	
 		pg = MemoryAllocClear(globals->mem_globals, sizeof(paige_rec), 1, 0);
-		pg_rec = UseMemory(pg);
+		pg_rec = (paige_rec_ptr) UseMemory(pg);
 		pg_rec->mem_id = globals->mem_globals->current_id;
 	
 		pg_rec->globals = globals;
@@ -668,13 +668,13 @@ PG_PASCAL (pg_ref) pgNew (const pg_globals_ptr globals, const generic_var def_de
 		pg_rec->wrap_area = copy_shape_param(globals, page_area);
 		pg_rec->exclude_area = copy_shape_param(globals, exclude_area);
 		
-		vis_ptr = UseMemory(pg_rec->vis_area);
+		vis_ptr = (rectangle_ptr) UseMemory(pg_rec->vis_area);
 		pg_rec->base_vis_origin = vis_ptr->top_left;
 		UnuseMemory(pg_rec->vis_area);
 
 		pg_rec->t_blocks = MemoryAlloc(globals->mem_globals, sizeof(text_block), 1, 1);
 		pg_rec->tlevel_blocks = pg_rec->t_blocks;
-		pgInitTextblock(pg_rec, 0, 0, UseMemory(pg_rec->t_blocks), FALSE);
+		pgInitTextblock(pg_rec, 0, 0, (text_block_ptr) UseMemory(pg_rec->t_blocks), FALSE);
 		UnuseMemory(pg_rec->t_blocks);
 	
 		pg_rec->hilite_rgn = pgRectToShape(globals->mem_globals, NULL);
@@ -695,10 +695,10 @@ PG_PASCAL (pg_ref) pgNew (const pg_globals_ptr globals, const generic_var def_de
 		pg_rec->target_hyperlinks = MemoryAllocClear(globals->mem_globals, sizeof(pg_hyperlink), 1, 2);
 		pg_rec->subref_stack = MemoryAlloc(globals->mem_globals, sizeof(paige_sub_rec), 0, 2);
 
-		first_font = UseMemory(pg_rec->fonts);
+		first_font = (font_info_ptr) UseMemory(pg_rec->fonts);
 		pgBlockMove(&globals->def_font, first_font, sizeof(font_info));
 			
-		first_style = UseMemory(pg_rec->t_formats);
+		first_style = (style_info_ptr) UseMemory(pg_rec->t_formats);
 		pgBlockMove(&globals->def_style, first_style, sizeof(style_info));
 
 		pg_rec->procs.font_proc(pg_rec, first_font);
@@ -711,7 +711,7 @@ PG_PASCAL (pg_ref) pgNew (const pg_globals_ptr globals, const generic_var def_de
 		UnuseMemory(pg_rec->fonts);
 		UnuseMemory(pg_rec->t_formats);
 		
-		first_par = UseMemory(pg_rec->par_formats);
+		first_par = (par_info_ptr) UseMemory(pg_rec->par_formats);
 		pgBlockMove(&globals->def_par, first_par, sizeof(par_info));
 		
 		first_par->procs.duplicate(MEM_NULL, pg_rec, pg_new_reason,
@@ -723,11 +723,11 @@ PG_PASCAL (pg_ref) pgNew (const pg_globals_ptr globals, const generic_var def_de
 		set_max_run(pg_rec, pg_rec->t_style_run);
 		set_max_run(pg_rec, pg_rec->par_style_run);
 	
-		first_link = UseMemory(pg_rec->hyperlinks);
+		first_link = (pg_hyperlink_ptr) UseMemory(pg_rec->hyperlinks);
 		first_link->applied_range.begin = first_link->applied_range.end = ZERO_TEXT_PAD;
 		UnuseMemory(pg_rec->hyperlinks);
 
-		first_link = UseMemory(pg_rec->target_hyperlinks);
+		first_link = (pg_hyperlink_ptr) UseMemory(pg_rec->target_hyperlinks);
 		first_link->applied_range.begin = first_link->applied_range.end = ZERO_TEXT_PAD;
 		UnuseMemory(pg_rec->target_hyperlinks);
 
@@ -788,7 +788,7 @@ PG_PASCAL (pg_ref) pgNewShared (pg_ref shared_from, const generic_var def_device
 		use_device = def_device;
 	/*End Ben Hack*/
 	
-	shared_rec = UseMemory(shared_from);
+	shared_rec = (paige_rec_ptr) UseMemory(shared_from);
 	new_ref = pgNew(shared_rec->globals, use_device, vis_area, page_area, exclude_area, attributes);
 	shared_flags = 0;
 	
@@ -819,18 +819,18 @@ PG_PASCAL (void) pgShareRefs (pg_ref pg, pg_ref shared_from, long shared_flags)
 	style_info_ptr	shared_default;
 	par_info_ptr	shared_par_default;
 
-	shared_rec = UseMemory(shared_from);
+	shared_rec = (paige_rec_ptr) UseMemory(shared_from);
 	shared_rec->flags2 |= IS_MASTER_BIT;
 
-	shared_default = UseMemory(shared_rec->t_formats);
+	shared_default = (style_info_ptr) UseMemory(shared_rec->t_formats);
 	shared_default->used_ctr += 1;
 	UnuseMemory(shared_rec->t_formats);
 
-	shared_par_default = UseMemory(shared_rec->par_formats);
+	shared_par_default = (par_info_ptr) UseMemory(shared_rec->par_formats);
 	shared_par_default->used_ctr += 1;
 	UnuseMemory(shared_rec->par_formats);
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	previous_shared_flags = pg_rec->shared_flags;
 	pg_rec->shared_pg = shared_from;
 	pg_rec->shared_flags = shared_flags | SHARED_FORMATS;
@@ -895,7 +895,7 @@ PG_PASCAL (void) pgDispose (pg_ref pg)
 	globals->pg_extend((void PG_FAR *) pg, pg_dispose);
 	mem_globals = globals->mem_globals;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((cache_index = pgInCacheList(mem_globals, pg) > 0)) {
 		
@@ -961,7 +961,7 @@ PG_PASCAL (void) pgFailureDispose (pg_ref pg)
 	if (globals = pgGetGlobals(pg))
 		globals->pg_extend((void PG_FAR*) pg, pg_dispose);
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	//Dispose of headers and footers
 	for (i = 0; i < 4; i++) {
@@ -1016,7 +1016,7 @@ PG_PASCAL (pg_ref) pgDuplicate (pg_ref pg)
 	paige_rec_ptr					pg_rec, target_rec;
 	volatile pg_ref					result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	PG_TRY(pg_rec->globals->mem_globals) {
 
@@ -1030,7 +1030,7 @@ PG_PASCAL (pg_ref) pgDuplicate (pg_ref pg)
 	}
 	PG_ENDTRY
 
-	target_rec = UseMemory(result);
+	target_rec = (paige_rec_ptr) UseMemory(result);
 	target_rec->doc_info = pg_rec->doc_info;
 	target_rec->flags2 = pg_rec->flags2;
 
@@ -1049,8 +1049,8 @@ PG_PASCAL (void) pgSetDefaultStyle (pg_ref pg, const style_info_ptr def_style, s
 	style_info_ptr			style;
 	long					real_used_ctr;
 
-	pg_rec = UseMemory(pg);
-	style = UseMemoryRecord(pg_rec->t_formats, pg_rec->def_style_index, 0, TRUE);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
+	style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, pg_rec->def_style_index, 0, TRUE);
 	real_used_ctr = style->used_ctr;
 	pgBlockMove(def_style, style, sizeof(style_info));
 	style->used_ctr = real_used_ctr;
@@ -1071,7 +1071,7 @@ PG_PASCAL (pg_short_t) pgGetDefaultStyle (pg_ref pg, style_info_ptr def_style)
 	paige_rec_ptr			pg_rec;
 	pg_short_t				index;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	index = pg_rec->def_style_index;
 	GetMemoryRecord(pg_rec->t_formats, index, def_style);
 	UnuseMemory(pg);
@@ -1088,8 +1088,8 @@ PG_PASCAL (void) pgSetDefaultPar (pg_ref pg, const par_info_ptr def_par, short d
 	par_info_ptr			par;
 	long					real_used_ctr;
 
-	pg_rec = UseMemory(pg);
-	par = UseMemory(pg_rec->par_formats);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
+	par = (par_info_ptr) UseMemory(pg_rec->par_formats);
 	real_used_ctr = par->used_ctr;
 	pgBlockMove(def_par, par, sizeof(par_info));
 	par->used_ctr = real_used_ctr;
@@ -1109,8 +1109,8 @@ PG_PASCAL (void) pgSetDefaultFont (pg_ref pg, const font_info_ptr def_font, shor
 	paige_rec_ptr			pg_rec;
 	font_info_ptr			font;
 
-	pg_rec = UseMemory(pg);
-	font = UseMemory(pg_rec->fonts);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
+	font = (font_info_ptr) UseMemory(pg_rec->fonts);
 	pgBlockMove(def_font, font, sizeof(font_info));
 	UnuseMemory(pg_rec->fonts);
 	pgInvalSelect(pg, 0, pg_rec->t_length);
@@ -1129,7 +1129,7 @@ PG_PASCAL (long) pgTextSize (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	long				t_size;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	t_size = pg_rec->t_length;
 	UnuseMemory(pg);
 	
@@ -1144,7 +1144,7 @@ PG_PASCAL (long) pgGetAttributes (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	long				result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->flags;
 	UnuseMemory(pg);
 	
@@ -1159,7 +1159,7 @@ PG_PASCAL (long) pgGetAttributes2 (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	long				result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->flags2;
 	UnuseMemory(pg);
 	
@@ -1177,7 +1177,7 @@ PG_PASCAL (pg_boolean) pgSetAttributes (pg_ref pg, long attributes)
 	long				old_attributes, hide_text_change;
 	pg_boolean			result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_attributes = pg_rec->flags;
 	pg_rec->flags = attributes;
 	
@@ -1208,7 +1208,7 @@ PG_PASCAL (pg_boolean) pgSetAttributes (pg_ref pg, long attributes)
 			if (!(select_ctr = pg_rec->num_selects * 2))
 				++select_ctr;
 
-			selections = UseMemory(pg_rec->select);
+			selections = (t_select_ptr) UseMemory(pg_rec->select);
 			select_changed = FALSE;
 
 			while (select_ctr) {
@@ -1258,7 +1258,7 @@ PG_PASCAL (pg_boolean) pgSetAttributes2 (pg_ref pg, long attributes2)
 	paige_rec_ptr		pg_rec;
 	long				old_attributes;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_attributes = pg_rec->flags2;
 	pg_rec->flags2 = attributes2;
 	UnuseMemory(pg);
@@ -1273,7 +1273,7 @@ PG_PASCAL (void) pgGetDocInfo (pg_ref pg, pg_doc_ptr doc_info)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgBlockMove(&pg_rec->doc_info, doc_info, sizeof(pg_doc_info));
 	UnuseMemory(pg);
 }
@@ -1288,7 +1288,7 @@ PG_PASCAL (void) pgSetDocInfo (pg_ref pg, const pg_doc_ptr doc_info,
 	paige_rec_ptr		pg_rec;
 	pg_boolean			page_info_changed;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	page_info_changed = ( (doc_info->attributes != pg_rec->doc_info.attributes)
 		|| (doc_info->repeat_offset.h != pg_rec->doc_info.repeat_offset.h)
@@ -1333,7 +1333,7 @@ PG_PASCAL (long) pgGetChangeCtr (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	long				result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->change_ctr;
 	UnuseMemory(pg);
 	
@@ -1347,7 +1347,7 @@ PG_PASCAL (void) pgSetChangeCtr (pg_ref pg, long ctr)
 {
 	paige_rec_ptr		pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->change_ctr = ctr;
 	UnuseMemory(pg);
 }
@@ -1359,7 +1359,7 @@ PG_PASCAL (void) pgSetDefaultDevice (pg_ref pg, const graf_device_ptr device)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (!(pg_rec->flags & NO_DEVICE_BIT))
 		pgCloseDevice(pg_rec->globals, &pg_rec->port);
@@ -1379,7 +1379,7 @@ PG_PASCAL (void) pgGetDefaultDevice (pg_ref pg, graf_device_ptr device)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgBlockMove(&pg_rec->port, device, sizeof(graf_device));
 	UnuseMemory(pg);
 }
@@ -1392,7 +1392,7 @@ PG_PASCAL (void) pgInitSameDevice (pg_ref pg, const graf_device_ptr device)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgInitDevice(pg_rec->globals, pg_rec->port.machine_var, pg_rec->port.machine_ref, device);
 
 	UnuseMemory(pg);
@@ -1405,7 +1405,7 @@ PG_PASCAL (void) pgSetDevicePalette (pg_ref pg, const generic_var palette)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->port.palette = palette;
 	UnuseMemory(pg);
 }
@@ -1417,7 +1417,7 @@ PG_PASCAL (generic_var) pgGetDevicePalette (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	generic_var			palette;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	palette = pg_rec->port.palette;
 	UnuseMemory(pg);
 	
@@ -1432,7 +1432,7 @@ PG_PASCAL (void) pgSetHooks (pg_ref pg, const pg_hooks PG_FAR *hooks, pg_boolean
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgBlockMove(hooks, &pg_rec->procs, sizeof(pg_hooks));
 	
 	if (inval_text)
@@ -1449,7 +1449,7 @@ PG_PASCAL (void) pgGetHooks (pg_ref pg, pg_hooks PG_FAR *hooks)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgBlockMove(&pg_rec->procs, hooks, sizeof(pg_hooks));
 
 	UnuseMemory(pg);
@@ -1463,7 +1463,7 @@ PG_PASCAL (void) pgSetOrigin (pg_ref pg, const co_ordinate_ptr origin)
 	paige_rec_ptr		pg_rec;
 	co_ordinate			old_origin;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_origin = pg_rec->port.origin;
 	pg_rec->port.origin = *origin;
 	
@@ -1477,7 +1477,7 @@ PG_PASCAL (void) pgGetOrigin (pg_ref pg, co_ordinate_ptr origin)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	*origin = pg_rec->port.origin;
 	UnuseMemory(pg);
 }
@@ -1492,7 +1492,7 @@ PG_PASCAL (pg_globals_ptr) pgGetGlobals (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	pg_globals_ptr		result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->globals;
 	UnuseMemory(pg);
 	
@@ -1508,13 +1508,13 @@ PG_PASCAL (void) pgSetAreas (pg_ref pg, shape_ref vis_area, shape_ref page_area,
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (vis_area) {
 		rectangle_ptr		vis_ptr;
 
 		MemoryCopy(vis_area, pg_rec->vis_area);
-		vis_ptr = UseMemory(vis_area);
+		vis_ptr = (rectangle_ptr) UseMemory(vis_area);
 		pg_rec->base_vis_origin = vis_ptr->top_left;
 		UnuseMemory(vis_area);
 		
@@ -1550,7 +1550,7 @@ PG_PASCAL (void) pgGetAreas (pg_ref pg, shape_ref vis_area, shape_ref page_area,
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (vis_area)
 		MemoryCopy(pg_rec->vis_area, vis_area);
@@ -1570,7 +1570,7 @@ PG_PASCAL (shape_ref) pgGetPageArea (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	shape_ref			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->wrap_area;
 	UnuseMemory(pg);
 	
@@ -1584,7 +1584,7 @@ PG_PASCAL (shape_ref) pgGetVisArea (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	shape_ref			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->vis_area;
 	UnuseMemory(pg);
 	
@@ -1599,7 +1599,7 @@ PG_PASCAL (shape_ref) pgGetExcludeArea (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	shape_ref			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->exclude_area;
 	UnuseMemory(pg);
 
@@ -1617,9 +1617,9 @@ PG_PASCAL (void) pgGrowVisArea (pg_ref pg, const co_ordinate_ptr top_left, const
 	register rectangle_ptr	vis_ptr;
 	register pg_short_t		num_rects;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
-	for (vis_ptr = UseMemory(pg_rec->vis_area), num_rects = (pg_short_t)GetMemorySize(pg_rec->vis_area);
+	for (vis_ptr = (rectangle_ptr) UseMemory(pg_rec->vis_area), num_rects = (pg_short_t)GetMemorySize(pg_rec->vis_area);
 			num_rects;  ++vis_ptr, --num_rects) {
 		
 		if (top_left)
@@ -1648,7 +1648,7 @@ PG_PASCAL (void) pgOffsetAreas (pg_ref pg, long h, long v, pg_boolean offset_pag
 	register point_start_ptr	starts;
 	register long				num_blocks, num_lines;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (h || v) {
 	
@@ -1673,7 +1673,7 @@ PG_PASCAL (void) pgOffsetAreas (pg_ref pg, long h, long v, pg_boolean offset_pag
 	
 		if ((offset_exclude || pgEmptyShape(pg_rec->exclude_area)) && offset_page) {
 			
-			block = UseMemory(pg_rec->t_blocks);
+			block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 			
 			for (num_blocks = GetMemorySize(pg_rec->t_blocks); num_blocks;
 					++block, --num_blocks) {
@@ -1682,7 +1682,7 @@ PG_PASCAL (void) pgOffsetAreas (pg_ref pg, long h, long v, pg_boolean offset_pag
 				
 				if (block->flags & SOME_LINES_GOOD && !(block->flags & LINES_PURGED)) {
 					
-					starts = UseMemory(block->lines);
+					starts = (point_start_ptr) UseMemory(block->lines);
 					
 					for (num_lines = GetMemorySize(block->lines); num_lines;
 							++starts, --num_lines)
@@ -1717,7 +1717,7 @@ PG_PASCAL (void) pgErasePageArea (pg_ref pg, shape_ref vis_area)
 {
 	paige_rec_ptr		pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgDrawPages(pg_rec, NULL, NULL, vis_area, sp_erase_all_pages);
 	UnuseMemory(pg);
 }
@@ -1738,7 +1738,7 @@ PG_PASCAL (void) pgSetExtraStruct (pg_ref pg, const void PG_FAR *extra_struct,
 	if ((id = ref_id + EXTRA_STRUCT_RSRV) < 0)
 		return;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	pgInitExtraStruct(pg_rec);
 
@@ -1747,7 +1747,7 @@ PG_PASCAL (void) pgSetExtraStruct (pg_ref pg, const void PG_FAR *extra_struct,
 	if (id >= current_size)
 		SetMemorySize(pg_rec->extra_stuff, id + 1);
 
-	extra_ptr = UseMemoryRecord(pg_rec->extra_stuff, id, 0, TRUE);
+	extra_ptr = (long PG_FAR*) UseMemoryRecord(pg_rec->extra_stuff, id, 0, TRUE);
 	*extra_ptr = (long) extra_struct;
 	
 	UnuseMemory(pg_rec->extra_stuff);
@@ -1763,7 +1763,7 @@ PG_PASCAL (void PG_FAR *) pgGetExtraStruct (pg_ref pg, long ref_id)
 	long				current_size;
 	long				id;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = NULL;
 
 	if (((id = ref_id + EXTRA_STRUCT_RSRV) >= 0) && pg_rec->extra_stuff) {
@@ -1772,7 +1772,7 @@ PG_PASCAL (void PG_FAR *) pgGetExtraStruct (pg_ref pg, long ref_id)
 		
 		if (id < current_size) {
 			
-			extra_ptr = UseMemory(pg_rec->extra_stuff);
+			extra_ptr = (long PG_FAR*) UseMemory(pg_rec->extra_stuff);
 			result = (void PG_FAR *) extra_ptr[id];
 			UnuseMemory(pg_rec->extra_stuff);
 		}
@@ -1810,12 +1810,12 @@ PG_PASCAL (long) pgExtraUniqueID (pg_ref pg)
 	long				extra_size;
 	long				next_id;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	next_id = EXTRA_STRUCT_RSRV;
 
 	if (pg_rec->extra_stuff) {
 		
-		extra_ptr = UseMemory(pg_rec->extra_stuff);
+		extra_ptr = (long PG_FAR*) UseMemory(pg_rec->extra_stuff);
 		extra_ptr += EXTRA_STRUCT_RSRV;
 		extra_size = GetMemorySize(pg_rec->extra_stuff) - EXTRA_STRUCT_RSRV;
 
@@ -1844,7 +1844,7 @@ PG_PASCAL (void) pgSetScaling (pg_ref pg, const pg_scale_ptr scale_factor, short
 {
 	paige_rec_ptr			pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgInvalidateHilite(pg_rec, (pg_boolean)(draw_mode != draw_none));
 	pg_rec->port.clip_info.change_flags |= CLIP_DEVICE_CHANGED;
 	pg_rec->scale_factor = *scale_factor;
@@ -1876,7 +1876,7 @@ PG_PASCAL (void) pgGetScaling (pg_ref pg, pg_scale_ptr scale_factor)
 {
 	paige_rec_ptr			pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	*scale_factor = pg_rec->scale_factor;
 	scale_factor->scale = pg_rec->real_scaling;
 	UnuseMemory(pg);
@@ -1891,7 +1891,7 @@ PG_PASCAL (long) pgTotalTextHeight (pg_ref pg, short paginate)
 	memory_ref				subref_state;
 	long					height;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	subref_state = pgGetSubrefState(pg_rec, FALSE, TRUE);
 
 	if (paginate)
@@ -1919,7 +1919,7 @@ PG_PASCAL (long) pgInCacheList (pgm_globals_ptr mem_globals, pg_ref pg)
 		return	0;
 	
 	num_refs = GetMemorySize(mem_globals->freemem_info);
-	refs = UseMemory(mem_globals->freemem_info);
+	refs = (pg_ref PG_FAR*) UseMemory(mem_globals->freemem_info);
 	
 	for (index = result = 0; index < num_refs; ++index)
 		if (refs[index] == pg) {
@@ -1940,7 +1940,7 @@ PG_PASCAL (void) pgSetImportBase (pg_ref pg, memory_ref base)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (pg_rec->import_base)
 		if (pg_rec->import_base != base)
@@ -1958,7 +1958,7 @@ PG_PASCAL (memory_ref) pgGetImportBase (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	memory_ref			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->import_base;
 	UnuseMemory(pg);
 	
@@ -1971,7 +1971,7 @@ PG_PASCAL (void) pgSetExportBase (pg_ref pg, memory_ref base)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (pg_rec->export_base)
 		if (pg_rec->export_base != base)
@@ -1988,7 +1988,7 @@ PG_PASCAL (memory_ref) pgGetExportBase (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	memory_ref			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->export_base;
 	UnuseMemory(pg);
 	
@@ -2033,7 +2033,7 @@ static long free_cached_blocks (paige_rec_ptr pg, memory_ref ref_mask, long need
 	pgInsetRect(&vis_bounds, 32, 32);
 
 	num_blocks = GetMemorySize(pg->t_blocks);
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	
 	while (num_blocks) {
 		
@@ -2069,7 +2069,7 @@ void set_max_run (paige_rec_ptr pg_rec, memory_ref the_run)
 {
 	style_run_ptr		run;
 
-	run = UseMemory(the_run);
+	run = (style_run_ptr) UseMemory(the_run);
 	run[1].offset = ZERO_TEXT_PAD;
 	UnuseMemory(the_run);
 }

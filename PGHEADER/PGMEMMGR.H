@@ -105,7 +105,11 @@ file also #includes "pgMachineDefs."  */
 
 #define MEM_NULL	0L
 
+#ifdef _WINDOWS
+typedef size_t memory_ref;			/* Basic memory reference */
+#else
 typedef unsigned long memory_ref;	/* Basic memory reference */
+#endif
 typedef memory_ref PG_FAR *memory_ref_ptr;
 
 typedef long PG_FAR *available_ptr;		/* Used for virtual memory map */
