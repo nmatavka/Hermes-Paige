@@ -1357,7 +1357,7 @@ static void apply_text_styles (const paige_rec_ptr src_pg, paige_rec_ptr target_
 	register pg_short_t		new_style_index;
 	style_run_ptr			src_run, target_run, start_src;
 	style_run				ending_run;
-	long					base_run_offset, run_rec_num;
+	size_t					base_run_offset, run_rec_num;
 	pg_short_t				num_runs, num_resolved;
 
 	pgCopySubRefs(src_pg, target_pg, src_range, target_range->begin);
@@ -1613,8 +1613,8 @@ static void apply_paragraph_styles (paige_rec_ptr src_pg, paige_rec_ptr target_p
 	style_walk		walker;
 	par_info		new_par, mask;
 	select_pair		target_apply;
-	long			target_begin, target_end, first_par_end, unwanted_offset;
-	long			applied_size, source_end_par_begin;
+	size_t			target_begin, target_end, first_par_end, unwanted_offset;
+	size_t			applied_size, source_end_par_begin;
 
 	pgFillBlock(&mask, sizeof(par_info), -1);
 
@@ -1781,7 +1781,7 @@ static void perform_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 	par_info_ptr			par_to_insert;
 	pg_boolean				not_fwd_delete;
 	pg_subref PG_FAR		*sublist;
-	long					insert_position;
+	size_t					insert_position;
 	short					action_verb, char_size, char_qty, increment;
 	
 	if (undo_ptr->keyboard_delete.end > undo_ptr->keyboard_delete.begin)
@@ -2007,7 +2007,7 @@ static void do_delete_from_ptr (style_info_ptr style, pg_char_ptr text,
 /* This function returns a duplicate of a select_pair list (src_range) with
 each entry offset by added_offset.  */
 
-static memory_ref copy_applied_range (paige_rec_ptr from_pg, long added_offset, pg_boolean force_select)
+static memory_ref copy_applied_range (paige_rec_ptr from_pg, size_t added_offset, pg_boolean force_select)
 {
 	memory_ref			src_range;
 	memory_ref			result = MEM_NULL;
@@ -2540,7 +2540,7 @@ static void insert_undo_subref (paige_rec_ptr pg, pg_subref subref)
 {
 	text_block_ptr		block;
 	pg_subref PG_FAR	*target_list;
-	long				current, subref_index;
+	size_t				current, subref_index;
 	
 	pgGetSelection(pg->myself, &current, NULL);
 

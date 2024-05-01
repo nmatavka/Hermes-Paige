@@ -125,7 +125,7 @@ PG_PASCAL (void) pgTextLoadProc (paige_rec_ptr pg, text_block_ptr block)
 	if (pg->cache_read_proc && pg->cache_file && !block->text) {
 		pg_globals_ptr		globals;
 		pg_char_ptr			text;
-		long				file_position, data_size, byte_size;
+		size_t				file_position, data_size, byte_size;
 
 		globals = pg->globals;
 		data_size = byte_size = (block->end - block->begin);
@@ -426,7 +426,7 @@ PG_PASCAL (long) pgRectFromSelection (paige_rec_ptr pg, text_block_ptr block,
 	long						caret_point;
 	pg_short_t					begin_start, num_starts;
 
-	alternate_start = (point_start_ptr) (point_start_ptr) first_start = UseMemory(block->lines);
+	alternate_start = first_start = (point_start_ptr) UseMemory(block->lines);
 	alternate_start += selection->line;
 
 	if (baseline)

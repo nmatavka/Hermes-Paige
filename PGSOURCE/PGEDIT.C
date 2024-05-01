@@ -378,7 +378,7 @@ PG_PASCAL (void) pgDelete (pg_ref pg, const select_pair_ptr delete_range, short 
 	register pg_short_t			num_selects;
 	register long				total_to_delete, deleted, multi_del_base;
 	t_select_ptr				new_selection;
-	long						delete_from, delete_to;
+	size_t						delete_from, delete_to;
 	short						use_draw_mode;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
@@ -1130,17 +1130,17 @@ such as keys should determine the minimum update area for user-view speed. If
 update_info is NULL, the code figures out an approximate starting spot, otherwise
 it figures it out more accurately.			*/
 
-PG_PASCAL (long) pgDeleteRawData (paige_rec_ptr pg, long delete_from, long PG_FAR *delete_to,
+PG_PASCAL (long) pgDeleteRawData (paige_rec_ptr pg, size_t delete_from, size_t PG_FAR *delete_to,
 		smart_update_ptr update_info)
 {
 	register text_block_ptr			block;
 	style_run_ptr					nuked_run;
 	pg_short_t						block_num;
 	pg_short_t						style_item, par_item;
-	long							nuked_rec_begin, local_offset, local_length;
-	long							nuked_styles, offset_to, first_display;
+	size_t							nuked_rec_begin, local_offset, local_length;
+	size_t							nuked_styles, offset_to, first_display;
 	pg_boolean						whole_par_special_case;				// PAJ
-	long							par_begin, par_end, par_dummy;		// PAJ
+	size_t							par_begin, par_end, par_dummy;		// PAJ
 
 	block = pgFindTextBlock(pg, delete_from, &block_num, FALSE, TRUE);
 	block->cache_flags |= CACHE_CHANGED_FLAG;
@@ -1849,7 +1849,7 @@ static void fix_deleted_pars (paige_rec_ptr pg, long deleted_from, long deleted_
 	register style_run_ptr			par_run;
 	register long					ending_offset;
 	select_pair						true_par;
-	long							beginning_offset, run_rec_num;
+	size_t							beginning_offset, run_rec_num;
 
 	ending_offset = deleted_to + 1;
 
@@ -2159,8 +2159,8 @@ static void handle_action_key (paige_rec_ptr pg, pg_char_ptr data, long offset,
 	register pg_globals_ptr		globals;
 	register pg_char			the_key;
 	smart_update				update_info;
-	long						current_selection, num_to_delete;
-	long						delete_to, deleted;
+	size_t						current_selection, num_to_delete;
+	size_t						delete_to, deleted;
 
 	globals = pg->globals;
 	the_key = data[offset];
@@ -2168,7 +2168,7 @@ static void handle_action_key (paige_rec_ptr pg, pg_char_ptr data, long offset,
 	clear_line_end_flag(pg);
 
 	if (the_key == globals->bs_char || the_key == globals->fwd_delete_char) {
-		long			delete_from, display_from, after_delete_insertion;
+		size_t			delete_from, display_from, after_delete_insertion;
 		short			use_draw_mode;
 		
 		if (pg->num_selects) {

@@ -62,8 +62,8 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
    pg_ref            result = MEM_NULL;
    embed_ref         embed;
    pg_fixed          vert_pos;
-   long              embed_type, position;
-   size_t            datasize;
+   long              embed_type;
+   size_t            datasize, position;
    short             scrap_type;
    
    raw_data = get_machine_scrap(globals, native_format, &scrap_type, &embed_type, &datasize, TRUE);
@@ -472,7 +472,7 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
    select_pair       	full_range;
    pg_os_type        	os_type;
    long              	embed_type = 0;
-   long            	 	position;
+   size_t          	 	position;
 
    pg_rec = (paige_rec_ptr) UseMemory(the_scrap);
    mem_globals = pg_rec->globals->mem_globals;

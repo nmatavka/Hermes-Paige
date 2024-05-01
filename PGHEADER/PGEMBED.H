@@ -123,7 +123,7 @@ typedef struct pg_embed_rec 	pg_embed_rec;
 typedef pg_embed_rec PG_FAR *	pg_embed_ptr;
 
 
-typedef PG_FN_PASCAL (long, embed_callback) (paige_rec_ptr pg, pg_embed_ptr embed_ptr,
+typedef PG_FN_PASCAL (size_t, embed_callback) (paige_rec_ptr pg, pg_embed_ptr embed_ptr,
 		long embed_type, short command, long user_refcon,
 		void *param1, void *param2);
 
@@ -333,12 +333,12 @@ extern PG_PASCAL (pg_boolean) pgInsertEmbedRef (pg_ref pg, embed_ref ref, long p
 extern PG_PASCAL (void) pgSetEmbedRef (pg_ref pg, embed_ref ref, select_pair_ptr selection,
 		short stylesheet_option, embed_callback callback, long callback_refcon,
 		short draw_mode);
-extern PG_PASCAL (embed_ref) pgFindNextEmbed (pg_ref pg, long PG_FAR *text_position,
+extern PG_PASCAL (embed_ref) pgFindNextEmbed (pg_ref pg, size_t PG_FAR *text_position,
 		long match_refcon, long AND_refcon);
 extern PG_PASCAL (embed_ref) pgGetExistingEmbed (pg_ref pg, long user_refcon);
 extern PG_PASCAL (long) pgNumEmbeds (pg_ref pg, select_pair_ptr selection);
-extern PG_PASCAL (embed_ref) pgGetIndEmbed (pg_ref pg, select_pair_ptr selection, long index,
-		long PG_FAR *text_position, style_info_ptr associated_style);
+extern PG_PASCAL (embed_ref) pgGetIndEmbed (pg_ref pg, select_pair_ptr selection, size_t index,
+		size_t PG_FAR *text_position, style_info_ptr associated_style);
 extern PG_PASCAL (embed_ref) pgPtInEmbed (pg_ref pg, co_ordinate_ptr point, long PG_FAR *text_offset,
 		style_info_ptr associated_style, pg_boolean do_callback);
 extern PG_PASCAL (long) pgEmbedStyleToIndex (pg_ref pg, style_info_ptr embed_style);
@@ -352,14 +352,14 @@ extern PG_PASCAL (embed_ref) pgFindSimilarEmbed (pg_ref pg, embed_ref ref, style
 /* File handler support: */
 
 extern PG_PASCAL (pg_error) pgSaveAllEmbedRefs (pg_ref pg, file_io_proc io_proc, file_io_proc data_io_proc,
-		long PG_FAR *file_position, file_ref filemap);
+		size_t PG_FAR *file_position, file_ref filemap);
 extern PG_PASCAL (pg_error) pgSaveEmbedRef (pg_ref pg, embed_ref ref, long element_info,
-		file_io_proc io_proc, file_io_proc data_io_proc, long PG_FAR *file_position,
+		file_io_proc io_proc, file_io_proc data_io_proc, size_t PG_FAR *file_position,
 		file_ref filemap);
 extern PG_PASCAL (void) pgInitEmbedProcs (pg_globals_ptr globals, embed_callback callback,
 		app_init_read init_proc);
 extern PG_PASCAL (pg_boolean) pgEmbedReadHandler (paige_rec_ptr pg, pg_file_key key, memory_ref key_data,
-		long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size);
+		long PG_FAR *element_info, void PG_FAR *aux_data, size_t PG_FAR *unpacked_size);
 extern PG_PASCAL (void) pgLoadImages (pg_ref pg, embed_callback image_callback, short wait_proc_verb);
 extern PG_PASCAL (void) pgPackEmbedRef (pack_walk_ptr walker, memory_ref url_list, embed_ref ref, long fake_ref_id);
 extern PG_PASCAL (memory_ref) pgUnpackEmbedRef (paige_rec_ptr pg, pack_walk_ptr walker, long PG_FAR *ref_id);
@@ -368,7 +368,7 @@ extern PG_PASCAL (memory_ref) pgUnpackEmbedRef (paige_rec_ptr pg, pack_walk_ptr 
 
 extern PG_PASCAL (size_t) pgDefaultEmbedCallback (paige_rec_ptr pg, pg_embed_ptr embed_ptr,
 		long embed_type, short command, long user_refcon,
-		long param1, long param2);
+		void *param1, void *param2);
 extern PG_PASCAL (void) pgEmbedStyleInit (paige_rec_ptr pg, style_info_ptr style,
 			font_info_ptr font);
 

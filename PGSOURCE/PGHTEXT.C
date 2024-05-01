@@ -989,7 +989,7 @@ static pg_char_ptr get_URL_ptr (pg_hyperlink_ptr link)
 	if (link->alt_URL == MEM_NULL)
 		return	link->URL;
 	
-	return	UseMemory(link->alt_URL);
+	return (pg_char_ptr) UseMemory(link->alt_URL);
 }
 
 /* compare_URL compares two strings and returns TRUE if they match. */

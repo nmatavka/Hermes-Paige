@@ -1134,7 +1134,7 @@ PG_PASCAL (void) pgPackBitMap (pack_walk_ptr walker, bitmap_ref b_map)
 
    if (palette_size)
    {
-      pgPackBytes(walker, UseMemory(bmap_ptr->palette), palette_size);
+      pgPackBytes(walker, (pg_bits8_ptr) UseMemory(bmap_ptr->palette), palette_size);
       UnuseMemory((memory_ref)bmap_ptr->palette);
    }
    

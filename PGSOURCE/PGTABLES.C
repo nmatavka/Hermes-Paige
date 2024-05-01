@@ -121,7 +121,7 @@ PG_PASCAL (void) pgInsertTable (pg_ref pg, long position, pg_table_ptr table,
 
 	row_data = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(pg_char), text_size, 0);
 
-	row = (pg_char_ptr) (pg_char_ptr) setup = UseMemory(row_data);
+	row = setup = (pg_char_ptr) UseMemory(row_data);
 	
 	for (row_ctr = 0; row_ctr < num_rows; ++row_ctr) {
 
@@ -1309,7 +1309,7 @@ PG_PASCAL (memory_ref) pgCellSelections (paige_rec_ptr pg_rec, select_pair_ptr s
 /* pgFixCellBackspace handles the situation where a tab or CR can be deleted. This gets called
 only if we are deleting a single char. */
 
-PG_PASCAL (void) pgFixCellBackspace (paige_rec_ptr pg, long PG_FAR *delete_from, long PG_FAR *delete_to)
+PG_PASCAL (void) pgFixCellBackspace (paige_rec_ptr pg, size_t PG_FAR *delete_from, size_t PG_FAR *delete_to)
 {
 	select_pair			cell_bounds;
 
@@ -1927,12 +1927,12 @@ PG_PASCAL (long) pgTableJustifyOffset (par_info_ptr par, long max_width)
 /* pgRowOffsets returns the bounding text offsets for the row that contains position.
 The local_position param is the LOCAL position of the text relative to block->begin. */
 
-PG_PASCAL (void) pgRowOffsets (text_block_ptr block, long local_position, long PG_FAR *begin,
-				long PG_FAR *end)
+PG_PASCAL (void) pgRowOffsets (text_block_ptr block, size_t local_position, size_t PG_FAR *begin,
+				size_t PG_FAR *end)
 {
 	register pg_char_ptr		text;
-	register long				position;
-	long						text_size;
+	register size_t				position;
+	size_t						text_size;
 	
 	text = (pg_char_ptr) UseMemory(block->text);
 	

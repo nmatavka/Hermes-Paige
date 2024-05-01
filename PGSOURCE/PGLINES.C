@@ -100,8 +100,8 @@ PG_PASCAL (long) pgOffsetToLineNum (pg_ref pg, long offset,
 /* pgLineNumToOffset detertimes the positions at start and end of line_num
 line number. */
 
-PG_PASCAL (void) pgLineNumToOffset (pg_ref pg, long line_num,
-		long PG_FAR *begin_offset, long PG_FAR *end_offset)
+PG_PASCAL (void) pgLineNumToOffset (pg_ref pg, size_t line_num,
+		size_t PG_FAR *begin_offset, size_t PG_FAR *end_offset)
 {
 	paige_rec_ptr				pg_rec;
 	text_block_ptr				block;
@@ -274,14 +274,14 @@ PG_PASCAL (long) pgOffsetToParNum (pg_ref pg, long offset)
 /* pgParNumToOffset detertimes the positions at start and end of line_num
 para number. */
 
-PG_PASCAL (void) pgParNumToOffset (pg_ref pg, long par_num,
-		long PG_FAR *begin_offset, long PG_FAR *end_offset)
+PG_PASCAL (void) pgParNumToOffset (pg_ref pg, size_t par_num,
+		size_t PG_FAR *begin_offset, size_t PG_FAR *end_offset)
 {
 	paige_rec_ptr				pg_rec;
 	text_block_ptr				block;
 	register point_start_ptr	starts;
-	long						local_begin, local_end;
-	long						line_gauge, wanted_num;
+	size_t						local_begin, local_end;
+	size_t						line_gauge, wanted_num;
 	pg_boolean					terminated = FALSE;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);

@@ -409,7 +409,7 @@ PG_PASCAL (void) pgInsertHiliteRect (paige_rec_ptr pg, text_block_ptr block,
 		wrap_rect = page_wrap_rect;
 
 	rect.top_left.v = top;
-	starts = (point_start_ptr) (point_start_ptr) secondary_starts = UseMemory(block->lines);
+	starts = secondary_starts = (point_start_ptr) UseMemory(block->lines);
 
 	if (first_select) {
 	
@@ -800,13 +800,13 @@ PG_PASCAL (pg_boolean) pgCheckDirectionChange(paige_rec_ptr pg)
 	
 	pg->text_direction = current_direction;
 	
-	for (block_qty = (text_block_ptr) (pg_short_t) (text_block_ptr) (pg_short_t)GetMemorySize(pg->t_blocks), block = UseMemory(pg->t_blocks);
+	for (block_qty = GetMemorySize(pg->t_blocks), block = (text_block_ptr)UseMemory(pg->t_blocks);
 			block_qty; ++block, --block_qty)
 		block->flags |= SWITCHED_DIRECTIONS;
 	
 	UnuseMemory(pg->t_blocks);
 	
-	for (block_qty = (t_select_ptr) (pg_short_t) (t_select_ptr) (pg_short_t)GetMemorySize(pg->select), selections = UseMemory(pg->select);
+	for (block_qty = GetMemorySize(pg->select), selections = (t_select_ptr)UseMemory(pg->select);
 			block_qty; ++selections, --block_qty)
 		selections->flags |= SELECTION_DIRTY;
 	

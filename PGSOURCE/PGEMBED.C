@@ -127,8 +127,8 @@ static void convert_old_borders (pg_embed_ptr embed_ptr, old_pg_border PG_FAR *o
 
 
 STATIC_PASCAL (void) measure_embed (paige_rec_ptr pg, style_walk_ptr walker,
-      pg_char_ptr data, long length, pg_short_t slop, long PG_FAR *positions,
-      short PG_FAR *types, short measure_verb, long current_offset, short scale_widths,
+      pg_char_ptr data, size_t length, pg_short_t slop, long PG_FAR *positions,
+      short PG_FAR *types, short measure_verb, size_t current_offset, short scale_widths,
       short call_order);
 STATIC_PASCAL (long) track_embed_ctl (paige_rec_ptr pg, short verb,
       t_select_ptr first_select, t_select_ptr last_select, style_walk_ptr styles,
@@ -146,7 +146,7 @@ STATIC_PASCAL (pg_boolean) embed_setup_insert_init (paige_rec_ptr pg, style_info
 STATIC_PASCAL (pg_boolean) embed_setup_insert (paige_rec_ptr pg, style_info_ptr style,
       long position);
 STATIC_PASCAL (long) embed_char_info (paige_rec_ptr pg, style_walk_ptr style_walker,
-      pg_char_ptr data, long block_offset, long offset_begin, long offset_end, long char_offset, long mask_bits);
+      pg_char_ptr data, size_t block_offset, size_t offset_begin, size_t offset_end, size_t char_offset, long mask_bits);
 STATIC_PASCAL (void) embed_activate (paige_rec_ptr pg_rec, style_info_ptr style,
       select_pair_ptr text_range, pg_char_ptr text, short front_back_state,
       short perm_state, pg_boolean show_hilite);
@@ -280,7 +280,7 @@ one and compared to match_refcon. If AND_refcon is zero or the resulting compari
 match_refcon is TRUE, the embed_ref is returned and *text_position is updated. If nonne
 found, MEM_NULL is returned and *text_position will be end of text. */
 
-PG_PASCAL (embed_ref) pgFindNextEmbed (pg_ref pg, long PG_FAR *text_position,
+PG_PASCAL (embed_ref) pgFindNextEmbed (pg_ref pg, size_t PG_FAR *text_position,
       long match_refcon, long AND_refcon)
 {
    paige_rec_ptr              pg_rec;
@@ -290,7 +290,7 @@ PG_PASCAL (embed_ref) pgFindNextEmbed (pg_ref pg, long PG_FAR *text_position,
    pg_embed_ptr               embed_ptr;
    embed_ref                  result;
    pg_short_t                 style_index;
-   long                    first_run, num_styles;
+   size_t                    first_run, num_styles;
 
    pg_rec = (paige_rec_ptr) UseMemory(pg);
    result = MEM_NULL;
@@ -587,8 +587,8 @@ found, MEM_NULL is returned. The text_position and associated_style params are o
 text_position is non-NULL, the first char position of the embed_ref is returned. If
 associated_style is non-NULL, a copy of the associated style is returned. */
 
-PG_PASCAL (embed_ref) pgGetIndEmbed (pg_ref pg, select_pair_ptr selection, long index,
-      long PG_FAR *text_position, style_info_ptr associated_style)
+PG_PASCAL (embed_ref) pgGetIndEmbed (pg_ref pg, select_pair_ptr selection, size_t index,
+      size_t PG_FAR *text_position, style_info_ptr associated_style)
 {
    paige_rec_ptr        	pg_rec;
    register style_info_ptr  style_base;
@@ -596,7 +596,7 @@ PG_PASCAL (embed_ref) pgGetIndEmbed (pg_ref pg, select_pair_ptr selection, long 
    style_run_ptr        	run;
    memory_ref           	select_ref;
    embed_ref            	result;
-   long              		num_selects, index_ctr;
+   size_t              		num_selects, index_ctr;
    
    if (!index)
       return   MEM_NULL;
@@ -865,7 +865,7 @@ PG_PASCAL (void) pgSetEmbedBounds (pg_ref pg, long index, select_pair_ptr index_
    paige_rec_ptr           pg_rec;
    pg_embed_ptr            embed_ptr;
    style_info			   associated_style;
-   long                    position, new_width, new_height, new_descent;
+   size_t                    position, new_width, new_height, new_descent;
    embed_ref               ref;
 
    if (ref = pgGetIndEmbed(pg, index_range, index, &position, &associated_style)) {
@@ -1096,7 +1096,7 @@ PG_PASCAL (size_t) pgDefaultEmbedCallback (paige_rec_ptr pg, pg_embed_ptr embed_
 from a PAIGE file. */
 
 PG_PASCAL (pg_boolean) pgEmbedReadHandler (paige_rec_ptr pg, pg_file_key key, memory_ref key_data,
-      long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size)
+      long PG_FAR *element_info, void PG_FAR *aux_data, size_t PG_FAR *unpacked_size)
 {
    pg_embed_ptr					embed_ptr;
    pgm_globals_ptr        		mem_globals;
@@ -1106,7 +1106,7 @@ PG_PASCAL (pg_boolean) pgEmbedReadHandler (paige_rec_ptr pg, pg_file_key key, me
    embed_callback  				callback;
    long PG_FAR 					*previous_embed;
    long                       	num_styles, ref_id, the_type;
-   long                       	called_ctr;
+   size_t                       called_ctr;
    long                       	file_version, old_current_id;
 
    file_version = pg->version;
@@ -1179,7 +1179,7 @@ PG_PASCAL (pg_boolean) pgEmbedReadHandler (paige_rec_ptr pg, pg_file_key key, me
 
          embed_ptr->style = styles;
          embed_ptr->style_refcon = styles->embed_style_refcon;
-         callback(pg, embed_ptr, the_type, EMBED_INIT, embed_ptr->style_refcon, called_ctr, (long)styles);
+         callback(pg, embed_ptr, the_type, EMBED_INIT, embed_ptr->style_refcon, (void*)called_ctr, (void*)styles);
          embed_ptr->style = NULL;
 
          ++called_ctr;
@@ -1426,7 +1426,7 @@ PG_PASCAL (memory_ref) pgUnpackEmbedRef (paige_rec_ptr pg, pack_walk_ptr walker,
 
 	   custom_data = pgGetUnpackedPtr(walker, &custom_size);
 	   callback(pg, embed_ptr, the_type, EMBED_READ_DATA, embed_ptr->user_refcon,
-	         (long)custom_data, custom_size);
+	         (void*)custom_data, (void*)custom_size);
 
 	   UnuseMemory(ref);
    }
@@ -1464,7 +1464,7 @@ saved only once (which is also why we need a separate function to save these
 refs descretely).  */
 
 PG_PASCAL (pg_error) pgSaveAllEmbedRefs (pg_ref pg, file_io_proc io_proc, file_io_proc data_io_proc,
-      long PG_FAR *file_position, file_ref filemap)
+      size_t PG_FAR *file_position, file_ref filemap)
 {
    paige_rec_ptr     pg_rec;
    embed_ref         ref;
@@ -1515,7 +1515,7 @@ PG_PASCAL (pg_error) pgSaveAllEmbedRefs (pg_ref pg, file_io_proc io_proc, file_i
 
 				if (!image->image_data && !image->loader_result)
 					callback(pg_rec, embed_ptr, embed_url_image, EMBED_LOAD_IMAGE, styles[index].embed_style_refcon,
-				     	(long)image, 0);
+				     	(void*)image, (void*)0);
 
 				UnuseMemory(url_ref);
 
@@ -1592,7 +1592,7 @@ not saved in the normal way. In other words, an embed ref that is marked for
 be saved descretely. */
 
 PG_PASCAL (pg_error) pgSaveEmbedRef (pg_ref pg, embed_ref ref, long element_info,
-      file_io_proc io_proc, file_io_proc data_io_proc, long PG_FAR *file_position,
+      file_io_proc io_proc, file_io_proc data_io_proc, size_t PG_FAR *file_position,
       file_ref filemap) 
 {
    paige_rec_ptr           pg_rec;
@@ -1779,7 +1779,7 @@ PG_PASCAL (long) pgInitEmbedStyleInfo (paige_rec_ptr pg, long position, embed_re
 
    style->styles[super_impose_var] = use_stylesheet_option;
 
-   use_callback(pg, new_embed, new_type, EMBED_VMEASURE, callback_refcon, (long)style, 0);
+   use_callback(pg, new_embed, new_type, EMBED_VMEASURE, callback_refcon, (void*)style, 0);
    UnuseMemory(ref);
 
    if (mask) {
@@ -1868,7 +1868,7 @@ PG_PASCAL (memory_ref) pgNewImageRecord (pg_ref pg, pg_url_image_ptr image, embe
       temp_embed.type = embed_url_image;
       temp_embed.data = (void PG_FAR *)result;
       temp_embed.version = CURRENT_EMBED_VERSION;
-      use_callback(pg_rec, &temp_embed, embed_url_image, EMBED_PREPARE_IMAGE, 0, (long)result_image, 0);
+      use_callback(pg_rec, &temp_embed, embed_url_image, EMBED_PREPARE_IMAGE, 0, (void*)result_image, 0);
 
       UnuseMemory(result);
    }
@@ -1962,7 +1962,7 @@ PG_PASCAL (void) pgLoadImages (pg_ref pg, embed_callback image_callback, short w
                
                if (!image->image_data && !image->loader_result)
                   use_callback(pg_rec, embed_ptr, embed_url_image, EMBED_LOAD_IMAGE, embed_ptr->style_refcon,
-                        (long)image, 0);
+                        (void*)image, 0);
 
                UnuseMemory((memory_ref)embed_ptr->data);
             }
@@ -1995,7 +1995,7 @@ PG_PASCAL (void) pgLoadImages (pg_ref pg, embed_callback image_callback, short w
 			               
 			               if (!image->image_data && !image->loader_result)
 			                  use_callback(pg_rec, embed_ptr, embed_url_image, EMBED_LOAD_IMAGE, embed_ptr->style_refcon,
-			                        (long)image, 0);
+			                        (void*)image, 0);
 
 			               UnuseMemory((memory_ref)embed_ptr->data);
 	         		}
@@ -2164,19 +2164,19 @@ PG_PASCAL (void) pgPackEmbedRef (pack_walk_ptr walker, memory_ref url_list, embe
 width. */
 
 STATIC_PASCAL (void) measure_embed (paige_rec_ptr pg, style_walk_ptr walker,
-      pg_char_ptr data, long length, pg_short_t slop, long PG_FAR *positions,
-      short PG_FAR *types, short measure_verb, long current_offset, short scale_widths,
+      pg_char_ptr data, size_t length, pg_short_t slop, long PG_FAR *positions,
+      short PG_FAR *types, short measure_verb, size_t current_offset, short scale_widths,
       short call_order)
 {
-   register long PG_FAR       *char_locs;
-   pg_embed_measure           measure_struct;
-   pg_embed_measure_ptr       measure_ptr;
-   embed_callback          callback;
-   style_info_ptr          style;
-   font_info_ptr           font;
-   pg_embed_ptr               embed_ptr;
-   long                    char_ctr, width_average, the_type;
-   long                    ending_width, use_width, incrementing_width;
+   register long PG_FAR     *char_locs;
+   pg_embed_measure         measure_struct;
+   pg_embed_measure_ptr     measure_ptr;
+   embed_callback           callback;
+   style_info_ptr           style;
+   font_info_ptr            font;
+   pg_embed_ptr             embed_ptr;
+   size_t                   char_ctr, width_average, the_type;
+   size_t                   ending_width, use_width, incrementing_width;
 
    if (types)
       pgFillBlock(types, length * sizeof(short), 0);
@@ -2221,7 +2221,7 @@ STATIC_PASCAL (void) measure_embed (paige_rec_ptr pg, style_walk_ptr walker,
          max_size = embed_ptr->modifier & 0x0000FFFF;
          
          the_size = (short)callback(pg, embed_ptr,
-               the_type, EMBED_SWAP, embed_ptr->style_refcon, (long)the_text, max_size);
+               the_type, EMBED_SWAP, embed_ptr->style_refcon, (void*)the_text, (void*)max_size);
       }
 
       if (the_size > length) {
@@ -2256,7 +2256,7 @@ STATIC_PASCAL (void) measure_embed (paige_rec_ptr pg, style_walk_ptr walker,
    }
 
    if (measure_verb != measure_draw_locs)
-      callback(pg, embed_ptr, the_type, EMBED_MEASURE, embed_ptr->style_refcon, (long)measure_ptr, 0);
+      callback(pg, embed_ptr, the_type, EMBED_MEASURE, embed_ptr->style_refcon, (void*)measure_ptr, 0);
 
    if (embed_empty(embed_ptr))
       if (embed_ptr->width < embed_ptr->empty_width)
@@ -2310,7 +2310,7 @@ STATIC_PASCAL (void) embed_activate (paige_rec_ptr pg_rec, style_info_ptr style,
    activate_data.perm_state = perm_state;
    activate_data.show_hilite = show_hilite;
 
-   callback(pg_rec, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK, (short)((pg_rec->flags & (PERM_DEACT_BIT | DEACT_BIT)) ? EMBED_DEACTIVATE : EMBED_ACTIVATE), embed_ptr->style_refcon, (long)&activate_data, 0);
+   callback(pg_rec, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK, (short)((pg_rec->flags & (PERM_DEACT_BIT | DEACT_BIT)) ? EMBED_DEACTIVATE : EMBED_ACTIVATE), embed_ptr->style_refcon, &activate_data, 0);
 }
 
 
@@ -2389,7 +2389,7 @@ STATIC_PASCAL (long) track_embed_ctl (paige_rec_ptr pg, short verb,
    
    track_result = callback(pg, embed_ptr,
          embed_ptr->type & EMBED_TYPE_MASK, command, embed_style->embed_style_refcon,
-         (long)click_ptr, 0);
+         (void*)click_ptr, 0);
 
    embed_ptr->style = NULL;
    UnuseMemory(embed_style->embed_object);
@@ -2497,7 +2497,7 @@ STATIC_PASCAL (void) embed_draw (paige_rec_ptr pg, style_walk_ptr walker, pg_cha
          
          max_size = embed_ptr->modifier & 0x0000FFFF;
          the_size = (short)callback(pg, embed_ptr, embed_dynamic_string,
-               EMBED_SWAP, embed_ptr->style_refcon, (long)the_chars, max_size);
+               EMBED_SWAP, embed_ptr->style_refcon, (void*)the_chars, (void*)max_size);
       }
 
      if (the_size) {
@@ -2527,13 +2527,13 @@ STATIC_PASCAL (void) embed_draw (paige_rec_ptr pg, style_walk_ptr walker, pg_cha
          
          if (!image_ptr->image_data && !image_ptr->loader_result)
             callback(pg, embed_ptr, the_type, EMBED_LOAD_IMAGE, embed_ptr->style_refcon,
-                     (long)image_ptr, 0);
+                     (void*)image_ptr, 0);
 
             UnuseMemory(image_ref);
      }
 
       callback(pg, embed_ptr, the_type, EMBED_DRAW,
-            embed_ptr->style_refcon, (long)draw_frame_ptr, (long)draw_position);
+            embed_ptr->style_refcon, draw_frame_ptr, (void*)draw_position);
    }
 
    embed_ptr->style = NULL;
@@ -2579,7 +2579,7 @@ STATIC_PASCAL (void) embed_copy (paige_rec_ptr src_pg, paige_rec_ptr target_pg,
       embed_ptr->used_ctr = 0;
       callback = (embed_callback) style->embed_entry;
       callback(pg_for_id, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK, EMBED_COPY,
-               style->embed_style_refcon, reason_verb, 0);
+               style->embed_style_refcon, (void*)reason_verb, 0);
    }
 
    ++embed_ptr->used_ctr;
@@ -2610,7 +2610,7 @@ STATIC_PASCAL (void) embed_delete (paige_rec_ptr pg, pg_globals_ptr globals,
       callback = (embed_callback)style->embed_entry;
       embed_ptr->style = style;
       callback(pg, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK, EMBED_DESTROY,
-               style->embed_style_refcon, reason_verb, 0);
+               style->embed_style_refcon, (void*)reason_verb, 0);
       embed_ptr->style = NULL;
       UnuseAndDispose(style->embed_object);
    }
@@ -2655,7 +2655,7 @@ item as a "word". Note that we don't get called (hook was not set) for
 character substitution.  */
 
 STATIC_PASCAL (long) embed_char_info (paige_rec_ptr pg, style_walk_ptr style_walker,
-      pg_char_ptr data, long block_offset, long offset_begin, long offset_end, long char_offset, long mask_bits)
+      pg_char_ptr data, size_t block_offset, size_t offset_begin, size_t offset_end, size_t char_offset, long mask_bits)
 {
    long        result;
    
@@ -3098,7 +3098,7 @@ static void standard_embed_dispose (pg_embed_ptr item, long the_type)
         case embed_meta_file:
 #ifdef WINDOWS_PLATFORM
             
-            DeleteMetaFile((HANDLE)the_data);
+            DeleteMetaFile((HMETAFILE)the_data);
 #else
          DisposeNonNilFailedMemory(the_data);
 #endif
@@ -3713,11 +3713,11 @@ static void custom_data_callback (paige_rec_ptr pg, pack_walk_ptr walker, pg_emb
 
    SetMemorySize(buffer_ref, 0);
    callback(pg, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK, EMBED_WRITE_DATA,
-         embed_ptr->user_refcon, (long)buffer_ref, 0);
+         embed_ptr->user_refcon, (void*)buffer_ref, 0);
    
    if (saved_size = GetMemorySize(buffer_ref)) {
 
-      pgPackBytes(walker, UseMemory(buffer_ref), saved_size);
+      pgPackBytes(walker, (pg_bits8_ptr) UseMemory(buffer_ref), saved_size);
       UnuseMemory(buffer_ref);
    }  
 }
@@ -3972,7 +3972,7 @@ static void unpack_altsize_text (paige_rec_ptr pg, pack_walk_ptr walker, pg_char
    if (pg->flags2 & UNICODE_SAVED)
       pgUnicodeToUnicode((pg_short_t PG_FAR *)str, size + 1, FALSE);
    else
-      pgBytesToUnicode((pg_bits8_ptr)str, str, NULL, size);
+      pgBytesToUnicode((pg_bits8_ptr)str, (pg_short_t*)str, NULL, size);
 #else
    if (pg->flags2 & UNICODE_SAVED) {
       pg_char     temp_name[256];

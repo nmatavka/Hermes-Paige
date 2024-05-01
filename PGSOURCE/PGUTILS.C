@@ -1039,7 +1039,7 @@ PG_PASCAL (void) pgCallContainerProc (paige_rec_ptr pg, pg_short_t container_num
 		pgAddPt(offset_extra, &repeat_offset);
 
 	pg->procs.container_proc(pg, (pg_short_t)(container_num + 1),
-			UseMemoryRecord(pg->wrap_area, real_container + 1, 0, TRUE), scale_factor,
+			(rectangle_ptr) UseMemoryRecord(pg->wrap_area, real_container + 1, 0, TRUE), scale_factor,
 				&repeat_offset, verb, extra_info);
 
 	UnuseMemory(pg->wrap_area);

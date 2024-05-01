@@ -23,8 +23,8 @@ library cannot be omitted from the basic Paige package. */
 #include "pgTables.h"
 
 
-static void find_word_boundary (paige_rec_ptr pg, long offset, long info_mask,
-		long PG_FAR *begin, long PG_FAR *end, pg_boolean left_side);
+static void find_word_boundary (paige_rec_ptr pg, size_t offset, long info_mask,
+		size_t PG_FAR *begin, size_t PG_FAR *end, pg_boolean left_side);
 static pg_short_t locate_closest_tab (style_walk_ptr walker, long left_base, long right_base,
 			long cur_base, tab_stop_ptr tab_result);
 static short encode_j_extra (long j_extra);
@@ -1094,7 +1094,7 @@ TRUE the word to the left is chosen if the offset is in between "real" words.
 If smart_select is TRUE the blank(s) are selected to the right side of the word. */
 
 PG_PASCAL (void) pgFindWord (pg_ref pg, size_t offset, size_t PG_FAR *first_byte,
-		long PG_FAR *last_byte, pg_boolean left_side, pg_boolean smart_select)
+		size_t PG_FAR *last_byte, pg_boolean left_side, pg_boolean smart_select)
 {
 	paige_rec_ptr				pg_rec;
 	long						info_mask;
@@ -1116,8 +1116,8 @@ offsets returned will exclude the left control char but will include the right.
 If left_side is TRUE the word to the left is chosen if the offset is in between
 "real" words.  */
 
-PG_PASCAL (void) pgFindCtlWord (pg_ref pg, long offset, long PG_FAR *first_byte,
-		long PG_FAR *last_byte, short left_side)
+PG_PASCAL (void) pgFindCtlWord (pg_ref pg, size_t offset, size_t PG_FAR *first_byte,
+		size_t PG_FAR *last_byte, short left_side)
 {
 	paige_rec_ptr				pg_rec;
 	
@@ -1132,8 +1132,8 @@ PG_PASCAL (void) pgFindCtlWord (pg_ref pg, long offset, long PG_FAR *first_byte,
 /* pgFindPar returns the byte offset of a paragraph that encloses the offset given.
 The paragraph is what would invert if it were selected (highlighted).  */
 
-PG_PASCAL (void) pgFindPar (pg_ref pg, long offset, long PG_FAR *first_byte,
-		long PG_FAR *last_byte)
+PG_PASCAL (void) pgFindPar (pg_ref pg, size_t offset, size_t PG_FAR *first_byte,
+		size_t PG_FAR *last_byte)
 {
 	paige_rec_ptr				pg_rec;
 	select_pair					boundary;
@@ -1154,13 +1154,13 @@ PG_PASCAL (void) pgFindPar (pg_ref pg, long offset, long PG_FAR *first_byte,
 /* pgFindLine returns the byte offset of a line that encloses the offset given.
 The line is what would invert if it were selected (highlighted).  */
 
-PG_PASCAL (void) pgFindLine (pg_ref pg, long offset, long PG_FAR *first_byte,
-		long PG_FAR *last_byte)
+PG_PASCAL (void) pgFindLine (pg_ref pg, size_t offset, size_t PG_FAR *first_byte,
+		size_t PG_FAR *last_byte)
 {
 	paige_rec_ptr				pg_rec;
 	text_block_ptr				block;
 	point_start_ptr				starts;
-	long						use_offset;
+	size_t						use_offset;
 	pg_short_t					local_begin, local_end, first_start;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
@@ -1282,13 +1282,13 @@ PG_PASCAL (void) pgScaleParInfo (paige_rec_ptr pg, par_info_ptr par, short numer
 /* This function returns the absolute byte offset of a word or paragraph (which
 is indicated in info_mask).   */
 
-static void find_word_boundary (paige_rec_ptr pg, long offset, long info_mask,
-		long PG_FAR *begin, long PG_FAR *end, pg_boolean left_side)
+static void find_word_boundary (paige_rec_ptr pg, size_t offset, long info_mask,
+		size_t PG_FAR *begin, size_t PG_FAR *end, pg_boolean left_side)
 {
 	text_block_ptr				block;
 	pg_char_ptr					text;
 	style_walk					walker;
-	long						begin_offset, end_offset, local_offset, info, boundary_info;
+	size_t						begin_offset, end_offset, local_offset, info, boundary_info;
 	pg_short_t					end_length;
 	
 	if (!pg->t_length) {

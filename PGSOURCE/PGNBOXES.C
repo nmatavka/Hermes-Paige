@@ -479,7 +479,7 @@ PG_PASCAL (long) pgAttachParExclusion (pg_ref pg, long position, pg_short_t inde
 {
 	paige_rec_ptr			pg_rec;
 	style_run_ptr			run;
-	long					par_position, num_runs, run_index;
+	size_t					par_position, num_runs, run_index;
 	short					use_draw_mode;
 	
 	pg_rec = (paige_rec_ptr) UseMemory(pg);

@@ -178,7 +178,7 @@ PG_PASCAL (void) pgChangeStyle (pg_ref pg, short style_id, const style_info_ptr 
 		if ((font_index = the_style->font_index) == DEFAULT_FONT_INDEX)
 			font_index = 0;
 
-		the_style->procs.init(pg_rec, the_style, UseMemoryRecord(pg_rec->fonts, font_index, 0, TRUE));
+		the_style->procs.init(pg_rec, the_style, (font_info_ptr) UseMemoryRecord(pg_rec->fonts, font_index, 0, TRUE));
 		UnuseMemory(pg_rec->fonts);
 
 /* Now walk through all style_info's and locate any "offspring" from this
@@ -235,7 +235,7 @@ original stylesheet. If found, I need to change original fields. */
 				//QUALCOMM Begin == Kusuma
 				if (each_style->font_index == the_style->font_index)
 				//QUALCOMM End == Kusuma
-				each_style->procs.init(pg_rec, each_style, UseMemoryRecord(pg_rec->fonts, font_index, 0, TRUE));
+				each_style->procs.init(pg_rec, each_style, (font_info_ptr) UseMemoryRecord(pg_rec->fonts, font_index, 0, TRUE));
 				UnuseMemory(pg_rec->fonts);
 				
 				if (each_style->styles[small_caps_var])
@@ -1969,7 +1969,7 @@ original stylesheet. If found, I need to change original fields. */
 					each_style->named_style_index = new_named_id;
 				
 				font_index = each_style->font_index;
-				each_style->procs.init(pg_rec, each_style, UseMemoryRecord(pg_rec->fonts, font_index, 0, TRUE));
+				each_style->procs.init(pg_rec, each_style, (font_info_ptr)UseMemoryRecord(pg_rec->fonts, font_index, 0, TRUE));
 				UnuseMemory(pg_rec->fonts);
 				
 				if (each_style->styles[small_caps_var])

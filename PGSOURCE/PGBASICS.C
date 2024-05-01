@@ -253,8 +253,8 @@ PG_PASCAL (void) pgExtendProc (void PG_FAR *param, short verb)
 
 /* pgWaitProc is the standard "wait-process" function, which does nothing.  */
 
-PG_PASCAL (void) pgWaitProc (paige_rec_ptr pg, short wait_verb, long progress_ctr,
-		long completion_ctr)
+PG_PASCAL (void) pgWaitProc (paige_rec_ptr pg, short wait_verb, size_t progress_ctr,
+		size_t completion_ctr)
 {
 #ifdef MAC_PLATFORM
 #pragma unused (pg, wait_verb, progress_ctr, completion_ctr)

@@ -906,7 +906,7 @@ PG_PASCAL (void) pgSetSelection (pg_ref pg, size_t begin_sel, size_t end_sel,
 	paige_rec_ptr			pg_rec;
 	t_select_ptr			selections;
 	size_t					beginning_select, ending_select;
-	long					unused_offset, first_select_flags, second_select_flags;
+	size_t					unused_offset, first_select_flags, second_select_flags;
 	short					will_draw, left_can_extend, right_can_extend;
 	pg_short_t				select_qty;
 
@@ -1706,7 +1706,7 @@ PG_PASCAL (void) pgBuildHiliteRgn (paige_rec_ptr pg, t_select_ptr selections,
 			avoid_shape = pgRectToShape(pg->globals->mem_globals, NULL);
 			
 			no_hilite_qty = (pg_short_t)GetMemorySize(no_hilite_ref) / 2;
-			pg->procs.hilite_rgn(pg, UseMemory(no_hilite_ref), no_hilite_qty,
+			pg->procs.hilite_rgn(pg, (t_select_ptr)UseMemory(no_hilite_ref), no_hilite_qty,
 					avoid_shape);
 			
 			UnuseMemory(no_hilite_ref);
@@ -1731,9 +1731,9 @@ PG_PASCAL (pg_boolean) pgAlignSelection (paige_rec_ptr pg, short align_verb, siz
 	text_block_ptr			block;
 	pg_char_ptr				text;
 	style_walk				walker;
-	register long PG_FAR	*offset;
-	register long			byte_advance, local_offset;
-	long					distance_in, max_size, offset_begin, offset_end;
+	register size_t PG_FAR	*offset;
+	register size_t			byte_advance, local_offset;
+	size_t					distance_in, max_size, offset_begin, offset_end;
 	pg_short_t				byte_modulo, char_size;
 	pg_boolean				did_adjust;
 
@@ -1845,7 +1845,7 @@ PG_PASCAL (pg_short_t) pgFindEmptyHilite (paige_rec_ptr pg, pg_short_t PG_FAR *r
 	if (!pg->num_selects)
 		return	0;
 
-	select1 = (t_select_ptr) (t_select_ptr) select2 = UseMemory(pg->select);
+	select1 = select2 = (t_select_ptr) UseMemory(pg->select);
 	++select2;
 
 	num_delete = *rec = 0;
@@ -2205,7 +2205,7 @@ or line.  */
 static void return_word_boundary (paige_rec_ptr pg, short modifiers, long offset,
 		long PG_FAR *begin, long PG_FAR *end, pg_boolean left_side)
 {
-	long		begin_sel, end_sel;
+	size_t		begin_sel, end_sel;
 	select_pair	style_mod_range;
 
 	if (modifiers & (WORD_MOD_BIT | PAR_MOD_BIT | LINE_MOD_BIT | WORD_CTL_MOD_BIT))
@@ -2267,9 +2267,9 @@ static void reverse_selection (t_select_ptr selection)
 static t_select_ptr current_selection_pair (paige_rec_ptr pg)
 {
 	if (!pg->num_selects)
-		return	UseMemory(pg->select);
+		return (t_select_ptr)UseMemory(pg->select);
 
-	return	UseMemoryRecord(pg->select, pg->num_selects * 2 - 2, USE_ALL_RECS, TRUE);
+	return (t_select_ptr)UseMemoryRecord(pg->select, pg->num_selects * 2 - 2, USE_ALL_RECS, TRUE);
 }
 
 
@@ -2571,7 +2571,7 @@ static void extend_selection (paige_rec_ptr pg, t_select_ptr new_select,
 	if (will_draw) {
 		shape_ref			diff_shape;
 		
-		pgBuildHiliteRgn(pg, UseMemory(pg->select), pg->num_selects, pg->hilite_rgn);
+		pgBuildHiliteRgn(pg, (t_select_ptr)UseMemory(pg->select), pg->num_selects, pg->hilite_rgn);
 		UnuseMemory(pg->select);
 
 		if (pgEmptyShape(pg->temp_rgn)) {
@@ -3089,7 +3089,7 @@ static long hyperlink_callback (paige_rec_ptr pg, short verb, short modifiers, m
 	pg_char_ptr				URL;
 	memory_ref				URL_ref;
 	pg_hyperlink			callback_link;
-	long					position;
+	size_t					position;
 	long					result = 0;
 	short					command;
 	

@@ -72,8 +72,8 @@ PG_PASCAL (void) pgActivateStyleProc (paige_rec_ptr pg, style_info_ptr style,
 /* pgCopyTextProc is the default copy_text proc, but does nothing by default. */
 
 PG_PASCAL (void) pgCopyTextProc (paige_rec_ptr src_pg, paige_rec_ptr target_pg,
-		short reason_verb, style_info_ptr style, long style_position,
-		long text_position, pg_char_ptr text, long length)
+		short reason_verb, style_info_ptr style, size_t style_position,
+		size_t text_position, pg_char_ptr text, size_t length)
 {
 #ifdef MAC_PLATFORM
 #pragma unused (src_pg, target_pg, reason_verb, style, style_position, text_position, text, length)
@@ -261,7 +261,7 @@ once more passing NULL as the walker parameter.
 Change 3/2594, "include_pars," if TRUE, includes par styles otherwise only
 text styles + font. */
 
-PG_PASCAL (void) pgPrepareStyleWalk (paige_rec_ptr pg, long offset,
+PG_PASCAL (void) pgPrepareStyleWalk (paige_rec_ptr pg, size_t offset,
 		style_walk_ptr walker, pg_boolean include_pars)
 {
 	register style_walk_ptr		walk;
@@ -1172,7 +1172,7 @@ PG_PASCAL (void) pgChangeStyleRun (style_ref ref, change_info_ptr change, style_
 	register style_run_ptr	run;
 	style_run				ending_run, change_run;
 	pg_short_t				old_style_item, new_style_item;
-	long					doc_size, rec_num;
+	size_t					doc_size, rec_num;
 
 	run = pgFindRunFromRef (ref, to_offset, NULL);
 	ending_run = *run;
@@ -1836,7 +1836,7 @@ static void convert_to_real_par_offsets (paige_rec_ptr pg, memory_ref selection)
 {
 	register select_pair_ptr	selections;
 	register short				num_refs;
-	long						unwanted_offset, right_offset;
+	size_t						unwanted_offset, right_offset;
 
 	for (selections = (select_pair_ptr) UseMemory(selection), num_refs = (short)GetMemorySize(selection);
 			num_refs;  ++selections, --num_refs) {

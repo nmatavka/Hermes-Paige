@@ -730,8 +730,8 @@ replaced with a single style_walk_ptr param.
 Added 4/14/94: if scale_widths is TRUE the result(s) are to be scaled.  */
 
 PG_PASCAL (void) pgMeasureProc (paige_rec_ptr pg, style_walk_ptr walker,
-      pg_char_ptr data, long length, pg_short_t slop, long PG_FAR *positions,
-      short PG_FAR *types, short measure_verb, long current_offset, pg_boolean scale_widths,
+      pg_char_ptr data, size_t length, pg_short_t slop, long PG_FAR *positions,
+      short PG_FAR *types, short measure_verb, size_t current_offset, pg_boolean scale_widths,
       short call_order)
 {
    register short       PG_FAR *each_type;
@@ -993,7 +993,7 @@ Also function result is now a long. */
 
 #ifdef UNICODE
 PG_PASCAL (long) pgCharInfoProc (paige_rec_ptr pg, style_walk_ptr style_walker,
-      pg_char_ptr data, long block_offset, long offset_begin, long offset_end, long char_offset,
+      pg_char_ptr data, size_t block_offset, size_t offset_begin, size_t offset_end, size_t char_offset,
       long mask_bits)
 {
    register    style_walk_ptr  walker;

@@ -129,7 +129,7 @@ enum {
 
 typedef PG_FN_PASCAL (void, mem_debug_proc) (pg_error message, unsigned long what_ref);
 typedef PG_FN_PASCAL (pg_error, purge_proc) (memory_ref ref_to_purge, pgm_globals_ptr mem_globals, short verb);
-typedef PG_FN_PASCAL (long, free_memory_proc) (pgm_globals_ptr mem_globals, memory_ref dont_free, size_t desired_free);
+typedef PG_FN_PASCAL (size_t, free_memory_proc) (pgm_globals_ptr mem_globals, memory_ref dont_free, size_t desired_free);
 
 
 /* Memory Manager Global Vars (app keeps these) */

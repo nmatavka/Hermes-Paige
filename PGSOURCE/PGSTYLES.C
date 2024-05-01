@@ -211,8 +211,8 @@ and *end_position return the style boundaries and the function returns TRUE.
 End_position can be NULL if you don't need its value;  any of the style_info
 pointers can be NULL in which case the default comparisons are used.   */
 
-PG_PASCAL (pg_boolean) pgFindStyleInfo (pg_ref pg, long PG_FAR *begin_position,
-		long PG_FAR *end_position, style_info_ptr match_style, style_info_ptr mask,
+PG_PASCAL (pg_boolean) pgFindStyleInfo (pg_ref pg, size_t PG_FAR *begin_position,
+		size_t PG_FAR *end_position, style_info_ptr match_style, style_info_ptr mask,
 		style_info_ptr AND_mask)
 {
 	paige_rec_ptr		pg_rec;

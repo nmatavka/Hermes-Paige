@@ -300,7 +300,7 @@ PG_PASCAL (void) pgLineMeasureProc (paige_rec_ptr pg, pg_measure_ptr line_info)
 		max_offset = offset_begin + line_info->max_text_size;
 		
 		SetMemorySize(line_info->tab_info, 1);
-		original_tabs = (tab_width_ptr) (tab_width_ptr) tabs = UseMemory(line_info->tab_info);
+		original_tabs = tabs = (tab_width_ptr) UseMemory(line_info->tab_info);
 		tabs->offset = GOD_AWFUL_HUGE;
 
 		text = (pg_char_ptr) UseMemory(line_info->block->text);
@@ -1077,7 +1077,7 @@ PG_PASCAL (void) pgPaginateStarts (paige_rec_ptr pg, text_block_ptr block, long 
 
 	pgFillBlock(&line_info, sizeof(pg_measure), 0);
 	line_info.block = block;
-	line_info.starts = (point_start_ptr) (point_start_ptr) starts = UseMemory(block->lines);
+	line_info.starts = starts = (point_start_ptr) UseMemory(block->lines);
 	starts->offset = 0;
 	shift_begin = shift_end = block->begin;
 	
@@ -1198,12 +1198,12 @@ PG_PASCAL (void) RebuildTextblock (paige_rec_ptr pg, text_block_ptr block,
 
 	line_info.styles = &walker;
 	line_info.block = block;
-	line_info.starts = (point_start_ptr) (point_start_ptr) starts = UseMemory(block->lines);
+	line_info.starts = starts = (point_start_ptr) UseMemory(block->lines);
 	line_info.starts->offset = 0;
 	line_info.starts_ctr = (pg_short_t)GetMemorySize(block->lines);
 
 	line_info.char_locs = line_info.positions = pgGetSubrefCharLocs(pg, block, &charloc_ref, &char_types);
-	line_info.char_types = (short *) (short *) line_info.types = UseMemory(char_types);
+	line_info.char_types = line_info.types = (short *) UseMemory(char_types);
 	line_info.starts_ref = block->lines;
 	line_info.tab_info = MemoryAlloc(pg->globals->mem_globals, sizeof(tab_width_info), 4, 16);
 	pgShapeBounds(pg->wrap_area, &line_info.wrap_bounds);

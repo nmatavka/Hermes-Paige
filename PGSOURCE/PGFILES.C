@@ -296,7 +296,8 @@ PG_PASCAL (pg_error) pgDoExceptionKey (paige_rec_ptr pg, memory_ref handlers,
 	pg_handler_ptr		handler;
 	pg_handler_proc		proc_to_call;
 	memory_ref			handlers_to_use;
-	long				error_for_call, original_size;
+	size_t				original_size;
+	long				error_for_call;
 	pg_error			final_error;
 
 	pg->globals->mem_globals->last_error = error_code;

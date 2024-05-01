@@ -1589,10 +1589,10 @@ typedef PG_FN_PASCAL(void, delete_text_proc) (paige_rec_ptr pg, short reason_ver
 		style_info_ptr style, long style_position, long text_position, pg_char_ptr text, long length);
 typedef PG_FN_PASCAL(pg_boolean, setup_insert_proc) (paige_rec_ptr pg, style_info_ptr to_be_inserted,
 		long position);
-typedef PG_FN_PASCAL(long, bytes_to_unicode_proc) (pg_bits8_ptr input_bytes, pg_short_t PG_FAR *output_chars,
-		font_info_ptr font, long input_byte_size);
-typedef PG_FN_PASCAL(long, unicode_to_bytes_proc) (pg_short_t PG_FAR *input_chars, pg_bits8_ptr output_bytes,
-		font_info_ptr font, long input_char_size);
+typedef PG_FN_PASCAL(size_t, bytes_to_unicode_proc) (pg_bits8_ptr input_bytes, pg_short_t PG_FAR *output_chars,
+		font_info_ptr font, size_t input_byte_size);
+typedef PG_FN_PASCAL(size_t, unicode_to_bytes_proc) (pg_short_t PG_FAR *input_chars, pg_bits8_ptr output_bytes,
+		font_info_ptr font, size_t input_char_size);
 typedef PG_FN_PASCAL(void, line_glitter_proc) (paige_rec_ptr pg, style_walk_ptr walker,
 		long line_number, long par_number, text_block_ptr block, point_start_ptr first_line,
 		point_start_ptr last_line, point_start_ptr previous_first, point_start_ptr previous_last,
@@ -1620,7 +1620,7 @@ typedef PG_FN_PASCAL(pg_word, charclass_info_proc) (paige_rec_ptr pg, pg_char_pt
 typedef PG_FN_PASCAL(short, key_insert_query) (paige_rec_ptr pg, pg_char_ptr the_char, short charsize);
 typedef PG_FN_PASCAL(pg_boolean, pg_handler_proc) (paige_rec_ptr pg, pg_file_key key,
 		memory_ref key_data, long PG_FAR *element_info, void PG_FAR *aux_data,
-		long PG_FAR *unpacked_size);
+		size_t PG_FAR *unpacked_size);
 typedef PG_FN_PASCAL(void, extend_proc) (void PG_FAR *param, short verb);
 typedef PG_FN_PASCAL(void, app_init_read) (paige_rec_ptr pg, memory_ref ref, short type);	//¥ TRS/OITC
 typedef PG_FN_PASCAL(void, subset_glitter_proc) (paige_rec_ptr pg, draw_points_ptr draw_position,
@@ -2281,8 +2281,8 @@ extern PG_PASCAL (void) pgGetHiliteStates (pg_ref pg, short PG_FAR *front_back_s
 		short PG_FAR *perm_state);
 extern PG_PASCAL (long) pgGetStyleInfo (pg_ref pg, const select_pair_ptr selection,
 		pg_boolean set_any_match, style_info_ptr info, style_info_ptr mask);
-extern PG_PASCAL (pg_boolean) pgFindStyleInfo (pg_ref pg, long PG_FAR *begin_position,
-		long PG_FAR *end_position, style_info_ptr match_style, style_info_ptr mask,
+extern PG_PASCAL (pg_boolean) pgFindStyleInfo (pg_ref pg, size_t PG_FAR *begin_position,
+		size_t PG_FAR *end_position, style_info_ptr match_style, style_info_ptr mask,
 		style_info_ptr AND_mask);
 extern PG_PASCAL (void) pgSetStyleInfo (pg_ref pg, const select_pair_ptr selection,
 		const style_info_ptr info, const style_info_ptr mask,  short draw_mode);
@@ -2408,7 +2408,7 @@ extern PG_PASCAL (short) pgUndoType (undo_ref ref);
 extern PG_PASCAL (void) pgSetUndoRefCon (undo_ref ref, long refCon);
 extern PG_PASCAL (long) pgGetUndoRefCon (undo_ref ref);
 extern PG_PASCAL (void) pgDisposeUndo (undo_ref ref);
-extern PG_PASCAL (pg_char_ptr) pgExamineText (pg_ref pg, long offset, text_ref *text, long PG_FAR *length);
+extern PG_PASCAL (pg_char_ptr) pgExamineText (pg_ref pg, long offset, text_ref *text, size_t PG_FAR *length);
 extern PG_PASCAL (long) pgNumTextblocks (pg_ref pg);
 extern PG_PASCAL (long) pgGetTextblock (pg_ref pg, long offset, text_block_ptr block,
 		pg_boolean want_pagination);
@@ -2416,13 +2416,13 @@ extern PG_PASCAL (long) pgCharType (pg_ref pg, long offset, long mask_bits);
 extern PG_PASCAL (pg_short_t) pgCharByte (pg_ref pg, size_t offset, pg_char_ptr char_bytes);
 extern PG_PASCAL (long) pgTextSize (pg_ref pg);
 extern PG_PASCAL (void) pgFindWord (pg_ref pg, size_t offset, size_t PG_FAR *first_byte,
-		long PG_FAR *last_byte, pg_boolean left_side, pg_boolean smart_select);
-extern PG_PASCAL (void) pgFindCtlWord (pg_ref pg, long offset, long PG_FAR *first_byte,
-		long PG_FAR *last_byte, short left_side);
-extern PG_PASCAL (void) pgFindPar (pg_ref pg, long offset, long PG_FAR *first_byte,
-		long PG_FAR *last_byte);
-extern PG_PASCAL (void) pgFindLine (pg_ref pg, long offset, long PG_FAR *first_byte,
-		long PG_FAR *last_byte);
+		size_t PG_FAR *last_byte, pg_boolean left_side, pg_boolean smart_select);
+extern PG_PASCAL (void) pgFindCtlWord (pg_ref pg, size_t offset, size_t PG_FAR *first_byte,
+		size_t PG_FAR *last_byte, short left_side);
+extern PG_PASCAL (void) pgFindPar (pg_ref pg, size_t offset, size_t PG_FAR *first_byte,
+		size_t PG_FAR *last_byte);
+extern PG_PASCAL (void) pgFindLine (pg_ref pg, size_t offset, size_t PG_FAR *first_byte,
+		size_t PG_FAR *last_byte);
 extern PG_PASCAL (long) pgFindCharType (pg_ref pg, long char_info, size_t PG_FAR *offset, pg_char_ptr the_byte);
 extern PG_PASCAL (void) pgGetSelection (pg_ref pg, size_t PG_FAR *begin_sel, size_t PG_FAR *end_sel);
 extern PG_PASCAL (void) pgSetSelection (pg_ref pg, size_t begin_sel, size_t end_sel,
@@ -2470,19 +2470,19 @@ extern PG_PASCAL (void) pgSetHandler (pg_globals_ptr globals, pg_file_key key,
 extern PG_PASCAL (pg_error) pgGetHandler (pg_globals_ptr globals, pg_handler_ptr handler);
 extern PG_PASCAL (pg_error) pgRemoveHandler (pg_globals_ptr globals,
 		pg_file_key key);
-extern PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_file_key_ptr keys,
+extern PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, size_t PG_FAR *file_position, const pg_file_key_ptr keys,
 		pg_short_t num_keys, file_io_proc write_proc, file_ref filemap,
 		long doc_element_info);
-extern PG_PASCAL (pg_error) pgVerifyFile (file_ref filemap, file_io_proc io_proc, long position);
-extern PG_PASCAL (pg_error) pgReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_file_key_ptr keys,
+extern PG_PASCAL (pg_error) pgVerifyFile (file_ref filemap, file_io_proc io_proc, size_t position);
+extern PG_PASCAL (pg_error) pgReadDoc (pg_ref pg, size_t PG_FAR *file_position, const pg_file_key_ptr keys,
 		pg_short_t num_keys, file_io_proc read_proc, file_ref filemap);
-extern PG_PASCAL (pg_error) pgCacheReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_file_key_ptr keys,
+extern PG_PASCAL (pg_error) pgCacheReadDoc (pg_ref pg, size_t PG_FAR *file_position, const pg_file_key_ptr keys,
 		pg_short_t num_keys, file_io_proc read_proc, file_ref filemap);
 extern PG_PASCAL (file_ref) pgGetCacheFileRef (pg_ref pg);
-extern PG_PASCAL (pg_error) pgCacheSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_file_key_ptr keys,
+extern PG_PASCAL (pg_error) pgCacheSaveDoc (pg_ref pg, size_t PG_FAR *file_position, const pg_file_key_ptr keys,
 		pg_short_t num_keys, file_io_proc write_proc, file_ref filemap,
 		long doc_element_info);
-extern PG_PASCAL (pg_error) pgTerminateFile (pg_ref pg, long PG_FAR *file_position,
+extern PG_PASCAL (pg_error) pgTerminateFile (pg_ref pg, size_t PG_FAR *file_position,
 		file_io_proc write_proc, file_ref filemap);
 extern PG_PASCAL (void) pgOffsetShape (shape_ref the_shape, long h, long v);
 extern PG_PASCAL (void) pgInsetShape (shape_ref the_shape, long h, long v);
@@ -2616,12 +2616,12 @@ extern PG_PASCAL (pg_short_t) pgGetDefaultStyle (pg_ref pg, style_info_ptr def_s
 extern PG_PASCAL (long) pgNumLines (pg_ref pg);
 extern PG_PASCAL (long) pgOffsetToLineNum (pg_ref pg, long offset,
 		pg_boolean line_end_has_precedence);
-extern PG_PASCAL (void) pgLineNumToOffset (pg_ref pg, long line_num,
-		long PG_FAR *begin_offset, long PG_FAR *end_offset);
+extern PG_PASCAL (void) pgLineNumToOffset (pg_ref pg, size_t line_num,
+		size_t PG_FAR *begin_offset, size_t PG_FAR *end_offset);
 extern PG_PASCAL (long) pgNumPars (pg_ref pg);
 extern PG_PASCAL (long) pgOffsetToParNum (pg_ref pg, long offset);
-extern PG_PASCAL (void) pgParNumToOffset  (pg_ref pg, long par_num,
-		long PG_FAR *begin_offset, long PG_FAR *end_offset);
+extern PG_PASCAL (void) pgParNumToOffset  (pg_ref pg, size_t par_num,
+		size_t PG_FAR *begin_offset, size_t PG_FAR *end_offset);
 extern PG_PASCAL (void) pgLineNumToBounds (pg_ref pg, long line_num,
 		pg_boolean want_scrolled, pg_boolean want_scaled,
 		rectangle_ptr bounds);

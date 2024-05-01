@@ -340,7 +340,7 @@ text_block arrays: */
 			
 			SetMemorySize(block->lines, input_byte_size / sizeof(point_start));
 			general_data = use_array(block->lines, &general_ctr);
-			unpack_point_starts(&walker, general_data, (pg_short_t)general_ctr);
+			unpack_point_starts(&walker, (point_start_ptr) general_data, (pg_short_t)general_ctr);
 			UnuseMemory(block->lines);
 
 			UnuseMemory(pgr->t_blocks);
@@ -774,7 +774,7 @@ or the appropriate error code.  */
 
 /* pgReadDoc reads one or more portions of a "file" into pg.  */
 
-PG_PASCAL (pg_error) pgReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_file_key_ptr keys,
+PG_PASCAL (pg_error) pgReadDoc (pg_ref pg, size_t PG_FAR *file_position, const pg_file_key_ptr keys,
 		pg_short_t num_keys, file_io_proc read_proc, file_ref filemap)
 {
 	volatile paige_rec_ptr			pg_rec;
@@ -784,8 +784,8 @@ PG_PASCAL (pg_error) pgReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 	pg_handler			header_handler;
 	file_io_proc		proc_to_read, data_proc;
 	void PG_FAR			*aux_data_ptr;
-	long				data_size, file_size, element_info, num_keys_read;
-	long				aux_refcon;
+	size_t				data_size, file_size, num_keys_read;
+	long				element_info, aux_refcon;
 	select_pair			cache_range;
 	pg_file_key			data_key;
 	pg_boolean			skip_all_keys, wait_terminated;
@@ -795,7 +795,7 @@ PG_PASCAL (pg_error) pgReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 	volatile pg_ref		aux_pg = MEM_NULL;
 	volatile memory_ref	doc_globals = MEM_NULL;
 	
-	pg_rec = (paige_rec_ptr) (volatile paige_rec_ptr) original_pg = UseMemory(pg);
+	pg_rec = original_pg = (paige_rec_ptr) UseMemory(pg);
 
 	mem_globals = pg_rec->globals->mem_globals;
 	file_size = 0;
@@ -910,7 +910,7 @@ PG_PASCAL (pg_error) pgReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 						data_proc = handler->read_data_proc;
 
 					if ((data_key == text_key) && pg_rec->cache_file) {
-						long		hex_header_size, hex_position;
+						size_t		hex_header_size, hex_position;
 						pg_bits8	cache_buffer[6];
 						short		hex_index;
 
@@ -1084,12 +1084,12 @@ next file positions should be the real data.  The function result is a file
 error (or NO_ERROR). Either data_size or element_size can be NULL (which just
 returns the key and error result).  */
 
-PG_PASCAL (pg_error) pgReadKey (file_io_proc io_proc, long PG_FAR *position,
-	file_ref filemap, pg_file_key_ptr key, long PG_FAR *data_size,
+PG_PASCAL (pg_error) pgReadKey (file_io_proc io_proc, size_t PG_FAR *position,
+	file_ref filemap, pg_file_key_ptr key, size_t PG_FAR *data_size,
 	long PG_FAR *element_info)
 {
 	pg_key_header			header;
-	long					read_size;
+	size_t					read_size;
 	register short			index;
 	register pg_file_key	the_key;
 	register long			value_result;
@@ -1140,7 +1140,7 @@ text portions are visible. This allows huge files to open and display quickly. A
 are the same, the only difference is that filemap MUST remain open until the pg_ref is disposed
 or the file is saved as a new file reference. */
 
-PG_PASCAL (pg_error) pgCacheReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_file_key_ptr keys,
+PG_PASCAL (pg_error) pgCacheReadDoc (pg_ref pg, size_t PG_FAR *file_position, const pg_file_key_ptr keys,
 		pg_short_t num_keys, file_io_proc read_proc, file_ref filemap)
 {
 	paige_rec_ptr		pg_rec;
@@ -1186,11 +1186,11 @@ PG_PASCAL (pg_error) pgCacheReadDoc (pg_ref pg, long PG_FAR *file_position, cons
 
 /* pgVerifyFile verifies that filemap file is a real PAIGE file. If so, NO_ERROR is returned. */
 
-PG_PASCAL (pg_error) pgVerifyFile (file_ref filemap, file_io_proc io_proc, long position)
+PG_PASCAL (pg_error) pgVerifyFile (file_ref filemap, file_io_proc io_proc, size_t position)
 {
 	pg_bits8			header[PG_HEADER_SIZE];
 	file_io_proc		read_proc;
-	long				file_position, data_size;
+	size_t				file_position, data_size;
 	pg_error			error = NO_ERROR;
 	
 	if (!(read_proc = io_proc))
@@ -1431,11 +1431,11 @@ PG_PASCAL (void) pgUnpackNumbers (pack_walk_ptr out_data, void PG_FAR *ptr, shor
 	register long  PG_FAR	*long_ptr;
 
 	if (data_code == short_data) {
-		for (ctr = (short *) (short) (short *) 0, short_ptr = ptr; ctr < qty; ++ctr)
+		for (ctr = 0, short_ptr = (short *) ptr; ctr < qty; ++ctr)
 			short_ptr[ctr] = (short)pgUnpackNum(out_data);
 	}
 	else {
-		for (ctr = (long *) (short) (long *) 0, long_ptr = ptr; ctr < qty; ++ctr)
+		for (ctr = 0, long_ptr = (long *) ptr; ctr < qty; ++ctr)
 			long_ptr[ctr] = pgUnpackNum(out_data);
 	}
 }
@@ -1763,7 +1763,8 @@ static void fix_pg_from_done_handlers (paige_rec_ptr pg, memory_ref handlers)
 	par_info_ptr					pars;
 	pg_handler_ptr					init_handler, line_handler, text_handler;
 	register long					text_size;
-	long							element, data_size;
+	size_t							data_size;
+	long							element;
 	short							font_index, font_qty, saved_resolution, actual_resolution;
 	pg_short_t						qty;
 
@@ -2235,7 +2236,7 @@ static void unpack_fontsize_text (paige_rec_ptr pg, pack_walk_ptr walker, pg_cha
 	if (pg->flags2 & UNICODE_SAVED)
 		pgUnicodeToUnicode((pg_short_t PG_FAR *)name, FONT_SIZE + 1, FALSE);
 	else
-		pgBytesToUnicode((pg_bits8_ptr)name, name, NULL, FONT_SIZE);
+		pgBytesToUnicode((pg_bits8_ptr)name, (pg_short_t PG_FAR *)name, NULL, FONT_SIZE);
 #else
 	if (pg->flags2 & UNICODE_SAVED) {
 

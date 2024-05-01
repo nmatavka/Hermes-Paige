@@ -907,7 +907,7 @@ PG_PASCAL (pg_boolean) pgVerifyRTF (pg_file_unit fileref, file_io_proc io_proc,
 		long starting_position)
 {
 	file_io_proc			use_io_proc;
-	long					position, datasize;
+	size_t					position, datasize;
 	pg_bits8				verify_buffer[5];
 	pg_boolean				result = BAD_TYPE_ERR;
 
@@ -940,7 +940,7 @@ PG_PASCAL (pg_boolean) pgVerifyHTML (pg_file_unit fileref, file_io_proc io_proc,
 		long starting_position)
 {
 	file_io_proc			use_io_proc;
-	long					position, datasize, index, file_eof;
+	size_t					position, datasize, index, file_eof;
 	pg_bits8				verify_buffer[256];
 	pg_boolean				result = BAD_TYPE_ERR;
 
@@ -1122,7 +1122,7 @@ PG_PASCAL (pg_short_t) pgSetFileExtension (pg_char_ptr filename, pg_char_ptr ext
 		if (non_extend_size)
 			*non_extend_size = (short)index;
 
-		if (equal_extensions((pg_bits8_ptr)extension, &filename[index], extension_size))
+		if (equal_extensions((pg_bits8_ptr)extension, (pg_bits8_ptr) &filename[index], extension_size))
 			return	(pg_short_t)str_size;
 	}
 	
@@ -1171,7 +1171,7 @@ static void copy_style_run (paige_rec_ptr pg, long position, memory_ref source_r
 {
 	style_run_ptr			run, source_run;
 	style_run				first_target_run;
-	long					rec_num, rec_ctr, num_target_runs, num_source_runs;
+	size_t					rec_num, rec_ctr, num_target_runs, num_source_runs;
 
 	run = pgFindRunFromRef(target_ref, position, &rec_num);
 	first_target_run = *run;

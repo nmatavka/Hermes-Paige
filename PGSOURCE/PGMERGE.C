@@ -191,7 +191,7 @@ static pg_boolean walk_merge_styles (paige_rec_ptr pg, style_info_ptr matching_s
 	style_walk					walker;
 	select_pair					merge_range;
 	text_ref					used_text_ref;
-	long						merge_length, max_length;
+	size_t						merge_length, max_length;
 	short						style_deleted;
 	pg_boolean					merge_result;
 
@@ -239,7 +239,7 @@ static pg_boolean walk_merge_styles (paige_rec_ptr pg, style_info_ptr matching_s
 					
 					if (merge_length = GetMemorySize(merged_text)) {
 						
-						pgInsert(pg->myself, UseMemory(merged_text), merge_length,
+						pgInsert(pg->myself, (const pg_char_ptr) UseMemory(merged_text), merge_length,
 								merge_range.begin, data_insert_mode, 0, draw_none);
 	
 						UnuseMemory(merged_text);

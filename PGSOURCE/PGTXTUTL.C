@@ -585,7 +585,7 @@ adjust it.  In any case, non-existent text (offsets >= total text size) will
 return NULL.   */
 
 PG_PASCAL (pg_char_ptr) pgExamineText (pg_ref pg, long offset, text_ref *text,
-		long PG_FAR *length)
+		size_t PG_FAR *length)
 {
 	paige_rec_ptr					pg_rec;
 	register pg_char_ptr			ptr_result;
@@ -747,7 +747,7 @@ PG_PASCAL (pg_boolean) pgGetHiliteRgn (pg_ref pg, const select_pair_ptr range,
 	
 	if (!range && !select_list) {
 		
-		pgBuildHiliteRgn(pg_rec, UseMemory(pg_rec->select), pg_rec->num_selects,
+		pgBuildHiliteRgn(pg_rec, (t_select_ptr)UseMemory(pg_rec->select), pg_rec->num_selects,
 					pg_rec->hilite_rgn);
 		MemoryCopy(pg_rec->hilite_rgn, rgn);
 
@@ -864,7 +864,7 @@ PG_PASCAL (void) pgSetCaretPosition (pg_ref pg, pg_short_t position_verb, pg_boo
 	t_select			temp_select;
 	t_select_ptr		select;
 	pg_short_t			use_position_verb, extend_flag;
-	long				left_word, right_word, position;
+	size_t				left_word, right_word, position;
 	long				original_position;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
@@ -1102,7 +1102,7 @@ PG_PASCAL (pg_boolean) pgInsertBytes (pg_ref pg, const pg_bits8_ptr data, long l
 {
 	paige_rec_ptr			pg_rec;
 	pgm_globals_ptr			mem_globals;
-	pg_char_ptr				chars;
+	pg_short_t*				chars;
 	style_info_ptr			insert_style;
 	font_info_ptr			insert_font;
 	long					character_count;
@@ -1116,14 +1116,14 @@ PG_PASCAL (pg_boolean) pgInsertBytes (pg_ref pg, const pg_bits8_ptr data, long l
 	PG_TRY(mem_globals) {
 		
 		temp_ref = MemoryAlloc(mem_globals, sizeof(pg_char), length, 0);
-		chars = (pg_char_ptr) UseMemory(temp_ref);
+		chars = (pg_short_t*) UseMemory(temp_ref);
 
 		insert_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long)pg_rec->insert_style, 0, TRUE);
 		insert_font = (font_info_ptr) UseMemoryRecord(pg_rec->fonts, (long)insert_style->font_index, 0, TRUE);
 		
 		character_count = insert_style->procs.bytes_to_unicode(data, chars, insert_font, length);
 		
-		result = pgInsert(pg, chars, character_count, position, insert_mode, modifiers, draw_mode);
+		result = pgInsert(pg, (const pg_char_ptr) chars, character_count, position, insert_mode, modifiers, draw_mode);
 		UnuseMemory(temp_ref);
 	};
 	

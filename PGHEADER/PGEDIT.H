@@ -29,7 +29,7 @@ extern PG_PASCAL (void) pgDoDisplay (pg_ref pg, select_pair_ptr range, const gra
 		short draw_mode);
 extern PG_PASCAL (long) pgInsertRawData (paige_rec_ptr pg, pg_char_ptr data, size_t length,
 			size_t offset, smart_update_ptr update_info, short insert_mode);
-extern PG_PASCAL (long) pgDeleteRawData (paige_rec_ptr pg, long delete_from, long PG_FAR *delete_to,
+extern PG_PASCAL (long) pgDeleteRawData (paige_rec_ptr pg, size_t delete_from, size_t PG_FAR *delete_to,
 		smart_update_ptr update_info);
 extern PG_PASCAL (graf_device_ptr) pgSetupGrafDevice (paige_rec_ptr pg, graf_device_ptr device,
 		shape_ref intersect_shape, short clip_verb);

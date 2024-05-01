@@ -53,7 +53,7 @@ PG_PASCAL (void) pgInitLineProc (paige_rec_ptr pg, pg_measure_ptr measure_info, 
 /* pgPageModify is the default modify-page function. This gets called for each repeating page.
 This default function does not do anything. */
 
-PG_PASCAL (void) pgPageModify  (paige_rec_ptr pg, long page_num, rectangle_ptr margins)
+PG_PASCAL (void) pgPageModify  (paige_rec_ptr pg, size_t page_num, rectangle_ptr margins)
 {
 }
 
@@ -1165,7 +1165,7 @@ PG_PASCAL (long) pgInvalTextBlock (paige_rec_ptr pg, text_block_ptr block,
 
 	wanted_offset = (pg_short_t)begin_offset;
 
-	starts = (point_start_ptr) (point_start_ptr) first_start = UseMemory(block->lines);
+	starts = first_start = (point_start_ptr) UseMemory(block->lines);
 	block->flags |= (NEEDS_CALC | NEEDS_PARNUMS);
 	
 	while ((starts[1].offset < wanted_offset) && (starts[1].flags != TERMINATOR_BITS))
@@ -1420,7 +1420,7 @@ static long measure_subref_char (paige_rec_ptr pg, text_block_ptr block, short s
 		globals = pg->globals;
 
 		pgUseSubRef(pg, *subref_list, 0, NULL, NULL);
-		pgPaginateBlock(pg, UseMemory(pg->t_blocks), NULL, FALSE);
+		pgPaginateBlock(pg, (text_block_ptr) UseMemory(pg->t_blocks), NULL, FALSE);
 		UnuseMemory(pg->t_blocks);
 
 		pgUnuseSubRef(pg);
