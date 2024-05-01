@@ -55,5 +55,6 @@ target_include_directories(paige
 if(WIN32)
     target_compile_definitions(paige
         PUBLIC
-            WINDOWS_COMPILE)
+            WINDOWS_COMPILE
+			_CRT_SECURE_NO_WARNINGS=1)
 endif()

@@ -1147,7 +1147,7 @@ PG_PASCAL (pg_error) pgCacheReadDoc (pg_ref pg, long PG_FAR *file_position, cons
 	file_io_proc		use_read_proc;
 	pg_error			result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((use_read_proc = read_proc) == NULL)
 		use_read_proc = pgStandardReadProc;

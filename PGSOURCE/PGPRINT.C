@@ -28,7 +28,7 @@ PG_PASCAL (pg_boolean) pgSetPrintDevice (pg_ref pg, generic_var device)
 	paige_rec_ptr		pg_rec;
 	pg_boolean			result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	result = (device != pg_rec->port.print_port);
 	pg_rec->port.print_port = device;
@@ -52,7 +52,7 @@ PG_PASCAL (generic_var) pgGetPrintDevice (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	generic_var			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->port.print_port;
 	UnuseMemory(pg);
 	
@@ -75,7 +75,7 @@ PG_PASCAL (long) pgPrintToPage (pg_ref pg, const graf_device_ptr target, long st
 	long					next_position;
 	short					use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (!(print_dev = target))
 		print_dev = &pg_rec->port;

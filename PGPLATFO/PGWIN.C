@@ -2740,7 +2740,7 @@ PG_PASCAL (pg_fixed) pgPointsizeToScreen (pg_ref pg, pg_fixed pointsize)
    long              doc_resolution;
    int                  resolution;
 
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    
    doc_resolution = pg_rec->port.resolution >> 16;
    resolution = (int)doc_resolution;
@@ -2763,7 +2763,7 @@ PG_PASCAL (pg_fixed) pgScreenToPointsize (pg_ref pg, pg_fixed screensize)
    long           doc_resolution;
    int                resolution;
 
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    
    doc_resolution = pg_rec->port.resolution >> 16;
    resolution = (int)doc_resolution;
@@ -3042,7 +3042,7 @@ PG_PASCAL (void) SetFontCharWidths (pg_ref pg, style_info_ptr style, int PG_FAR 
    font_info_ptr     font;
    pg_short_t        style_index;
 
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
 
    if ((style_index = pgFindMatchingStyle((memory_ref) pg_rec->t_formats, style, 0,
             SIGNIFICANT_STYLE_SIZE)) > 0) {

@@ -17,7 +17,7 @@ PG_PASCAL (long) pgNumLines (pg_ref pg)
 	text_block_ptr			block;
 	long					result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (!(pg_rec->flags & COUNT_LINES_BIT))
 		result = 0;
@@ -53,7 +53,7 @@ PG_PASCAL (long) pgOffsetToLineNum (pg_ref pg, long offset,
 	pg_short_t					local_offset;
 	long						result, use_offset;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (!(pg_rec->flags & COUNT_LINES_BIT))
 		result = 0;
@@ -110,7 +110,7 @@ PG_PASCAL (void) pgLineNumToOffset (pg_ref pg, long line_num,
 	long						line_gauge, wanted_num;
 	pg_boolean					terminated = FALSE;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (!(pg_rec->flags & COUNT_LINES_BIT))
 		local_begin = local_end = 0;
@@ -192,7 +192,7 @@ PG_PASCAL (long) pgNumPars (pg_ref pg)
 	text_block_ptr			block;
 	long					result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (!(pg_rec->flags & COUNT_LINES_BIT))
 		result = 0;
@@ -227,7 +227,7 @@ PG_PASCAL (long) pgOffsetToParNum (pg_ref pg, long offset)
 	pg_short_t					local_offset;
 	long						result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (!(pg_rec->flags & COUNT_LINES_BIT))
 		result = 0;
@@ -284,7 +284,7 @@ PG_PASCAL (void) pgParNumToOffset (pg_ref pg, long par_num,
 	long						line_gauge, wanted_num;
 	pg_boolean					terminated = FALSE;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (!(pg_rec->flags & COUNT_LINES_BIT))
 		local_begin = local_end = 0;

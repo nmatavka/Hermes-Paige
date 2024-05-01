@@ -1099,7 +1099,7 @@ PG_PASCAL (void) pgFindWord (pg_ref pg, long offset, long PG_FAR *first_byte,
 	paige_rec_ptr				pg_rec;
 	long						info_mask;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	info_mask = WORD_SEL_BIT;
 	if (smart_select)
@@ -1121,7 +1121,7 @@ PG_PASCAL (void) pgFindCtlWord (pg_ref pg, long offset, long PG_FAR *first_byte,
 {
 	paige_rec_ptr				pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	find_word_boundary(pg_rec, pgFixOffset(pg_rec, offset), CTL_BIT, first_byte, last_byte, left_side);
 	
@@ -1138,7 +1138,7 @@ PG_PASCAL (void) pgFindPar (pg_ref pg, long offset, long PG_FAR *first_byte,
 	paige_rec_ptr				pg_rec;
 	select_pair					boundary;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	boundary.begin = offset;
 	pg_rec->procs.boundary_proc(pg_rec, &boundary);
 	
@@ -1163,7 +1163,7 @@ PG_PASCAL (void) pgFindLine (pg_ref pg, long offset, long PG_FAR *first_byte,
 	long						use_offset;
 	pg_short_t					local_begin, local_end, first_start;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
  	pg_rec->procs.set_device(pg_rec, set_pg_device, &pg_rec->port, &pg_rec->bk_color);
 
 	use_offset = pgFixOffset(pg_rec, offset);

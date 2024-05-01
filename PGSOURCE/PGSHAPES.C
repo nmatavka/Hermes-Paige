@@ -869,7 +869,7 @@ PG_PASCAL (void) pgShapeToSelections (pg_ref pg, shape_ref the_shape, memory_ref
 	t_select			fake_select;
 	pg_short_t			num_blocks;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	SetMemorySize(selections, 0);
 	
@@ -1034,7 +1034,7 @@ PG_PASCAL (void) pgEraseShape (pg_ref pg, shape_ref the_shape, const pg_scale_pt
 	if (pgEmptyShape(the_shape))
 		return;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	r_ptr = UseMemory(the_shape);
 
 	if (!(sect_ptr = vis_bounds))

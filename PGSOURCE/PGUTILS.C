@@ -68,7 +68,7 @@ PG_PASCAL (void) pgAreaBounds (pg_ref pg, rectangle_ptr page_bounds,
 {
 	paige_rec_ptr		pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (page_bounds)
 		pgShapeBounds(pg_rec->wrap_area, page_bounds);
@@ -88,7 +88,7 @@ PG_PASCAL (void) pgSetAreaBounds (pg_ref pg, const rectangle_ptr page_bounds,
 	paige_rec_ptr		pg_rec;
 	pg_boolean			requires_pagination;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	requires_pagination = FALSE;
 
 	if (page_bounds) {
@@ -145,7 +145,7 @@ PG_PASCAL (void) pgWindowOriginChanged (pg_ref pg, const co_ordinate_ptr origina
 	long					offset_h, offset_v;
 	pg_short_t				shape_qty;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (original_origin)
 		starting_origin = *original_origin;
@@ -1293,7 +1293,7 @@ PG_PASCAL (long) pgGetType (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	long				result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->pg_type;
 	UnuseMemory(pg);
 	
@@ -1307,7 +1307,7 @@ PG_PASCAL (void) pgSetType (pg_ref pg, long new_type)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->pg_type = new_type;
 	UnuseMemory(pg);
 }

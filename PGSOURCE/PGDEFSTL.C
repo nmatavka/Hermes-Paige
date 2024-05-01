@@ -231,7 +231,7 @@ PG_PASCAL (void) pgSetInsertionStyles (pg_ref pg, const style_info_ptr style, co
 	paige_rec_ptr			pg_rec;
 	style_info				copy_of_style;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (!style)
 		GetMemoryRecord(pg_rec->t_formats, pg_rec->insert_style, &copy_of_style);

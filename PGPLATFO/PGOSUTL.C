@@ -178,7 +178,7 @@ PG_PASCAL (generic_var) pgSetDrawingDevice (pg_ref pg, const generic_var draw_de
 	paige_rec_ptr				pg_rec;
 	generic_var					previous_device;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef MAC_PLATFORM
 	previous_device = (generic_var)pg_rec->port.machine_var;
@@ -207,7 +207,7 @@ PG_PASCAL (generic_var) pgSetScaledDrawingDevice (pg_ref pg, const generic_var d
 	pg_scale_factor			old_scale;
 	long					access_ctr, machine_ref3;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_device = (generic_var)pg_rec->port.machine_ref;
 	access_ctr = pg_rec->port.access_ctr;
 	machine_ref3 = pg_rec->port.machine_ref3;
@@ -239,7 +239,7 @@ PG_PASCAL (void) pgReleaseDrawingDevice (pg_ref pg, const generic_var previous_d
 {
 	paige_rec_ptr				pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef MAC_PLATFORM
 	pg_rec->port.machine_var = previous_device;

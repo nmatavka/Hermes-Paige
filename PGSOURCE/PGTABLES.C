@@ -53,7 +53,7 @@ PG_PASCAL (void) pgInsertTable (pg_ref pg, long position, pg_table_ptr table,
 	pg_char				insertion[2];
 	long				num_rows, row_ctr, num_columns, text_size, pensize, update_begin;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	table_range.begin = pgFixOffset(pg_rec, position);
 	
 	if (table_range.begin) {
@@ -158,7 +158,7 @@ PG_PASCAL (pg_boolean) pgIsTable (pg_ref pg, long position)
 	paige_rec_ptr	pg_rec;
 	pg_boolean		result = FALSE;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pgPositionInTable(pg_rec, position, NULL);
 	UnuseMemory(pg);
 	
@@ -176,7 +176,7 @@ PG_PASCAL (short) pgPtInTable (pg_ref pg, co_ordinate_ptr point, rectangle_ptr c
 	co_ordinate				the_point;
 	short					result = 0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	the_point = *point;	
 	pg_rec->port.scale.scale = -pg_rec->port.scale.scale;
@@ -200,7 +200,7 @@ PG_PASCAL (memory_ref) pgTableColumnWidths (pg_ref pg, long position)
 	par_info_ptr		par;
 	memory_ref			result = MEM_NULL;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		
@@ -220,7 +220,7 @@ PG_PASCAL (void) pgCellOffsets (pg_ref pg, long position, select_pair_ptr offset
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgPositionInTable(pg_rec, pgFixOffset(pg_rec, position), offsets);
 	UnuseMemory(pg);
 }
@@ -235,7 +235,7 @@ PG_PASCAL (void) pgSetColumnBorders (pg_ref pg, long position, short column_num,
 	par_info				par, mask;
 	select_pair				table_range;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	table_range.begin = table_range.end = pgFixOffset(pg_rec, position);
 	pgGetParInfo(pg, &table_range, FALSE, &par, &mask);
 	
@@ -260,7 +260,7 @@ PG_PASCAL (void) pgSetColumnShading (pg_ref pg, long position, short column_num,
 	par_info				par, mask;
 	select_pair				table_range;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	table_range.begin = table_range.end = pgFixOffset(pg_rec, position);
 	pgGetParInfo(pg, &table_range, FALSE, &par, &mask);
 	
@@ -286,7 +286,7 @@ PG_PASCAL (void) pgSetColumnAlignment (pg_ref pg, long position, short column_nu
 	select_pair				table_range;
 	long					align_value = 0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	table_range.begin = table_range.end = pgFixOffset(pg_rec, position);
 	pgGetParInfo(pg, &table_range, FALSE, &par, &mask);
 	
@@ -328,7 +328,7 @@ PG_PASCAL (void) pgSetColumnWidth (pg_ref pg, long position, short column_num,
 	par_info				par, mask;
 	select_pair				table_range;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	table_range.begin = table_range.end = pgFixOffset(pg_rec, position);
 	pgGetParInfo(pg, &table_range, FALSE, &par, &mask);
 	
@@ -359,7 +359,7 @@ PG_PASCAL (void) pgTableOffsets (pg_ref pg, long position, select_pair_ptr offse
 	pg_short_t			style_item;
 	long				table_id;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	par_run = pgFindRunFromRef(pg_rec->par_style_run, pgFixOffset(pg_rec, position), NULL);
 	par_base = UseMemory(pg_rec->par_formats);
@@ -417,7 +417,7 @@ PG_PASCAL (short) pgPositionToColumn (pg_ref pg, long position)
 	paige_rec_ptr			pg_rec;
 	short					column = -1;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (get_table_format(pg_rec, position)) {
 		text_block_ptr			block;
@@ -472,7 +472,7 @@ PG_PASCAL (long) pgPositionToRow (pg_ref pg, long position, select_pair_ptr offs
 	paige_rec_ptr			pg_rec;
 	long					row = -1;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (get_table_format(pg_rec, position)) {
 		text_block_ptr			block;
@@ -542,7 +542,7 @@ PG_PASCAL (pg_boolean) pgGetColumnInfo (pg_ref pg, long position, short column_n
 	par_info_ptr			par;
 	pg_boolean				is_table = FALSE;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		
@@ -586,7 +586,7 @@ PG_PASCAL (short) pgNumColumns (pg_ref pg, long position)
 	par_info_ptr		par;
 	short				result = 0;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		
@@ -608,7 +608,7 @@ PG_PASCAL (long) pgNumRows (pg_ref pg, long position)
 	par_info_ptr		par;
 	long				result = 0;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		select_pair			table_range;
@@ -669,7 +669,7 @@ PG_PASCAL (void) pgInsertColumn (pg_ref pg, long position, short column_num,
 	pg_char					tab_char = (pg_char)9;
 	short					column_insert;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 
@@ -738,7 +738,7 @@ PG_PASCAL (void) pgInsertRow (pg_ref pg, long position, long row_num, short draw
 	par_info_ptr			par;
 	long					row_size;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		select_pair		row_range;
@@ -779,7 +779,7 @@ PG_PASCAL (void) pgDeleteColumn (pg_ref pg, long position, short column_num, sho
 	par_info_ptr			par;
 	par_info				new_par, mask;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		select_pair				table_range, delete_range;
@@ -849,7 +849,7 @@ PG_PASCAL (void) pgDeleteRow (pg_ref pg, long position, long row_num, short draw
 	par_info_ptr			par;
 	short					use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		select_pair				table_range, delete_range;
@@ -889,7 +889,7 @@ PG_PASCAL (void) pgConvertTableText (pg_ref pg, select_pair_ptr selection,
 	register select_pair_ptr	select_run;
 	change_info					stuff_to_change;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	if (GetAccessCtr(pg_rec->par_style_run))

@@ -407,7 +407,7 @@ PG_PASCAL (pg_boolean) pgIdle (pg_ref pg)
 	short					starting_buffer_mode, ending_buffer_mode, verb;
 	pg_boolean				caret_time;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	starting_buffer_mode = pg_rec->key_buffer_mode;
 
 	if (caret_time = pgIsCaretTime(pg_rec))
@@ -457,7 +457,7 @@ PG_PASCAL (long) pgDragSelect (pg_ref pg, const co_ordinate_ptr location, short 
 	short						no_half_chars, use_modifiers;
 	
 	pgInsertPendingKeys(pg);
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	use_modifiers = modifiers;
 
 	if(verb == mouse_down) {
@@ -644,7 +644,7 @@ PG_PASCAL (void) pgSetCursorState (pg_ref pg, short cursor_state)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (!(pg_rec->flags & DEACT_BITS) && !pg_rec->num_selects) {
 
@@ -669,7 +669,7 @@ PG_PASCAL (short) pgGetCursorState (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	short				result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = ((pg_rec->flags & CARET_BIT) != 0);
 
 	UnuseMemory(pg);
@@ -723,7 +723,7 @@ PG_PASCAL (pg_boolean) pgCaretPosition (pg_ref pg, long offset, rectangle_ptr ca
 	text_block_ptr				block;
 	short						result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (offset != CURRENT_POSITION) {
 		
@@ -804,7 +804,7 @@ PG_PASCAL (void) pgSetHiliteStates (pg_ref pg, short front_back_state,
 	short				old_was_active, new_is_active;
 	short				new_cursor_verb;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	old_fb_state = (!(pg_rec->flags & DEACT_BIT));
 	old_perm_state = (!(pg_rec->flags & PERM_DEACT_BIT));
@@ -875,7 +875,7 @@ PG_PASCAL (void) pgGetHiliteStates (pg_ref pg, short PG_FAR *front_back_state,
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (front_back_state) {
 		
@@ -910,7 +910,7 @@ PG_PASCAL (void) pgSetSelection (pg_ref pg, long begin_sel, long end_sel,
 	short					will_draw, left_can_extend, right_can_extend;
 	pg_short_t				select_qty;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	first_select_flags = second_select_flags = SELECTION_DIRTY;
 	pg_rec->stable_caret.h = pg_rec->stable_caret.v = 0;
 
@@ -1058,7 +1058,7 @@ PG_PASCAL (void) pgGetSelection (pg_ref pg, long PG_FAR *begin_sel, long PG_FAR 
 	register t_select_ptr	selections;
 	register pg_short_t		num_selections;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	selections = UseMemory(pg_rec->select);
 	
 	if (begin_sel)
@@ -1088,7 +1088,7 @@ PG_PASCAL (pg_short_t) pgNumSelections (pg_ref pg)
 	paige_rec_ptr	pg_rec;
 	pg_short_t		num_sel;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	num_sel = pg_rec->num_selects;
 	UnuseMemory(pg);
 	
@@ -1110,7 +1110,7 @@ PG_PASCAL (void) pgExtendSelection (pg_ref pg, long amount_ext, short modifiers,
 	pg_short_t				use_sel_rec;
 	rectangle				sel_rect;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	use_sel_rec = 0;
 
 	if (!pg_rec->num_selects)
@@ -1360,7 +1360,7 @@ PG_PASCAL (void) pgInvalSelect (pg_ref pg, long select_from, long select_to)
 	pg_short_t						remaining_recs, block_num;
 	long							lowest_select;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	pg_rec->flags |= (INVALID_CURSOR_BIT);
 	pgInvalTextMeasure(pg_rec, select_from, select_to);
@@ -1447,7 +1447,7 @@ PG_PASCAL (pg_short_t) pgPixelToPage (pg_ref pg, co_ordinate_ptr pixel,
 	long			text_height;
 	pg_short_t		page_num;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	pgShapeBounds(pg_rec->wrap_area, &page_bounds);
 	
@@ -1566,7 +1566,7 @@ PG_PASCAL (short) pgPtInView (pg_ref pg, const co_ordinate_ptr point,
 	co_ordinate				extra, scaled_pt;
 	short					view;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	view = 0;
 	
@@ -1646,7 +1646,7 @@ PG_PASCAL (short) pgTextRect (pg_ref pg, const select_pair_ptr range, pg_boolean
 	select_pair_ptr				selections;
 	short						first_baseline;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->procs.set_device(pg_rec, set_pg_device, &pg_rec->port, &pg_rec->bk_color);
 	first_baseline = 0;
 

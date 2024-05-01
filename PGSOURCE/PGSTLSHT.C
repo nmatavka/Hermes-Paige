@@ -40,7 +40,7 @@ PG_PASCAL (short) pgNewStyle (pg_ref pg, const style_info_ptr new_style, const f
 	font_info					font_to_add;
 	short						new_id;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgBlockMove(new_style, &style_to_add, sizeof(style_info));
 	
 	count_style_sheets(pg_rec, &new_id);
@@ -72,7 +72,7 @@ PG_PASCAL (void) pgRemoveStyle (pg_ref pg, short style_id)
 	paige_rec_ptr			pg_rec;
 	style_info_ptr			the_style;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (the_style = pgLocateStyleSheet(pg_rec, style_id, NULL)) {
 		
@@ -95,7 +95,7 @@ PG_PASCAL (short) pgNumStyles (pg_ref pg)
 	paige_rec_ptr				pg_rec;
 	short						num_styles;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	num_styles = count_style_sheets(pg_rec, NULL);
 	UnuseMemory(pg);
 	
@@ -110,7 +110,7 @@ PG_PASCAL (short) pgMaxStylesheetID (pg_ref pg)
 	paige_rec_ptr				pg_rec;
 	short						num_styles;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	count_style_sheets(pg_rec, &num_styles);
 	UnuseMemory(pg);
 	
@@ -128,7 +128,7 @@ PG_PASCAL (pg_boolean) pgGetStyle (pg_ref pg, short style_id, style_info_ptr sty
 	style_info_ptr			the_style;
 	short					result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (the_style = pgLocateStyleSheet(pg_rec, style_id, NULL)) {
 		
@@ -161,7 +161,7 @@ PG_PASCAL (void) pgChangeStyle (pg_ref pg, short style_id, const style_info_ptr 
 	pg_boolean				convertFont;
 	//QUALCOMM End == Kusuma
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (the_style = pgLocateStyleSheet(pg_rec, style_id, NULL)) {
 		
@@ -297,7 +297,7 @@ PG_PASCAL (void) pgSetStyleSheet (pg_ref pg, const select_pair_ptr selection,
 	style_info_ptr			style_sheet;
 	style_info				info, mask;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (style_sheet = pgLocateStyleSheet(pg_rec, style_id, NULL)) {
 
@@ -344,7 +344,7 @@ PG_PASCAL (short) pgFindStyleSheet (pg_ref pg, const style_info_ptr compare_styl
 	register long				style_qty;
 	short						result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = 0;
 	
 	if (mask)
@@ -385,7 +385,7 @@ PG_PASCAL (short) pgGetIndStyleSheet (pg_ref pg, short index, style_info_ptr sty
 	register short				style_qty, ctr;
 	short						result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = 0;
 
 	for (styles = UseMemory(pg_rec->t_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->t_formats),
@@ -420,7 +420,7 @@ PG_PASCAL (short) pgNewParStyle (pg_ref pg, const par_info_ptr new_style)
 	par_info					style_to_add;
 	short						new_id;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	pgBlockMove(new_style, &style_to_add, sizeof(par_info));
 
@@ -446,7 +446,7 @@ PG_PASCAL (void) pgRemoveParStyle (pg_ref pg, short style_id)
 	paige_rec_ptr			pg_rec;
 	par_info_ptr			the_style;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (the_style = pgLocateParStyleSheet(pg_rec, style_id)) {
 		
@@ -468,7 +468,7 @@ PG_PASCAL (short) pgNumParStyles (pg_ref pg)
 	paige_rec_ptr				pg_rec;
 	short						num_styles;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	num_styles = count_par_style_sheets(pg_rec, NULL);
 	UnuseMemory(pg);
 	
@@ -483,7 +483,7 @@ PG_PASCAL (short) pgMaxParStylesheetID (pg_ref pg)
 	paige_rec_ptr				pg_rec;
 	short						num_styles;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	count_par_style_sheets(pg_rec, &num_styles);
 	UnuseMemory(pg);
 	
@@ -499,7 +499,7 @@ PG_PASCAL (pg_boolean) pgGetParStyle (pg_ref pg, short style_id, par_info_ptr st
 	par_info_ptr			the_style;
 	pg_boolean				result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (the_style = pgLocateParStyleSheet(pg_rec, style_id)) {
 		
@@ -528,7 +528,7 @@ PG_PASCAL (void) pgChangeParStyle (pg_ref pg, short style_id, const par_info_ptr
 	long					qty;
 	short					negative_style_id, use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (the_style = pgLocateParStyleSheet(pg_rec, style_id)) {
 		
@@ -586,7 +586,7 @@ PG_PASCAL (void) pgSetParStyleSheet (pg_ref pg, const select_pair_ptr selection,
 	par_info_ptr			style_sheet;
 	par_info				info, mask;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (style_sheet = pgLocateParStyleSheet(pg_rec, style_id)) {
 
@@ -632,7 +632,7 @@ PG_PASCAL (short) pgFindParStyleSheet (pg_ref pg, const par_info_ptr compare_sty
 	register long				style_qty;
 	short						result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = 0;
 	
 	if (mask)
@@ -672,7 +672,7 @@ PG_PASCAL (short) pgGetIndParStyleSheet (pg_ref pg, short index, par_info_ptr st
 	register short				style_qty, ctr;
 	short						result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = 0;
 
 	for (styles = UseMemory(pg_rec->par_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->par_formats),
@@ -732,7 +732,7 @@ PG_PASCAL (long) pgNewNamedStyle (pg_ref pg, pg_c_string_ptr stylename, const st
 	paige_rec_ptr		pg_rec;
 	long				index;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	index = new_named_style(pg, stylename, style, font, par);
 	
 	if (pg_rec->global_styles)
@@ -779,7 +779,7 @@ extern PG_PASCAL (void) pgMergeNamedStyles (pg_ref pg, pg_c_string_ptr source_st
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (pg_rec->global_styles)
 		merge_named_style(pg_rec->global_styles, source_style, target_style, draw_none);
@@ -802,7 +802,7 @@ PG_PASCAL (long) pgAddNamedStyle (pg_ref pg, pg_c_string_ptr stylename, const sh
 	long					style_index;
 	short					name_index;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((style_index = pgGetNamedStyleIndex(pg, stylename)) > 0) {
 		style_info_ptr		old_style;
@@ -898,7 +898,7 @@ PG_PASCAL (long) pgNumNamedStyles (pg_ref pg)
 	paige_rec_ptr			pg_rec;
 	long					num_styles;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	num_styles = GetMemorySize(pg_rec->named_styles);
 	UnuseMemory(pg);
 	
@@ -934,7 +934,7 @@ PG_PASCAL (long) pgGetNamedStyleIndex (pg_ref pg, pg_c_string_ptr stylename)
 		return	info.named_style_index;
 	}
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	num_styles = GetMemorySize(pg_rec->named_styles);
 	named_style = UseMemory(pg_rec->named_styles);
 	index_result = 0;
@@ -964,7 +964,7 @@ PG_PASCAL (void) pgGetNamedStyleInfo (pg_ref pg, long index, style_info_ptr styl
 	style_info_ptr			style_ptr;
 	par_info_ptr			par_ptr;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (index > 0 && index <= GetMemorySize(pg_rec->named_styles)) {
 		
@@ -1024,7 +1024,7 @@ PG_PASCAL (pg_boolean) pgGetNamedStyle (pg_ref pg, long named_style_index, named
 	paige_rec_ptr			pg_rec;
 	pg_boolean				valid_style;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	valid_style = FALSE;
 	
 	if ( (named_style_index > 0) && (named_style_index <= GetMemorySize(pg_rec->named_styles)) ) {
@@ -1048,7 +1048,7 @@ PG_PASCAL (void) pgRenameStyle (pg_ref pg, long named_style_index, pg_c_string_p
 	paige_rec_ptr			pg_rec;
 	named_stylesheet		named_style;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (pg_rec->global_styles) {
 		
@@ -1075,7 +1075,7 @@ PG_PASCAL (void) pgDeleteNamedStyle (pg_ref pg, long named_style_index)
 	paige_rec_ptr			pg_rec;
 	named_stylesheet		named_style;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (pg_rec->global_styles) {
 		
@@ -1101,7 +1101,7 @@ PG_PASCAL (void) pgSetDefaultNamedStyle (pg_ref pg, long def_index)
 {
 	paige_rec_ptr			pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((pg_rec->def_named_index = def_index - 1) < 0)
 		pg_rec->def_named_index = 0;
@@ -1116,7 +1116,7 @@ PG_PASCAL (long) pgGetDefaultNamedStyle (pg_ref pg)
 	long		result;
 	paige_rec_ptr			pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->def_named_index;
 	UnuseMemory(pg);
 
@@ -1144,7 +1144,7 @@ PG_PASCAL (pg_boolean) pgGetAppliedNamedStyle (pg_ref pg, select_pair_ptr select
 	
 	if (style_id > 0 || par_id > 0) {
 	
-		pg_rec = UseMemory(pg);
+		pg_rec = (paige_rec_ptr) UseMemory(pg);
 		named_style = UseMemory(pg_rec->named_styles);
 		num_styles = GetMemorySize(pg_rec->named_styles);
 		*stylename = 0;
@@ -1207,7 +1207,7 @@ PG_PASCAL (memory_ref) pgSetGlobalNamedStyles (pg_ref pg, pg_ref global_pg,
 	font_info_ptr			source_font;
 	long					num_styles, style_index;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	global_pg_rec = UseMemory(global_pg);
 	pg_rec->global_styles = MEM_NULL;			// to make sure we dont add them globally yet.
 
@@ -1469,7 +1469,7 @@ PG_PASCAL (void) pgUnsetGlobalNamedStyles (pg_ref pg)
 {
 	paige_rec_ptr			pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->global_styles = MEM_NULL;
 	UnuseMemory(pg);
 }
@@ -1487,7 +1487,7 @@ PG_PASCAL (pg_boolean) pgUpdateNamedStyleChild (pg_ref pg, pg_char_ptr stylename
 	long					parent_index, child_index;
 	pg_boolean				changed = FALSE;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (pg_rec->global_styles) {
 		
@@ -1561,7 +1561,7 @@ PG_PASCAL (long) pgFindSameNamedStyle (pg_ref pg, style_info_ptr style, font_inf
 	long					num_styles, index;
 	long					result = 0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	num_styles = GetMemorySize(pg_rec->named_styles);
 	named_styles = UseMemory(pg_rec->named_styles);
@@ -1807,7 +1807,7 @@ static void rename_style (pg_ref pg, long named_style_index, pg_c_string_ptr sty
 	named_stylesheet_ptr	the_style;
 	short					ctr;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ( (named_style_index > 0) && (named_style_index <= GetMemorySize(pg_rec->named_styles)) ) {
 		
@@ -1831,7 +1831,7 @@ static void delete_named_style (pg_ref pg, long named_style_index)
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ( (named_style_index > 0) && (named_style_index <= GetMemorySize(pg_rec->named_styles)) ) {
 		style_info_ptr		styles;
@@ -1895,7 +1895,7 @@ static void merge_named_style (pg_ref pg, pg_c_string_ptr source_style,
 	named_stylesheet	source_rec, target_rec;
 	long				source_index, target_index;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	master_save = pg_rec->global_styles;
 	pg_rec->global_styles = MEM_NULL;
 

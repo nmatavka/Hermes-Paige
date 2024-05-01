@@ -43,7 +43,7 @@ PG_PASCAL (long) pgGetStyleInfo (pg_ref pg, const select_pair_ptr selection,
 	change_info					stuff_to_report;
 	long						first_select;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (set_any_match)
 		pgFillBlock(mask, sizeof(style_info), 0);
@@ -123,7 +123,7 @@ PG_PASCAL (void) pgSetStyleInfo (pg_ref pg, const select_pair_ptr selection,
 	paige_rec_ptr				pg_rec;
 	pg_short_t					old_font_index;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_font_index = mask->font_index;
 	mask->font_index = 0;
 	
@@ -146,7 +146,7 @@ PG_PASCAL (void) pgSetStyleClassInfo (pg_ref pg, const select_pair_ptr range, lo
 	register select_pair_ptr	select_run;
 	change_info					stuff_to_change;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (select_list = pgSetupOffsetRun(pg_rec, range, FALSE, TRUE)) {
 
@@ -197,7 +197,7 @@ PG_PASCAL (void) pgGetStyleInfoRec (pg_ref pg, short style_item, style_info_ptr 
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	GetMemoryRecord(pg_rec->t_formats, style_item, format);
 	UnuseMemory(pg);
 }
@@ -220,7 +220,7 @@ PG_PASCAL (pg_boolean) pgFindStyleInfo (pg_ref pg, long PG_FAR *begin_position,
 	long				start_offset;
 	pg_boolean			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = FALSE;
 	
 	if ((start_offset = *begin_position) < pg_rec->t_length) {
@@ -278,7 +278,7 @@ PG_PASCAL (long) pgGetStyleClassInfo (pg_ref pg, long position, select_pair_ptr 
 	long						use_position;
 	long						result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	use_position = pgFixOffset(pg_rec, position);
 
@@ -334,7 +334,7 @@ PG_PASCAL (void) pgSetStyleProcs (pg_ref pg, const pg_style_hooks PG_FAR *procs,
 	pg_short_t			style_qty;
 	short				some_changed;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	some_changed = FALSE;
 
 	for (styles = UseMemory(pg_rec->t_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->t_formats);

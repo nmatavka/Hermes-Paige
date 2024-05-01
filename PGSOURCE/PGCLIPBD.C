@@ -136,8 +136,8 @@ PG_PASCAL (pg_ref) pgCopy (pg_ref pg, const select_pair_ptr selection)
 	volatile memory_ref			apply_ref = MEM_NULL;
 	volatile pg_ref				copy_result = MEM_NULL;
 
-	pg_rec = UseMemory(pg);
-	select_ptr = UseMemory(pg_rec->select);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
+	select_ptr = (t_select_ptr) UseMemory(pg_rec->select);
 	UnuseMemory(pg_rec->select);
 
 	globals = pg_rec->globals;
@@ -147,14 +147,14 @@ PG_PASCAL (pg_ref) pgCopy (pg_ref pg, const select_pair_ptr selection)
 		if (apply_ref = pgSetupOffsetRun(pg_rec, selection, FALSE, FALSE)) {
 			
 			num_selects = (pg_short_t)GetMemorySize(apply_ref);
-			selections = UseMemory(apply_ref);
+			selections = (select_pair_ptr) UseMemory(apply_ref);
 			completion = total_text_to_copy(selections, num_selects);
 			should_call_wait = (completion > LARGE_COPY_SIZE);
 	
 			copy_base = selections->begin;
 	
 			copy_result = pgNewShell(globals);
-			pg_copy = UseMemory(copy_result);
+			pg_copy = (paige_rec_ptr) UseMemory(copy_result);
 			pg_copy->flags2 |= (pg_rec->flags2 & APPLY_ALL_PAR_INFOS);
 			progress = 0;
 			pg_copy->insert_style = NULL_RUN;
@@ -280,7 +280,7 @@ PG_PASCAL (text_ref) pgCopyText (pg_ref pg, const select_pair_ptr selection, sho
 	volatile memory_ref	select_list = MEM_NULL;
 	volatile text_ref	copy_result = MEM_NULL;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	globals = pg_rec->globals;
 
@@ -392,7 +392,7 @@ PG_PASCAL (undo_ref) pgPrepareUndo (pg_ref pg, short verb, void PG_FAR *insert_r
 	pg_short_t		num_selects;
 	/*QUALCOMM End Hack*/
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	flags_save = (pg_rec->flags2 & APPLY_ALL_PAR_INFOS);
 	pg_rec->flags2 |= APPLY_ALL_PAR_INFOS;
 
@@ -702,7 +702,7 @@ PG_PASCAL (undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo,
 	undo_ptr = NULL;
 #endif
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	globals = pg_rec->globals;
 	
 	if ((use_draw_mode = draw_mode) == best_way)
@@ -1159,7 +1159,7 @@ static void execute_paste (pg_ref pg, pg_ref paste_ref, long position,
 	pg_short_t					old_insertion;
 	short						should_call_wait, use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_change_ctr = pg_rec->change_ctr;
 	globals = pg_rec->globals;
 	

@@ -216,7 +216,7 @@ PG_PASCAL (pg_boolean) pgInsert (pg_ref pg, const pg_char_ptr data, long length,
 	if (!length)
 		return	FALSE;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	insertion_displayed = FALSE;
 	
 	if ((use_insert_mode = insert_mode) == recursive_insert_mode)
@@ -381,7 +381,7 @@ PG_PASCAL (void) pgDelete (pg_ref pg, const select_pair_ptr delete_range, short 
 	long						delete_from, delete_to;
 	short						use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgInsertPendingKeys(pg);
 
 #ifdef PG_DEBUG
@@ -452,7 +452,7 @@ PG_PASCAL (pg_boolean) pgInsertPendingKeys (pg_ref pg)
 	pg_boolean		result = FALSE;
 	long			insert_size;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if ((use_draw_mode = pg_rec->key_buffer_mode) != 0) {
 		
@@ -512,7 +512,7 @@ PG_PASCAL (void) pgDoDisplay (pg_ref pg, select_pair_ptr range, const graf_devic
 	shape_ref				old_wrap, old_vis;
 	memory_ref				copy_of_subs;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	copy_of_subs = pgGetSubrefState(pg_rec, FALSE, TRUE);
 
 	if (wrap_target || vis_target || target_device) {

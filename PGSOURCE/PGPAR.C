@@ -90,7 +90,7 @@ PG_PASCAL (void) pgGetParInfoRec (pg_ref pg, short style_item, par_info_ptr form
 {
 	paige_rec_ptr			pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	GetMemoryRecord(pg_rec->par_formats, style_item, format);
 
 	UnuseMemory(pg);
@@ -106,7 +106,7 @@ PG_PASCAL (long) pgParMaxWidth (pg_ref pg, long position)
 	rectangle_ptr		wrap_bounds;
 	long				result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	par_style = pgFindParStyle(pg_rec, pgFixOffset(pg_rec, position));
 	wrap_bounds = UseMemory(pg_rec->wrap_area);
@@ -137,7 +137,7 @@ PG_PASCAL (void) pgGetIndents (pg_ref pg, const select_pair_ptr selection, pg_in
 	par_info				info, indent_mask;
 	long					first_select;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	pgGetParInfo(pg, selection, FALSE, &info, &indent_mask);
 
@@ -176,7 +176,7 @@ PG_PASCAL (void) pgSetIndents (pg_ref pg, const select_pair_ptr selection, const
 	paige_rec_ptr			pg_rec;
 	par_info				info, indent_mask;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	pgFillBlock(&info, sizeof(par_info), 0);
 	pgFillBlock(&indent_mask, sizeof(par_info), 0);
@@ -279,7 +279,7 @@ PG_PASCAL (void) pgSetParProcs (pg_ref pg, const pg_par_hooks PG_FAR *procs,
 	pg_short_t			style_qty;
 	short				some_changed;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	some_changed = FALSE;
 
 	for (styles = UseMemory(pg_rec->par_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->par_formats);
@@ -334,7 +334,7 @@ PG_PASCAL (void) pgSetSpecialTabFlags (pg_ref pg, const select_pair_ptr selectio
 	long					num_in, num_out;
 	pg_short_t				index;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	range_ref = pgSetupOffsetRun(pg_rec, selection, TRUE, FALSE);
 	apply_range = UseMemory(range_ref);
 
@@ -390,7 +390,7 @@ PG_PASCAL (void) pgClearSpecialTabFlags (pg_ref pg, const select_pair_ptr select
 	select_pair_ptr			apply_range;
 	long					num_out;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	range_ref = pgSetupOffsetRun(pg_rec, selection, TRUE, FALSE);
 	apply_range = UseMemory(range_ref);
 
@@ -541,7 +541,7 @@ static long get_par_info (pg_ref pg, const select_pair_ptr selection,
 	change_info					stuff_to_report;
 	long						first_select;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (set_any_match)
 		pgFillBlock(mask, sizeof(par_info), 0);
@@ -597,7 +597,7 @@ static void set_par_info (pg_ref pg, const select_pair_ptr selection,
 	register select_pair_ptr	select_run;
 	change_info					stuff_to_change;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	if (GetAccessCtr(pg_rec->par_style_run))

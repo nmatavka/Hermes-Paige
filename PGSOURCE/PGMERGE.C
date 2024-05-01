@@ -76,7 +76,7 @@ PG_PASCAL (pg_boolean) pgMergeText (pg_ref pg, const style_info_ptr matching_sty
 	long						old_change_ctr;
 	pg_boolean					merge_result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	merge_result = FALSE;
 	old_change_ctr = pg_rec->change_ctr;
 
@@ -148,7 +148,7 @@ PG_PASCAL (void) pgRestoreMerge (pg_ref pg, pg_boolean revert_original, short dr
 	paige_rec_ptr				pg_rec;
 	long						old_change_ctr;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_change_ctr = pg_rec->change_ctr;
 
 	if (pg_rec->merge_save) {

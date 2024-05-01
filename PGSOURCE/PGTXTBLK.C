@@ -460,7 +460,7 @@ PG_PASCAL (long) pgNumTextblocks (pg_ref pg)
 	paige_rec_ptr			pg_rec;
 	long					result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = GetMemorySize(pg_rec->t_blocks);
 	UnuseMemory(pg);
 	
@@ -481,7 +481,7 @@ PG_PASCAL (long) pgGetTextblock (pg_ref pg, long offset, text_block_ptr block,
 	long					wanted_offset;
 	pg_short_t				rec_num_result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	wanted_offset = pgFixOffset(pg_rec, offset);
 	the_block = pgFindTextBlock(pg_rec, wanted_offset, &rec_num_result,

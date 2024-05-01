@@ -29,7 +29,7 @@ PG_PASCAL (void) pgSetTabBase (pg_ref pg, long tab_base)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->tab_base = tab_base;
 	
 	UnuseMemory(pg);
@@ -43,7 +43,7 @@ PG_PASCAL (long) pgGetTabBase (pg_ref pg)
 	long			result;
 	
 	paige_rec_ptr		pg_rec;
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->tab_base;
 	UnuseMemory(pg);
 	
@@ -89,7 +89,7 @@ PG_PASCAL (void) pgGetTabList (pg_ref pg, const select_pair_ptr selection, tab_r
 
 	target_qty = 0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	selections = pgSetupOffsetRun(pg_rec, selection, TRUE, FALSE);
 	select_qty = GetMemorySize(selections);
@@ -260,7 +260,7 @@ static void set_or_change_tabs (pg_ref pg, select_pair_ptr selection, tab_stop_p
 	if (!tab_qty)
 		return;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgFillBlock(&temp_par, sizeof(par_info), 0);
 	pgBlockMove(tab_ptr, temp_par.tabs, sizeof(tab_stop) * tab_qty);
 	temp_par.num_tabs = tab_qty;

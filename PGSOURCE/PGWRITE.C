@@ -591,7 +591,7 @@ extern PG_PASCAL (pg_error) pgWriteKeyData (pg_ref pg, pg_file_key key,
 
 	do_zeros = TRUE;			/* Must include all leading zeros */
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	globals = pg_rec->globals;
 
 	cached_file = (pg_boolean)((pg_rec->cache_target_file != MEM_NULL)
@@ -693,7 +693,7 @@ PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 	volatile memory_ref			key_data = MEM_NULL;
 	volatile memory_ref			subref_list = MEM_NULL;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	subref_list = pgGetSubrefState(pg_rec, FALSE, TRUE);
 
 	wait_proc = pg_rec->procs.wait_proc;
@@ -853,7 +853,7 @@ PG_PASCAL (pg_error) pgCacheSaveDoc (pg_ref pg, long PG_FAR *file_position, cons
 	paige_rec_ptr			pg_rec;
 	pg_error				result = NO_ERROR;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (pg_rec->cache_file == filemap)
 		pg_rec->cache_target_file = filemap;
@@ -901,7 +901,7 @@ PG_PASCAL (pg_error) pgTerminateFile (pg_ref pg, long PG_FAR *file_position,
 	long						actual_size;
 	pg_error					result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	key_data = MemoryAlloc(pg_rec->globals->mem_globals, 1, 0, 0);
 	pgInitOneHandler(&eof_handler, pg_eof_key);

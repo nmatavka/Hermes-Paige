@@ -257,7 +257,7 @@ PG_PASCAL (embed_ref) pgGetExistingEmbed (pg_ref pg, long user_refcon)
    embed_ref                  result;
    long                    num_styles;
 
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    result = MEM_NULL;
    num_styles = GetMemorySize(pg_rec->t_formats);
    
@@ -292,7 +292,7 @@ PG_PASCAL (embed_ref) pgFindNextEmbed (pg_ref pg, long PG_FAR *text_position,
    pg_short_t                 style_index;
    long                    first_run, num_styles;
 
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    result = MEM_NULL;
    
    if (*text_position < 0)
@@ -365,7 +365,7 @@ PG_PASCAL (pg_boolean) pgInsertEmbedRef (pg_ref pg, embed_ref ref, long position
    pg_char              dummy_insert[2];
    pg_boolean           result;
 
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    
    if (pg_rec->num_selects)
       pgDelete(pg, NULL, draw_none);
@@ -427,7 +427,7 @@ PG_PASCAL (void) pgSetEmbedRef (pg_ref pg, embed_ref ref, select_pair_ptr select
    style_info           new_style, mask;
    long                 new_type;
 
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    
    if (selection)
       change_range = *selection;
@@ -460,7 +460,7 @@ PG_PASCAL (embed_ref) pgFindSimilarEmbed (pg_ref pg, embed_ref ref, style_info_p
     pg_boolean             same_type, same_dimensions, same_data;
    embed_ref               result;
  
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    num_styles = GetMemorySize(pg_rec->t_formats);
    result = MEM_NULL;
    compare_to = UseMemory(ref);
@@ -525,7 +525,7 @@ PG_PASCAL (long) pgNumEmbeds (pg_ref pg, select_pair_ptr selection)
    memory_ref           select_ref;
    long              result, num_selects;
    
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    result = 0;
    
    if (selection)
@@ -601,7 +601,7 @@ PG_PASCAL (embed_ref) pgGetIndEmbed (pg_ref pg, select_pair_ptr selection, long 
    if (!index)
       return   MEM_NULL;
 
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    result = MEM_NULL;
    index_ctr = 0;
 
@@ -703,7 +703,7 @@ PG_PASCAL (embed_ref) pgPtInEmbed (pg_ref pg, co_ordinate_ptr point, long PG_FAR
       if (associated_style)
          pgBlockMove(&the_style, associated_style, sizeof(style_info));
 
-      pg_rec = UseMemory(pg);
+      pg_rec = (paige_rec_ptr) UseMemory(pg);
       embed_ptr = UseMemory(ref);
       
       get_visual_frame(pg_rec, embed_ptr, &the_range, &bounds);
@@ -749,7 +749,7 @@ PG_PASCAL (long) pgEmbedStyleToIndex (pg_ref pg, style_info_ptr embed_style)
 
    if (embed_style->embed_object) {
       
-      pg_rec = UseMemory(pg);
+      pg_rec = (paige_rec_ptr) UseMemory(pg);
       stylebase = UseMemory(pg_rec->t_formats);
       run = UseMemory(pg_rec->t_style_run);
       num_runs = GetMemorySize(pg_rec->t_style_run) - 1;
@@ -793,7 +793,7 @@ PG_PASCAL (embed_ref) pgGetEmbedJustClicked (pg_ref pg, long drag_select_result)
    embed_ref                  result;
    long                    num_styles;
    
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    result = MEM_NULL;
 
    num_styles = GetMemorySize(pg_rec->t_formats);
@@ -831,7 +831,7 @@ PG_PASCAL (long) pgGetEmbedBounds (pg_ref pg, long index, select_pair_ptr index_
 
    if (ref = pgGetIndEmbed(pg, index_range, index, &style_range.begin, &style)) {
 
-      pg_rec = UseMemory(pg);
+      pg_rec = (paige_rec_ptr) UseMemory(pg);
       embed_ptr = UseMemory(ref);
       result = style_range.begin;
       style_range.end = style_range.begin + (style.char_bytes + 1);
@@ -870,7 +870,7 @@ PG_PASCAL (void) pgSetEmbedBounds (pg_ref pg, long index, select_pair_ptr index_
 
    if (ref = pgGetIndEmbed(pg, index_range, index, &position, &associated_style)) {
 
-     pg_rec = UseMemory(pg);
+     pg_rec = (paige_rec_ptr) UseMemory(pg);
      embed_ptr = UseMemory(ref);
      
      if (bounds) {
@@ -917,7 +917,7 @@ PG_PASCAL (void) pgInvalEmbedRef (pg_ref pg, long position, pg_embed_ptr embed_p
      style_run_ptr     run;
      style_info_ptr    style;
      
-     pg_rec = UseMemory(pg);
+     pg_rec = (paige_rec_ptr) UseMemory(pg);
      pgInvalSelect(pg, position, position + 2);
      
      run = UseMemory(pg_rec->t_style_run);
@@ -1478,7 +1478,7 @@ PG_PASCAL (pg_error) pgSaveAllEmbedRefs (pg_ref pg, file_io_proc io_proc, file_i
    file_io_proc      data_proc;
    pg_error          result;
    
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    key_data = MemoryAlloc(pg_rec->globals->mem_globals, 1, 0, 32);
    custom_ref = MemoryAlloc(pg_rec->globals->mem_globals, 1, 0, 32);
    url_list_ref = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(memory_ref), 0, 32);
@@ -1603,7 +1603,7 @@ PG_PASCAL (pg_error) pgSaveEmbedRef (pg_ref pg, embed_ref ref, long element_info
    long                 fake_id;
    pg_error                result;
 
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    key_data = MemoryAlloc(pg_rec->globals->mem_globals, 1, 0, 32);
    use_ref = ref;
    fake_id = 0;
@@ -1818,7 +1818,7 @@ PG_PASCAL (memory_ref) pgNewImageRecord (pg_ref pg, pg_url_image_ptr image, embe
    long              num_styles, index;
    memory_ref           result = MEM_NULL;
    
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    num_styles = GetMemorySize(pg_rec->t_formats);
    styles = UseMemory(pg_rec->t_formats);
    
@@ -1896,7 +1896,7 @@ PG_PASCAL (void) pgLoadImages (pg_ref pg, embed_callback image_callback, short w
    memory_ref			PG_FAR *frame_refs;
    long              	num_styles, num_frames, index, count, count_progress;
 
-   pg_rec = UseMemory(pg);
+   pg_rec = (paige_rec_ptr) UseMemory(pg);
    num_styles = GetMemorySize(pg_rec->t_formats);
    styles = UseMemory(pg_rec->t_formats);
 

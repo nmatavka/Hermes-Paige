@@ -457,7 +457,7 @@ PG_C (pg_error) pgSetFileEOF(pg_file_unit ref_num, long offset)
 
 	err = pgSetFilePos(ref_num, offset);
 	if (err == NO_ERROR)
-		err = _lwrite(ref_num, (void PG_FAR *)&err, 0);
+		err = _lwrite(ref_num, (LPCCH)&err, 0);
 
     return err;
 }

@@ -35,7 +35,7 @@ PG_PASCAL (pg_short_t) pgNumExclusions (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	pg_short_t			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (pgEmptyShape(pg_rec->exclude_area))
 		result = 0;
@@ -57,7 +57,7 @@ PG_PASCAL (void) pgGetExclusion (pg_ref pg, pg_short_t position,
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	GetMemoryRecord(pg_rec->exclude_area, position, exclusion);
 	
@@ -92,7 +92,7 @@ PG_PASCAL (pg_short_t) pgPtInExclusion (pg_ref pg, const co_ordinate_ptr point,
 	if (!pgNumExclusions(pg))
 		return	0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	scaled_pt = *point;
 	pgScaleLong(-pg_rec->scale_factor.scale, pg_rec->scale_factor.origin.h,
@@ -119,7 +119,7 @@ PG_PASCAL (void) pgInsertExclusion (pg_ref pg, const rectangle_ptr exclusion,
 	long PG_FAR			*ref_longs;
 	long				first_display, num_par_exclusions;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	validate_exclusion_refcons(pg_rec);
 
@@ -182,7 +182,7 @@ PG_PASCAL (void) pgRemoveExclusion (pg_ref pg, pg_short_t position,
 	rectangle			deleted_r;
 	long				first_display, num_par_exclusions;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	check_position_range(pg_rec, position);
@@ -268,7 +268,7 @@ PG_PASCAL (void) pgReplaceExclusion (pg_ref pg, const rectangle_ptr exclusion,
 	rectangle_ptr		wrap_r;
 	long				first_display, second_display, exclusion_display;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	wrap_r = UseMemoryRecord(pg_rec->exclude_area, position, 0, TRUE);
 	
 	exclusion_display = pgGetAttachedPar(pg, position);
@@ -319,7 +319,7 @@ PG_PASCAL (void) pgSwapExclusions (pg_ref pg, pg_short_t exclusion1,
 	long PG_FAR			*ref_longs;
 	long				hold, first_display, second_display;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	check_position_range(pg_rec, exclusion1);
@@ -367,7 +367,7 @@ PG_PASCAL (long) pgGetExclusionRefCon (pg_ref pg, pg_short_t position)
 	paige_rec_ptr		pg_rec;
 	long				result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 
 #ifdef PG_DEBUG
@@ -390,7 +390,7 @@ PG_PASCAL (void) pgSetExclusionRefCon (pg_ref pg, pg_short_t position, long ref_
 	paige_rec_ptr		pg_rec;
 	long PG_FAR			*ref_longs;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	check_position_range(pg_rec, position);
@@ -419,7 +419,7 @@ PG_PASCAL (void) pgInsertExclusionShape (pg_ref pg, pg_short_t position,
 	long PG_FAR			*ref_longs;
 	pg_short_t			num_new_rects, first_display;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	validate_exclusion_refcons(pg_rec);
 	num_new_rects = (pg_short_t)GetMemorySize(exclude_shape) - 1;
@@ -482,7 +482,7 @@ PG_PASCAL (long) pgAttachParExclusion (pg_ref pg, long position, pg_short_t inde
 	long					par_position, num_runs, run_index;
 	short					use_draw_mode;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((use_draw_mode = draw_mode) == best_way)
 		use_draw_mode = bits_copy;
@@ -535,7 +535,7 @@ PG_PASCAL (long) pgGetAttachedPar (pg_ref pg, pg_short_t exclusion)
 	style_run_ptr		run;
 	long				result, num_runs;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = -1;
 	
 	if ((num_runs = GetMemorySize(pg_rec->par_exclusions)) > 0) {

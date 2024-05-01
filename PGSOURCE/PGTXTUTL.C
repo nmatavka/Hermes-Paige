@@ -32,7 +32,7 @@ PG_PASCAL (long) pgPtToChar (pg_ref pg, const co_ordinate_ptr point, const co_or
 	co_ordinate				the_point;
 	t_select				selection;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	the_point = *point;
 	if (offset_extra)
@@ -70,7 +70,7 @@ PG_PASCAL (long) pgPtToStyleInfo (pg_ref pg, const co_ordinate_ptr point,
 	style_run_ptr		run;
 	t_select			selection;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	pg_rec->procs.set_device(pg_rec, set_pg_device, &pg_rec->port, NULL);
 	
@@ -128,7 +128,7 @@ PG_PASCAL (void) pgTextboxDisplay (pg_ref pg, paige_rec_ptr target_pg, const rec
 	pg_region				old_scroll_rgn;
 	long					old_flags;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_device = (generic_var)pg_rec->port.machine_ref;
 	old_var = pg_rec->port.machine_var;
 	old_flags = pg_rec->flags;
@@ -220,7 +220,7 @@ PG_PASCAL (short) pgCharacterRect (pg_ref pg, long position, pg_boolean want_scr
 	long				caret_pt, char_bytes, local_begin, local_end;
 	short				baseline;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->procs.set_device(pg_rec, set_pg_device, &pg_rec->port, NULL);
 
 	selection.offset = pgFixOffset(pg_rec, position);
@@ -285,7 +285,7 @@ PG_PASCAL (void) pgMaxTextBounds (pg_ref pg, rectangle_ptr bounds, pg_boolean pa
 	text_block_ptr				block;
 	long						num_blocks;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	block = UseMemory(pg_rec->t_blocks);
 	
 	if (!pg_rec->t_length)
@@ -325,7 +325,7 @@ PG_PASCAL (long) pgCharType (pg_ref pg, long offset, long mask_bits)
 	text_block_ptr		block;
 	long				use_offset, result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	use_offset = pgFixOffset(pg_rec, offset);
 	block = pgFindTextBlock(pg_rec, use_offset, NULL, FALSE, TRUE);
@@ -361,7 +361,7 @@ PG_PASCAL (pg_short_t) pgCharByte (pg_ref pg, long offset, pg_char_ptr char_byte
 	long				use_offset, c_info, byte_position, begin_offset, end_offset;
 	pg_short_t			result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	use_offset = pgFixOffset(pg_rec, offset);
 	result = 0;
@@ -427,7 +427,7 @@ PG_PASCAL (long) pgFindCharType (pg_ref pg, long char_info, long PG_FAR *offset,
 	pg_char_ptr			text;
 	long				use_offset, c_info, byte_position, begin_offset, end_offset;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	use_offset = pgFixOffset(pg_rec, *offset);
 	c_info = 0;
@@ -503,7 +503,7 @@ PG_PASCAL (memory_ref) pgMaskedSelection (pg_ref pg, const select_pair_ptr range
 	select_pair				current_range;
 	memory_ref				result = MEM_NULL;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (range == NULL)
 		pgGetSelection(pg, &begin_select, &end_select);
@@ -588,7 +588,7 @@ PG_PASCAL (pg_char_ptr) pgExamineText (pg_ref pg, long offset, text_ref *text,
 	register pg_char_ptr			ptr_result;
 	register long					wanted_offset;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	wanted_offset = pgFixOffset(pg_rec, offset);
 
@@ -610,7 +610,7 @@ PG_PASCAL (void) pgPaginateNow (pg_ref pg, long paginate_to, pg_boolean use_best
 	paige_rec_ptr			pg_rec;
 	text_block_ptr			block;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	block = pgFindTextBlock(pg_rec, pgFixOffset(pg_rec, paginate_to), NULL, FALSE, TRUE);
 	
@@ -634,7 +634,7 @@ PG_PASCAL (void) pgSetPageColor (pg_ref pg, const color_value_ptr color)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->bk_color = *color;
 	++pg_rec->change_ctr;
 
@@ -648,7 +648,7 @@ PG_PASCAL (void) pgGetPageColor (pg_ref pg, color_value_ptr color)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	*color = pg_rec->bk_color;
 	UnuseMemory(pg);
 }
@@ -666,7 +666,7 @@ PG_PASCAL (memory_ref) pgGetSelectionList (pg_ref pg, pg_boolean for_paragraph)
 	paige_rec_ptr				pg_rec;
 	memory_ref					result_ref;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result_ref = pgSetupOffsetRun(pg_rec, NULL, for_paragraph, FALSE);
 	UnuseMemory(pg);
 
@@ -689,7 +689,7 @@ PG_PASCAL (void) pgSetSelectionList (pg_ref pg, memory_ref select_list,
 	if (select_list == MEM_NULL)
 		return;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	will_draw = show_hilite && ((pg_rec->flags & DEACT_BITS) == 0); 
 	
 	pgRemoveAllHilites(pg_rec, will_draw);
@@ -740,7 +740,7 @@ PG_PASCAL (pg_boolean) pgGetHiliteRgn (pg_ref pg, const select_pair_ptr range,
 	register select_pair_ptr	pairs_ptr;
 	memory_ref					selections;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (!range && !select_list) {
 		
@@ -801,7 +801,7 @@ PG_PASCAL (void) pgInvalShapes (pg_ref pg, pg_boolean inval_page, pg_boolean inv
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (inval_page || inval_exclusion) {
 
@@ -828,7 +828,7 @@ PG_PASCAL (long) pgGetEndingPage (pg_ref pg, rectangle_ptr page_rect)
 	co_ordinate				page_point, repeat_offset;
 	long					page_num;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	block = UseMemoryRecord(pg_rec->t_blocks, GetMemorySize(pg_rec->t_blocks) - 1, USE_ALL_RECS, TRUE);
 	pgPaginateBlock(pg_rec, block, (smart_update_ptr)NULL, FALSE);
 	page_point.h = block->bounds.top_left.h;
@@ -864,7 +864,7 @@ PG_PASCAL (void) pgSetCaretPosition (pg_ref pg, pg_short_t position_verb, pg_boo
 	long				left_word, right_word, position;
 	long				original_position;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgSetupGrafDevice(pg_rec, &pg_rec->port, MEM_NULL, clip_standard_verb);
 
 	use_position_verb = position_verb & CARET_VERB_MASK;
@@ -1106,7 +1106,7 @@ PG_PASCAL (pg_boolean) pgInsertBytes (pg_ref pg, const pg_bits8_ptr data, long l
 	volatile memory_ref		temp_ref;
 	pg_boolean				result = FALSE;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	mem_globals = pg_rec->globals->mem_globals;
 	temp_ref = MEM_NULL;
 

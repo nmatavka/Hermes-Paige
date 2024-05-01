@@ -47,7 +47,7 @@ PG_PASCAL (void) pgBeginImport (pg_ref pg, long import_position)
 	text_block_ptr		block;
 	long				memory_id;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	mem_globals = pg_rec->globals->mem_globals;
 	memory_id = pg_rec->mem_id;
 	
@@ -100,7 +100,7 @@ PG_PASCAL (void) pgEndImport (pg_ref pg, pg_boolean keep_selection, short draw_m
 	pg_boolean			result = FALSE;
 	long				num_blocks, num_links, target_pos, num_frames;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if ((import_ref = pg_rec->import_control) != MEM_NULL) {
 		
@@ -272,7 +272,7 @@ PG_PASCAL (pg_boolean) pgInsertText (pg_ref pg, pg_char_ptr data, long length,
 	if (!length)
 		return	FALSE;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (pg_rec->import_control) {
 		pg_import_ptr		import_ptr;
@@ -563,7 +563,7 @@ PG_PASCAL (pg_boolean) pgInsertEmbed (pg_ref pg, embed_ref ref,
 	pg_char					embed_chars[2];
 	pg_boolean				result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (!pg_rec->import_control) {
 
@@ -745,7 +745,7 @@ PG_PASCAL (file_ref) pgGetCacheFileRef (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	file_ref			result = MEM_NULL;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->cache_file;
 	UnuseMemory(pg);
 

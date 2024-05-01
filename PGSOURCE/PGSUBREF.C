@@ -156,7 +156,7 @@ PG_PASCAL (void) pgInsertSubRef (pg_ref pg, pg_subref subref, long position,
 	style_info_ptr	def_style;
 	long			real_position, sublist_position;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	real_position = pgFixOffset(pg_rec, position);
 	sub_ptr = UseMemory(subref);
 	sub_ptr->home_position = real_position;
@@ -559,7 +559,7 @@ PG_PASCAL (pg_boolean) pgClickSelectSubRef (pg_ref pg, co_ordinate_ptr mouse_poi
 	long				current_offset, uneditable_ctr;
 
 	clicked_pt = *mouse_point;
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_subset = pg_rec->active_subset;
 
 	pgSetupGrafDevice(pg_rec, &pg_rec->port, MEM_NULL, clip_standard_verb);
@@ -1032,7 +1032,7 @@ PG_PASCAL (void) pgSetSubRefText (pg_ref pg, pg_subref ref, long index,
 	style_info_ptr			first_style;
 	long					index_size;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	index_size = GetMemorySize(ref);
 
 	if (index >= index_size) {
