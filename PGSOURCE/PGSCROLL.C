@@ -1229,7 +1229,7 @@ static long closest_start_sect (paige_rec_ptr pg, rectangle_ptr vis, long side_t
 	scrolled_r.bot_right.v += pg->scroll_pos.v;
 
 	num_blocks = (pg_short_t)GetMemorySize(pg->t_blocks);
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	one_eighth = (vis->bot_right.v - vis->top_left.v) / 8;
 	
 	if (use_bottom = (vis->bot_right.v == side_to_use)) {
@@ -1256,7 +1256,7 @@ static long closest_start_sect (paige_rec_ptr pg, rectangle_ptr vis, long side_t
 		if (pgSectRect(&block->bounds, &scrolled_r, NULL)) {
 			
 			pgPaginateBlock(pg, block, NULL, TRUE);
-			starts = UseMemory(block->lines);
+			starts = (point_start_ptr) UseMemory(block->lines);
 			
 			while (starts->flags != TERMINATOR_BITS) {
 				
@@ -1366,7 +1366,7 @@ static short fix_paginated_scroll (paige_rec_ptr pg, short wanted_scroll,
 
 	current_scroll = wanted_scroll;
 
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	num_blocks = max_blocks = (pg_short_t)GetMemorySize(pg->t_blocks);
 	block_ctr = 1;
 	called_wait = FALSE;
@@ -1470,14 +1470,14 @@ static void hide_scrolling_caret (paige_rec_ptr pg)
 
 	pgSetupGrafDevice(pg, &pg->port, MEM_NULL, clip_standard_verb);
 
-	select = UseMemory(pg->select);
+	select = (t_select_ptr) UseMemory(pg->select);
 	
 	if (pg->doc_info.attributes & WINDOW_CURSOR_BIT) {
 		
 		if (!pg->stable_caret.h)
 			pg->procs.cursor_proc(pg, select, compute_cursor);
 		
-		vis_rect = UseMemory(pg->vis_area);
+		vis_rect = (rectangle_ptr) UseMemory(pg->vis_area);
 		pg->relative_caret.h = pg->stable_caret.h - vis_rect->top_left.h;
 		pg->relative_caret.v = pg->stable_caret.v - vis_rect->top_left.v;
 
@@ -1509,11 +1509,11 @@ static void restore_scrolling_caret (paige_rec_ptr pg)
 	if (pg->num_selects || (pg->flags & (DEACT_BIT | PERM_DEACT_BIT)))
 		return;
 	
-	select = UseMemory(pg->select);
+	select = (t_select_ptr) UseMemory(pg->select);
 
 	if (pg->doc_info.attributes & WINDOW_CURSOR_BIT) {
 
-		vis_rect = UseMemory(pg->vis_area);
+		vis_rect = (rectangle_ptr) UseMemory(pg->vis_area);
 
 		for (infinite_loop_protect = 3; infinite_loop_protect; infinite_loop_protect -= 1) {
 

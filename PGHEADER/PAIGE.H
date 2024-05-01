@@ -1017,7 +1017,7 @@ typedef draw_points PG_FAR *draw_points_ptr;
 /* Text style run record */
 
 struct style_run {
-	long		offset;			/* Absolute text offset */
+	size_t		offset;			/* Absolute text offset */
 	pg_short_t	style_item;		/* Index to style records */
 };
 
@@ -1085,8 +1085,8 @@ typedef tab_stop PG_FAR *tab_stop_ptr;	/* "FAR" pointer for tab record */
 /* Pair defining a selection range:  */
 
 struct select_pair {
-	long		begin;				/* Beginning offset of some text portion */
-	long		end;				/* Ending offset of some text portion */
+	size_t		begin;				/* Beginning offset of some text portion */
+	size_t		end;				/* Ending offset of some text portion */
 };
 
 typedef struct select_pair select_pair;
@@ -1108,7 +1108,7 @@ typedef pg_kb_data PG_FAR *pg_kb_ptr;
 /* Text selection point record (defines "caret" or visual selection points): */
 
 struct t_select {
-	long				offset;				/* Absolute text offset */
+	size_t				offset;				/* Absolute text offset */
 	select_pair			word_offsets;		/* Original word offsets if applicable */
 	co_ordinate			original_pt;		/* Original point of selection */
 	pg_short_t			line;				/* Point start number */
@@ -1166,11 +1166,11 @@ struct graf_device {
 	pg_region		scroll_rgn;		/* If non-null, clip to this (from scrolling) */
 	pg_clip_info	clip_info;		/* Info in which last clipping region was based. */
 	long			palette_select; /* Used for machine-specific palette code */
-	long			previous_items[6]; /* Previously selected items (machine-specific) */
-	long			machine_ref;	/* Additional ref for machine */
-	long			machine_ref2;	/* More info for machine */
-	long			machine_ref3;	/* More info for machine */
-	long			machine_ref4;	/* More info for machine */
+	size_t			previous_items[6]; /* Previously selected items (machine-specific) */
+	size_t			machine_ref;	/* Additional ref for machine */
+	size_t			machine_ref2;	/* More info for machine */
+	size_t			machine_ref3;	/* More info for machine */
+	size_t			machine_ref4;	/* More info for machine */
 	long			caret_info;		/* Used for machine-dependent caret stuff */
 	memory_ref		graf_stack;		/* Use to "push" previous stuff */
 	memory_ref		poly_save;		/* Used to save polygon or picture drawings */
@@ -1550,15 +1550,15 @@ typedef PG_FN_PASCAL(void, bitmap_modify_proc) (paige_rec_ptr pg, graf_device_pt
 		pg_boolean post_call, rectangle_ptr bits_rect, co_ordinate_ptr screen_offset,
 		long text_position);
 typedef PG_FN_PASCAL(void, wait_process_proc) (paige_rec_ptr pg, short wait_verb,
-		long progress_ctr, long completion_ctr);
+		size_t progress_ctr, size_t completion_ctr);
 typedef PG_FN_PASCAL(void, draw_page_proc) (paige_rec_ptr pg, shape_ptr page_shape,
 		pg_short_t r_qty, pg_short_t page_num, co_ordinate_ptr vis_offset,
 		short draw_mode_used, short call_order);
 typedef PG_FN_PASCAL(void, enhance_undo_proc) (paige_rec_ptr pg, pg_undo_ptr undo_rec,
 		void PG_FAR *insert_ref, short action_to_take);
 typedef PG_FN_PASCAL(void, measure_proc) (paige_rec_ptr pg, style_walk_ptr walker,
-		pg_char_ptr data, long length, pg_short_t slop, long PG_FAR *positions,
-		short PG_FAR *types, short measure_verb, long current_offset, pg_boolean scale_widths,
+		pg_char_ptr data, size_t length, pg_short_t slop, long PG_FAR *positions,
+		short PG_FAR *types, short measure_verb, size_t current_offset, pg_boolean scale_widths,
 		short call_order);
 typedef PG_FN_PASCAL(pg_boolean, merge_proc) (paige_rec_ptr pg, style_info_ptr style, pg_char_ptr text_data,
 		pg_short_t length, text_ref merged_data, long ref_con);
@@ -1567,7 +1567,7 @@ typedef PG_FN_PASCAL(long, track_control_proc) (paige_rec_ptr pg, short verb,
 		pg_char_ptr associated_text, point_start_ptr bounds_info, short modifiers,
 		long track_refcon);
 typedef PG_FN_PASCAL(long, char_info_proc) (paige_rec_ptr pg, style_walk_ptr walker,
-		pg_char_ptr data, long block_offset, long offset_begin, long offset_end, long char_offset,
+		pg_char_ptr data, size_t block_offset, size_t offset_begin, size_t offset_end, size_t char_offset,
 		long mask_bits);
 typedef PG_FN_PASCAL(void, text_draw_proc) (paige_rec_ptr pg, style_walk_ptr walker, pg_char_ptr data,
 		pg_short_t offset, pg_short_t length, draw_points_ptr draw_position,
@@ -1583,8 +1583,8 @@ typedef PG_FN_PASCAL(void, style_activate_proc) (paige_rec_ptr pg, style_info_pt
 		select_pair_ptr text_range, pg_char_ptr text, short front_back_state,
 		short perm_state, pg_boolean show_hilite);
 typedef PG_FN_PASCAL(void, copy_text_proc) (paige_rec_ptr src_pg, paige_rec_ptr target_pg,
-		short reason_verb, style_info_ptr style, long style_position,
-		long text_position, pg_char_ptr text, long length);
+		short reason_verb, style_info_ptr style, size_t style_position,
+		size_t text_position, pg_char_ptr text, size_t length);
 typedef PG_FN_PASCAL(void, delete_text_proc) (paige_rec_ptr pg, short reason_verb,
 		style_info_ptr style, long style_position, long text_position, pg_char_ptr text, long length);
 typedef PG_FN_PASCAL(pg_boolean, setup_insert_proc) (paige_rec_ptr pg, style_info_ptr to_be_inserted,
@@ -1610,9 +1610,9 @@ typedef PG_FN_PASCAL(void, alter_par_proc) (paige_rec_ptr pg, par_info_ptr old_p
 		par_info_ptr new_par);
 typedef PG_FN_PASCAL(void, set_device_proc) (paige_rec_ptr pg, short verb, graf_device_ptr device,
 		color_value_ptr bk_color);
-typedef PG_FN_PASCAL(void, page_modify_proc) (paige_rec_ptr pg, long page_num, rectangle_ptr margins);
-typedef PG_FN_PASCAL(pg_error, file_io_proc) (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
+typedef PG_FN_PASCAL(void, page_modify_proc) (paige_rec_ptr pg, size_t page_num, rectangle_ptr margins);
+typedef PG_FN_PASCAL(pg_error, file_io_proc) (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
 typedef PG_FN_PASCAL(long, wordbreak_info_proc) (paige_rec_ptr pg, pg_char_ptr the_char, short charsize,
 		style_info_ptr style, font_info_ptr font, long current_settings);
 typedef PG_FN_PASCAL(pg_word, charclass_info_proc) (paige_rec_ptr pg, pg_char_ptr the_char, short charsize,
@@ -1747,8 +1747,8 @@ struct style_info {
 	long		style_sheet_id;		/* Used for style sheet features */
 	long		named_style_index;	/* Index to named stylesheet */
 	long		small_caps_index;	/* Style_info index for small caps point size */
-	long		machine_var;		/* Machine-specific use (hold Windows font object) */
-	long		machine_var2;		/* Machine-specific (used for Windows font object) */
+	size_t		machine_var;		/* Machine-specific use (hold Windows font object) */
+	size_t		machine_var2;		/* Machine-specific (used for Windows font object) */
 	pg_fixed	char_width;			/* Character width (not used in Mac) */
 	pg_fixed	point;				/* Point (if different than pitch) */
 	pg_fixed	left_overhang;		/* This style's left overhang if any */
@@ -1764,7 +1764,7 @@ struct style_info {
 	long		key_equiv;			/* Holds the keyboard equivalent for stylesheets (RTF) */
 	long		future[2];			/* Reserved for future expansion */
 	long		html_style;			/* Applied style from HTML import, used also for export */
-	long		embed_entry;		/* App callback function for embed_refs */
+	void*		embed_entry;		/* App callback function for embed_refs */
 	long		embed_style_refcon; /* Used by embed object extension */
 	long		embed_refcon;		/* Used by embedded object extension */
 	long		embed_id;			/* Used by embedded object extension */
@@ -1772,7 +1772,7 @@ struct style_info {
 	style_append_t user_var;		/* Can be used for anything */
 	pg_style_hooks procs;			/* Contains functions on how to draw */
 	long		maintenance;		/* (Used internally) */
-	long		used_ctr;			/* (used internally) */
+	size_t		used_ctr;			/* (used internally) */
 };
 
 /* NOTE, the following defines the number of "short" and "long" members sequentially in style_info.
@@ -1957,8 +1957,8 @@ struct pg_globals {
 	pg_char				right_double_quote[4];	/* Right smart double quote */
 	pg_char		 		elipse_symbol[4];		/* Char to draw for "elipse" */
 	pg_char				unknown_char[4];		/* Character to use for unsupported chars */
-	long				invis_font;				/* Machine-specific invisible char font */
-	long				embed_callback_proc;	/* Used by embed_ref engine */
+	size_t				invis_font;				/* Machine-specific invisible char font */
+	void				*embed_callback_proc;	/* Used by embed_ref engine */
 	font_info			def_font;				/* Default font for all pgNew's */
 	style_info			def_style;				/* Default style for all pgNew's */
 	par_info			def_par;				/* Default para for all pgNew's */
@@ -1977,7 +1977,7 @@ struct pg_globals {
 	short				offscreen_enable;		/* TRUE if in offscreen mode */
 	short				color_enable;			/* Used to detect color screens */
 	long				system_version;			/* Used to know what system */
-	long				machine_const;			/* Can be used by your machine */
+	size_t				machine_const;			/* Can be used by your machine */
 	long				bullet_size;			/* Size of HTML bullet chars */
 	memory_ref			machine_specific;		/* Can hold whatever, MACHINE-DEPENDENT! */
 	memory_ref			font_objects;			/* For Windows, built font objects */
@@ -2073,7 +2073,7 @@ struct paige_rec {
 	shape_ref			wrap_area;			/* Intersection of page/exclude */
 	shape_ref			hilite_rgn;			/* Area for highlight draw */
 	shape_ref			temp_rgn;			/* Used to draw partial highlights */
-	long				forced_break;		/* Used for temporary page break when paginating */
+	size_t				forced_break;		/* Used for temporary page break when paginating */
 	co_ordinate			base_vis_origin;	/* Base (original) vis area top-left point */
 	block_ref			t_blocks;			/* Text block array */
 	block_ref			tlevel_blocks;		/* Top level blocks (when dealing with hiearchy subrefs) */
@@ -2144,7 +2144,7 @@ struct paige_rec {
 /* Record to make it easier to advance through styles: */
 
 struct style_walk {
-	long				current_offset;	/* Current style offset position */
+	size_t				current_offset;	/* Current style offset position */
 	style_info_ptr		cur_style;		/* Current text style */
 	par_info_ptr		cur_par_style;	/* Current paragraph style */
 	font_info_ptr		cur_font;		/* Current font record */
@@ -2185,12 +2185,12 @@ extern	"C" {
 #endif
 
 
-extern PG_PASCAL (void) pgPrepareStyleWalk (paige_rec_ptr pg, long offset,
+extern PG_PASCAL (void) pgPrepareStyleWalk (paige_rec_ptr pg, size_t offset,
 		style_walk_ptr walker, pg_boolean include_pars);
 extern PG_PASCAL (pg_boolean) pgWalkNextStyle (style_walk_ptr walker);
 extern PG_PASCAL (pg_boolean) pgWalkPreviousStyle (style_walk_ptr walker);
-extern PG_PASCAL (pg_boolean) pgWalkStyle (style_walk_ptr walker, long amount);
-extern PG_PASCAL (pg_boolean) pgSetWalkStyle (style_walk_ptr walker, long position);
+extern PG_PASCAL (pg_boolean) pgWalkStyle (style_walk_ptr walker, size_t amount);
+extern PG_PASCAL (pg_boolean) pgSetWalkStyle (style_walk_ptr walker, size_t position);
 
 /* Async Lock/Unlock */
 
@@ -2224,7 +2224,7 @@ extern PG_PASCAL (void) pgShareRefs (pg_ref pg, pg_ref shared_from, long shared_
 extern PG_PASCAL (void) pgSetDefaultDevice (pg_ref pg, const graf_device_ptr device);
 extern PG_PASCAL (void) pgGetDefaultDevice (pg_ref pg, graf_device_ptr device);
 extern PG_PASCAL (void) pgInitDevice (const pg_globals_ptr globals, const generic_var the_port,
-		long machine_ref, graf_device_ptr device);
+		size_t machine_ref, graf_device_ptr device);
 extern PG_PASCAL (void) pgInitSameDevice (pg_ref pg, const graf_device_ptr device);
 extern PG_PASCAL (void) pgCloseDevice (const pg_globals_ptr globals, const graf_device_ptr device);
 extern PG_PASCAL (generic_var) pgSetDrawingDevice (pg_ref pg, const generic_var draw_device);
@@ -2264,7 +2264,7 @@ extern PG_PASCAL (void) pgDisplay (pg_ref pg, const graf_device_ptr target_devic
 		shape_ref wrap_target, const co_ordinate_ptr offset_extra, short draw_mode);
 extern PG_PASCAL (void) pgTextboxDisplay (pg_ref pg, paige_rec_ptr target_pg, const rectangle_ptr target_box,
 		const rectangle_ptr wrap_rect, short draw_mode);
-extern PG_PASCAL (pg_boolean) pgInsert (pg_ref pg, const pg_char_ptr data, long length, long position,
+extern PG_PASCAL (pg_boolean) pgInsert (pg_ref pg, const pg_char_ptr data, size_t length, size_t position,
 		short insert_mode, short modifiers, short draw_mode);
 extern PG_PASCAL (pg_boolean) pgInsertText (pg_ref pg, pg_char_ptr data, long length,
 		font_info_ptr font, style_info_ptr style, par_info_ptr paragraph, short draw_mode);
@@ -2318,7 +2318,7 @@ extern PG_PASCAL (void) pgSetParProcs (pg_ref pg, const pg_par_hooks PG_FAR *pro
 		const par_info_ptr match_style, const par_info_ptr mask_style,
 		const par_info_ptr AND_style, long user_data, long user_id,
 		pg_boolean inval_text, short draw_mode);
-extern PG_PASCAL (long) pgPtToStyleInfo (pg_ref pg, const co_ordinate_ptr point,
+extern PG_PASCAL (size_t) pgPtToStyleInfo (pg_ref pg, const co_ordinate_ptr point,
 		short conversion_info, style_info_ptr style, select_pair_ptr range);
 extern PG_PASCAL (void) pgGetStyleInfoRec (pg_ref pg, short style_item, style_info_ptr format);
 extern PG_PASCAL (void) pgGetParInfoRec (pg_ref pg, short style_item, par_info_ptr format);
@@ -2413,9 +2413,9 @@ extern PG_PASCAL (long) pgNumTextblocks (pg_ref pg);
 extern PG_PASCAL (long) pgGetTextblock (pg_ref pg, long offset, text_block_ptr block,
 		pg_boolean want_pagination);
 extern PG_PASCAL (long) pgCharType (pg_ref pg, long offset, long mask_bits);
-extern PG_PASCAL (pg_short_t) pgCharByte (pg_ref pg, long offset, pg_char_ptr char_bytes);
+extern PG_PASCAL (pg_short_t) pgCharByte (pg_ref pg, size_t offset, pg_char_ptr char_bytes);
 extern PG_PASCAL (long) pgTextSize (pg_ref pg);
-extern PG_PASCAL (void) pgFindWord (pg_ref pg, long offset, long PG_FAR *first_byte,
+extern PG_PASCAL (void) pgFindWord (pg_ref pg, size_t offset, size_t PG_FAR *first_byte,
 		long PG_FAR *last_byte, pg_boolean left_side, pg_boolean smart_select);
 extern PG_PASCAL (void) pgFindCtlWord (pg_ref pg, long offset, long PG_FAR *first_byte,
 		long PG_FAR *last_byte, short left_side);
@@ -2423,9 +2423,9 @@ extern PG_PASCAL (void) pgFindPar (pg_ref pg, long offset, long PG_FAR *first_by
 		long PG_FAR *last_byte);
 extern PG_PASCAL (void) pgFindLine (pg_ref pg, long offset, long PG_FAR *first_byte,
 		long PG_FAR *last_byte);
-extern PG_PASCAL (long) pgFindCharType (pg_ref pg, long char_info, long PG_FAR *offset, pg_char_ptr the_byte);
-extern PG_PASCAL (void) pgGetSelection (pg_ref pg, long PG_FAR *begin_sel, long PG_FAR *end_sel);
-extern PG_PASCAL (void) pgSetSelection (pg_ref pg, long begin_sel, long end_sel,
+extern PG_PASCAL (long) pgFindCharType (pg_ref pg, long char_info, size_t PG_FAR *offset, pg_char_ptr the_byte);
+extern PG_PASCAL (void) pgGetSelection (pg_ref pg, size_t PG_FAR *begin_sel, size_t PG_FAR *end_sel);
+extern PG_PASCAL (void) pgSetSelection (pg_ref pg, size_t begin_sel, size_t end_sel,
 		short modifiers, pg_boolean show_hilite);
 extern PG_PASCAL (memory_ref) pgGetSelectionList (pg_ref pg, pg_boolean for_paragraph);
 extern PG_PASCAL (void) pgSetSelectionList (pg_ref pg, memory_ref select_list,
@@ -2445,7 +2445,7 @@ extern PG_PASCAL (short) pgTextRect (pg_ref pg, const select_pair_ptr range, pg_
 		pg_boolean want_scaled, rectangle_ptr rect);
 extern PG_PASCAL (short) pgCharacterRect (pg_ref pg, long position, pg_boolean want_scrolled,
 		pg_boolean want_scaled, rectangle_ptr rect);
-extern PG_PASCAL (long) pgPtToChar (pg_ref pg, const co_ordinate_ptr point, const co_ordinate_ptr offset_extra);
+extern PG_PASCAL (size_t) pgPtToChar (pg_ref pg, const co_ordinate_ptr point, const co_ordinate_ptr offset_extra);
 extern PG_PASCAL (short) pgPtInView (pg_ref pg, const co_ordinate_ptr point,
 		const co_ordinate_ptr offset_extra);
 extern PG_PASCAL (long) pgTotalTextHeight (pg_ref pg, short paginate);
@@ -2511,7 +2511,7 @@ extern PG_PASCAL (void) pgSetShapeRect (shape_ref the_shape, const rectangle_ptr
 extern PG_PASCAL (void) pgEraseShape (pg_ref pg, shape_ref the_shape, const pg_scale_ptr scale_factor,
 		const co_ordinate_ptr offset_extra, const rectangle_ptr vis_bounds);
 extern PG_PASCAL (void) pgDisposeShape (shape_ref the_shape);
-extern PG_PASCAL (void) pgInvalSelect (pg_ref pg, long select_from, long select_to);
+extern PG_PASCAL (void) pgInvalSelect (pg_ref pg, size_t select_from, size_t select_to);
 extern PG_PASCAL (void) pgInvalShapes (pg_ref pg, pg_boolean inval_page, pg_boolean inval_exclusion);
 extern PG_PASCAL (void) pgGetDocInfo (pg_ref pg, pg_doc_ptr doc_info);
 extern PG_PASCAL (void) pgSetDocInfo (pg_ref pg, const pg_doc_ptr doc_info,
@@ -2568,7 +2568,7 @@ extern PG_PASCAL (void) pgReplaceContainer (pg_ref pg, const rectangle_ptr conta
 extern PG_PASCAL (void) pgSwapContainers (pg_ref pg, pg_short_t container1,
 		pg_short_t container2, short draw_mode);
 extern PG_PASCAL (pg_short_t) pgCharToContainer (pg_ref pg, long offset);
-extern PG_PASCAL (long) pgContainerToChar (pg_ref pg, pg_short_t position);
+extern PG_PASCAL (size_t) pgContainerToChar (pg_ref pg, pg_short_t position);
 
 /* "Exclusion Area" Support (for graphics, layout, etc. ) */
 
@@ -2635,11 +2635,11 @@ extern PG_PASCAL (void) pgDisplayLineRange (pg_ref pg, long line_from, long line
 /* Version 2.x Unicode Support */
 
 extern PG_PASCAL (pg_boolean) pgIsPaigeUnicode (void);
-extern PG_PASCAL (long) pgBytesToUnicode (pg_bits8_ptr input_bytes, pg_short_t PG_FAR *output_chars,
-		font_info_ptr font, long input_byte_size);
-extern PG_PASCAL (long) pgUnicodeToBytes (pg_short_t PG_FAR *input_chars, pg_bits8_ptr output_bytes,
-		font_info_ptr font, long input_char_size);
-extern PG_PASCAL (long) pgUnicodeToUnicode (pg_short_t PG_FAR *the_chars, long num_chars, pg_boolean force_reverse);
+extern PG_PASCAL (size_t) pgBytesToUnicode (pg_bits8_ptr input_bytes, pg_short_t PG_FAR *output_chars,
+		font_info_ptr font, size_t input_byte_size);
+extern PG_PASCAL (size_t) pgUnicodeToBytes (pg_short_t PG_FAR *input_chars, pg_bits8_ptr output_bytes,
+		font_info_ptr font, size_t input_char_size);
+extern PG_PASCAL (size_t) pgUnicodeToUnicode (pg_short_t PG_FAR *the_chars, size_t num_chars, pg_boolean force_reverse);
 
 #ifdef UNICODE
 extern PG_PASCAL (pg_boolean) pgInsertBytes (pg_ref pg, const pg_bits8_ptr data, long length, long position,

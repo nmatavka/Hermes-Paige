@@ -112,7 +112,7 @@ PG_PASCAL (pg_subref) pgNewSubRef (pgm_globals_ptr mem_globals)
 		mem_globals->current_id = mem_globals->next_mem_id;
 	
 		subref = MemoryAllocClear(mem_globals, sizeof(paige_sub_rec), 1, 0);
-		sub_ptr = UseMemory(subref);
+		sub_ptr = (paige_sub_ptr) UseMemory(subref);
 		sub_ptr->myself = subref;
 		sub_ptr->mem_id = mem_globals->current_id;
 		sub_ptr->flags = NO_WRAP_BIT;
@@ -154,14 +154,14 @@ PG_PASCAL (void) pgInsertSubRef (pg_ref pg, pg_subref subref, long position,
 	style_run_ptr	run, par_run;
 	text_block_ptr	block;
 	style_info_ptr	def_style;
-	long			real_position, sublist_position;
+	size_t			real_position, sublist_position;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	real_position = pgFixOffset(pg_rec, position);
-	sub_ptr = UseMemory(subref);
+	sub_ptr = (paige_sub_ptr) UseMemory(subref);
 	sub_ptr->home_position = real_position;
 	sub_ptr->home_sub = pg_rec->active_subset;
-	run = UseMemory(sub_ptr->t_style_run);
+	run = (style_run_ptr) UseMemory(sub_ptr->t_style_run);
 	
 	if ((run->style_item = locate_stylesheet_option(pg_rec, stylesheet_option)) == 0)
 		run->style_item = pg_rec->insert_style;
@@ -191,7 +191,7 @@ PG_PASCAL (void) pgInsertSubRef (pg_ref pg, pg_subref subref, long position,
 #endif
 	}
 
-	def_style = UseMemoryRecord(pg_rec->t_formats, (long)run->style_item, 0, TRUE);
+	def_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long)run->style_item, 0, TRUE);
 	def_style->used_ctr += 1;
 	sub_ptr->insert_style = run->style_item;
 	UnuseMemory(pg_rec->t_formats);
@@ -199,7 +199,7 @@ PG_PASCAL (void) pgInsertSubRef (pg_ref pg, pg_subref subref, long position,
 	if (initial_text && initial_text_size) {
 		pg_hyperlink_ptr		first_link;
 
-		block = UseMemory(sub_ptr->t_blocks);
+		block = (text_block_ptr) UseMemory(sub_ptr->t_blocks);
 		block->end = initial_text_size;
 		SetMemorySize(block->text, initial_text_size);
 		pgBlockMove(initial_text, UseMemory(block->text), initial_text_size);
@@ -207,13 +207,13 @@ PG_PASCAL (void) pgInsertSubRef (pg_ref pg, pg_subref subref, long position,
 		UnuseMemory(sub_ptr->t_blocks);
 
 		run[1].offset = initial_text_size + ZERO_TEXT_PAD;
-		par_run = UseMemory(sub_ptr->par_style_run);
+		par_run = (style_run_ptr) UseMemory(sub_ptr->par_style_run);
 		par_run[1].offset = initial_text_size + ZERO_TEXT_PAD;
 		UnuseMemory(sub_ptr->par_style_run);
-		first_link = UseMemory(sub_ptr->hyperlinks);
+		first_link = (pg_hyperlink_ptr) UseMemory(sub_ptr->hyperlinks);
 		first_link->applied_range.begin = first_link->applied_range.end = initial_text_size + ZERO_TEXT_PAD;
 		UnuseMemory(sub_ptr->hyperlinks);
-		first_link = UseMemory(sub_ptr->target_hyperlinks);
+		first_link = (pg_hyperlink_ptr) UseMemory(sub_ptr->target_hyperlinks);
 		first_link->applied_range.begin = first_link->applied_range.end = initial_text_size + ZERO_TEXT_PAD;
 		UnuseMemory(sub_ptr->target_hyperlinks);
 
@@ -226,7 +226,7 @@ PG_PASCAL (void) pgInsertSubRef (pg_ref pg, pg_subref subref, long position,
 	block = pgFindTextBlock(pg_rec, real_position, NULL, FALSE, TRUE);
 	sublist_position = pgFindSubrefPosition(block, (pg_short_t)(real_position - block->begin));
 	
-	subref_list = InsertMemory(block->subref_list, sublist_position, 1);
+	subref_list = (pg_subref_ptr) InsertMemory(block->subref_list, sublist_position, 1);
 	*subref_list = subref;
 	
 	UnuseMemory(block->subref_list);
@@ -262,7 +262,7 @@ PG_PASCAL (void) pgDrawSubRef (paige_rec_ptr pg, style_walk_ptr walker,
 
 	subref_index = pgFindSubrefPosition(draw_position->block, local_offset);
 	GetMemoryRecord(draw_position->block->subref_list, subref_index, (void PG_FAR *)&subref);
-	sub_ptr = UseMemory(subref);
+	sub_ptr = (paige_sub_ptr) UseMemory(subref);
 	sub_ptr += sub_ptr->alt_index;
 	sub_ptr->home_position = (long)draw_position->starts->offset;
 	sub_ptr->home_position += draw_position->block->begin;
@@ -301,7 +301,7 @@ PG_PASCAL (void) pgDisposeSubRef (pg_subref subref)
 	paige_sub_ptr		sub_ptr;
 	long				memory_id;
 
-	sub_ptr = UseMemory(subref);
+	sub_ptr = (paige_sub_ptr) UseMemory(subref);
 	pgDisposeAllSubRefs(sub_ptr->t_blocks);
 	memory_id = sub_ptr->mem_id;
 	UnuseMemory(subref);
@@ -320,7 +320,8 @@ PG_PASCAL (pg_subref) pgDuplicateRef (paige_rec_ptr source_pg, paige_rec_ptr tar
 	pgm_globals_ptr		mem_globals;
 	paige_sub_ptr		sub_ptr;
 	text_block_ptr		block;
-	long				num_alternates, mem_id;
+	size_t				num_alternates;
+	long				mem_id;
 
 	mem_globals = GetGlobalsFromRef(subref);
 
@@ -333,7 +334,7 @@ PG_PASCAL (pg_subref) pgDuplicateRef (paige_rec_ptr source_pg, paige_rec_ptr tar
 
 		result = MemoryDuplicateID(subref, mem_id);
 
-		sub_ptr = UseMemory(result);
+		sub_ptr = (paige_sub_ptr) UseMemory(result);
 		num_alternates = GetMemorySize(result);
 		
 		while (num_alternates) {
@@ -348,7 +349,7 @@ PG_PASCAL (pg_subref) pgDuplicateRef (paige_rec_ptr source_pg, paige_rec_ptr tar
 			sub_ptr->hyperlinks = MemoryDuplicateID(sub_ptr->hyperlinks, mem_id);
 			sub_ptr->target_hyperlinks = MemoryDuplicateID(sub_ptr->hyperlinks, mem_id);
 
-			block = UseMemory(sub_ptr->t_blocks);
+			block = (text_block_ptr) UseMemory(sub_ptr->t_blocks);
 			block->text = MemoryDuplicateID(block->text, mem_id);
 			block->lines = MemoryDuplicateID(block->lines, mem_id);
 			block->subref_list = MemoryDuplicateID(block->subref_list, mem_id);
@@ -393,8 +394,8 @@ PG_PASCAL (void) pgUseSubRef (paige_rec_ptr pg, pg_subref subref, long flags, re
 	if (pin_to)
 		pin_bounds_to_rect(pg, subref, pin_to, flags, draw_position);
 
-	stack_ptr = AppendMemory(pg->subref_stack, 1, TRUE);
-	sub_ptr = UseMemory(subref);
+	stack_ptr = (paige_sub_ptr) AppendMemory(pg->subref_stack, 1, TRUE);
+	sub_ptr = (paige_sub_ptr) UseMemory(subref);
 	stack_ptr->alt_index = 0;
 	pgCopySubfields(pg, stack_ptr, TRUE);
 	copy_width_table(pg, stack_ptr, TRUE);
@@ -421,13 +422,13 @@ PG_PASCAL (pg_subref) pgUnuseSubRef (paige_rec_ptr pg)
 {
 	paige_sub_ptr		stack_ptr, sub_ptr;
 	pg_subref			previous;
-	long				stack_size;
+	size_t				stack_size;
 	
 	previous = pg->active_subset;
 
 	if (stack_size = GetMemorySize(pg->subref_stack)) {
 		
-		sub_ptr = UseMemory(pg->active_subset);
+		sub_ptr = (paige_sub_ptr) UseMemory(pg->active_subset);
 
 		if (!(sub_ptr->subref_flags & SUBREF_NOT_EDITABLE))
 			--pg->subref_level;
@@ -437,7 +438,7 @@ PG_PASCAL (pg_subref) pgUnuseSubRef (paige_rec_ptr pg)
 		UnuseMemory(pg->active_subset);
 
 		--stack_size;
-		stack_ptr = UseMemoryRecord(pg->subref_stack, stack_size, 0, TRUE);
+		stack_ptr = (paige_sub_ptr) UseMemoryRecord(pg->subref_stack, stack_size, 0, TRUE);
 		stack_ptr->alt_index = 0;
 		pgCopySubfields(pg, stack_ptr, FALSE);
 		copy_width_table(pg, stack_ptr, FALSE);
@@ -459,7 +460,7 @@ PG_PASCAL (memory_ref) pgGetSubrefState (paige_rec_ptr pg, pg_boolean clear_hili
 {
 	pg_subref		PG_FAR		*restore_list;
 	memory_ref					restore_ref;
-	long						stack_size;
+	size_t						stack_size;
 
 	if (clear_hilites)
 		pgSetupGrafDevice(pg, &pg->port, MEM_NULL, clip_standard_verb);
@@ -473,13 +474,13 @@ PG_PASCAL (memory_ref) pgGetSubrefState (paige_rec_ptr pg, pg_boolean clear_hili
 		if (stack_size > 1) {
 			paige_sub_ptr			sub_ptr;
 			
-			sub_ptr = UseMemory(pg->subref_stack);
+			sub_ptr = (paige_sub_ptr) UseMemory(pg->subref_stack);
 			
 			while (stack_size > 1) {
 				
 				++sub_ptr;
 				--stack_size;
-				restore_list = AppendMemory(restore_ref, 1, FALSE);
+				restore_list = (pg_subref *) AppendMemory(restore_ref, 1, FALSE);
 				*restore_list = sub_ptr->active_subset;
 				UnuseMemory(restore_ref);
 			}
@@ -487,7 +488,7 @@ PG_PASCAL (memory_ref) pgGetSubrefState (paige_rec_ptr pg, pg_boolean clear_hili
 			UnuseMemory(pg->subref_stack);
 		}
 
-		restore_list = AppendMemory(restore_ref, 1, FALSE);
+		restore_list = (pg_subref *) AppendMemory(restore_ref, 1, FALSE);
 		*restore_list = pg->active_subset;
 		UnuseMemory(restore_ref);
 		
@@ -522,7 +523,7 @@ to put back whatever subref was there before. THE MEMORY_REF IS DISPOSED. */
 PG_PASCAL (void) pgRestoreSubRefs (paige_rec_ptr pg, memory_ref old_subrefs)
 {
 	pg_subref		PG_FAR		*restore_list;
-	long						list_size;
+	size_t						list_size;
 	
 	if (old_subrefs) {
 		
@@ -535,7 +536,7 @@ PG_PASCAL (void) pgRestoreSubRefs (paige_rec_ptr pg, memory_ref old_subrefs)
 
 		list_size = GetMemorySize(old_subrefs);
 		
-		for (restore_list = UseMemory(old_subrefs); list_size; ++restore_list, --list_size)
+		for (restore_list = (pg_subref *) UseMemory(old_subrefs); list_size; ++restore_list, --list_size)
 			pgUseSubRef(pg, *restore_list, 0, NULL, NULL);
 		
 		UnuseAndDispose(old_subrefs);
@@ -556,7 +557,7 @@ PG_PASCAL (pg_boolean) pgClickSelectSubRef (pg_ref pg, co_ordinate_ptr mouse_poi
 	pg_subref			old_subset, clicked_ref;
 	t_select_ptr		select;
 	pg_boolean			subset_changed;
-	long				current_offset, uneditable_ctr;
+	size_t				current_offset, uneditable_ctr;
 
 	clicked_pt = *mouse_point;
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
@@ -572,7 +573,7 @@ PG_PASCAL (pg_boolean) pgClickSelectSubRef (pg_ref pg, co_ordinate_ptr mouse_poi
 	}
 
 	pgTurnOffHighlight(pg_rec, FALSE);
-	select = UseMemory(pg_rec->select);
+	select = (t_select_ptr) UseMemory(pg_rec->select);
 	current_offset = select->offset;
 	UnuseMemory(pg_rec->select);
 	pgSetSelection(pg, current_offset, current_offset, 0, FALSE);
@@ -583,7 +584,7 @@ PG_PASCAL (pg_boolean) pgClickSelectSubRef (pg_ref pg, co_ordinate_ptr mouse_poi
 	while (clicked_ref = pgPtInSubRef(pg_rec, mouse_point)) {
 
 		pgUseSubRef(pg_rec, clicked_ref, 0, NULL, NULL);
-		sub_ptr = UseMemory(clicked_ref);
+		sub_ptr = (paige_sub_ptr) UseMemory(clicked_ref);
 		sub_ptr += sub_ptr->alt_index;
 
 		if (sub_ptr->subref_flags & SUBREF_NOT_EDITABLE)
@@ -629,13 +630,13 @@ PG_PASCAL (memory_ref) pgSetNestedFocus (paige_rec_ptr pg, pg_subref ref, pg_boo
 	pg_subref			previous_ref, this_ref;
 	pg_subref	PG_FAR	*stack_list;
 	paige_sub_ptr		sub_ptr;
-	long				stack_qty;
+	size_t				stack_qty;
 
 	old_state = pgGetSubrefState(pg, TRUE, TRUE);
 
 	if (ref) {
 	
-		sub_ptr = UseMemory(ref);
+		sub_ptr = (paige_sub_ptr) UseMemory(ref);
 		previous_ref = sub_ptr->home_sub;
 		UnuseMemory(ref);
 		new_state = MemoryAlloc(pg->globals->mem_globals, sizeof(pg_subref), 0, 3);
@@ -643,18 +644,18 @@ PG_PASCAL (memory_ref) pgSetNestedFocus (paige_rec_ptr pg, pg_subref ref, pg_boo
 		while (previous_ref) {
 			
 			this_ref = previous_ref;
-			stack_list = AppendMemory(new_state, 1, FALSE);
+			stack_list = (pg_subref *) AppendMemory(new_state, 1, FALSE);
 			*stack_list = this_ref;
 			UnuseMemory(new_state);
 
-			sub_ptr = UseMemory(this_ref);
+			sub_ptr = (paige_sub_ptr) UseMemory(this_ref);
 			previous_ref = sub_ptr->home_sub;
 			UnuseMemory(this_ref);
 		}
 		
 		if ((stack_qty = GetMemorySize(new_state)) > 0) {
 			
-			stack_list = UseMemory(new_state);
+			stack_list = (pg_subref *) UseMemory(new_state);
 			stack_list += stack_qty;
 			
 			while (stack_qty) {
@@ -683,15 +684,15 @@ PG_PASCAL (memory_ref) pgSetNestedFocus (paige_rec_ptr pg, pg_subref ref, pg_boo
 an active subset. NOTE, a "fake" insert can occur in which data is NULL. This is done to
 force-invalidate the activate subset and the subsequent line. */
 
-PG_PASCAL (pg_boolean) pgInsertIntoSubRef (paige_rec_ptr pg, pg_byte_ptr data, long length,
-		long position, short insert_mode, short modifiers, short draw_mode)
+PG_PASCAL (pg_boolean) pgInsertIntoSubRef (paige_rec_ptr pg, pg_byte_ptr data, size_t length,
+		size_t position, short insert_mode, short modifiers, short draw_mode)
 {
 	pg_subref			active_subset, focus_subset;
 	paige_sub_ptr		sub_ptr;
 	text_block_ptr		block;
 	memory_ref			restore_ref;
 	pg_boolean			result;
-	long				fake_insert_pos;
+	size_t				fake_insert_pos;
 	short				use_insert_mode, use_draw_mode;
 
 	use_insert_mode = insert_mode;
@@ -731,7 +732,7 @@ PG_PASCAL (pg_boolean) pgInsertIntoSubRef (paige_rec_ptr pg, pg_byte_ptr data, l
 
 	active_subset = invalidate_hierarchy(pg);
 
-	sub_ptr = UseMemory(active_subset);
+	sub_ptr = (paige_sub_ptr) UseMemory(active_subset);
 	sub_ptr += sub_ptr->alt_index;
 	fake_insert_pos = sub_ptr->home_position;  // = top level memory_ref insertion place
 	UnuseMemory(active_subset);
@@ -746,7 +747,7 @@ PG_PASCAL (pg_boolean) pgInsertIntoSubRef (paige_rec_ptr pg, pg_byte_ptr data, l
 		pgRestoreSubRefs(pg, restore_ref);
 
 		pgSetupGrafDevice(pg, &pg->port, MEM_NULL, clip_standard_verb);
-		pg->procs.cursor_proc(pg, UseMemory(pg->select), restore_cursor);
+		pg->procs.cursor_proc(pg, (t_select_ptr) UseMemory(pg->select), restore_cursor);
 		UnuseMemory(pg->select);
 		pgDrawHighlight(pg, update_cursor);
 		pg->procs.set_device(pg, unset_pg_device, &pg->port, NULL);
@@ -763,7 +764,7 @@ PG_PASCAL (void) pgClearSubrefCarets (paige_rec_ptr pg, pg_subref clear_this_als
 	long				num_subs;
 	
 	num_subs = GetMemorySize(pg->subref_stack);
-	stack_ptr = UseMemory(pg->subref_stack);
+	stack_ptr = (paige_sub_ptr) UseMemory(pg->subref_stack);
 	
 	while (num_subs) {
 		
@@ -777,7 +778,7 @@ PG_PASCAL (void) pgClearSubrefCarets (paige_rec_ptr pg, pg_subref clear_this_als
 	
 	if (clear_this_also) {
 		
-		stack_ptr = UseMemory(clear_this_also);
+		stack_ptr = (paige_sub_ptr) UseMemory(clear_this_also);
 		stack_ptr->flags &= (~CARET_BIT);
 		invalidate_selections(stack_ptr);
 		UnuseMemory(clear_this_also);
@@ -785,7 +786,7 @@ PG_PASCAL (void) pgClearSubrefCarets (paige_rec_ptr pg, pg_subref clear_this_als
 	
 	if (pg->active_subset && pg->active_subset != clear_this_also) {
 
-		stack_ptr = UseMemory(pg->active_subset);
+		stack_ptr = (paige_sub_ptr) UseMemory(pg->active_subset);
 		stack_ptr->flags &= (~CARET_BIT);
 		invalidate_selections(stack_ptr);
 		UnuseMemory(pg->active_subset);
@@ -805,9 +806,9 @@ PG_PASCAL (void) pgUpdateSubRefBounds (paige_rec_ptr pg, text_block_ptr block)
 	rectangle				union_bounds;
 	long					width, height, align_extra;
 
-	sub_ptr = UseMemory(pg->active_subset);
+	sub_ptr = (paige_sub_ptr) UseMemory(pg->active_subset);
 	sub_ptr += sub_ptr->alt_index;
-	starts = initial_starts = UseMemory(block->lines);
+	starts = initial_starts = (point_start_ptr) UseMemory(block->lines);
 	pgFillBlock(&union_bounds, sizeof(rectangle), 0);
 
 	while (starts->flags != TERMINATOR_BITS) {
@@ -948,7 +949,7 @@ PG_PASCAL (void) pgApplyStylesToSubrefs (paige_rec_ptr pg, select_pair_ptr range
 		else
 			local_end_offset = range->end - block->begin;
 
-		text = UseMemory(block->text);
+		text = (pg_byte_ptr) UseMemory(block->text);
 		
 		while (local_offset < local_end_offset) {
 		
@@ -1002,7 +1003,7 @@ PG_PASCAL (void) pgDecrementSubsetStyles (paige_rec_ptr pg, pg_short_t bad_index
 	if ((stack_qty = GetMemorySize(pg->subref_stack)) > 0) {
 		paige_sub_ptr		sub_ptr;
 		
-		sub_ptr = UseMemory(pg->subref_stack);
+		sub_ptr = (paige_sub_ptr) UseMemory(pg->subref_stack);
 		
 		while (stack_qty) {
 			
@@ -1041,7 +1042,7 @@ PG_PASCAL (void) pgSetSubRefText (pg_ref pg, pg_subref ref, long index,
 		UnuseMemory(ref);
 	}
 	
-	sub_ptr = UseMemory(ref);
+	sub_ptr = (paige_sub_ptr) UseMemory(ref);
 	
 	if (sub_ptr[index].t_blocks == MEM_NULL)
 		pgAllocateAlternate(sub_ptr, index);
@@ -1052,7 +1053,7 @@ PG_PASCAL (void) pgSetSubRefText (pg_ref pg, pg_subref ref, long index,
 
 		sub_ptr += index;
 
-		block = UseMemory(sub_ptr->t_blocks);
+		block = (text_block_ptr) UseMemory(sub_ptr->t_blocks);
 		SetMemorySize(block->text, text_size);
 		block->end = text_size;
 		pgBlockMove(the_text, UseMemory(block->text), text_size);
@@ -1062,7 +1063,7 @@ PG_PASCAL (void) pgSetSubRefText (pg_ref pg, pg_subref ref, long index,
 		
 		SetMemorySize(sub_ptr->t_style_run, 2);
 		SetMemorySize(sub_ptr->par_style_run, 2);
-		run = UseMemory(sub_ptr->t_style_run);
+		run = (style_run_ptr) UseMemory(sub_ptr->t_style_run);
 		run[1].offset = text_size + ZERO_TEXT_PAD;
 		
 		if (stylesheet_option)
@@ -1071,12 +1072,12 @@ PG_PASCAL (void) pgSetSubRefText (pg_ref pg, pg_subref ref, long index,
 		
 		sub_ptr->insert_style = run->style_item;
 		
-		first_style = UseMemoryRecord(pg_rec->t_formats, (long)run->style_item, 0, TRUE);
+		first_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long)run->style_item, 0, TRUE);
 		first_style->used_ctr += 1;
 		UnuseMemory(pg_rec->t_formats);
 		UnuseMemory(sub_ptr->t_style_run);
 		
-		run = UseMemory(sub_ptr->par_style_run);
+		run = (style_run_ptr) UseMemory(sub_ptr->par_style_run);
 		run[1].offset = text_size + ZERO_TEXT_PAD;
 		UnuseMemory(sub_ptr->par_style_run);
 		
@@ -1084,10 +1085,10 @@ PG_PASCAL (void) pgSetSubRefText (pg_ref pg, pg_subref ref, long index,
 		
 		SetMemorySize(sub_ptr->hyperlinks, 1);
 		SetMemorySize(sub_ptr->target_hyperlinks, 1);
-		hyperlink = UseMemory(sub_ptr->hyperlinks);
+		hyperlink = (pg_hyperlink_ptr) UseMemory(sub_ptr->hyperlinks);
 		hyperlink->applied_range.begin = hyperlink->applied_range.end = text_size + ZERO_TEXT_PAD;
 		UnuseMemory(sub_ptr->hyperlinks);
-		hyperlink = UseMemory(sub_ptr->target_hyperlinks);
+		hyperlink = (pg_hyperlink_ptr) UseMemory(sub_ptr->target_hyperlinks);
 		hyperlink->applied_range.begin = hyperlink->applied_range.end = text_size + ZERO_TEXT_PAD;
 		UnuseMemory(sub_ptr->target_hyperlinks);
 
@@ -1148,7 +1149,7 @@ PG_PASCAL (memory_ref) pgGetSubRefText (pg_ref pg, pg_subref ref, long index)
 	memory_ref				result;
 	
 	result = MEM_NULL;
-	sub_ptr = UseMemory(ref);
+	sub_ptr = (paige_sub_ptr) UseMemory(ref);
 
 	if (index < 0)
 		use_index = sub_ptr->alt_index;
@@ -1161,7 +1162,7 @@ PG_PASCAL (memory_ref) pgGetSubRefText (pg_ref pg, pg_subref ref, long index)
 		
 		if (sub_ptr->t_blocks) {
 		
-			block = UseMemory(sub_ptr->t_blocks);
+			block = (text_block_ptr) UseMemory(sub_ptr->t_blocks);
 			result = block->text;
 			UnuseMemory(sub_ptr->t_blocks);
 		}
@@ -1182,7 +1183,7 @@ PG_PASCAL (void) pgInvalSubBlocks (paige_rec_ptr pg, paige_sub_ptr sub_ptr)
 	
 	globals = pg->globals;
 
-	block = UseMemory(sub_ptr->t_blocks);
+	block = (text_block_ptr) UseMemory(sub_ptr->t_blocks);
 	block->flags |= NEEDS_CALC;
 	UnuseMemory(sub_ptr->t_blocks);
 	
@@ -1211,7 +1212,7 @@ PG_PASCAL (long) pgMatrixWidth (paige_rec_ptr pg, paige_sub_ptr home_sub_ptr, te
 	long						widest_width, num_subs, result, generated_extra;
 	short						num_columns, num_rows, row_ctr, column_ctr;
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	result = 0;
 	generated_extra = 100000;
 
@@ -1245,13 +1246,13 @@ PG_PASCAL (long) pgMatrixWidth (paige_rec_ptr pg, paige_sub_ptr home_sub_ptr, te
 		matrix_ref = MemoryAllocClear(pg->globals->mem_globals, (short)sizeof(subref_matrix_info),
 				(long)0, (short)((num_columns * num_rows) + 1));
 
-		subref_list = UseMemory(block->subref_list);
+		subref_list = (pg_subref_ptr) UseMemory(block->subref_list);
 		num_subs = GetMemorySize(block->subref_list);
 		
 		while (num_subs) {
 			
-			matrix_ptr = AppendMemory(matrix_ref, 1, FALSE);
-			sub_ptr = UseMemory(*subref_list);
+			matrix_ptr = (subref_matrix_ptr) AppendMemory(matrix_ref, 1, FALSE);
+			sub_ptr = (paige_sub_ptr) UseMemory(*subref_list);
 			matrix_ptr->ref = *subref_list;
 			matrix_ptr->width = sub_ptr->subset_bounds.bot_right.h - sub_ptr->subset_bounds.top_left.h;
 			UnuseMemory(*subref_list);
@@ -1263,7 +1264,7 @@ PG_PASCAL (long) pgMatrixWidth (paige_rec_ptr pg, paige_sub_ptr home_sub_ptr, te
 		
 		UnuseMemory(block->subref_list);
 		
-		matrix_ptr = UseMemory(matrix_ref);
+		matrix_ptr = (subref_matrix_ptr) UseMemory(matrix_ref);
 		
 		for (column_ctr = 0; column_ctr < num_columns; ++column_ctr) {
 			
@@ -1282,7 +1283,7 @@ PG_PASCAL (long) pgMatrixWidth (paige_rec_ptr pg, paige_sub_ptr home_sub_ptr, te
 			for (row_index = row_ctr = 0; row_ctr < num_rows; ++row_ctr, row_index += num_columns) {
 				
 				subref = matrix_ptr[row_index].ref;
-				sub_ptr = UseMemory(subref);
+				sub_ptr = (paige_sub_ptr) UseMemory(subref);
 				sub_ptr->minimum_width = widest_width;
 				
 				if (sub_ptr->minimum_width < sub_ptr->empty_width)
@@ -1327,12 +1328,12 @@ PG_PASCAL (void) pgInvalMatrix (paige_rec_ptr pg, text_block_ptr block, pg_boole
 	long				num_subs;
 	paige_sub_ptr		sub_ptr;
 
-	subref_list = UseMemory(block->subref_list);
+	subref_list = (pg_subref_ptr) UseMemory(block->subref_list);
 	num_subs = GetMemorySize(block->subref_list);
 	
 	while (num_subs) {
 		
-		sub_ptr = UseMemory(*subref_list);
+		sub_ptr = (paige_sub_ptr) UseMemory(*subref_list);
 		
 		if (zero_widths)
 			sub_ptr->minimum_width = sub_ptr->empty_width;
@@ -1364,7 +1365,7 @@ PG_PASCAL (long) pgFindSubrefPosition (text_block_ptr block, pg_short_t local_po
 	if (text_size == 0 || local_position == 0 || num_subs == 0)
 		return	0;
 	
-	text = UseMemory(block->text);
+	text = (pg_byte_ptr) UseMemory(block->text);
 	subref_pos = text_pos = 0;
 	
 	while (text_pos < local_position) {
@@ -1393,11 +1394,11 @@ PG_PASCAL (long) pgSubrefHomePosition (paige_rec_ptr pg, pg_subref subref)
 	paige_sub_ptr			home_ptr, sub_ptr;
 	block_ref				blockref;
 
-	sub_ptr = UseMemory(subref);
+	sub_ptr = (paige_sub_ptr) UseMemory(subref);
 	
 	if (sub_ptr->home_sub) {
 		
-		home_ptr = UseMemory(sub_ptr->home_sub);
+		home_ptr = (paige_sub_ptr) UseMemory(sub_ptr->home_sub);
 		blockref = home_ptr->t_blocks;
 		UnuseMemory(sub_ptr->home_sub);
 	}
@@ -1430,7 +1431,7 @@ PG_PASCAL (pg_subref) pgGetNthSubref (paige_rec_ptr pg, long index)
 	if (index == 0)
 		return	MEM_NULL;
 
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	num_blocks = GetMemorySize(pg->t_blocks);
 	result = MEM_NULL;
 	counter = index - 1;
@@ -1441,7 +1442,7 @@ PG_PASCAL (pg_subref) pgGetNthSubref (paige_rec_ptr pg, long index)
 		
 		if (num_subs > counter) {
 			
-			subref_list = UseMemory(block->subref_list);
+			subref_list = (pg_subref_ptr) UseMemory(block->subref_list);
 			result = subref_list[counter];
 			UnuseMemory(block->subref_list);
 			
@@ -1499,7 +1500,7 @@ PG_PASCAL (void) pgDeleteSubRefs (text_block_ptr block, long local_offset, long 
 	if ((num_subs = GetMemorySize(block->subref_list)) == 0)
 		return;
 	
-	text = UseMemory(block->text);
+	text = (pg_byte_ptr) UseMemory(block->text);
 	
 	for (subref_ctr = offset_ctr = 0; offset_ctr < local_offset; ++offset_ctr)
 		if (text[offset_ctr] == SUBREF_CHAR)
@@ -1537,13 +1538,13 @@ PG_PASCAL (void) pgDisposeAllSubRefs (block_ref blocks)
 	long						num_blocks, num_subs;
 	
 	num_blocks = GetMemorySize(blocks);
-	block = UseMemory(blocks);
+	block = (text_block_ptr) UseMemory(blocks);
 	
 	while (num_blocks) {
 		
 		if ((num_subs = GetMemorySize(block->subref_list)) > 0) {
 			
-			subref_list = UseMemory(block->subref_list);
+			subref_list = (pg_subref_ptr) UseMemory(block->subref_list);
 			
 			while (num_subs) {
 				
@@ -1575,13 +1576,13 @@ PG_PASCAL (void) pgDuplicateAllSubRefs (paige_rec_ptr src_pg, paige_rec_ptr targ
 	long						num_blocks, num_subs;
 	
 	num_blocks = GetMemorySize(blocks);
-	block = UseMemory(blocks);
+	block = (text_block_ptr) UseMemory(blocks);
 	
 	while (num_blocks) {
 		
 		if ((num_subs = GetMemorySize(block->subref_list)) > 0) {
 			
-			subref_list = UseMemory(block->subref_list);
+			subref_list = (pg_subref_ptr) UseMemory(block->subref_list);
 			
 			while (num_subs) {
 				
@@ -1627,7 +1628,7 @@ PG_PASCAL (void) pgCopySubRefs (paige_rec_ptr src_pg, paige_rec_ptr target_pg,
 
 	while (begin_text < end_text) {
 		
-		text = UseMemory(block->text);
+		text = (pg_byte_ptr) UseMemory(block->text);
 		text += (begin_text - block->begin);
 		
 		if ((end_block = block->end) > end_text)
@@ -1639,7 +1640,7 @@ PG_PASCAL (void) pgCopySubRefs (paige_rec_ptr src_pg, paige_rec_ptr target_pg,
 				
 				if ((subref = pgGetSourceSubRef(src_pg, source_range->begin + offset_ctr)) != MEM_NULL) {
 				
-					subref_list = InsertMemory(block->subref_list, subref_index, 1);
+					subref_list = (pg_subref_ptr) InsertMemory(block->subref_list, subref_index, 1);
 					*subref_list = pgDuplicateRef(src_pg, target_pg, subref, target_pg->active_subset);
 					UnuseMemory(block->subref_list);
 
@@ -1697,11 +1698,11 @@ PG_PASCAL (void) pgPackSubRefs (pack_walk_ptr walker, text_block_ptr block)
 	
 	if (num_subs) {
 		
-		subref_list = UseMemory(block->subref_list);
+		subref_list = (pg_subref_ptr) UseMemory(block->subref_list);
 		
 		while (num_subs) {
 			
-			sub_ptr = UseMemory(*subref_list);
+			sub_ptr = (paige_sub_ptr) UseMemory(*subref_list);
 			alternate_qty = GetMemorySize(*subref_list);
 			pgPackNum(walker, long_data, alternate_qty);
 			
@@ -1727,7 +1728,7 @@ PG_PASCAL (void) pgPackSubRefs (pack_walk_ptr walker, text_block_ptr block)
 				pgPackNum(walker, long_data, sub_ptr->callback_refcon);
 				pgPackNum(walker, short_data, sub_ptr->reserved1);
 				pgPackNum(walker, long_data, sub_ptr->reserved2);
-				pgPackBytes(walker, (pg_byte_ptr)&sub_ptr->reserved3, sizeof(double));
+				pgPackBytes(walker, (pg_bits8_ptr)&sub_ptr->reserved3, sizeof(double));
 				pgPackNum(walker, short_data, sub_ptr->reserved4);
 				pgPackNum(walker, short_data, sub_ptr->reserved5);
 				pgPackNum(walker, long_data, sub_ptr->reserved6);
@@ -1745,7 +1746,7 @@ PG_PASCAL (void) pgPackSubRefs (pack_walk_ptr walker, text_block_ptr block)
 				pgPackNum(walker, long_data, GetMemorySize(sub_ptr->target_hyperlinks));
 				pgPackHyperlinks(walker, sub_ptr->target_hyperlinks, NULL);
 
-				pgPackTextBlock(walker, UseMemory(sub_ptr->t_blocks), TRUE, TRUE);
+				pgPackTextBlock(walker, (text_block_ptr) UseMemory(sub_ptr->t_blocks), TRUE, TRUE);
 				UnuseMemory(sub_ptr->t_blocks);
 
 				++sub_ptr;
@@ -1784,12 +1785,12 @@ PG_PASCAL (long) pgUnpackSubRefs (paige_rec_ptr pg, pack_walk_ptr walker, text_b
 	while (num_subs) {
 		
 		subref = pgNewSubRef(GetGlobalsFromRef(block->text));
-		subref_list = AppendMemory(block->subref_list, 1, FALSE);
+		subref_list = (pg_subref_ptr) AppendMemory(block->subref_list, 1, FALSE);
 		*subref_list = subref;
 		UnuseMemory(block->subref_list);
 
 		alternate_qty = pgUnpackNum(walker);
-		sub_ptr = UseMemory(subref);
+		sub_ptr = (paige_sub_ptr) UseMemory(subref);
 		alt_index = 0;
 
 		while (alternate_qty) {
@@ -1820,7 +1821,7 @@ PG_PASCAL (long) pgUnpackSubRefs (paige_rec_ptr pg, pack_walk_ptr walker, text_b
 			sub_ptr->callback_refcon = pgUnpackNum(walker);
 			sub_ptr->reserved1 = (short)pgUnpackNum(walker);
 			sub_ptr->reserved2 = pgUnpackNum(walker);
-			pgUnpackPtrBytes(walker, (pg_byte_ptr)&sub_ptr->reserved3);
+			pgUnpackPtrBytes(walker, (pg_bits8_ptr)&sub_ptr->reserved3);
 
 			sub_ptr->reserved4 = (short)pgUnpackNum(walker);
 			sub_ptr->reserved5 = (short)pgUnpackNum(walker);
@@ -1841,13 +1842,13 @@ PG_PASCAL (long) pgUnpackSubRefs (paige_rec_ptr pg, pack_walk_ptr walker, text_b
 				ht_callback			callback;
 				long				links_qty;
 				
-				def_link = UseMemory(pg->hyperlinks);
+				def_link = (pg_hyperlink_ptr) UseMemory(pg->hyperlinks);
 				callback = def_link->callback;
 				UnuseMemory(pg->hyperlinks);
 				links_qty = pgUnpackNum(walker);
 				pgUnpackHyperlinks(pg, walker, callback, links_qty, sub_ptr->hyperlinks);
 
-				def_link = UseMemory(pg->target_hyperlinks);
+				def_link = (pg_hyperlink_ptr) UseMemory(pg->target_hyperlinks);
 				callback = def_link->callback;
 				UnuseMemory(pg->target_hyperlinks);
 				links_qty = pgUnpackNum(walker);
@@ -1855,16 +1856,16 @@ PG_PASCAL (long) pgUnpackSubRefs (paige_rec_ptr pg, pack_walk_ptr walker, text_b
 			}
 			else {
 
-				def_link = UseMemory(sub_ptr->hyperlinks);
+				def_link = (pg_hyperlink_ptr) UseMemory(sub_ptr->hyperlinks);
 				def_link->applied_range.begin = def_link->applied_range.end = sub_ptr->t_length + ZERO_TEXT_PAD;
 				UnuseMemory(sub_ptr->hyperlinks);
 
-				def_link = UseMemory(sub_ptr->target_hyperlinks);
+				def_link = (pg_hyperlink_ptr) UseMemory(sub_ptr->target_hyperlinks);
 				def_link->applied_range.begin = def_link->applied_range.end = sub_ptr->t_length + ZERO_TEXT_PAD;
 				UnuseMemory(sub_ptr->target_hyperlinks);
 			}
 
-			sub_block = UseMemory(sub_ptr->t_blocks);
+			sub_block = (text_block_ptr) UseMemory(sub_ptr->t_blocks);
 			pgUnpackTextBlock(pg, walker, sub_block, TRUE, subref);
 			sub_block->flags |= NEEDS_CALC;
 			UnuseMemory(sub_ptr->t_blocks);
@@ -1875,7 +1876,7 @@ PG_PASCAL (long) pgUnpackSubRefs (paige_rec_ptr pg, pack_walk_ptr walker, text_b
 			if (alternate_qty > 0) {
 				
 				AppendMemory(subref, 1, TRUE);
-				sub_ptr = UseMemoryRecord(subref, 0, USE_ALL_RECS, FALSE);
+				sub_ptr = (paige_sub_ptr) UseMemoryRecord(subref, 0, USE_ALL_RECS, FALSE);
 				pgAllocateAlternate(sub_ptr, alt_index);
 				sub_ptr += alt_index;
 			}
@@ -1909,14 +1910,14 @@ PG_PASCAL (long) pgRedrawSubsetLine (paige_rec_ptr pg_rec, pg_subref subref, lon
 		return	previous_redraw;
 	
 	current_ref = subref;
-	sub_ptr = UseMemory(current_ref);
+	sub_ptr = (paige_sub_ptr) UseMemory(current_ref);
 	
 	while (sub_ptr->home_sub) {
 		
 		next_ref = sub_ptr->home_sub;
 		UnuseMemory(current_ref);
 		current_ref = next_ref;
-		sub_ptr = UseMemory(current_ref);
+		sub_ptr = (paige_sub_ptr) UseMemory(current_ref);
 	}
 	
 	UnuseMemory(current_ref);
@@ -1926,7 +1927,7 @@ PG_PASCAL (long) pgRedrawSubsetLine (paige_rec_ptr pg_rec, pg_subref subref, lon
 	
 	block = pgFindTextBlock(pg_rec, home_home_position, NULL, TRUE, TRUE);
 	local_position = (pg_short_t)(home_home_position - block->begin);
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	
 	while (starts[1].offset <= local_position) {
 		
@@ -1978,7 +1979,7 @@ PG_PASCAL (pg_boolean) pgActiveMatrix (paige_rec_ptr pg)
 
 	if (pg->active_subset) {
 		
-		sub_ptr = UseMemory(pg->active_subset);
+		sub_ptr = (paige_sub_ptr) UseMemory(pg->active_subset);
 		
 		result = (pg_boolean)((sub_ptr->subref_flags & SUBREF_MATRIXALIGN) != 0);
 		
@@ -1997,7 +1998,7 @@ PG_PASCAL (long PG_FAR*) pgGetSubrefCharLocs (paige_rec_ptr pg, text_block_ptr b
 
 	if (pgActiveMatrix(pg)) {
 		
-		sub_ptr = UseMemory(pg->active_subset);
+		sub_ptr = (paige_sub_ptr) UseMemory(pg->active_subset);
 		pgInvalSubBlocks(pg, sub_ptr);
 		pgInvalMatrix(pg, block, TRUE);
 		pgInvalMatrix(pg, block, FALSE);
@@ -2048,7 +2049,7 @@ PG_PASCAL (memory_ref) pgGetThisSubset (pg_measure_ptr line_info, long current_o
 		if ((types[index] & PG_SUBSET_BIT) == PG_SUBSET_BIT)
 			subref_index += 1;
 	
-	subref_list = UseMemory(line_info->block->subref_list);
+	subref_list = (pg_subref_ptr) UseMemory(line_info->block->subref_list);
 	result = subref_list[subref_index];
 	UnuseMemory(line_info->block->subref_list);
 	
@@ -2073,16 +2074,16 @@ PG_PASCAL (pg_subref) pgPtInSubRef (paige_rec_ptr pg, co_ordinate_ptr mouse_poin
 	pgAddPt(&pg->scroll_pos, &point);
 
 	num_blocks = GetMemorySize(pg->t_blocks);
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	
 	while (num_blocks && (result == MEM_NULL)) {
 		
 		num_subs = GetMemorySize(block->subref_list);
-		subref_list = UseMemory(block->subref_list);
+		subref_list = (pg_subref_ptr) UseMemory(block->subref_list);
 		
 		while (num_subs) {
 			
-			sub_ptr = UseMemory(*subref_list);
+			sub_ptr = (paige_sub_ptr) UseMemory(*subref_list);
 			sub_ptr += sub_ptr->alt_index;
 
 			if (sub_ptr->subref_flags & SUBREF_DRAWN)
@@ -2149,7 +2150,7 @@ static long position_to_index (text_block_ptr block, long position)
 	register long				index;
 	long						result;
 	
-	text = UseMemory(block->text);
+	text = (pg_byte_ptr) UseMemory(block->text);
 
 	for (index = 0, result = 0; index < position; index += 1)
 		if (text[index] == SUBREF_CHAR)
@@ -2177,11 +2178,11 @@ static void pin_bounds_to_rect (paige_rec_ptr pg, pg_subref subref, rectangle_pt
 	long				num_blocks, offset_h, offset_v, baseline_diff;
 	long				alignment_flags, width;
 
-	sub_ptr = UseMemory(subref);
+	sub_ptr = (paige_sub_ptr) UseMemory(subref);
 	sub_ptr += sub_ptr->alt_index;
 
 	num_blocks = GetMemorySize(sub_ptr->t_blocks);
-	block = UseMemory(sub_ptr->t_blocks);
+	block = (text_block_ptr) UseMemory(sub_ptr->t_blocks);
 
 	offset_h = bounds->top_left.h - block->bounds.top_left.h;
 	offset_v = bounds->top_left.v - block->bounds.top_left.v;
@@ -2190,8 +2191,8 @@ static void pin_bounds_to_rect (paige_rec_ptr pg, pg_subref subref, rectangle_pt
 		style_run_ptr		run;
 		par_info_ptr		par;
 		
-		run = UseMemory(sub_ptr->par_style_run);
-		par = UseMemoryRecord(pg->par_formats, (long)run->style_item, 0, TRUE);
+		run = (style_run_ptr) UseMemory(sub_ptr->par_style_run);
+		par = (par_info_ptr) UseMemoryRecord(pg->par_formats, (long)run->style_item, 0, TRUE);
 		offset_h += par->table.cell_h_extra;
 		UnuseMemory(pg->par_formats);
 		UnuseMemory(sub_ptr->par_style_run);
@@ -2199,7 +2200,7 @@ static void pin_bounds_to_rect (paige_rec_ptr pg, pg_subref subref, rectangle_pt
 
 	pgFillBlock(&initial_bounds, sizeof(rectangle), 0);
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 
 	while (starts->flags != TERMINATOR_BITS) {
 		
@@ -2246,7 +2247,7 @@ static void pin_bounds_to_rect (paige_rec_ptr pg, pg_subref subref, rectangle_pt
 			if (adjacent_sub = get_adjacent_subref(draw_position->block, subref,
 						(pg_boolean)((alignment_flags & (SUBREF_ALIGNTOP | SUBREF_ALIGNMIDDLE)) != 0))) {
 				
-				adjacent_ptr = UseMemory(adjacent_sub);
+				adjacent_ptr = (paige_sub_ptr) UseMemory(adjacent_sub);
 				resulting_bounds = initial_bounds;
 				pgOffsetRect(&resulting_bounds, offset_h, offset_v);
 
@@ -2273,7 +2274,7 @@ static void pin_bounds_to_rect (paige_rec_ptr pg, pg_subref subref, rectangle_pt
 		pgOffsetRect(&block->bounds, offset_h, offset_v);
 		pgOffsetRect(&block->end_start.bounds, offset_h, offset_v);
 
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 
 		while (starts->flags != TERMINATOR_BITS) {
 			
@@ -2302,7 +2303,7 @@ static pg_subref get_adjacent_subref (text_block_ptr block, pg_subref current_re
 	
 	result = MEM_NULL;
 	num_subs = (short)GetMemorySize(block->subref_list);
-	subref_list = UseMemory(block->subref_list);
+	subref_list = (pg_subref_ptr) UseMemory(block->subref_list);
 	
 	for (index = 0; index < num_subs; ++index)
 		if (subref_list[index] == current_ref)
@@ -2362,7 +2363,7 @@ static void initialize_sub_record (pgm_globals_ptr mem_globals, paige_sub_ptr su
 	sub_ptr->width_table.used_ctr = 0;
 
 	sub_ptr->t_blocks = MemoryAllocClear(mem_globals, sizeof(text_block), 1, 0);
-	block = UseMemory(sub_ptr->t_blocks);
+	block = (text_block_ptr) UseMemory(sub_ptr->t_blocks);
 
 	block->text = MemoryAlloc(mem_globals, sizeof(pg_byte), 0, 16);
 	block->lines = MemoryAllocClear(mem_globals, sizeof(point_start), 2, 1);
@@ -2370,7 +2371,7 @@ static void initialize_sub_record (pgm_globals_ptr mem_globals, paige_sub_ptr su
 	SetMemoryPurge(block->text, LINE_PURGE_STATUS, FALSE);
 	block->subref_list = MemoryAlloc(mem_globals, sizeof(memory_ref), 0, 8);
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	starts->flags = NEW_LINE_BIT | LINE_BREAK_BIT;
 	++starts;
 	starts->flags = TERMINATOR_BITS;
@@ -2386,19 +2387,19 @@ static void initialize_sub_record (pgm_globals_ptr mem_globals, paige_sub_ptr su
 	sub_ptr->hyperlinks = MemoryAllocClear(mem_globals, sizeof(pg_hyperlink), 1, 0);
 	sub_ptr->target_hyperlinks = MemoryAllocClear(mem_globals, sizeof(pg_hyperlink), 1, 0);
 
-	first_run = UseMemory(sub_ptr->t_style_run);
+	first_run = (style_run_ptr) UseMemory(sub_ptr->t_style_run);
 	first_run[1].offset = ZERO_TEXT_PAD;
 	UnuseMemory(sub_ptr->t_style_run);
 
-	first_run = UseMemory(sub_ptr->par_style_run);
+	first_run = (style_run_ptr) UseMemory(sub_ptr->par_style_run);
 	first_run[1].offset = ZERO_TEXT_PAD;
 	UnuseMemory(sub_ptr->par_style_run);
 
-	first_link = UseMemory(sub_ptr->hyperlinks);
+	first_link = (pg_hyperlink_ptr) UseMemory(sub_ptr->hyperlinks);
 	first_link->applied_range.begin = first_link->applied_range.end = ZERO_TEXT_PAD;
 	UnuseMemory(sub_ptr->hyperlinks);
 
-	first_link = UseMemory(sub_ptr->target_hyperlinks);
+	first_link = (pg_hyperlink_ptr) UseMemory(sub_ptr->target_hyperlinks);
 	first_link->applied_range.begin = first_link->applied_range.end = ZERO_TEXT_PAD;
 	UnuseMemory(sub_ptr->target_hyperlinks);
 
@@ -2427,9 +2428,9 @@ static pg_subref invalidate_hierarchy (paige_rec_ptr pg)
 	while (stack_size > 1) {
 		
 		--stack_size;
-		stack_ptr = UseMemoryRecord(pg->subref_stack, stack_size, 0, TRUE);
+		stack_ptr = (paige_sub_ptr) UseMemoryRecord(pg->subref_stack, stack_size, 0, TRUE);
 		active_subset = stack_ptr->active_subset;
-		sub_ptr = UseMemory(active_subset);
+		sub_ptr = (paige_sub_ptr) UseMemory(active_subset);
 		sub_ptr += sub_ptr->alt_index;
 		pgInvalSubBlocks(pg, sub_ptr);
 		pgInvalSubBlocks(pg, stack_ptr);
@@ -2453,18 +2454,18 @@ static void decrement_subset_styles (block_ref t_blocks, pg_short_t bad_index,
 	long							num_blocks, num_subs, alt_qty;
 	
 	num_blocks = GetMemorySize(t_blocks);
-	block = UseMemory(t_blocks);
+	block = (text_block_ptr) UseMemory(t_blocks);
 	
 	while (num_blocks) {
 		
 		if ((num_subs = GetMemorySize(block->subref_list)) != 0) {
 			
-			subref_list = UseMemory(block->subref_list);
+			subref_list = (pg_subref_ptr) UseMemory(block->subref_list);
 			
 			while (num_subs) {
 				
 				alt_qty = GetMemorySize(*subref_list);
-				sub_ptr = UseMemory(*subref_list);
+				sub_ptr = (paige_sub_ptr) UseMemory(*subref_list);
 				
 				while (alt_qty) {
 					
@@ -2516,7 +2517,7 @@ static long locate_subref_position (block_ref blocks, pg_subref subref)
 	pg_subref				matching_ref;
 	long					result, num_blocks, num_subs, sub_ctr;
 	
-	block = UseMemory(blocks);
+	block = (text_block_ptr) UseMemory(blocks);
 	num_blocks = GetMemorySize(blocks);
 	matching_ref = MEM_NULL;
 
@@ -2524,7 +2525,7 @@ static long locate_subref_position (block_ref blocks, pg_subref subref)
 	
 		if ((num_subs = GetMemorySize(block->subref_list)) > 0) {
 			
-			subref_list = UseMemory(block->subref_list);
+			subref_list = (pg_subref_ptr) UseMemory(block->subref_list);
 			
 			for (sub_ctr = 1; sub_ctr <= num_subs; ++subref_list, ++sub_ctr)
 				if (*subref_list == subref) {
@@ -2547,7 +2548,7 @@ static long locate_subref_position (block_ref blocks, pg_subref subref)
 
 	if (matching_ref) {
 		
-		text = UseMemory(block->text);
+		text = (pg_byte_ptr) UseMemory(block->text);
 		text_size = (short)(block->end - block->begin);
 		result = block->begin;
 		
@@ -2582,7 +2583,7 @@ static pg_short_t locate_stylesheet_option (paige_rec_ptr pg, short stylesheet_o
 
 	result = 0;
 
-	styles = UseMemory(pg->t_formats);
+	styles = (style_info_ptr) UseMemory(pg->t_formats);
 	style_qty = GetMemorySize(pg->t_formats);
 	
 	for (style_ctr = 1; style_ctr <= style_qty; ++styles, ++style_ctr)
@@ -2654,7 +2655,7 @@ static void pack_select_pairs (pack_walk_ptr walker, memory_ref selection_ref)
 	qty = GetMemorySize(selection_ref);
 	pgPackNum(walker, long_data, qty);
 	
-	for (selections = UseMemory(selection_ref); qty; ++selections, --qty)
+	for (selections = (select_pair_ptr) UseMemory(selection_ref); qty; ++selections, --qty)
 		pgPackSelectPair(walker, selections);
 	
 	UnuseMemory(selection_ref);
@@ -2683,7 +2684,7 @@ static void unpack_select_pairs (pack_walk_ptr walker, memory_ref selection_ref)
 	qty = pgUnpackNum(walker);
 	SetMemorySize(selection_ref, qty);
 	
-	for (selections = UseMemory(selection_ref); qty; ++selections, --qty)
+	for (selections = (select_pair_ptr) UseMemory(selection_ref); qty; ++selections, --qty)
 		pgUnpackSelectPair(walker, selections);
 	
 	UnuseMemory(selection_ref);
@@ -2705,7 +2706,7 @@ static void invalidate_subref (paige_rec_ptr pg, pg_subref ref)
 	while (last_ref) {
 		
 		this_ref = last_ref;
-		sub_ptr = UseMemory(this_ref);
+		sub_ptr = (paige_sub_ptr) UseMemory(this_ref);
 		
 		if (!(last_ref = sub_ptr->home_sub))
 			home_pos = pgSubrefHomePosition(pg, this_ref);
@@ -2717,7 +2718,7 @@ static void invalidate_subref (paige_rec_ptr pg, pg_subref ref)
 
 	if (pg->active_subset) {
 		
-		sub_ptr = UseMemory(pg->subref_stack);
+		sub_ptr = (paige_sub_ptr) UseMemory(pg->subref_stack);
 		blockref = sub_ptr->t_blocks;
 		pgInvalSubBlocks(pg, sub_ptr);
 		UnuseMemory(pg->subref_stack);
@@ -2729,7 +2730,7 @@ static void invalidate_subref (paige_rec_ptr pg, pg_subref ref)
 	}
 
 	num_blocks = GetMemorySize(blockref);
-	block = UseMemory(blockref);
+	block = (text_block_ptr) UseMemory(blockref);
 	
 	while (num_blocks) {
 		
@@ -2761,7 +2762,7 @@ static void transfer_style_indexes (paige_rec_ptr source_pg, paige_rec_ptr targe
 	short						stylesheet;
 
 	num_runs = GetMemorySize(runref) - 1;
-	run = UseMemory(runref);
+	run = (style_run_ptr) UseMemory(runref);
 	
 	while (num_runs) {
 		
@@ -2791,7 +2792,7 @@ static void transfer_style_indexes (paige_rec_ptr source_pg, paige_rec_ptr targe
 
 		run->style_item = pgAddStyleInfo(target_pg, source_pg, internal_clone_reason, &new_style);
 		
-		added_style = UseMemoryRecord(target_pg->t_formats, (long)run->style_item, 0, TRUE);
+		added_style = (style_info_ptr) UseMemoryRecord(target_pg->t_formats, (long)run->style_item, 0, TRUE);
 		added_style->used_ctr += 1;
 		UnuseMemory(target_pg->t_formats);
 		
@@ -2818,7 +2819,7 @@ static void invalidate_selections (paige_sub_ptr sub_ptr)
 	t_select_ptr		selections;
 	long				num_selects;
 	
-	selections = UseMemory(sub_ptr->select);
+	selections = (t_select_ptr) UseMemory(sub_ptr->select);
 	num_selects = GetMemorySize(sub_ptr->select);
 	
 	while (num_selects) {
@@ -2839,7 +2840,7 @@ static void clear_hilite (paige_rec_ptr pg)
 	long				current_select;
 
 	pgTurnOffHighlight(pg, FALSE);
-	select = UseMemory(pg->select);
+	select = (t_select_ptr) UseMemory(pg->select);
 	current_select = select->offset;
 	UnuseMemory(pg->select);
 	pgSetSelection(pg->myself, current_select, current_select, 0, FALSE);

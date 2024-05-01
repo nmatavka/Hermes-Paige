@@ -182,8 +182,8 @@ PG_PASCAL (void) pgLineDraw (graf_device_ptr port, co_ordinate_ptr start_pt,
 
       brush = CreateSolidBrush((COLORREF)color);
       pen = CreatePen(PS_SOLID, 1, (COLORREF)color);
-      old_brush = SelectObject(hdc, brush);
-      old_pen = SelectObject(hdc, pen);
+      old_brush = (HBRUSH) SelectObject(hdc, brush);
+      old_pen = (HPEN) SelectObject(hdc, pen);
       Rectangle(hdc, r.left, r.top, r.right, r.bottom);
       //FrameRect(hdc, &r, brush); // PDA
       SelectObject(hdc, old_brush);
@@ -279,7 +279,7 @@ PG_PASCAL (void) pgFrameObject (graf_device_ptr port, rectangle_ptr frame,
 
       hdc = (HDC)port->machine_ref;
       brush = CreateSolidBrush((COLORREF)0);
-      old_brush = SelectObject(hdc, brush);
+      old_brush = (HBRUSH) SelectObject(hdc, brush);
 
    switch (object_verb) {
 
@@ -362,7 +362,7 @@ PG_PASCAL (void) pgFrameRect (graf_device_ptr port, rectangle_ptr frame,
 
    hdc = (HDC)port->machine_ref;
    brush = CreateSolidBrush((COLORREF)color);
-   old_brush = SelectObject(hdc, brush);
+   old_brush = (HBRUSH) SelectObject(hdc, brush);
    FrameRect(hdc, &r, brush);
    SelectObject(hdc, old_brush);
    DeleteObject(brush);
@@ -478,7 +478,7 @@ PG_PASCAL (void) pgFillPoly (graf_device_ptr port, poly_ref poly,
 {
    pg_poly_ptr          poly_ptr;
    
-   poly_ptr = UseMemory(poly);
+   poly_ptr = (pg_poly_ptr) UseMemory(poly);
 
 #ifdef MAC_PLATFORM
    {
@@ -706,7 +706,7 @@ PG_PASCAL (void) pgOpenPoly (pgm_globals_ptr mem_globals, rectangle_ptr frame,
 
    drawing_device->poly_save = MemoryAllocClear(mem_globals, 1,
       sizeof(pg_poly_rec) - sizeof(co_ordinate), 32);
-   new_poly = UseMemory(drawing_device->poly_save);
+   new_poly = (pg_poly_ptr) UseMemory(drawing_device->poly_save);
    
    new_poly->height = (short)(frame->bot_right.v - frame->top_left.v);
    new_poly->width = (short)(frame->bot_right.h - frame->top_left.h);
@@ -735,7 +735,7 @@ PG_PASCAL (void) pgPolyBounds (poly_ref poly, long PG_FAR *width, long PG_FAR *h
 {
    pg_poly_ptr       poly_ptr;
    
-   poly_ptr = UseMemory(poly);
+   poly_ptr = (pg_poly_ptr) UseMemory(poly);
    
    if (width)
       *width = (long)poly_ptr->width;
@@ -758,7 +758,7 @@ PG_PASCAL (void) pgOpenPicture (pgm_globals_ptr mem_globals, rectangle_ptr frame
 
    drawing_device->pict_save = MemoryAllocClear(mem_globals, 1,
       sizeof(picture_header), 32);
-   new_pict = UseMemory(drawing_device->pict_save);
+   new_pict = (picture_header_ptr) UseMemory(drawing_device->pict_save);
    
    new_pict->height = (short)(frame->bot_right.v - frame->top_left.v);
    new_pict->width = (short)(frame->bot_right.h - frame->top_left.h);
@@ -789,7 +789,7 @@ PG_PASCAL (void) pgPictureBounds (picture_ref picture, long PG_FAR *width, long 
 {
    picture_header_ptr         pict_ptr;
    
-   pict_ptr = UseMemory(picture);
+   pict_ptr = (picture_header_ptr) UseMemory(picture);
    
    if (width)
       *width = (long)pict_ptr->width;
@@ -823,7 +823,7 @@ extern PG_PASCAL (void) pgDrawPicture (graf_device_ptr drawing_device,
    if (clip_to_frame)
       old_clip = pgSetClipRect(drawing_device, pict_frame, NULL);
 
-   pict_byte_data = UseMemory(picture);
+   pict_byte_data = (pg_char_ptr) UseMemory(picture);
    header = (picture_header_ptr)pict_byte_data;
    pict_byte_data += sizeof(picture_header);
    pen_size.h = pen_size.v = 1;
@@ -1002,7 +1002,7 @@ PG_PASCAL (void) pgRestoreClipRgn (graf_device_ptr device, generic_var rgn)
 #ifdef WINDOWS_PLATFORM
    HRGN			old_rgn;
    
-   old_rgn = SelectObject((HDC)device->machine_ref, (HRGN)rgn);
+   old_rgn = (HRGN) SelectObject((HDC)device->machine_ref, (HRGN)rgn);
    DeleteObject(old_rgn);
 #endif
 }
@@ -1105,7 +1105,7 @@ PG_PASCAL (void) pgPackPoly (pack_walk_ptr walker, poly_ref poly)
    if (!poly_size)
       return;
    
-   poly_ptr = UseMemory(poly);
+   poly_ptr = (pg_poly_ptr) UseMemory(poly);
    pack_poly_rec(walker, poly_ptr);
    UnuseMemory(poly);
 }
@@ -1121,7 +1121,7 @@ PG_PASCAL (void) pgPackBitMap (pack_walk_ptr walker, bitmap_ref b_map)
    pg_bitmap_ptr  bmap_ptr;
    long        palette_size;
    
-   bmap_ptr = UseMemory(b_map);
+   bmap_ptr = (pg_bitmap_ptr) UseMemory(b_map);
    if (bmap_ptr->palette)
       palette_size = GetMemorySize(bmap_ptr->palette);
    else
@@ -1153,7 +1153,7 @@ PG_PASCAL (poly_ref) pgUnpackPoly (pack_walk_ptr walker)
    if (poly_size = pgUnpackNum(walker)) {
       
       new_poly = MemoryAllocClear(GetGlobalsFromRef(walker->data_ref), 1, poly_size, 0);
-      poly_ptr = UseMemory(new_poly);
+      poly_ptr = (pg_poly_ptr) UseMemory(new_poly);
       unpack_poly_rec(walker, poly_ptr);
       UnuseMemory(new_poly);
    }
@@ -1173,7 +1173,7 @@ PG_PASCAL (picture_ref) pgUnpackBitMap (pack_walk_ptr walker)
    new_bmap = MemoryAlloc(GetGlobalsFromRef(walker->data_ref), 1, 0, 0);
    pgUnpackBytes(walker, new_bmap);
 
-   bmap_ptr = UseMemory(new_bmap);
+   bmap_ptr = (pg_bitmap_ptr) UseMemory(new_bmap);
    bmap_ptr->palette = MEM_NULL;
 
    bmap_ptr->palette = MemoryAlloc(GetGlobalsFromRef(walker->data_ref), 1, 0, 0);
@@ -1490,9 +1490,9 @@ static void save_poly_points (poly_ref poly, co_ordinate_ptr first_pt, co_ordina
    pg_poly_ptr       poly_ptr;
    co_ordinate_ptr      new_points;
 
-   poly_ptr = UseMemory(poly);
+   poly_ptr = (pg_poly_ptr) UseMemory(poly);
    poly_ptr->num_points += 2;
-   new_points = AppendMemory(poly, sizeof(co_ordinate) * 2, FALSE);
+   new_points = (co_ordinate_ptr) AppendMemory(poly, sizeof(co_ordinate) * 2, FALSE);
    new_points[0] = *first_pt;
    new_points[1] = *second_pt;
    

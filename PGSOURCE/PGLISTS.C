@@ -86,7 +86,7 @@ PG_PASCAL (long) pgFindInList(pg_list_ref list, void PG_FAR *data, pg_list_compa
 	{
 		pg_byte_ptr				p;
 		
-		p = UseMemoryRecord (list, i, 1 , TRUE);
+		p = (pg_byte_ptr) UseMemoryRecord (list, i, 1 , TRUE);
 
 		if (compare_proc((void PG_FAR *)p, compare_data))
 		{
@@ -115,7 +115,7 @@ PG_PASCAL (long) pgChangeInList(pg_list_ref list, long index, void PG_FAR *data)
 	{
 		pg_byte_ptr				p;
 		
-		p = UseMemoryRecord (list, indexx, 1 , TRUE);
+		p = (pg_byte_ptr) UseMemoryRecord (list, indexx, 1 , TRUE);
 		if (data)
 			pgBlockMove(data, p, GetMemoryRecSize(list));
 		UnuseMemory(list);
@@ -139,7 +139,7 @@ PG_PASCAL (long) pgGetFromList(pg_list_ref list, long index, void PG_FAR *data)
 	{
 		pg_byte_ptr				p;
 		
-		p = UseMemoryRecord (list, indexx, 1 , TRUE);
+		p = (pg_byte_ptr) UseMemoryRecord (list, indexx, 1 , TRUE);
 		if (data)
 			pgBlockMove(p, data, GetMemoryRecSize(list));
 		UnuseMemory(list);
@@ -160,7 +160,7 @@ PG_PASCAL (long) pgRemoveFromList(pg_list_ref list, long index, pg_list_delete_p
 	{
 		pg_byte_ptr				p;
 		
-		p = UseMemoryRecord (list, index, 1 , TRUE);
+		p = (pg_byte_ptr) UseMemoryRecord (list, index, 1 , TRUE);
 		if (delete_proc)
 			delete_proc(p);
 		UnuseMemory(list);

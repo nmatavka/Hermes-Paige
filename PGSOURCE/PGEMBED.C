@@ -195,7 +195,7 @@ PG_PASCAL (embed_ref) pgNewEmbedRef (pgm_globals_ptr mem_globals, long item_type
    mem_globals->current_id = mem_globals->next_mem_id;
 
    result = MemoryAllocClear(mem_globals, sizeof(pg_embed_rec), 1, 0);
-   embed_ptr = UseMemory(result);
+   embed_ptr = (pg_embed_ptr) UseMemory(result);
 
    embed_ptr->version = CURRENT_EMBED_VERSION;
    embed_ptr->type = item_type;
@@ -239,7 +239,7 @@ PG_PASCAL (void) pgEmbedDispose (embed_ref ref)
 {
    pg_embed_ptr         embed_ptr;
    
-   embed_ptr = UseMemory(ref);
+   embed_ptr = (pg_embed_ptr) UseMemory(ref);
    pgDefaultEmbedCallback((paige_rec_ptr)NULL, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK,
          EMBED_DESTROY, 0, 0, 0);
 
@@ -261,7 +261,7 @@ PG_PASCAL (embed_ref) pgGetExistingEmbed (pg_ref pg, long user_refcon)
    result = MEM_NULL;
    num_styles = GetMemorySize(pg_rec->t_formats);
    
-   for (styles = UseMemory(pg_rec->t_formats); num_styles; ++styles, --num_styles)
+   for (styles = (style_info_ptr) UseMemory(pg_rec->t_formats); num_styles; ++styles, --num_styles)
       if (styles->embed_object && (styles->embed_refcon == user_refcon)) {
             result = styles->embed_object;
             break;
@@ -307,7 +307,7 @@ PG_PASCAL (embed_ref) pgFindNextEmbed (pg_ref pg, long PG_FAR *text_position,
    num_styles = GetMemorySize(pg_rec->t_style_run) - 1;
    run = pgFindStyleRun(pg_rec, *text_position, &first_run);
    num_styles -= (long)first_run;
-   stylebase = UseMemory(pg_rec->t_formats);
+   stylebase = (style_info_ptr) UseMemory(pg_rec->t_formats);
 
    while (num_styles) {
       
@@ -318,7 +318,7 @@ PG_PASCAL (embed_ref) pgFindNextEmbed (pg_ref pg, long PG_FAR *text_position,
          if (!AND_refcon || ((style->embed_style_refcon & AND_refcon) == match_refcon)) {
             
             result = style->embed_object;
-            embed_ptr = UseMemory(result);
+            embed_ptr = (pg_embed_ptr) UseMemory(result);
             embed_ptr->style_refcon = style->embed_style_refcon;
             embed_ptr->lowlevel_index = (long)style_index;
             UnuseMemory(result);
@@ -370,7 +370,7 @@ PG_PASCAL (pg_boolean) pgInsertEmbedRef (pg_ref pg, embed_ref ref, long position
    if (pg_rec->num_selects)
       pgDelete(pg, NULL, draw_none);
    
-   embed_ptr = UseMemory(ref);
+   embed_ptr = (pg_embed_ptr) UseMemory(ref);
    type_and_flags = embed_ptr->type;
    the_type = type_and_flags & EMBED_TYPE_MASK;
 
@@ -383,7 +383,7 @@ PG_PASCAL (pg_boolean) pgInsertEmbedRef (pg_ref pg, embed_ref ref, long position
          
          if (pgFindSimilarEmbed(pg, ref, &new_style)) {
             
-            embed_ptr = UseMemory((memory_ref)new_style.embed_object);
+            embed_ptr = (pg_embed_ptr) UseMemory((memory_ref)new_style.embed_object);
             embed_ptr->used_ctr += 1;
             UnuseMemory((memory_ref)new_style.embed_object);
          new_style.procs.insert_proc = embed_setup_insert_init;
@@ -463,14 +463,14 @@ PG_PASCAL (embed_ref) pgFindSimilarEmbed (pg_ref pg, embed_ref ref, style_info_p
    pg_rec = (paige_rec_ptr) UseMemory(pg);
    num_styles = GetMemorySize(pg_rec->t_formats);
    result = MEM_NULL;
-   compare_to = UseMemory(ref);
+   compare_to = (pg_embed_ptr) UseMemory(ref);
    compare_type = compare_to->type & EMBED_TYPE_MASK;
 
-   for (styles = UseMemory(pg_rec->t_formats); num_styles; ++styles, --num_styles) {
+   for (styles = (style_info_ptr) UseMemory(pg_rec->t_formats); num_styles; ++styles, --num_styles) {
       
       if (styles->embed_object) {
          
-         embed_ptr = UseMemory((memory_ref)styles->embed_object);
+         embed_ptr = (pg_embed_ptr) UseMemory((memory_ref)styles->embed_object);
          
          the_type = embed_ptr->type & EMBED_TYPE_MASK;
          same_type = (pg_boolean)((the_type == compare_type)
@@ -542,8 +542,8 @@ PG_PASCAL (long) pgNumEmbeds (pg_ref pg, select_pair_ptr selection)
    if (select_ref = pgSetupOffsetRun(pg_rec, &use_to_init, FALSE, FALSE)) {
       
       num_selects = GetMemorySize(select_ref);
-      selections = UseMemory(select_ref);
-      style_base = UseMemory(pg_rec->t_formats);
+      selections = (select_pair_ptr) UseMemory(select_ref);
+      style_base = (style_info_ptr) UseMemory(pg_rec->t_formats);
 
       while (num_selects) {
          
@@ -608,8 +608,8 @@ PG_PASCAL (embed_ref) pgGetIndEmbed (pg_ref pg, select_pair_ptr selection, long 
    if (select_ref = pgSetupOffsetRun(pg_rec, selection, FALSE, FALSE)) {
       
       num_selects = GetMemorySize(select_ref);
-      selections = UseMemory(select_ref);
-      style_base = UseMemory(pg_rec->t_formats);
+      selections = (select_pair_ptr) UseMemory(select_ref);
+      style_base = (style_info_ptr) UseMemory(pg_rec->t_formats);
 
       while (num_selects) {
          
@@ -704,7 +704,7 @@ PG_PASCAL (embed_ref) pgPtInEmbed (pg_ref pg, co_ordinate_ptr point, long PG_FAR
          pgBlockMove(&the_style, associated_style, sizeof(style_info));
 
       pg_rec = (paige_rec_ptr) UseMemory(pg);
-      embed_ptr = UseMemory(ref);
+      embed_ptr = (pg_embed_ptr) UseMemory(ref);
       
       get_visual_frame(pg_rec, embed_ptr, &the_range, &bounds);
 
@@ -719,7 +719,7 @@ PG_PASCAL (embed_ref) pgPtInEmbed (pg_ref pg, co_ordinate_ptr point, long PG_FAR
             embed_ptr->style = &the_style;
             callback(pg_rec, embed_ptr, embed_type, EMBED_CURSOR,
                   the_style.embed_style_refcon, 
-                  (long)point, (long)bounds_ptr);
+                  point, bounds_ptr);
             embed_ptr->style = NULL;
          }
       }
@@ -750,8 +750,8 @@ PG_PASCAL (long) pgEmbedStyleToIndex (pg_ref pg, style_info_ptr embed_style)
    if (embed_style->embed_object) {
       
       pg_rec = (paige_rec_ptr) UseMemory(pg);
-      stylebase = UseMemory(pg_rec->t_formats);
-      run = UseMemory(pg_rec->t_style_run);
+      stylebase = (style_info_ptr) UseMemory(pg_rec->t_formats);
+      run = (style_run_ptr) UseMemory(pg_rec->t_style_run);
       num_runs = GetMemorySize(pg_rec->t_style_run) - 1;
       embed_id = embed_style->embed_id;
 
@@ -797,7 +797,7 @@ PG_PASCAL (embed_ref) pgGetEmbedJustClicked (pg_ref pg, long drag_select_result)
    result = MEM_NULL;
 
    num_styles = GetMemorySize(pg_rec->t_formats);
-   for (styles = UseMemory(pg_rec->t_formats); num_styles; ++styles, --num_styles)
+   for (styles = (style_info_ptr) UseMemory(pg_rec->t_formats); num_styles; ++styles, --num_styles)
       if (styles->embed_id == drag_select_result) {
          
          result = styles->embed_object;
@@ -832,7 +832,7 @@ PG_PASCAL (long) pgGetEmbedBounds (pg_ref pg, long index, select_pair_ptr index_
    if (ref = pgGetIndEmbed(pg, index_range, index, &style_range.begin, &style)) {
 
       pg_rec = (paige_rec_ptr) UseMemory(pg);
-      embed_ptr = UseMemory(ref);
+      embed_ptr = (pg_embed_ptr) UseMemory(ref);
       result = style_range.begin;
       style_range.end = style_range.begin + (style.char_bytes + 1);
       
@@ -871,7 +871,7 @@ PG_PASCAL (void) pgSetEmbedBounds (pg_ref pg, long index, select_pair_ptr index_
    if (ref = pgGetIndEmbed(pg, index_range, index, &position, &associated_style)) {
 
      pg_rec = (paige_rec_ptr) UseMemory(pg);
-     embed_ptr = UseMemory(ref);
+     embed_ptr = (pg_embed_ptr) UseMemory(ref);
      
      if (bounds) {
      
@@ -920,13 +920,13 @@ PG_PASCAL (void) pgInvalEmbedRef (pg_ref pg, long position, pg_embed_ptr embed_p
      pg_rec = (paige_rec_ptr) UseMemory(pg);
      pgInvalSelect(pg, position, position + 2);
      
-     run = UseMemory(pg_rec->t_style_run);
+     run = (style_run_ptr) UseMemory(pg_rec->t_style_run);
      
      while (run->offset <= position) {
         
         if (run->offset == position) {
            
-           style = UseMemoryRecord(pg_rec->t_formats, (long)run->style_item, 0, TRUE);
+           style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long)run->style_item, 0, TRUE);
            style->descent = (short)embed_ptr->descent;
            style->ascent = (short)(embed_ptr->height - embed_ptr->descent);
            UnuseMemory(pg_rec->t_formats);
@@ -962,7 +962,7 @@ PG_PASCAL (void) pgDrawAlternateText (graf_device_ptr device, pg_embed_ptr item,
    pg_short_t        the_size;
    
    if (item->data)
-      the_chars = UseMemory((memory_ref)item->data);
+      the_chars = (pg_char_ptr) UseMemory((memory_ref)item->data);
    else
       the_chars = (pg_char_ptr)&item->uu.alt_data;
 
@@ -984,7 +984,7 @@ PG_PASCAL (void) pgSetEmbedBorders (embed_ref ref, long border_info, long color,
 {
    pg_embed_ptr   embed;
    
-   embed = UseMemory(ref);
+   embed = (pg_embed_ptr) UseMemory(ref);
    embed->border_info = border_info;
    embed->border_color = color;
    embed->shading = shading;
@@ -1008,18 +1008,18 @@ PG_PASCAL (void) pgDrawEmbedBorders(paige_rec_ptr pg, pg_embed_ptr embed, rectan
 which application specified NULL callback. Or, if application does not know
 how to handle the command it should call this directly. */
 
-PG_PASCAL (long) pgDefaultEmbedCallback (paige_rec_ptr pg, pg_embed_ptr embed_ptr,
+PG_PASCAL (size_t) pgDefaultEmbedCallback (paige_rec_ptr pg, pg_embed_ptr embed_ptr,
       long embed_type, short command, long user_refcon,
-      long param1, long param2)
+      void *param1, void *param2)
 {
-   pg_embed_ptr      use_embed_ptr;
-   long           result = 0;
+   pg_embed_ptr     use_embed_ptr;
+   size_t           result = 0;
    
    if (!embed_ptr)
          return   0;
    
    if (embed_ptr->embed_represent && (command != EMBED_DESTROY))
-      use_embed_ptr = UseMemory(embed_ptr->embed_represent);
+      use_embed_ptr = (pg_embed_ptr) UseMemory(embed_ptr->embed_represent);
    else
          use_embed_ptr = embed_ptr;
 
@@ -1051,7 +1051,7 @@ PG_PASCAL (long) pgDefaultEmbedCallback (paige_rec_ptr pg, pg_embed_ptr embed_pt
          if (use_embed_ptr->embed_represent) {
              pg_embed_ptr     represent_ptr;
              
-             represent_ptr = UseMemory(use_embed_ptr->embed_represent);
+             represent_ptr = (pg_embed_ptr) UseMemory(use_embed_ptr->embed_represent);
              standard_embed_dispose(represent_ptr, represent_ptr->type & EMBED_TYPE_MASK);
              UnuseAndDispose(use_embed_ptr->embed_represent);
              use_embed_ptr->embed_represent = MEM_NULL;
@@ -1060,8 +1060,8 @@ PG_PASCAL (long) pgDefaultEmbedCallback (paige_rec_ptr pg, pg_embed_ptr embed_pt
          break;
 
       case EMBED_SWAP:
-         if ((result = pgCStrLength((pg_c_string_ptr)param1)) > param2)
-            result = param2;
+         if ((result = pgCStrLength((pg_c_string_ptr)param1)) > (size_t)param2)
+            result = (size_t)param2;
          break;
       
       case EMBED_INIT:
@@ -1127,7 +1127,7 @@ PG_PASCAL (pg_boolean) pgEmbedReadHandler (paige_rec_ptr pg, pg_file_key key, me
    }
    
    ref = pgUnpackEmbedRef(pg, &walker, &ref_id);
-   embed_ptr = UseMemory(ref);
+   embed_ptr = (pg_embed_ptr) UseMemory(ref);
    the_type = embed_ptr->type & EMBED_TYPE_MASK;
 
    if (!(callback = (embed_callback)pg->globals->embed_callback_proc))
@@ -1144,7 +1144,7 @@ PG_PASCAL (pg_boolean) pgEmbedReadHandler (paige_rec_ptr pg, pg_file_key key, me
             
             if (*previous_embed) {
             
-               previous_ptr = UseMemory((memory_ref)*previous_embed);
+               previous_ptr = (pg_embed_ptr) UseMemory((memory_ref)*previous_embed);
                previous_ptr->embed_represent = ref;
                UnuseMemory((memory_ref)*previous_embed);
             }
@@ -1154,7 +1154,7 @@ PG_PASCAL (pg_boolean) pgEmbedReadHandler (paige_rec_ptr pg, pg_file_key key, me
    
       called_ctr = 0;
 
-      for (styles = UseMemory(pg->t_formats); num_styles; ++styles, --num_styles)
+      for (styles = (style_info_ptr) UseMemory(pg->t_formats); num_styles; ++styles, --num_styles)
          if (ref_id == (long)styles->embed_object && !(styles->class_bits & EMBED_READ_BIT)) {
          
          ++embed_ptr->used_ctr;
@@ -1175,7 +1175,7 @@ PG_PASCAL (pg_boolean) pgEmbedReadHandler (paige_rec_ptr pg, pg_file_key key, me
          styles->procs.duplicate = embed_copy;
          styles->procs.delete_style = embed_delete;
          styles->procs.track_ctl = track_embed_ctl;
-         styles->embed_entry = (long)callback;
+         styles->embed_entry = callback;
 
          embed_ptr->style = styles;
          embed_ptr->style_refcon = styles->embed_style_refcon;
@@ -1193,11 +1193,11 @@ PG_PASCAL (pg_boolean) pgEmbedReadHandler (paige_rec_ptr pg, pg_file_key key, me
 			long					num_frames;
 			
 			num_frames = GetMemorySize(pg->exclusions);
-			framerefs = UseMemory(pg->exclusions);
+			framerefs = (memory_ref *) UseMemory(pg->exclusions);
 			
 			while (num_frames) {
 				
-				frame = UseMemory(*framerefs);
+				frame = (pg_frame_ptr) UseMemory(*framerefs);
 				
 				if (ref_id == (long)frame->data)
 					if (!(frame->flags & FRAME_READ_BIT)) {
@@ -1267,7 +1267,7 @@ PG_PASCAL (memory_ref) pgUnpackEmbedRef (paige_rec_ptr pg, pack_walk_ptr walker,
 	// Bug fix 8/16/95, any data struct within embed_ref must have different ID than pg_ref:
 
 	   mem_globals->current_id = GetMemoryRefID(ref);
-	   embed_ptr = UseMemory(ref);
+	   embed_ptr = (volatile pg_embed_ptr) UseMemory(ref);
 	   embed_ptr->version = (short)version;      //Reestablish the original version
 
 	   if (the_type & KEPT_AROUND)
@@ -1414,7 +1414,7 @@ PG_PASCAL (memory_ref) pgUnpackEmbedRef (paige_rec_ptr pg, pack_walk_ptr walker,
 	               pg_url_image_ptr  image_ptr;
 	               
 	               GetMemoryRecord(pg->url_list_ref, url_index - 1, &url_ref);
-	               image_ptr = UseMemory(url_ref);
+	               image_ptr = (pg_url_image_ptr) UseMemory(url_ref);
 	               image_ptr->used_ctr += 1;
 	               UnuseMemory(url_ref);
 	               embed_ptr->data = (void PG_FAR *)url_ref;
@@ -1453,7 +1453,7 @@ PG_PASCAL (void) pgInitEmbedProcs (pg_globals_ptr globals, embed_callback callba
    pgSetHandler(globals, embedded_item_key, pgEmbedReadHandler, NULL, NULL, NULL);
    pgSetHandler(globals, url_image_key, pgEmbedReadHandler, NULL, NULL, NULL);
 
-   globals->embed_callback_proc = (long)callback;
+   globals->embed_callback_proc = (void *) (long)callback;
    globals->app_init_proc = init_proc;
 }
 
@@ -1486,7 +1486,7 @@ PG_PASCAL (pg_error) pgSaveAllEmbedRefs (pg_ref pg, file_io_proc io_proc, file_i
 // First, build any URL type(s) within the list:
 
    num_styles = GetMemorySize(pg_rec->t_formats);
-   styles = UseMemory(pg_rec->t_formats);
+   styles = (style_info_ptr) UseMemory(pg_rec->t_formats);
 
    result = NO_ERROR;
 
@@ -1497,7 +1497,7 @@ PG_PASCAL (pg_error) pgSaveAllEmbedRefs (pg_ref pg, file_io_proc io_proc, file_i
       
       if ((ref = styles[index].embed_object) != MEM_NULL) {
 
-         embed_ptr = UseMemory(ref);
+         embed_ptr = (pg_embed_ptr) UseMemory(ref);
          
          if ((embed_ptr->type & EMBED_TYPE_MASK) == embed_url_image)
 			if (!find_url_ref(url_list_ref, (memory_ref)embed_ptr->data)) {
@@ -1506,11 +1506,11 @@ PG_PASCAL (pg_error) pgSaveAllEmbedRefs (pg_ref pg, file_io_proc io_proc, file_i
 				memory_ref           url_ref;
 
 				url_ref = (memory_ref)embed_ptr->data;
-				url_list = AppendMemory(url_list_ref, 1, FALSE);
+				url_list = (memory_ref *) AppendMemory(url_list_ref, 1, FALSE);
 				*url_list = url_ref;
 				UnuseMemory(url_list_ref);
 
-				image = UseMemory(url_ref);
+				image = (pg_url_image_ptr) UseMemory(url_ref);
 				callback = (embed_callback)styles[index].embed_entry;
 
 				if (!image->image_data && !image->loader_result)
@@ -1548,7 +1548,7 @@ PG_PASCAL (pg_error) pgSaveAllEmbedRefs (pg_ref pg, file_io_proc io_proc, file_i
             pgSetupPacker(&walker, key_data, 0);
             pgPackEmbedRef(&walker, url_list_ref, ref, fake_id);
             callback = (embed_callback)styles[index].embed_entry;
-            custom_data_callback(pg_rec, &walker, UseMemory(ref), callback, custom_ref);
+            custom_data_callback(pg_rec, &walker, (pg_embed_ptr) UseMemory(ref), callback, custom_ref);
             UnuseMemory(ref);
             pgFinishPack(&walker);
 
@@ -1559,7 +1559,7 @@ PG_PASCAL (pg_error) pgSaveAllEmbedRefs (pg_ref pg, file_io_proc io_proc, file_i
             if (result)
                break;
 
-            embed_ptr = UseMemory(ref);
+            embed_ptr = (pg_embed_ptr) UseMemory(ref);
             represent_ref = embed_ptr->embed_represent;
             UnuseMemory(ref);
             
@@ -1623,7 +1623,7 @@ PG_PASCAL (pg_error) pgSaveEmbedRef (pg_ref pg, embed_ref ref, long element_info
          
          UnuseMemory(walker.data_ref);
          
-         embed_ptr = UseMemory(use_ref);
+         embed_ptr = (pg_embed_ptr) UseMemory(use_ref);
          represent_ref = embed_ptr->embed_represent;
          UnuseMemory(use_ref);
          
@@ -1651,7 +1651,7 @@ PG_PASCAL (void) pgEmbedStyleInit (paige_rec_ptr pg, style_info_ptr style, font_
    pg_boolean        	init_as_text;
    long                 object_ascent, object_descent;
 
-   embed_ptr = UseMemory(style->embed_object);
+   embed_ptr = (pg_embed_ptr) UseMemory(style->embed_object);
    init_as_text = (pg_boolean)((embed_ptr->type & USE_TEXT_HEIGHT) != 0);
    UnuseMemory(style->embed_object);
  
@@ -1662,7 +1662,7 @@ PG_PASCAL (void) pgEmbedStyleInit (paige_rec_ptr pg, style_info_ptr style, font_
 
    if (!init_as_text) {
       
-      embed_ptr = UseMemory(style->embed_object);
+      embed_ptr = (pg_embed_ptr) UseMemory(style->embed_object);
       object_ascent = embed_ptr->height - embed_ptr->descent + embed_ptr->top_extra;
       object_descent = embed_ptr->descent + embed_ptr->bot_extra;
    
@@ -1727,7 +1727,7 @@ PG_PASCAL (long) pgInitEmbedStyleInfo (paige_rec_ptr pg, long position, embed_re
    if (!pg->import_control)
       pgSetSelection(pg->myself, position, position, 0, FALSE);
 
-   new_embed = UseMemory(ref);
+   new_embed = (pg_embed_ptr) UseMemory(ref);
    new_type = new_embed->type & EMBED_TYPE_MASK;
    
    if (will_be_inserted)
@@ -1768,7 +1768,7 @@ PG_PASCAL (long) pgInitEmbedStyleInfo (paige_rec_ptr pg, long position, embed_re
    style->procs.delete_style = embed_delete;
    style->procs.track_ctl = track_embed_ctl;
 
-   style->embed_entry = (long)use_callback;
+   style->embed_entry = use_callback;
    style->embed_object = ref;
    style->embed_refcon = new_embed->user_refcon;
    style->embed_style_refcon = callback_refcon;
@@ -1793,7 +1793,7 @@ PG_PASCAL (long) pgInitEmbedStyleInfo (paige_rec_ptr pg, long position, embed_re
       mask->procs.track_ctl = (track_control_proc)SET_MASK_BITS;
        mask->procs.char_info = (char_info_proc)SET_MASK_BITS;
    
-      mask->embed_entry = SET_MASK_BITS;
+      mask->embed_entry = (void *) SET_MASK_BITS;
       mask->embed_object = (memory_ref)SET_MASK_BITS;
       mask->embed_refcon = SET_MASK_BITS;
       mask->embed_style_refcon = SET_MASK_BITS;
@@ -1820,7 +1820,7 @@ PG_PASCAL (memory_ref) pgNewImageRecord (pg_ref pg, pg_url_image_ptr image, embe
    
    pg_rec = (paige_rec_ptr) UseMemory(pg);
    num_styles = GetMemorySize(pg_rec->t_formats);
-   styles = UseMemory(pg_rec->t_formats);
+   styles = (style_info_ptr) UseMemory(pg_rec->t_formats);
    
    if (check_to >= 0)
       num_styles = check_to;
@@ -1830,7 +1830,7 @@ PG_PASCAL (memory_ref) pgNewImageRecord (pg_ref pg, pg_url_image_ptr image, embe
       if (styles->embed_object) {
          pg_embed_ptr      embed_ptr;
          
-         embed_ptr = UseMemory(styles->embed_object);
+         embed_ptr = (pg_embed_ptr) UseMemory(styles->embed_object);
          
          if ((embed_ptr->type & EMBED_TYPE_MASK) == embed_url_image && embed_ptr->data) {
             pg_url_image      image_record;
@@ -1857,7 +1857,7 @@ PG_PASCAL (memory_ref) pgNewImageRecord (pg_ref pg, pg_url_image_ptr image, embe
       pg_embed_rec         temp_embed;
       
       result = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(pg_url_image), 1, 0);
-      result_image = UseMemory(result);
+      result_image = (pg_url_image_ptr) UseMemory(result);
       *result_image = *image;
       result_image->used_ctr = 0;
       
@@ -1873,7 +1873,7 @@ PG_PASCAL (memory_ref) pgNewImageRecord (pg_ref pg, pg_url_image_ptr image, embe
       UnuseMemory(result);
    }
    
-   result_image = UseMemory(result);
+   result_image = (pg_url_image_ptr) UseMemory(result);
    result_image->used_ctr += 1;
    UnuseMemory(result);
    UnuseMemory(pg);
@@ -1898,13 +1898,13 @@ PG_PASCAL (void) pgLoadImages (pg_ref pg, embed_callback image_callback, short w
 
    pg_rec = (paige_rec_ptr) UseMemory(pg);
    num_styles = GetMemorySize(pg_rec->t_formats);
-   styles = UseMemory(pg_rec->t_formats);
+   styles = (style_info_ptr) UseMemory(pg_rec->t_formats);
 
    for (index = count = 0; index < num_styles; ++index, ++styles) {
       
       if (styles->embed_object) {
          
-         embed_ptr = UseMemory((memory_ref)styles->embed_object);
+         embed_ptr = (pg_embed_ptr) UseMemory((memory_ref)styles->embed_object);
          
          if ((embed_ptr->type & EMBED_TYPE_MASK) == embed_url_image)
             count += 1;
@@ -1916,15 +1916,15 @@ PG_PASCAL (void) pgLoadImages (pg_ref pg, embed_callback image_callback, short w
    if (pg_rec->flags2 & HAS_PG_FRAMES_BIT) {
    		
    		num_frames = GetMemorySize(pg_rec->exclusions);
-   		frame_refs = UseMemory(pg_rec->exclusions);
+   		frame_refs = (memory_ref *) UseMemory(pg_rec->exclusions);
    		
    		for (index = 0; index < num_frames; ++index, ++frame_refs) {
    			
-   			frame = UseMemory(*frame_refs);
+   			frame = (pg_frame_ptr) UseMemory(*frame_refs);
    			
    			if (frame->type == frame_embed && frame->data) {
    				
-   				embed_ptr = UseMemory((memory_ref)frame->data);
+   				embed_ptr = (pg_embed_ptr) UseMemory((memory_ref)frame->data);
    
 	            if ((embed_ptr->type & EMBED_TYPE_MASK) == embed_url_image)
 	            	count += 1;
@@ -1942,7 +1942,7 @@ PG_PASCAL (void) pgLoadImages (pg_ref pg, embed_callback image_callback, short w
 
    if (count > 0) {
    
-      styles = UseMemoryRecord(pg_rec->t_formats, 0, 0, FALSE);
+      styles = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, 0, 0, FALSE);
 
       for (index = count_progress = 0; index < num_styles; ++index, ++styles) {
 
@@ -1950,12 +1950,12 @@ PG_PASCAL (void) pgLoadImages (pg_ref pg, embed_callback image_callback, short w
 
          if (styles->embed_object) {
             
-            embed_ptr = UseMemory((memory_ref)styles->embed_object);
+            embed_ptr = (pg_embed_ptr) UseMemory((memory_ref)styles->embed_object);
             
             if ((embed_ptr->type & EMBED_TYPE_MASK) == embed_url_image) {
                
                ++count_progress;
-               image = UseMemory((memory_ref)embed_ptr->data);
+               image = (pg_url_image_ptr) UseMemory((memory_ref)embed_ptr->data);
 
                if ((use_callback = image_callback) == NULL)
                   use_callback = pgDefaultEmbedCallback;
@@ -1973,22 +1973,22 @@ PG_PASCAL (void) pgLoadImages (pg_ref pg, embed_callback image_callback, short w
       
       if (num_frames) {
 
-	   		frame_refs = UseMemory(pg_rec->exclusions);
+	   		frame_refs = (memory_ref *) UseMemory(pg_rec->exclusions);
 	   		
 	   		for (index = 0; index < num_frames; ++index, ++frame_refs) {
 	   			
 	   			pg_rec->procs.wait_proc(pg_rec, wait_proc_verb, count_progress, count);
 
-	   			frame = UseMemory(*frame_refs);
+	   			frame = (pg_frame_ptr) UseMemory(*frame_refs);
 	   			
 	   			if (frame->type == frame_embed && frame->data) {
 	   				
-	   				embed_ptr = UseMemory((memory_ref)frame->data);
+	   				embed_ptr = (pg_embed_ptr) UseMemory((memory_ref)frame->data);
 	   
 		            if ((embed_ptr->type & EMBED_TYPE_MASK) == embed_url_image) {
 		            	
 			               ++count_progress;
-			               image = UseMemory((memory_ref)embed_ptr->data);
+			               image = (pg_url_image_ptr) UseMemory((memory_ref)embed_ptr->data);
 
 			               if ((use_callback = image_callback) == NULL)
 			                  use_callback = pgDefaultEmbedCallback;
@@ -2031,7 +2031,7 @@ PG_PASCAL (void) pgPackEmbedRef (pack_walk_ptr walker, memory_ref url_list, embe
 
    pgPackNum(walker, long_data, ref_id);     // So I know where it goes on READ
    
-   embed_ptr = UseMemory(ref);
+   embed_ptr = (pg_embed_ptr) UseMemory(ref);
 
    pgPackNum(walker, long_data, CURRENT_EMBED_VERSION);
    pgPackNum(walker, long_data, embed_ptr->type);
@@ -2106,13 +2106,13 @@ PG_PASCAL (void) pgPackEmbedRef (pack_walk_ptr walker, memory_ref url_list, embe
          case embed_bookmark_start:
          case embed_bookmark_end:
          case embed_unsupported_object:
-            pgPackBytes(walker, UseMemory((memory_ref)embed_ptr->data),
+            pgPackBytes(walker, (pg_bits8_ptr) UseMemory((memory_ref)embed_ptr->data),
                   GetByteSize((memory_ref)embed_ptr->data));
             UnuseMemory((memory_ref)embed_ptr->data);
             
             if (embed_ptr->rtf_text_data) {
  
-               pgPackBytes(walker, UseMemory(embed_ptr->rtf_text_data), GetByteSize(embed_ptr->rtf_text_data));
+               pgPackBytes(walker, (pg_bits8_ptr) UseMemory(embed_ptr->rtf_text_data), GetByteSize(embed_ptr->rtf_text_data));
                UnuseMemory(embed_ptr->rtf_text_data);
             }
 
@@ -2195,7 +2195,7 @@ STATIC_PASCAL (void) measure_embed (paige_rec_ptr pg, style_walk_ptr walker,
 
    style = walker->cur_style;
    font = walker->cur_font;
-   embed_ptr = UseMemory(style->embed_object);
+   embed_ptr = (pg_embed_ptr) UseMemory(style->embed_object);
    embed_ptr->style = style;
    embed_ptr->style_refcon = style->embed_style_refcon;
    callback = (embed_callback)style->embed_entry;
@@ -2209,7 +2209,7 @@ STATIC_PASCAL (void) measure_embed (paige_rec_ptr pg, style_walk_ptr walker,
       short             the_size;
 
       if (embed_ptr->data)
-         the_text = UseMemory((memory_ref)embed_ptr->data);
+         the_text = (pg_char_ptr) UseMemory((memory_ref)embed_ptr->data);
       else
          the_text = (pg_char_ptr)&embed_ptr->uu.alt_data;
 
@@ -2227,7 +2227,7 @@ STATIC_PASCAL (void) measure_embed (paige_rec_ptr pg, style_walk_ptr walker,
       if (the_size > length) {
 
          temp_ref = MemoryAlloc(pg->globals->mem_globals, sizeof(long), the_size + 1, 0);
-         temp_positions = UseMemory(temp_ref);
+         temp_positions = (long *) UseMemory(temp_ref);
          *temp_positions = *positions;
       }
       else {
@@ -2298,7 +2298,7 @@ STATIC_PASCAL (void) embed_activate (paige_rec_ptr pg_rec, style_info_ptr style,
    pg_embed_ptr               embed_ptr;
    pg_embed_activate          activate_data;
 
-   embed_ptr = UseMemory(style->embed_object);
+   embed_ptr = (pg_embed_ptr) UseMemory(style->embed_object);
    embed_ptr->style = style;
    embed_ptr->style_refcon = style->embed_style_refcon;
    callback = (embed_callback)style->embed_entry;
@@ -2340,7 +2340,7 @@ STATIC_PASCAL (long) track_embed_ctl (paige_rec_ptr pg, short verb,
    click_struct.modifiers = modifiers;
    click_ptr = &click_struct;
 
-   embed_ptr = UseMemory(embed_style->embed_object);
+   embed_ptr = (pg_embed_ptr) UseMemory(embed_style->embed_object);
    style_range.begin = styles->prev_style_run->offset;
    style_range.end = styles->next_style_run->offset;
 
@@ -2371,7 +2371,7 @@ STATIC_PASCAL (long) track_embed_ctl (paige_rec_ptr pg, short verb,
      pgScalePt(&pg->port.scale, NULL, &click_struct.point);
    }
    
-   embed_ptr = UseMemory(embed_style->embed_object);
+   embed_ptr = (pg_embed_ptr) UseMemory(embed_style->embed_object);
    embed_ptr->style = embed_style;
    embed_ptr->style_refcon = embed_style->embed_style_refcon;
    callback = (embed_callback)embed_style->embed_entry;
@@ -2394,7 +2394,7 @@ STATIC_PASCAL (long) track_embed_ctl (paige_rec_ptr pg, short verb,
    embed_ptr->style = NULL;
    UnuseMemory(embed_style->embed_object);
    
-   hilite_select = UseMemory(pg->select);
+   hilite_select = (t_select_ptr) UseMemory(pg->select);
 
    if (track_result) {
    
@@ -2431,7 +2431,7 @@ STATIC_PASCAL (void) embed_draw (paige_rec_ptr pg, style_walk_ptr walker, pg_cha
    
    style = walker->cur_style;
    font = walker->cur_font;   
-   embed_ptr = UseMemory(style->embed_object);
+   embed_ptr = (pg_embed_ptr) UseMemory(style->embed_object);
   
    the_type = embed_ptr->type & EMBED_TYPE_MASK;
    callback = (embed_callback)style->embed_entry;
@@ -2486,7 +2486,7 @@ STATIC_PASCAL (void) embed_draw (paige_rec_ptr pg, style_walk_ptr walker, pg_cha
       short             the_size;
       
       if (embed_ptr->data)
-         the_chars = UseMemory((memory_ref)embed_ptr->data);
+         the_chars = (pg_char_ptr) UseMemory((memory_ref)embed_ptr->data);
       else
          the_chars = (pg_char_ptr)&embed_ptr->uu.alt_data;
 
@@ -2523,7 +2523,7 @@ STATIC_PASCAL (void) embed_draw (paige_rec_ptr pg, style_walk_ptr walker, pg_cha
             memory_ref           image_ref;
             
             image_ref = (memory_ref)embed_ptr->data;
-            image_ptr = UseMemory((memory_ref)image_ref);
+            image_ptr = (pg_url_image_ptr) UseMemory((memory_ref)image_ref);
          
          if (!image_ptr->image_data && !image_ptr->loader_result)
             callback(pg, embed_ptr, the_type, EMBED_LOAD_IMAGE, embed_ptr->style_refcon,
@@ -2554,7 +2554,7 @@ STATIC_PASCAL (void) embed_copy (paige_rec_ptr src_pg, paige_rec_ptr target_pg,
    if (reason_verb == new_stylesheet_reason)
       return;
 
-   embed_ptr = UseMemory(style->embed_object);
+   embed_ptr = (pg_embed_ptr) UseMemory(style->embed_object);
    source_of_id = MEM_NULL;
 
    if (!(pg_for_id = target_pg))
@@ -2575,7 +2575,7 @@ STATIC_PASCAL (void) embed_copy (paige_rec_ptr src_pg, paige_rec_ptr target_pg,
       the_copy = MemoryDuplicate(style->embed_object);
       UnuseMemory(style->embed_object);
       style->embed_object = the_copy;
-      embed_ptr = UseMemory(style->embed_object);
+      embed_ptr = (pg_embed_ptr) UseMemory(style->embed_object);
       embed_ptr->used_ctr = 0;
       callback = (embed_callback) style->embed_entry;
       callback(pg_for_id, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK, EMBED_COPY,
@@ -2600,7 +2600,7 @@ STATIC_PASCAL (void) embed_delete (paige_rec_ptr pg, pg_globals_ptr globals,
    pg_embed_ptr            embed_ptr;
    embed_callback          callback;
    
-   embed_ptr = UseMemory(style->embed_object);
+   embed_ptr = (pg_embed_ptr) UseMemory(style->embed_object);
    
    if (embed_ptr->used_ctr)
       embed_ptr->used_ctr -= 1;
@@ -2766,7 +2766,7 @@ static void standard_embed_draw (paige_rec_ptr pg, pg_embed_ptr item,
          memory_ref           image_ref;
          
          image_ref = the_data;
-         image_ptr = UseMemory((memory_ref)image_ref);
+         image_ptr = (pg_url_image_ptr) UseMemory((memory_ref)image_ref);
       
       if (image_ptr->image_data) {
       
@@ -3061,7 +3061,7 @@ static void standard_embed_dispose (pg_embed_ptr item, long the_type)
 
          pg_url_image_ptr     image_ptr;
          
-         image_ptr = UseMemory(the_data);
+         image_ptr = (pg_url_image_ptr) UseMemory(the_data);
          image_ptr->used_ctr -= 1;
          
          if (image_ptr->used_ctr <= 0) {
@@ -3109,7 +3109,7 @@ static void standard_embed_dispose (pg_embed_ptr item, long the_type)
          {
             pg_bitmap_ptr        bitmap_ptr;
 
-            bitmap_ptr = UseMemory(the_data);
+            bitmap_ptr = (pg_bitmap_ptr) UseMemory(the_data);
             
             if (bitmap_ptr->palette)
                DisposeMemory(bitmap_ptr->palette);
@@ -3284,7 +3284,7 @@ static void initialize_embed_data (pgm_globals_ptr mem_globals, embed_ref the_re
    pg_poly_ptr       poly_ptr;
    long               data_size, the_type;
    
-   embed_ptr = UseMemory(the_ref);
+   embed_ptr = (pg_embed_ptr) UseMemory(the_ref);
    the_type = embed_ptr->type & EMBED_TYPE_MASK;
    if (the_type == embed_alternate_char || the_type == embed_dynamic_string)
       embed_ptr->type |= USE_TEXT_HEIGHT;
@@ -3364,7 +3364,7 @@ static void initialize_embed_data (pgm_globals_ptr mem_globals, embed_ref the_re
             break;
             
          case embed_polygon:
-            poly_ptr = UseMemory((memory_ref)data);
+            poly_ptr = (pg_poly_ptr) UseMemory((memory_ref)data);
             rect.bot_right.h = poly_ptr->width;
             rect.bot_right.v = poly_ptr->height;
             UnuseMemory((memory_ref)data);
@@ -3435,7 +3435,7 @@ static void initialize_embed_data (pgm_globals_ptr mem_globals, embed_ref the_re
           {
             pg_url_image_ptr     image_ptr;
             
-            image_ptr = UseMemory((memory_ref)data);
+            image_ptr = (pg_url_image_ptr) UseMemory((memory_ref)data);
             rect.bot_right.h = image_ptr->source_width;
             rect.bot_right.v = image_ptr->source_height;
             
@@ -3587,7 +3587,7 @@ static void get_visual_frame (paige_rec_ptr pg, pg_embed_ptr embed_ptr,
    associated_pt.flags = 0;
    pgCalcSelect(pg, &associated_pt);
    block = pgFindTextBlock(pg, associated_pt.offset, NULL, FALSE, FALSE);
-   starts = UseMemoryRecord(block->lines, (long)associated_pt.line, 0, TRUE);
+   starts = (point_start_ptr) UseMemoryRecord(block->lines, (long)associated_pt.line, 0, TRUE);
    *bounds = starts->bounds;
    baseline = starts->baseline;
    UnuseMemory(block->lines);
@@ -3687,7 +3687,7 @@ static long find_url_ref (memory_ref listref, memory_ref url)
    if (listref == MEM_NULL)
       return   0;
 
-   list = UseMemory(listref);
+   list = (memory_ref *) UseMemory(listref);
    num_entries = GetMemorySize(listref);
    
    for (index = 0; index < num_entries; ++index)
@@ -3830,7 +3830,7 @@ static void pack_url (pack_walk_ptr walker, memory_ref url_ref)
    long              url_string_size, alt_string_size;
    long              effective_type;
 
-   image_ptr = UseMemory(url_ref);
+   image_ptr = (pg_url_image_ptr) UseMemory(url_ref);
    url_string_size = pgCStrLength(image_ptr->URL);
    alt_string_size = pgCStrLength(image_ptr->alt_string);
 
@@ -3872,11 +3872,11 @@ static void unpack_url (paige_rec_ptr pg, pack_walk_ptr walker)
    mem_globals->next_mem_id += 1;
    url_ref = MemoryAllocClearID(pg->globals->mem_globals, sizeof(pg_url_image), 1, 0, mem_globals->next_mem_id);
    
-   list = AppendMemory(pg->url_list_ref, 1, FALSE);
+   list = (memory_ref *) AppendMemory(pg->url_list_ref, 1, FALSE);
    *list = url_ref;
    UnuseMemory(pg->url_list_ref);
 
-   image_ptr = UseMemory(url_ref);
+   image_ptr = (pg_url_image_ptr) UseMemory(url_ref);
    url_string_size = pgUnpackNum(walker);
    alt_string_size = pgUnpackNum(walker);
 
@@ -4030,7 +4030,7 @@ static void PG_FAR * pack_graphics (pack_walk_ptr walker, short the_type, void P
 #endif
    } else {
    
-        pgPackBytes(walker, UseMemory((memory_ref)data), GetByteSize((memory_ref)data));
+        pgPackBytes(walker, (pg_bits8_ptr) UseMemory((memory_ref)data), GetByteSize((memory_ref)data));
         UnuseMemory((memory_ref)data);
     }
     

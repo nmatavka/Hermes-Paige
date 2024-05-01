@@ -33,7 +33,7 @@ static void compare_long_and_set (long PG_FAR *src_fld, long PG_FAR *target_fld,
 		pg_boolean bitwise_compare);
 static void compare_short_and_set (short PG_FAR *src_fld, short PG_FAR *target_fld,
 		short PG_FAR *mask_fld, short num_flds, pg_boolean positive_match);
-static long trailing_text_blanks (paige_rec_ptr pg, long begin_select, long end_select);
+static long trailing_text_blanks (paige_rec_ptr pg, size_t begin_select, size_t end_select);
 static pg_short_t append_new_style_info (paige_rec_ptr pg, style_info_ptr the_style,
 		paige_rec_ptr src_option, short reason_verb);
 static void adjust_small_caps_ctr (paige_rec_ptr pg, style_info_ptr mother_style,
@@ -118,7 +118,7 @@ PG_PASCAL (pg_boolean) pgSetupInsertProc (paige_rec_ptr pg, style_info_ptr style
 offset. Note you can get the same thing with two calls: pgFindStyleRun and
 then pgIndexToStyle. */
 
-PG_PASCAL (style_info_ptr) pgFindTextStyle (paige_rec_ptr pg_rec, long offset)
+PG_PASCAL (style_info_ptr) pgFindTextStyle (paige_rec_ptr pg_rec, size_t offset)
 {
 	style_run_ptr		run_info;
 	pg_short_t			index;
@@ -126,7 +126,7 @@ PG_PASCAL (style_info_ptr) pgFindTextStyle (paige_rec_ptr pg_rec, long offset)
 	run_info = pgFindStyleRun(pg_rec, offset, NULL);
 	index = run_info->style_item;
 	UnuseMemory(pg_rec->t_style_run);
-	return UseMemoryRecord(pg_rec->t_formats, index, USE_ALL_RECS, TRUE);
+	return (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, index, USE_ALL_RECS, TRUE);
 }
 
 
@@ -142,7 +142,7 @@ PG_PASCAL (style_info_ptr) pgLocateStyleSheet (paige_rec_ptr pg, short style_id,
 	if (!style_id)
 		return	NULL;
 
-	styles = UseMemory(pg->t_formats);
+	styles = (style_info_ptr) UseMemory(pg->t_formats);
 	style_qty = (pg_short_t)GetMemorySize(pg->t_formats);
 	
 	for (style_ctr = 0; style_ctr < style_qty; ++styles, ++style_ctr)
@@ -162,8 +162,8 @@ PG_PASCAL (style_info_ptr) pgLocateStyleSheet (paige_rec_ptr pg, short style_id,
 
 /* pgFindStyleRun returns the style_run (pointer) based on a text offset. */
 
-PG_PASCAL (style_run_ptr) pgFindStyleRun (paige_rec_ptr pg_rec, long offset,
-		long PG_FAR *rec_num)
+PG_PASCAL (style_run_ptr) pgFindStyleRun (paige_rec_ptr pg_rec, size_t offset,
+		size_t PG_FAR *rec_num)
 {
 	return	pgFindRunFromRef(pg_rec->t_style_run, offset, rec_num);
 }
@@ -171,8 +171,8 @@ PG_PASCAL (style_run_ptr) pgFindStyleRun (paige_rec_ptr pg_rec, long offset,
 
 /* pgFindParStyleRun returns the par style_run (pointer) based on a text offset. */
 
-PG_PASCAL (style_run_ptr) pgFindParStyleRun (paige_rec_ptr pg_rec, long offset,
-		long PG_FAR *rec_num)
+PG_PASCAL (style_run_ptr) pgFindParStyleRun (paige_rec_ptr pg_rec, size_t offset,
+		size_t PG_FAR *rec_num)
 {
 	return	pgFindRunFromRef(pg_rec->par_style_run, offset, rec_num);
 }
@@ -183,7 +183,7 @@ PG_PASCAL (style_run_ptr) pgFindParStyleRun (paige_rec_ptr pg_rec, long offset,
 offset. Note you can get the same thing with two calls: pgFindParStyleRun and
 then pgIndexToParStyle. */
 
-PG_PASCAL (par_info_ptr) pgFindParStyle (paige_rec_ptr pg_rec, long offset)
+PG_PASCAL (par_info_ptr) pgFindParStyle (paige_rec_ptr pg_rec, size_t offset)
 {
 	style_run_ptr		run_info;
 	pg_short_t			index;
@@ -191,7 +191,7 @@ PG_PASCAL (par_info_ptr) pgFindParStyle (paige_rec_ptr pg_rec, long offset)
 	run_info = pgFindParStyleRun(pg_rec, offset, NULL);
 	index = run_info->style_item;
 	UnuseMemory(pg_rec->par_style_run);
-	return UseMemoryRecord(pg_rec->par_formats, index, USE_ALL_RECS, TRUE);
+	return (par_info_ptr) UseMemoryRecord(pg_rec->par_formats, index, USE_ALL_RECS, TRUE);
 }
 
 
@@ -273,22 +273,22 @@ PG_PASCAL (void) pgPrepareStyleWalk (paige_rec_ptr pg, long offset,
 		walk->next_style_run = walk->prev_style_run = pgFindStyleRun(pg, offset, NULL);
 		++walk->next_style_run;
 		
-		walk->style_base = UseMemory(pg->t_formats);
-		walk->font_base = UseMemory(pg->fonts);
+		walk->style_base = (style_info_ptr) UseMemory(pg->t_formats);
+		walk->font_base = (font_info_ptr) UseMemory(pg->fonts);
 
 		walk->current_offset = offset;
 		walk->last_font = -3;
 		walk->t_length = pg->t_length;
 		walk->hyperlink = pgFindHypertextRun(pg->hyperlinks, offset, NULL);
-		walk->hyperlink_base = UseMemoryRecord(pg->hyperlinks, 0, 0, FALSE);
+		walk->hyperlink_base = (pg_hyperlink_ptr) UseMemoryRecord(pg->hyperlinks, 0, 0, FALSE);
 		walk->hyperlink_target = pgFindHypertextRun(pg->target_hyperlinks, offset, NULL);
-		walk->hyperlink_target_base = UseMemoryRecord(pg->target_hyperlinks, 0, 0, FALSE);
+		walk->hyperlink_target_base = (pg_hyperlink_ptr) UseMemoryRecord(pg->target_hyperlinks, 0, 0, FALSE);
 
 		if (include_pars) {
 
 			walk->next_par_run = walk->prev_par_run = pgFindParStyleRun(pg, offset, NULL);
 			++walk->next_par_run;
-			walk->par_base = UseMemory(pg->par_formats);
+			walk->par_base = (par_info_ptr) UseMemory(pg->par_formats);
 		}
 		else
 			walk->par_base = NULL;
@@ -323,10 +323,10 @@ PG_PASCAL (void) pgPrepareStyleWalk (paige_rec_ptr pg, long offset,
 you want to advance in amount (plus or minus) and the next/previous styles are
 set up.  TRUE is returned if the style(s) changed.    */
 
-PG_PASCAL (pg_boolean) pgWalkStyle (style_walk_ptr walker, long amount)
+PG_PASCAL (pg_boolean) pgWalkStyle (style_walk_ptr walker, size_t amount)
 {
 	register style_walk_ptr		walk;
-	register long				new_position;
+	register size_t				new_position;
 	pg_boolean					result;
 
 	walk = walker;
@@ -437,7 +437,7 @@ PG_PASCAL (pg_boolean) pgWalkPreviousStyle (style_walk_ptr walker)
 set (instead of increment or decrement from the current position). It returns
 TRUE if the new style is different than the previous.  */
 
-PG_PASCAL (pg_boolean) pgSetWalkStyle (style_walk_ptr walker, long position)
+PG_PASCAL (pg_boolean) pgSetWalkStyle (style_walk_ptr walker, size_t position)
 {
 	if (walker->current_offset == position)
 		return	FALSE;
@@ -476,7 +476,7 @@ PG_PASCAL (void) pgSetupInsertStyle(paige_rec_ptr pg_rec)
 		if ((font_index = copy_of_style.font_index) == DEFAULT_FONT_INDEX)
 			font_index = 0;
 
-		insert_font = UseMemoryRecord(pg_rec->fonts, font_index, 0, TRUE);
+		insert_font = (font_info_ptr) UseMemoryRecord(pg_rec->fonts, font_index, 0, TRUE);
 		copy_of_style.procs.init(pg_rec, &copy_of_style, insert_font);
 		UnuseMemory(pg_rec->fonts);
 		
@@ -575,14 +575,14 @@ PG_PASCAL (memory_ref) pgSetupOffsetRun (paige_rec_ptr pg, select_pair_ptr selec
 		
 		if (!(num_selects = pg->num_selects)) {
 			
-			run = UseMemory(result);
-			selections = UseMemory(pg->select);
+			run = (select_pair_ptr) UseMemory(result);
+			selections = (t_select_ptr) UseMemory(pg->select);
 			run->begin = run->end = selections->offset;
 			UnuseMemory(pg->select);
 		}
 		else {
 			
-			selections = UseMemory(pg->select);
+			selections = (t_select_ptr) UseMemory(pg->select);
 
 			if (selections->flags & VERTICAL_FLAG) {
 				shape_ref		rgn;
@@ -597,7 +597,7 @@ PG_PASCAL (memory_ref) pgSetupOffsetRun (paige_rec_ptr pg, select_pair_ptr selec
 
 				SetMemorySize(result, num_selects);
 				
-				for (run = UseMemory(result); num_selects; ++run, --num_selects) {
+				for (run = (select_pair_ptr) UseMemory(result); num_selects; ++run, --num_selects) {
 					
 					run->begin = selections[0].offset;
 					run->end = selections[1].offset;
@@ -629,8 +629,8 @@ PG_PASCAL (memory_ref) pgSetupOffsetRun (paige_rec_ptr pg, select_pair_ptr selec
 		if (num_selects == 0) {
 			
 			SetMemorySize(result, 1);
-			run = UseMemory(result);
-			selections = UseMemory(pg->select);
+			run = (select_pair_ptr) UseMemory(result);
+			selections = (t_select_ptr) UseMemory(pg->select);
 			run->begin = run->end = selections->offset;
 			
 			UnuseMemory(result);
@@ -664,7 +664,7 @@ PG_PASCAL (pg_short_t) pgFindMatchingStyle (memory_ref ref_to_use, void PG_FAR *
 		pg_short_t start_rec, pg_short_t match_size)
 {
 	register pg_short_t				rec_size, ctr;
-	register long					num_recs;
+	register size_t					num_recs;
 	register pg_bits8_ptr			rec_ptr;
 	long							first_rec;
 
@@ -694,7 +694,7 @@ PG_PASCAL (pg_short_t) pgFindMatchingStyle (memory_ref ref_to_use, void PG_FAR *
 				par_ptr->style_sheet_id = -par_ptr->style_sheet_id;
 	}
 
-	rec_ptr = UseMemoryRecord(ref_to_use, first_rec, USE_ALL_RECS, TRUE);
+	rec_ptr = (pg_bits8_ptr) UseMemoryRecord(ref_to_use, first_rec, USE_ALL_RECS, TRUE);
 
 	for (ctr = start_rec + 1; num_recs; ++ctr, rec_ptr += rec_size, --num_recs)
 		if (pgEqualStruct(rec_ptr, rec_to_match, (long)match_size)) {
@@ -729,7 +729,7 @@ PG_PASCAL (void) pgGetPadStyles (paige_rec_ptr pg, long pad_offset,
 	
 	if (increment_used) {
 	
-		style = UseMemoryRecord(pg->t_formats, *style_item, 0, TRUE);
+		style = (style_info_ptr) UseMemoryRecord(pg->t_formats, *style_item, 0, TRUE);
 		++style->used_ctr;
 		adjust_small_caps_ctr(pg, style, 1);
 
@@ -749,7 +749,7 @@ PG_PASCAL (void) pgGetPadStyles (paige_rec_ptr pg, long pad_offset,
 		
 		if (increment_used) {
 		
-			par_style = UseMemoryRecord(pg->par_formats, *par_item, 0, TRUE);
+			par_style = (par_info_ptr) UseMemoryRecord(pg->par_formats, *par_item, 0, TRUE);
 			++par_style->used_ctr;
 			UnuseMemory(pg->par_formats);
 		}
@@ -770,8 +770,8 @@ PG_PASCAL (void) pgSetPadStyles (paige_rec_ptr pg, pg_short_t style_item,
 	register style_run_ptr		run;
 	style_info_ptr				style;
 	par_info_ptr				par_style;
-	long						used_ctr_amt, par_offset;
-	long						unwanted_offset, run_num;
+	size_t						used_ctr_amt, par_offset;
+	size_t						unwanted_offset, run_num;
 
 	run = pgFindStyleRun(pg, pad_style_offset, &run_num);
 	used_ctr_amt = 0;
@@ -781,7 +781,7 @@ PG_PASCAL (void) pgSetPadStyles (paige_rec_ptr pg, pg_short_t style_item,
 		if (pad_style_offset >= run->offset)
 			++run_num;
 
-		run = InsertMemory(pg->t_style_run, run_num, 1);
+		run = (style_run_ptr) InsertMemory(pg->t_style_run, run_num, 1);
 		run->style_item = style_item;
 		run->offset = pad_style_offset;
 	}
@@ -793,7 +793,7 @@ PG_PASCAL (void) pgSetPadStyles (paige_rec_ptr pg, pg_short_t style_item,
 	
 	UnuseMemory(pg->t_style_run);
 
-	style = UseMemoryRecord(pg->t_formats, style_item, 0, TRUE);
+	style = (style_info_ptr) UseMemoryRecord(pg->t_formats, style_item, 0, TRUE);
 	style->used_ctr += used_ctr_amt;
 	adjust_small_caps_ctr(pg, style, used_ctr_amt);
 
@@ -807,14 +807,14 @@ PG_PASCAL (void) pgSetPadStyles (paige_rec_ptr pg, pg_short_t style_item,
 	if (run->offset != par_offset) {
 //	if ((par_offset < pg->t_length) && (run->offset != par_offset)) {
 		
-		run = InsertMemory(pg->par_style_run, run_num + 1, 1);
+		run = (style_run_ptr) InsertMemory(pg->par_style_run, run_num + 1, 1);
 		run->style_item = par_item;
 		run->offset = par_offset;
 	}
 	else
 	if (unwanted_offset == pad_style_offset) {
 
-		run = InsertMemory(pg->par_style_run, run_num, 1);
+		run = (style_run_ptr) InsertMemory(pg->par_style_run, run_num, 1);
 		run->style_item = par_item;
 		run->offset = pad_style_offset;
 	}
@@ -823,7 +823,7 @@ PG_PASCAL (void) pgSetPadStyles (paige_rec_ptr pg, pg_short_t style_item,
 
 	UnuseMemory(pg->par_style_run);
 
-	par_style = UseMemoryRecord(pg->par_formats, par_item, 0, TRUE);
+	par_style = (par_info_ptr) UseMemoryRecord(pg->par_formats, par_item, 0, TRUE);
 	par_style->used_ctr += used_ctr_amt;
 	UnuseMemory(pg->par_formats);
 }
@@ -843,7 +843,7 @@ PG_PASCAL (short) pgAddNewFont (paige_rec_ptr pg, const font_info_ptr font)
 	if (!font->name[0] && !font->alternate_name[0])
 		return	DEFAULT_FONT_INDEX;
 
-	for (num_fonts = (pg_short_t)GetMemorySize(pg->fonts), fonts = UseMemory(pg->fonts),
+	for (num_fonts = (pg_short_t)GetMemorySize(pg->fonts), fonts = (font_info_ptr) UseMemory(pg->fonts),
 			index = 0; num_fonts; ++fonts, ++index, --num_fonts)
 		if (pgEqualFontNames(font, fonts, FALSE) && pgEqualFontNames(font, fonts, TRUE))
 			break;
@@ -882,7 +882,7 @@ PG_PASCAL (pg_short_t) pgAddStyleInfo (paige_rec_ptr pg, paige_rec_ptr src_optio
 	if ((font_index = style->font_index) == DEFAULT_FONT_INDEX)
 		font_index = 0;
 	
-	the_font = UseMemoryRecord(pg->fonts, font_index, 0, TRUE);
+	the_font = (font_info_ptr) UseMemoryRecord(pg->fonts, font_index, 0, TRUE);
 	style->procs.init(pg, style, the_font);
 	UnuseMemory(pg->fonts);
 
@@ -914,7 +914,7 @@ PG_PASCAL (pg_short_t) pgAddParInfo (paige_rec_ptr pg, paige_rec_ptr src_option,
 		return	found_rec - 1;
 
 	found_rec = (pg_short_t)GetMemorySize(pg->par_formats);
-	appended_ptr = AppendMemory(pg->par_formats, 1, FALSE);
+	appended_ptr = (par_info_ptr) AppendMemory(pg->par_formats, 1, FALSE);
 	pgBlockMove(style, appended_ptr, sizeof(par_info));
 	appended_ptr->used_ctr = 0;
 
@@ -958,7 +958,7 @@ PG_PASCAL (pg_boolean) pgSetFldsFromMask (void PG_FAR *new_rec, void PG_FAR *fil
 	changed = FALSE;
 	size_ctr = rec_size / sizeof(short);
 	
-	for (target = new_rec, src = fill, mask_items = mask;  size_ctr; --size_ctr,
+	for (target = (pg_short_t *) new_rec, src = (pg_short_t *) fill, mask_items = (pg_short_t *) mask;  size_ctr; --size_ctr,
 			++target, ++src) {
 		
 		if (*mask_items++) {
@@ -998,9 +998,9 @@ PG_PASCAL (void) pgSetMaskFromFlds (void PG_FAR *rec1, void PG_FAR *rec2, void P
 	if (rec_type == style_compare) {
 		register style_info_ptr		src, target, the_mask;
 		
-		src = rec1;
-		target = rec2;
-		the_mask = mask;
+		src = (style_info_ptr) rec1;
+		target = (style_info_ptr) rec2;
+		the_mask = (style_info_ptr) mask;
 
 /* NOTE!!! THE FOLLOWING CODE ASSUMES A CERTAIN SEQUENCE OF FIELDS IN STYLE_INFO.
 THIS CODE NEEDS TO BE CHANGED IF FIELDS ARE CHANGED. */
@@ -1021,9 +1021,9 @@ THIS CODE NEEDS TO BE CHANGED IF FIELDS ARE CHANGED. */
 	if (rec_type == par_compare) {
 		register par_info_ptr		src, target, the_mask;
 
-		src = rec1;
-		target = rec2;
-		the_mask = mask;
+		src = (par_info_ptr) rec1;
+		target = (par_info_ptr) rec2;
+		the_mask = (par_info_ptr) mask;
 		
 		compare_short_and_set(&src->justification, &target->justification,
 				&the_mask->justification, PARINFO_SHORTS, positive_match);
@@ -1054,9 +1054,9 @@ THIS CODE NEEDS TO BE CHANGED IF FIELDS ARE CHANGED. */
 	else {
 		register font_info_ptr		src, target, the_mask;
 
-		src = rec1;
-		target = rec2;
-		the_mask = mask;
+		src = (font_info_ptr) rec1;
+		target = (font_info_ptr) rec2;
+		the_mask = (font_info_ptr) mask;
 
 		/* Compare font name */
 		
@@ -1140,7 +1140,7 @@ PG_PASCAL (long) pgAddSmallCapsStyle (paige_rec_ptr pg, paige_rec_ptr src_option
 	small_caps.maintenance = 0;
 	small_caps.used_ctr = small_caps.style_sheet_id = 0;
 	font_index = style->font_index;
-	small_caps.procs.init(pg, &small_caps, UseMemoryRecord(pg->fonts, font_index, 0, TRUE));
+	small_caps.procs.init(pg, &small_caps, (font_info_ptr) UseMemoryRecord(pg->fonts, font_index, 0, TRUE));
 	UnuseMemory(pg->fonts);
 
 	if ((result = (long)pgFindMatchingStyle((memory_ref) pg->t_formats, &small_caps,
@@ -1152,7 +1152,7 @@ PG_PASCAL (long) pgAddSmallCapsStyle (paige_rec_ptr pg, paige_rec_ptr src_option
 	if (style->maintenance & IS_STYLE_SHEET) {
 		style_info_ptr		added_style;
 		
-		added_style = UseMemoryRecord(pg->t_formats, result, 0, TRUE);
+		added_style = (style_info_ptr) UseMemoryRecord(pg->t_formats, result, 0, TRUE);
 		added_style->used_ctr += 1;
 		UnuseMemory(pg->t_formats);
 	}
@@ -1198,7 +1198,7 @@ PG_PASCAL (void) pgChangeStyleRun (style_ref ref, change_info_ptr change, style_
 			if (from_offset != run->offset) {
 				
 				++rec_num;
-				run = InsertMemory(ref, rec_num, 1);
+				run = (style_run_ptr) InsertMemory(ref, rec_num, 1);
 				old_style_item = NULL_RUN;
 			}
 			else
@@ -1224,7 +1224,7 @@ PG_PASCAL (void) pgChangeStyleRun (style_ref ref, change_info_ptr change, style_
 		
 		if (run->offset != to_offset) {
 			old_style_item = NULL_RUN;
-			run = InsertMemory(ref, rec_num, 1);
+			run = (style_run_ptr) InsertMemory(ref, rec_num, 1);
 		}
 		else
 			old_style_item = run->style_item;
@@ -1294,10 +1294,10 @@ PG_PASCAL (pg_boolean) pgStyleMatchesCriteria (void PG_FAR *target_style, void P
 	short PG_FAR					*mask_values, *and_values;
 	register short					match_value, match_to, compare_qty;
 
-	compare_to = target_style;
-	compare_from = match_style;
-	mask_values = mask;
-	and_values = AND_mask;
+	compare_to = (short *) target_style;
+	compare_from = (short *) match_style;
+	mask_values = (short *) mask;
+	and_values = (short *) AND_mask;
 	
 	for (compare_qty = rec_length / sizeof(short); compare_qty; --compare_qty) {
 	
@@ -1350,14 +1350,14 @@ PG_PASCAL (pg_boolean) pgStyleMatchesCriteria (void PG_FAR *target_style, void P
 /* pgFindRunFromRef returns a <<used>> pointer for a style run that matches offset. If rec_num
 is non-NULL, the record number is returned.  */
 
-PG_PASCAL (style_run_ptr) pgFindRunFromRef (style_ref ref, long offset, long PG_FAR *rec_num)
+PG_PASCAL (style_run_ptr) pgFindRunFromRef (style_ref ref, size_t offset, size_t PG_FAR *rec_num)
 {
 	register style_run_ptr		run;
-	register long				abs_offset, record;
-	long						num_records;
+	register size_t				abs_offset, record;
+	size_t						num_records;
 	
 	num_records = GetMemorySize(ref);
-	run = UseMemory(ref);
+	run = (style_run_ptr) UseMemory(ref);
 	record = 0;
 
 	if (abs_offset = offset) {
@@ -1409,7 +1409,7 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 
 	if (change->style_change) {
 		
-		style_base = UseMemory(pg->t_formats);
+		style_base = (style_info_ptr) UseMemory(pg->t_formats);
 		
 		while (bad_style = find_bad_style(pg, pg->t_style_run, &bad_index)) {
 
@@ -1437,11 +1437,11 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 			adjust_small_caps_ctr(pg, &style_base[end_of_run.style_item], -1);
 		}
 		
-		end_ptr = UseMemoryRecord(pg->t_style_run, GetMemorySize(pg->t_style_run) - 2,
+		end_ptr = (style_run_ptr) UseMemoryRecord(pg->t_style_run, GetMemorySize(pg->t_style_run) - 2,
 				USE_ALL_RECS, TRUE);
 		end_ptr[1].style_item = end_ptr->style_item;
 		
-		end_ptr = UseMemoryRecord(pg->t_style_run, 0, 0, FALSE);
+		end_ptr = (style_run_ptr) UseMemoryRecord(pg->t_style_run, 0, 0, FALSE);
 		end_ptr->offset = 0;
 
 		UnuseMemory(pg->t_style_run);
@@ -1455,7 +1455,7 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 				
 			if (GetMemorySize(pg->subref_stack)) {
 				
-				sub_ptr = UseMemory(pg->subref_stack);
+				sub_ptr = (paige_sub_ptr) UseMemory(pg->subref_stack);
 				main_run = sub_ptr->t_style_run;
 				UnuseMemory(pg->subref_stack);
 			}
@@ -1481,7 +1481,7 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 					if (!(--num_styles))
 						bad_index = 0;
 					
-					style_base = UseMemoryRecord(pg->t_formats, bad_index, USE_ALL_RECS, TRUE);
+					style_base = (style_info_ptr) UseMemoryRecord(pg->t_formats, bad_index, USE_ALL_RECS, TRUE);
 				}
 				else {
 					++style_base;
@@ -1497,7 +1497,7 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 
 	if (change->par_change || change->tab_change) {
 
-		par_base = UseMemory(pg->par_formats);
+		par_base = (par_info_ptr) UseMemory(pg->par_formats);
 		
 		while (bad_style = find_bad_style(pg, pg->par_style_run, &bad_index)) {
 			
@@ -1507,7 +1507,7 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 		
 	/* Check ending record to see if "valid" or not */
 
-		end_ptr = UseMemory(pg->par_style_run);
+		end_ptr = (style_run_ptr) UseMemory(pg->par_style_run);
 		end_ptr->offset = 0;
 		UnuseMemory(pg->par_style_run);
 
@@ -1527,7 +1527,7 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 		if (!(pg->flags2 & (NO_STYLE_CLEANUP | IS_MASTER_BIT))) {
 		
 			num_styles = max_styles = (pg_short_t)GetMemorySize(pg->par_formats);
-			par_base = UseMemoryRecord(pg->par_formats, 0, USE_ALL_RECS, FALSE);
+			par_base = (par_info_ptr) UseMemoryRecord(pg->par_formats, 0, USE_ALL_RECS, FALSE);
 	
 			bad_index = 0;
 			
@@ -1535,7 +1535,7 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 				
 			if (GetMemorySize(pg->subref_stack)) {
 				
-				sub_ptr = UseMemory(pg->subref_stack);
+				sub_ptr = (paige_sub_ptr) UseMemory(pg->subref_stack);
 				main_run = sub_ptr->par_style_run;
 				UnuseMemory(pg->subref_stack);
 			}
@@ -1555,7 +1555,7 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 					if (!(--num_styles))
 						bad_index = 0;
 	
-					par_base = UseMemoryRecord(pg->par_formats, bad_index, USE_ALL_RECS, TRUE);
+					par_base = (par_info_ptr) UseMemoryRecord(pg->par_formats, bad_index, USE_ALL_RECS, TRUE);
 				}
 				else {
 					++par_base;
@@ -1652,7 +1652,7 @@ PG_PASCAL (void) pgDescrementRunItems (style_ref ref, pg_short_t index, pg_short
 	
 	num_styles = (pg_short_t)GetMemorySize(ref);
 	
-	for (styles = UseMemory(ref); num_styles; ++styles, --num_styles)
+	for (styles = (style_run_ptr) UseMemory(ref); num_styles; ++styles, --num_styles)
 		if (styles->style_item != NULL_RUN) {
 		
 			if (styles->style_item > index)
@@ -1684,7 +1684,7 @@ PG_PASCAL (void) pgScaleStyleInfo (paige_rec_ptr pg, style_info_ptr style, short
 	if (style->embed_object) {
 		pg_embed_ptr		embed_ptr;
 		
-		embed_ptr = UseMemory((memory_ref)style->embed_object);
+		embed_ptr = (pg_embed_ptr) UseMemory((memory_ref)style->embed_object);
 		
 		pgScaleLong(scale, 0, &embed_ptr->width);
 		pgScaleLong(scale, 0, &embed_ptr->minimum_width);
@@ -1762,7 +1762,7 @@ PG_PASCAL (style_run_ptr) pgFindParExclusionRun (paige_rec_ptr pg, long offset,
 	
 	if ((num_runs = GetMemorySize(pg->par_exclusions)) > 0) {
 		
-		result = UseMemory(pg->par_exclusions);
+		result = (style_run_ptr) UseMemory(pg->par_exclusions);
 		
 		while (num_runs) {
 			
@@ -1838,7 +1838,7 @@ static void convert_to_real_par_offsets (paige_rec_ptr pg, memory_ref selection)
 	register short				num_refs;
 	long						unwanted_offset, right_offset;
 
-	for (selections = UseMemory(selection), num_refs = (short)GetMemorySize(selection);
+	for (selections = (select_pair_ptr) UseMemory(selection), num_refs = (short)GetMemorySize(selection);
 			num_refs;  ++selections, --num_refs) {
 
 		pgFindPar(pg->myself, selections->begin, &selections->begin, &unwanted_offset);
@@ -1866,7 +1866,7 @@ static void change_used_ctr (change_info_ptr change, pg_short_t old_item, pg_sho
 	
 	if (change->par_change || change->tab_change) {
 
-		par_base = UseMemory(change->pg->par_formats);
+		par_base = (par_info_ptr) UseMemory(change->pg->par_formats);
 		
 		if (old_item != NULL_RUN)
 			par_base[old_item].used_ctr -= 1;
@@ -1876,7 +1876,7 @@ static void change_used_ctr (change_info_ptr change, pg_short_t old_item, pg_sho
 	}
 	else {
 
-		style_base = UseMemory(change->pg->t_formats);
+		style_base = (style_info_ptr) UseMemory(change->pg->t_formats);
 		
 		if (old_item != NULL_RUN) {
 		
@@ -1909,7 +1909,7 @@ static pg_short_t find_bad_style (paige_rec_ptr pg, style_ref ref,
 		
 		if (GetMemorySize(ref) > 2) {
 			
-			styles = UseMemory(ref);
+			styles = (style_run_ptr) UseMemory(ref);
 			*bad_index = styles[1].style_item;
 			UnuseMemory(ref);
 
@@ -1923,7 +1923,7 @@ static pg_short_t find_bad_style (paige_rec_ptr pg, style_ref ref,
 
 	if (num_runs = (pg_short_t)GetMemorySize(ref) - 2) {
 		
-		for (rec_num = 1, styles = UseMemory(ref); num_runs; ++rec_num, ++styles, --num_runs) {
+		for (rec_num = 1, styles = (style_run_ptr) UseMemory(ref); num_runs; ++rec_num, ++styles, --num_runs) {
 			
 			if ((styles[1].offset <= styles->offset)
 					|| (styles[1].style_item == styles->style_item)
@@ -1954,7 +1954,7 @@ static void decrement_small_caps_indexes (paige_rec_ptr pg, pg_short_t bad_index
 	
 	index_just_deleted = (long)bad_index;
 	
-	for (styles = UseMemory(pg->t_formats), num_styles = GetMemorySize(pg->t_formats);
+	for (styles = (style_info_ptr) UseMemory(pg->t_formats), num_styles = GetMemorySize(pg->t_formats);
 			num_styles; ++styles, --num_styles)
 		if (styles->styles[small_caps_var] && (styles->small_caps_index > index_just_deleted))
 			--styles->small_caps_index;
@@ -2063,7 +2063,7 @@ static void compare_short_and_set (short PG_FAR *src_fld, short PG_FAR *target_f
 /* This function returns the number of trailing blanks at end of specified
 selection range. Could be zero, but at not more than end - begin - 1. */
 
-static long trailing_text_blanks (paige_rec_ptr pg, long begin_select, long end_select)
+static long trailing_text_blanks (paige_rec_ptr pg, size_t begin_select, size_t end_select)
 {
 	text_block_ptr		block;
 	pg_char_ptr			text;
@@ -2078,7 +2078,7 @@ static long trailing_text_blanks (paige_rec_ptr pg, long begin_select, long end_
 		return	0;
 
 	block = pgFindTextBlock(pg, global_offset, NULL, FALSE, TRUE);
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 	pgPrepareStyleWalk(pg, global_offset, &walker, FALSE);
 	
 	local_offset = global_offset - block->begin;
@@ -2123,7 +2123,7 @@ static pg_short_t append_new_style_info (paige_rec_ptr pg, style_info_ptr the_st
 	
 	if ((pg->flags2 & IS_MASTER_BIT) && !(pg->flags2 & NO_STYLE_CLEANUP)) {
 		
-		appended_ptr = UseMemory(pg->t_formats);
+		appended_ptr = (style_info_ptr) UseMemory(pg->t_formats);
 		
 		for (index = 0; index < num_styles; ++index, ++appended_ptr)
 			if (appended_ptr->used_ctr == 0)
@@ -2131,7 +2131,7 @@ static pg_short_t append_new_style_info (paige_rec_ptr pg, style_info_ptr the_st
 	}
 
 	if (index == num_styles)
-		appended_ptr = AppendMemory(pg->t_formats, 1, FALSE);
+		appended_ptr = (style_info_ptr) AppendMemory(pg->t_formats, 1, FALSE);
 	
 	result = (pg_short_t)index;
 
@@ -2166,7 +2166,7 @@ static void adjust_small_caps_ctr (paige_rec_ptr pg, style_info_ptr mother_style
 
 	if (mother_style->styles[small_caps_var]) {
 		
-		alt_style = UseMemoryRecord(pg->t_formats, mother_style->small_caps_index,
+		alt_style = (style_info_ptr) UseMemoryRecord(pg->t_formats, mother_style->small_caps_index,
 				0, FALSE);
 		alt_style->used_ctr += amt;
 	}
@@ -2192,7 +2192,7 @@ static void fix_multiple_select_pairs (memory_ref pairs_ref)
 	short						num_selects;
 	
 	num_selects = (short)GetMemorySize(pairs_ref);
-	selections = UseMemory(pairs_ref);
+	selections = (select_pair_ptr) UseMemory(pairs_ref);
 	
 	if (selections->end < selections->begin) {
 		

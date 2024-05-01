@@ -170,7 +170,7 @@ PG_PASCAL (void) pgInitStandardHandlers (pg_globals_ptr globals)
 		
 		if (key_ctr != line_key && key_ctr != embedded_item_key && key_ctr != format_init_key) {
 		
-			handlers = AppendMemory (globals->file_handlers, 1, FALSE);
+			handlers = (pg_handler_ptr) AppendMemory (globals->file_handlers, 1, FALSE);
 		
 			pgInitOneHandler(handlers, key_ctr);
 			
@@ -180,7 +180,7 @@ PG_PASCAL (void) pgInitStandardHandlers (pg_globals_ptr globals)
 
 // Add hyperlink handlers:
 
-	handlers = AppendMemory (globals->file_handlers, 2, FALSE);
+	handlers = (pg_handler_ptr) AppendMemory (globals->file_handlers, 2, FALSE);
 	pgInitOneHandler(handlers, hyperlink_key);
 	pgInitOneHandler(&handlers[1], hyperlink_target_key);
 	UnuseMemory(globals->file_handlers);

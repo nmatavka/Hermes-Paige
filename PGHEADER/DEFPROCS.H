@@ -138,30 +138,30 @@ extern PG_PASCAL (void) pgBkImageProc (paige_rec_ptr pg, pg_url_image_ptr image,
 /* Default file functions */
 
 extern PG_PASCAL (pg_boolean) pgReadHandlerProc (paige_rec_ptr pg, pg_file_key key, memory_ref key_data,
-		long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size);
+		size_t PG_FAR *element_info, void PG_FAR *aux_data, size_t PG_FAR *unpacked_size);
 extern PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, memory_ref key_data,
-		long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size);
+		size_t PG_FAR *element_info, void PG_FAR *aux_data, size_t PG_FAR *unpacked_size);
 extern PG_PASCAL (pg_boolean) pgDummyReadHandler (paige_rec_ptr pg, pg_file_key key, memory_ref key_data,
-		long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size);
+		size_t PG_FAR *element_info, void PG_FAR *aux_data, size_t PG_FAR *unpacked_size);
 extern PG_PASCAL (pg_boolean) pgDummyWriteHandler (paige_rec_ptr pg, pg_file_key key, memory_ref key_data,
-		long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size);
-extern PG_PASCAL (pg_error) pgStandardReadProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
-extern PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
-extern PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
-extern PG_PASCAL (pg_error) pgOSWriteProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
-extern PG_PASCAL (pg_error) pgScrapMemoryWrite (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
-extern PG_PASCAL (pg_error) pgScrapMemoryRead (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
+		size_t PG_FAR *element_info, void PG_FAR *aux_data, size_t PG_FAR *unpacked_size);
+extern PG_PASCAL (pg_error) pgStandardReadProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
+extern PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
+extern PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
+extern PG_PASCAL (pg_error) pgOSWriteProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
+extern PG_PASCAL (pg_error) pgScrapMemoryWrite (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
+extern PG_PASCAL (pg_error) pgScrapMemoryRead (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
 
 /* Default extend and misc. procs */
 
 extern PG_PASCAL (void) pgExtendProc (void PG_FAR *param, short verb);
-extern PG_PASCAL (long) pgCacheFree (pgm_globals_ptr mem_globals, memory_ref dont_free, long desired_free);
+extern PG_PASCAL (size_t) pgCacheFree (pgm_globals_ptr mem_globals, memory_ref dont_free, size_t desired_free);
 
 
 #ifdef __cplusplus

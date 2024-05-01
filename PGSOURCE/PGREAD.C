@@ -246,7 +246,7 @@ text_block arrays: */
 			else
 #endif
 		{
-			for (block = use_array(pgr->t_blocks, &general_ctr); general_ctr;
+			for (block = (text_block_ptr) use_array(pgr->t_blocks, &general_ctr); general_ctr;
 					++block, --general_ctr) {
 
 				pgUnpackTextBlock(pg, &walker, block, FALSE, MEM_NULL);
@@ -268,7 +268,7 @@ text_block arrays: */
 				
 				if (*element_info > block->end) {
 				
-					block = AppendMemory(pgr->t_blocks, 1, FALSE);
+					block = (text_block_ptr) AppendMemory(pgr->t_blocks, 1, FALSE);
 					pgInitTextblock(pgr, *element_info, MEM_NULL, block, TRUE);
 					unicode_input_size = cache_range->end - cache_range->begin;
 
@@ -310,12 +310,12 @@ text_block arrays: */
 			
 			if (*element_info > block->end) {
 				
-				block = AppendMemory(pgr->t_blocks, 1, FALSE);
+				block = (text_block_ptr) AppendMemory(pgr->t_blocks, 1, FALSE);
 				pgInitTextblock(pgr, *element_info, MEM_NULL, block, (pg_boolean)(pgr->cache_file != MEM_NULL));			
 				block->end = block->begin + unicode_input_size;
 			}
 
-			target_text = AppendMemory(block->text, unicode_input_size, FALSE);
+			target_text = (pg_char_ptr) AppendMemory(block->text, unicode_input_size, FALSE);
 			pgUnpackPtrBytes(&walker, (pg_bits8_ptr)target_text);
 			UnuseMemory(block->text);
 			UnuseMemory(pgr->t_blocks);
@@ -334,7 +334,7 @@ text_block arrays: */
 			
 			if (*element_info > block->end) {
 				
-				block = AppendMemory(pgr->t_blocks, 1, FALSE);
+				block = (text_block_ptr) AppendMemory(pgr->t_blocks, 1, FALSE);
 				pgInitTextblock(pgr, *element_info, MEM_NULL, block, (pg_boolean)(pgr->cache_file != MEM_NULL));
 			}
 			
@@ -390,7 +390,7 @@ text_block arrays: */
 					if (!(pgr->flags2 & KEEP_READ_STYLES))
 						SetMemorySize(pgr->t_formats, 0);
 	
-					style_ptr = AppendMemory(pgr->t_formats, general_ctr, TRUE);
+					style_ptr = (style_info_ptr) AppendMemory(pgr->t_formats, general_ctr, TRUE);
 	
 					while (general_ctr) {
 					
@@ -403,7 +403,7 @@ text_block arrays: */
 					
 					if (pgr->version < KEY_REVISION10) {
 					
-						style_ptr = UseMemoryRecord(pgr->t_formats, 0, 0, FALSE);
+						style_ptr = (style_info_ptr) UseMemoryRecord(pgr->t_formats, 0, 0, FALSE);
 						style_ptr->used_ctr += 1;
 					}
 					
@@ -426,7 +426,7 @@ text_block arrays: */
 					if (!(pgr->flags2 & KEEP_READ_PARS))
 						SetMemorySize(pgr->par_formats, 0);
 					
-					par_ptr = AppendMemory(pgr->par_formats, run_ctr, TRUE);
+					par_ptr = (par_info_ptr) AppendMemory(pgr->par_formats, run_ctr, TRUE);
 
 					while (run_ctr) {
 				
@@ -437,7 +437,7 @@ text_block arrays: */
 	
 					if (pgr->version < KEY_REVISION10) {
 					
-						par_ptr = UseMemoryRecord(pgr->par_formats, 0, 0, FALSE);
+						par_ptr = (par_info_ptr) UseMemoryRecord(pgr->par_formats, 0, 0, FALSE);
 						par_ptr->used_ctr += 1;
 					}
 	
@@ -458,7 +458,7 @@ text_block arrays: */
 					if (!(pgr->flags2 & KEEP_READ_FONTS))
 						SetMemorySize(pgr->fonts, 0);
 					
-					fonts = AppendMemory(pgr->fonts, run_ctr, TRUE);
+					fonts = (font_info_ptr) AppendMemory(pgr->fonts, run_ctr, TRUE);
 				
 					while (run_ctr) {
 				
@@ -486,7 +486,7 @@ text_block arrays: */
 				if (pgr->version < KEY_REVISION7) {
 				 	rectangle_ptr			vis_ptr;
 	
-				 	vis_ptr = UseMemory(pgr->vis_area);
+				 	vis_ptr = (rectangle_ptr) UseMemory(pgr->vis_area);
 				 	pgr->base_vis_origin = vis_ptr->top_left;
 				 	UnuseMemory(pgr->vis_area);
 				}
@@ -518,7 +518,7 @@ text_block arrays: */
 			SetMemorySize(pgr->select, *element_info + MINIMUM_SELECT_MEMSIZE);
 			pgr->num_selects = (pg_short_t)(*element_info / 2);
 
-			for (selections = use_array(pgr->select, &general_ctr); general_ctr;
+			for (selections = (t_select_ptr) use_array(pgr->select, &general_ctr); general_ctr;
 				++selections, --general_ctr) {
 				
 				selections->offset = pgUnpackNum(&walker);
@@ -558,7 +558,7 @@ text_block arrays: */
 				SetMemorySize(pgr->applied_range, *element_info);
 
 			run_ctr = *element_info;
-			for (pair_ptr = UseMemory(pg->applied_range); run_ctr;
+			for (pair_ptr = (select_pair_ptr) UseMemory(pg->applied_range); run_ctr;
 					++pair_ptr, --run_ctr)
 				pgUnpackSelectPair(&walker, pair_ptr);
 
@@ -659,7 +659,7 @@ text_block arrays: */
 				memory_ref PG_FAR 	*frames;
 				long				num_frames;
 				
-				frames = UseMemory(general_ref);
+				frames = (memory_ref *) UseMemory(general_ref);
 				num_frames = *element_info;
 				
 				while (num_frames) {
@@ -682,7 +682,7 @@ text_block arrays: */
 				register pg_globals_ptr		globals;
 
 
-				globals = aux_data;
+				globals = (pg_globals_ptr) aux_data;
 
 				pgUnpackNumbers(&walker, &globals->line_wrap_char, SHORT_GLOBAL_CHARS, short_data);
 				pgUnpackPtrBytes(&walker, (pg_bits8_ptr)globals->hyphen_char);
@@ -710,7 +710,7 @@ text_block arrays: */
 					if (!(pgr->flags2 & KEEP_READ_STYLES))
 						SetMemorySize(pgr->named_styles, 0);
 
-					named_styles = AppendMemory(pgr->named_styles, run_ctr, TRUE);
+					named_styles = (named_stylesheet_ptr) AppendMemory(pgr->named_styles, run_ctr, TRUE);
 				
 					while (run_ctr) {
 						
@@ -795,7 +795,7 @@ PG_PASCAL (pg_error) pgReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 	volatile pg_ref		aux_pg = MEM_NULL;
 	volatile memory_ref	doc_globals = MEM_NULL;
 	
-	pg_rec = original_pg = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) (volatile paige_rec_ptr) original_pg = UseMemory(pg);
 
 	mem_globals = pg_rec->globals->mem_globals;
 	file_size = 0;
@@ -885,7 +885,7 @@ PG_PASCAL (pg_error) pgReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 					
 					if (aux_pg) {
 					
-						pg_rec = UseMemory(aux_pg);
+						pg_rec = (volatile paige_rec_ptr) UseMemory(aux_pg);
 						pgPushMemoryID(pg_rec);
 					}
 					else
@@ -954,7 +954,7 @@ PG_PASCAL (pg_error) pgReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 							pg_globals_ptr	temp_globals;
 
 							doc_globals = MemoryAlloc(mem_globals, sizeof(pg_globals), 1, 0);
-							temp_globals = UseMemory(doc_globals);
+							temp_globals = (pg_globals_ptr) UseMemory(doc_globals);
 							pgBlockMove(pg_rec->globals, temp_globals, sizeof(pg_globals));
 							
 							done = handler->read_handler(pg_rec, globals_key, data_ref,
@@ -1172,7 +1172,7 @@ PG_PASCAL (pg_error) pgCacheReadDoc (pg_ref pg, long PG_FAR *file_position, cons
 				SetMemoryPurge(mem_globals->freemem_info, NO_PURGING_STATUS, FALSE);
 			}
 
-			refs = AppendMemory(mem_globals->freemem_info, 1, FALSE);
+			refs = (pg_ref *) AppendMemory(mem_globals->freemem_info, 1, FALSE);
 			*refs = pg;
 			UnuseMemory(mem_globals->freemem_info);
 		}
@@ -1431,11 +1431,11 @@ PG_PASCAL (void) pgUnpackNumbers (pack_walk_ptr out_data, void PG_FAR *ptr, shor
 	register long  PG_FAR	*long_ptr;
 
 	if (data_code == short_data) {
-		for (ctr = 0, short_ptr = ptr; ctr < qty; ++ctr)
+		for (ctr = (short *) (short) (short *) 0, short_ptr = ptr; ctr < qty; ++ctr)
 			short_ptr[ctr] = (short)pgUnpackNum(out_data);
 	}
 	else {
-		for (ctr = 0, long_ptr = ptr; ctr < qty; ++ctr)
+		for (ctr = (long *) (short) (long *) 0, long_ptr = ptr; ctr < qty; ++ctr)
 			long_ptr[ctr] = pgUnpackNum(out_data);
 	}
 }
@@ -1664,7 +1664,7 @@ PG_PASCAL (void) pgUnpackShape (pack_walk_ptr walker, shape_ref the_shape)
 	long			shape_size;
 	
 	shape_size = GetMemorySize(the_shape);
-	for (rects = UseMemory(the_shape); shape_size; ++rects, --shape_size)
+	for (rects = (rectangle_ptr) UseMemory(the_shape); shape_size; ++rects, --shape_size)
 		pgUnpackRect(walker, rects);
 
 	UnuseMemory(the_shape);
@@ -1805,7 +1805,7 @@ static void fix_pg_from_done_handlers (paige_rec_ptr pg, memory_ref handlers)
 
 			qty = (pg_short_t)GetMemorySize(pg->select);
 			
-			for (selections = UseMemory(pg->select); qty; ++selections, --qty)
+			for (selections = (t_select_ptr) UseMemory(pg->select); qty; ++selections, --qty)
 				selections->flags |= SELECTION_DIRTY;
 				
 				UnuseMemory(pg->select);
@@ -1814,7 +1814,7 @@ static void fix_pg_from_done_handlers (paige_rec_ptr pg, memory_ref handlers)
 		qty = (pg_short_t)GetMemorySize(pg->t_blocks);
 		actual_block_qty = 0;
 
-		for (block = UseMemory(pg->t_blocks); qty; ++block, --qty) {
+		for (block = (text_block_ptr) UseMemory(pg->t_blocks); qty; ++block, --qty) {
 			
 			if (!line_handler)
 				block->flags |= LINES_PURGED;
@@ -1847,7 +1847,7 @@ static void fix_pg_from_done_handlers (paige_rec_ptr pg, memory_ref handlers)
     qty = (pg_short_t)GetMemorySize(pg->fonts);
     font_qty = (short)qty;
 
-	for (fonts = UseMemory(pg->fonts); qty; ++fonts, ++element, --qty) {
+	for (fonts = (font_info_ptr) UseMemory(pg->fonts); qty; ++fonts, ++element, --qty) {
 		
 		fonts->environs &= (~(FONT_GOOD | FONT_USES_ALTERNATE));	/* Default to font not good (yet) */
 		
@@ -1872,9 +1872,9 @@ static void fix_pg_from_done_handlers (paige_rec_ptr pg, memory_ref handlers)
 	element = 0;
 	data_size = sizeof(style_info);
     
-    fonts = UseMemory(pg->fonts);
+    fonts = (font_info_ptr) UseMemory(pg->fonts);
  
-	for (styles = UseMemory(pg->t_formats), qty = (pg_short_t)GetMemorySize(pg->t_formats);
+	for (styles = (style_info_ptr) UseMemory(pg->t_formats), qty = (pg_short_t)GetMemorySize(pg->t_formats);
 		qty; ++styles, ++element, --qty) {
 		
 		styles->class_bits &= (~EMBED_READ_BIT);
@@ -1906,7 +1906,7 @@ static void fix_pg_from_done_handlers (paige_rec_ptr pg, memory_ref handlers)
 
 	if (init_handler) {
 		
-		for (pars = UseMemory(pg->par_formats), qty = (pg_short_t)GetMemorySize(pg->par_formats);
+		for (pars = (par_info_ptr) UseMemory(pg->par_formats), qty = (pg_short_t)GetMemorySize(pg->par_formats);
 			qty; ++pars, ++element, --qty)
 			init_handler->read_handler(pg, format_init_key, (memory_ref) init_par_verb,
 				&element, pars, &data_size);
@@ -1956,7 +1956,7 @@ static void fix_style_run (paige_rec_ptr pg, memory_ref run, memory_ref styles)
 	
 	run_qty = GetMemorySize(run);
 	style_qty = (pg_short_t)GetMemorySize(styles);
-	run_ptr = UseMemory(run);
+	run_ptr = (style_run_ptr) UseMemory(run);
 	
 	while (run_qty) {
 		
@@ -1982,7 +1982,7 @@ static void fix_hyperlink_run (paige_rec_ptr pg, memory_ref run)
 	long					qty;
 	
 	qty = GetMemorySize(run);
-	hyperlinks = UseMemoryRecord(run, qty - 1, 0, TRUE);
+	hyperlinks = (pg_hyperlink_ptr) UseMemoryRecord(run, qty - 1, 0, TRUE);
 	hyperlinks->applied_range.end = hyperlinks->applied_range.begin = pg->t_length + ZERO_TEXT_PAD;
 	UnuseMemory(run);
 }
@@ -2315,7 +2315,7 @@ static void convert_for_unicode (paige_rec_ptr pg)
 	
 	num_blocks = GetMemorySize(pg->t_blocks);
 	
-	for (block = UseMemory(pg->t_blocks); num_blocks; ++block, --num_blocks) {
+	for (block = (text_block_ptr) UseMemory(pg->t_blocks); num_blocks; ++block, --num_blocks) {
 
 	#ifdef UNICODE
 		pgBlockToUnicode(pg, block);

@@ -52,7 +52,7 @@ static void advance_text_runs (paige_rec_ptr pg, text_block_ptr block,
 static void fix_deleted_pars (paige_rec_ptr pg, long deleted_from, long deleted_to);
 static void advance_style_run (style_ref the_run, long offset, long length,
 		pg_boolean include_equal_offsets);
-static void insert_key_data (paige_rec_ptr pg, pg_char_ptr data, long length,
+static void insert_key_data (paige_rec_ptr pg, pg_char_ptr data, size_t length,
 		short modifiers, short draw_mode);
 static void dump_key_data (paige_rec_ptr pg, style_info_ptr style,
 		pg_char_ptr data, long offset, long length, short draw_mode);
@@ -74,7 +74,7 @@ static void erase_end_display (paige_rec_ptr pg, text_block_ptr block, co_ordina
 		graphic_line_ptr last_line, long last_drawn_offset);
 static pg_short_t get_num_pages (paige_rec_ptr pg);
 static void extend_visual_pages (paige_rec_ptr pg, short draw_mode);
-static pg_boolean has_any_controls (paige_rec_ptr pg, pg_char_ptr text, long length);
+static pg_boolean has_any_controls (paige_rec_ptr pg, pg_char_ptr text, size_t length);
 static void scale_drawing (paige_rec_ptr pg, co_ordinate_ptr amount_offset,
 		draw_points_ptr draw_position);
 static pg_boolean can_quit_display (paige_rec_ptr pg, point_start_ptr line_start,
@@ -145,7 +145,7 @@ PG_PASCAL (void) pgSmartQuotesProc (paige_rec_ptr pg, long insert_offset,
 	block = pgFindTextBlock(pg, insert_offset, NULL, FALSE, TRUE);
 	pgPrepareStyleWalk(pg, insert_offset, &walker, FALSE);
 
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 
 	global_offset = insert_offset;
 
@@ -204,14 +204,14 @@ the insertion occurs at the current insertion point.
 Change for version 1.1, now returns a pg_boolean, TRUE if display or caret
 changed in any way. */
 
-PG_PASCAL (pg_boolean) pgInsert (pg_ref pg, const pg_char_ptr data, long length, long position,
+PG_PASCAL (pg_boolean) pgInsert (pg_ref pg, const pg_char_ptr data, size_t length, size_t position,
 		short insert_mode, short modifiers, short draw_mode)
 {
 	paige_rec_ptr				pg_rec;
 	short						use_insert_mode;
 	pg_boolean					insertion_displayed;
-	long						insert_position, remaining_length;
-	long						max_blocksize, insert_length;
+	size_t						insert_position, remaining_length;
+	size_t						max_blocksize, insert_length;
 
 	if (!length)
 		return	FALSE;
@@ -398,14 +398,14 @@ PG_PASCAL (void) pgDelete (pg_ref pg, const select_pair_ptr delete_range, short 
 		
 		pgRemoveAllHilites(pg_rec, use_draw_mode);
 		SetMemorySize(pg_rec->select, MINIMUM_SELECT_MEMSIZE);
-		new_selection = UseMemory(pg_rec->select);
+		new_selection = (t_select_ptr) UseMemory(pg_rec->select);
 		new_selection->flags |= SELECTION_DIRTY;
 		new_selection[1] = new_selection[0];
 		pg_rec->stable_caret.h = pg_rec->stable_caret.v = 0;
 		pg_rec->num_selects = 0;
 		multi_del_base = 0;
 
-		for (selections = UseMemory(select_list), num_selects = (pg_short_t)GetMemorySize(select_list);
+		for (selections = (select_pair_ptr) UseMemory(select_list), num_selects = (pg_short_t)GetMemorySize(select_list);
 				num_selects;  ++selections, --num_selects) {
 
 			delete_from = selections->begin - multi_del_base;
@@ -459,7 +459,7 @@ PG_PASCAL (pg_boolean) pgInsertPendingKeys (pg_ref pg)
 		pg_rec->key_buffer_mode = draw_none;	/* Avoids infinite recursions */
 		insert_size = GetMemorySize(pg_rec->key_buffer);
 		
-		result = pgInsert(pg, UseMemory(pg_rec->key_buffer), insert_size, CURRENT_POSITION,
+		result = pgInsert(pg, (const pg_char_ptr) UseMemory(pg_rec->key_buffer), insert_size, CURRENT_POSITION,
 				recursive_insert_mode, 0, use_draw_mode);
 
 		UnuseMemory(pg_rec->key_buffer);
@@ -598,7 +598,7 @@ used for printing (so print function gets the first offset that won't appear
 on the page).  */
 
 PG_PASCAL (long) pgUpdateText (paige_rec_ptr pg, graf_device_ptr draw_port,
-		long beginning_offset, long ending_offset, shape_ref vis_rgn,
+		size_t beginning_offset, size_t ending_offset, shape_ref vis_rgn,
 		co_ordinate_ptr offset_extra, short display_verb, short hilite_mode)
 {
 	long		result;
@@ -632,7 +632,7 @@ PG_PASCAL (void) pgDisplaySubset (paige_rec_ptr pg, rectangle_ptr draw_bounds,
 		return;
 
 	num_blocks = GetMemorySize(pg->t_blocks);
-	wrap_base = UseMemory(pg->wrap_area);
+	wrap_base = (rectangle_ptr) UseMemory(pg->wrap_area);
 	++wrap_base;
 
 	if (!pg->num_selects)
@@ -652,7 +652,7 @@ PG_PASCAL (void) pgDisplaySubset (paige_rec_ptr pg, rectangle_ptr draw_bounds,
 		
 		if (!(block->flags & ALL_TEXT_HIDDEN)) {
 
-			starts = initial_starts = UseMemory(block->lines);
+			starts = initial_starts = (point_start_ptr) UseMemory(block->lines);
 			pgFillBlock(&union_of_starts, sizeof(rectangle), 0);
 			
 			while (starts->flags != TERMINATOR_BITS) {
@@ -674,7 +674,7 @@ PG_PASCAL (void) pgDisplaySubset (paige_rec_ptr pg, rectangle_ptr draw_bounds,
 			glitter.walker = walker;
 			
 			pg->procs.load_proc(pg, block);
-			text = UseMemory(block->text);
+			text = (pg_char_ptr) UseMemory(block->text);
 			
 			while (starts->flags != TERMINATOR_BITS)
 				starts += draw_line(pg, block, text, starts, &walker,
@@ -784,8 +784,8 @@ The function does NOT do the following:
 Added 7/14/95, if key_insert_mode and a single null char is offered, the current line
 is invalidated, recomputed but nothing is inserted. */
 
-PG_PASCAL (long) pgInsertRawData (paige_rec_ptr pg, pg_char_ptr data, long length,
-			long offset, smart_update_ptr update_info, short insert_mode)
+PG_PASCAL (long) pgInsertRawData (paige_rec_ptr pg, pg_char_ptr data, size_t length,
+			size_t offset, smart_update_ptr update_info, short insert_mode)
 {
 	register text_block_ptr		block;
 	style_info					info, mask;
@@ -819,7 +819,7 @@ PG_PASCAL (long) pgInsertRawData (paige_rec_ptr pg, pg_char_ptr data, long lengt
 		else
 			advance_equal_pars = FALSE;
 
-		target_ptr = InsertMemory(block->text, insert_position, use_length);
+		target_ptr = (pg_char_ptr) InsertMemory(block->text, insert_position, use_length);
 		
 		if (use_length == 1)
 			*target_ptr = *data;
@@ -928,7 +928,7 @@ PG_PASCAL (void) pgDrawPages (paige_rec_ptr pg, graf_device_ptr device,
 	pgNegatePt(&pg->scroll_pos);
 	pg->vis_area = vis_area;		/* <-- needs for hook */
 
-	page_ptr = UseMemory(pg->wrap_area);
+	page_ptr = (rectangle_ptr) UseMemory(pg->wrap_area);
 	r_qty = (pg_short_t)(GetMemorySize(pg->wrap_area) - 1);
 	pgShapeBounds(vis_area, &vis_bounds);
 	pgBlockMove(page_ptr, &page_bounds, sizeof(rectangle));
@@ -1098,11 +1098,11 @@ PG_PASCAL (void) pgSetTerminatorFlag (paige_rec_ptr pg)
 		
 		wanted_char = pg->t_length - 1;
 
-		block = UseMemoryRecord(pg->t_blocks, GetMemorySize(pg->t_blocks) - 1, 0, TRUE);
+		block = (text_block_ptr) UseMemoryRecord(pg->t_blocks, GetMemorySize(pg->t_blocks) - 1, 0, TRUE);
 		pgPrepareStyleWalk(pg, wanted_char, &walker, FALSE);
 		pg->procs.load_proc(pg, block);
 
-		if (walker.cur_style->procs.char_info(pg, &walker, UseMemory(block->text),
+		if (walker.cur_style->procs.char_info(pg, &walker, (pg_char_ptr) UseMemory(block->text),
 				block->begin, 0, block->end - block->begin, wanted_char - block->begin, PAR_SEL_BIT))
 			pg->flags |= DOC_TERMINATED_BIT;
 		
@@ -1402,7 +1402,7 @@ static long update_text (paige_rec_ptr pg, graf_device_ptr draw_port,
 	last_drawn_line.r_num = -1;
 	last_drawn_line.cell_num = 0;
 
-	wrap_base = UseMemory(pg->wrap_area);
+	wrap_base = (rectangle_ptr) UseMemory(pg->wrap_area);
 	++wrap_base;
 	wrap_qty = (pg_short_t)(GetMemorySize(pg->wrap_area) - 1);
 
@@ -1486,7 +1486,7 @@ static long update_text (paige_rec_ptr pg, graf_device_ptr draw_port,
 			if (pg->port.clip_info.change_flags & CLIP_EXCLUDE_CHANGED)
 				pgClipGrafDevice(pg, clip_standard_verb, MEM_NULL);
 
-			starts = line_starts = UseMemory(block->lines);
+			starts = line_starts = (point_start_ptr) UseMemory(block->lines);
 			
 			pgFillBlock(&glitter, sizeof(glitter_info), 0);
 			
@@ -1520,7 +1520,7 @@ static long update_text (paige_rec_ptr pg, graf_device_ptr draw_port,
 			
 			local_end_offset = last_offset - block->begin;
 			pg->procs.load_proc(pg, block);
-			text = UseMemory(block->text);
+			text = (pg_char_ptr) UseMemory(block->text);
 			
 			if ((display_mode_verb = draw_mode) == best_way)
 				display_mode_verb = direct_copy;
@@ -1593,7 +1593,7 @@ static long update_text (paige_rec_ptr pg, graf_device_ptr draw_port,
 
 // Bug fix by Gar 12/10/95, update "last_drawn_bottom". 
 		
-		block = UseMemoryRecord(pg->t_blocks, 0, 0, FALSE);
+		block = (text_block_ptr) UseMemoryRecord(pg->t_blocks, 0, 0, FALSE);
 		pg->last_drawn_bottom.v_position = block->bounds.bot_right.v;
 		pg->last_drawn_bottom.v_position += pg->port.origin.v - pg->scroll_pos.v;
 	}
@@ -1653,7 +1653,7 @@ static void do_partial_display (paige_rec_ptr pg, long draw_from,
 	offset_begin -= block->begin;
 	offset_end = block->end - block->begin;
 	local_offset = (pg_short_t)offset_begin;
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	
 	while (starts->offset < local_offset)
 		++starts;
@@ -1679,7 +1679,7 @@ static void do_partial_display (paige_rec_ptr pg, long draw_from,
 	UnuseMemory(locs_ref);
 	pgReleaseCharLocs(pg, locs_ref);
 
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 	pgPrepareStyleWalk(pg, draw_from, &walker, TRUE);
 	
 	if (local_offset)
@@ -1779,7 +1779,7 @@ static void advance_text_runs (paige_rec_ptr pg, text_block_ptr block,
 		UnuseMemory(pg->par_exclusions);
 	}
 
-	selections = UseMemory(pg->select);
+	selections = (t_select_ptr) UseMemory(pg->select);
 	num_selects = pg->num_selects + 1;
 	
 	while (num_selects) {
@@ -1801,7 +1801,7 @@ static void advance_text_runs (paige_rec_ptr pg, text_block_ptr block,
 
 	if (!pg->num_selects) {
 		
-		selections = UseMemoryRecord(pg->select, 0, 0, FALSE);
+		selections = (t_select_ptr) UseMemoryRecord(pg->select, 0, 0, FALSE);
 		selections[1] = selections[0];
 		pg->hilite_anchor = selections->offset;
 	}
@@ -1811,7 +1811,7 @@ static void advance_text_runs (paige_rec_ptr pg, text_block_ptr block,
 	if (pg->applied_range) {
 		
 		num_selects = (pg_short_t)GetMemorySize(pg->applied_range);
-		applied_pairs = UseMemory(pg->applied_range);
+		applied_pairs = (select_pair_ptr) UseMemory(pg->applied_range);
 		
 		while (num_selects) {
 
@@ -1870,7 +1870,7 @@ static void fix_deleted_pars (paige_rec_ptr pg, long deleted_from, long deleted_
 			
 			UnuseMemory(pg->par_style_run);
 			DeleteMemory(pg->par_style_run, run_rec_num, 1);
-			par_run = UseMemoryRecord(pg->par_style_run, run_rec_num, USE_ALL_RECS, TRUE);
+			par_run = (style_run_ptr) UseMemoryRecord(pg->par_style_run, run_rec_num, USE_ALL_RECS, TRUE);
 		}
 		else {
 			
@@ -1939,7 +1939,7 @@ static void advance_style_run (style_ref the_run, long offset, long length,
 
 	num_runs = (pg_short_t)GetMemorySize(the_run);
 
-	for (run = UseMemory(the_run); minimum_offset >= run->offset; ++run, --num_runs) ;
+	for (run = (style_run_ptr) UseMemory(the_run); minimum_offset >= run->offset; ++run, --num_runs) ;
 	
 	if (num_runs > 1)
 		if ((run->offset == run[1].offset) || (!run->offset)) {
@@ -1969,7 +1969,7 @@ as arrows. NOTE: The char_bytes field is temporarily forced to 0. The purpose
 of this is to ensure special control code for the incoming stream are
 recognized.     */
 
-static void insert_key_data (paige_rec_ptr pg, pg_char_ptr data, long length,
+static void insert_key_data (paige_rec_ptr pg, pg_char_ptr data, size_t length,
 		short modifiers, short draw_mode)
 {
 	style_info			insert_style;
@@ -2145,7 +2145,7 @@ static void clear_line_end_flag (paige_rec_ptr pg)
 {
 	t_select_ptr		selection;
 
-	selection = UseMemory(pg->select);
+	selection = (t_select_ptr) UseMemory(pg->select);
 	selection->flags &= CLR_END_LINE_FLAG;
 	UnuseMemory(pg->select);
 }
@@ -2336,7 +2336,7 @@ static long align_selection (paige_rec_ptr pg, long position, long byte_advance)
 	pgPrepareStyleWalk(pg, new_position, &walker, FALSE);
 	
 	block = pgFindTextBlock(pg, new_position, NULL, FALSE, TRUE);
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 	offset_end = block->end - block->begin;
 
 	if ((byte_advance > 0) && (new_position < pg->t_length)) {
@@ -2468,7 +2468,7 @@ static void increment_line_select(paige_rec_ptr pg, short modifiers, short direc
 	long						previous_container, scaled_extra;
 	co_ordinate					fake_pt;
 	
-	selection = UseMemory(pg->select);
+	selection = (t_select_ptr) UseMemory(pg->select);
 	
 	if (modifiers & EXTEND_MOD_BIT) {
 
@@ -2495,7 +2495,7 @@ static void increment_line_select(paige_rec_ptr pg, short modifiers, short direc
 	}
 	
 	block = pgFindTextBlock(pg, selection->offset, NULL, FALSE, TRUE);
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	starts += selection->line;
 
 	fake_pt.h = starts->bounds.top_left.h + selection->primary_caret;
@@ -2527,7 +2527,7 @@ static void increment_line_select(paige_rec_ptr pg, short modifiers, short direc
 			
 			--block;
 			pgPaginateBlock(pg, block, NULL, FALSE);
-			starts = UseMemory(block->lines);
+			starts = (point_start_ptr) UseMemory(block->lines);
 			
 			while (starts[1].flags != TERMINATOR_BITS)
 				++starts;
@@ -2552,7 +2552,7 @@ static void increment_line_select(paige_rec_ptr pg, short modifiers, short direc
 			UnuseMemory(block->lines);
 			++block;
 			pgPaginateBlock(pg, block, NULL, FALSE);
-			starts = UseMemory(block->lines);
+			starts = (point_start_ptr) UseMemory(block->lines);
 		}
 	}
 
@@ -2606,7 +2606,7 @@ static void advance_line_run (paige_rec_ptr pg, text_block_ptr block, pg_short_t
 	if (!(block->flags & SOME_LINES_GOOD) || (block->flags & LINES_PURGED))
 		return;
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	first_starts = starts;
 
 	for (previous_offset = 0; starts->flags != TERMINATOR_BITS; ++starts) {
@@ -2652,7 +2652,7 @@ static void advance_line_run (paige_rec_ptr pg, text_block_ptr block, pg_short_t
 		local_offset = offset;
 		par_offset = block->begin;
 		par_offset += (long)local_offset;
-		par_base = UseMemory(pg->par_formats);
+		par_base = (par_info_ptr) UseMemory(pg->par_formats);
 		par_run = pgFindParStyleRun(pg, par_offset, NULL);
 		par_index = par_run->style_item;
 		
@@ -2743,7 +2743,7 @@ static void erase_top_or_bottom (paige_rec_ptr pg, short dont_draw, pg_boolean d
 	scroll_offset.v = -pg->scroll_pos.v;
 	pgAddPt(&pg->port.origin, &scroll_offset);
 	
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 
 	if (do_bottom) {
 		
@@ -2781,7 +2781,7 @@ static void erase_top_or_bottom (paige_rec_ptr pg, short dont_draw, pg_boolean d
 	}
 	else {
 		
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		
 		section.r_num = starts->r_num;
 		section.v_position = starts->bounds.top_left.v;
@@ -2828,7 +2828,7 @@ static void compute_top_and_bottom (text_block_ptr block, pg_short_t starts_offs
 	register point_start_ptr		starts;
 	long							lowest, highest;
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	
 	while (starts->offset < starts_offset) {
 
@@ -2886,7 +2886,7 @@ static void erase_end_display (paige_rec_ptr pg, text_block_ptr block, co_ordina
 	if (!(block->flags & ALL_TEXT_HIDDEN) && block->begin && block->begin == last_drawn_offset) {
 
 		pgPaginateBlock(pg, block, NULL, TRUE);				
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		current_line.bounds = starts->bounds;
 		current_line.bounds.bot_right.v += (long)starts->cell_height;
 		current_line.r_num = starts->r_num;
@@ -2926,7 +2926,7 @@ static void erase_from_last_line (paige_rec_ptr pg, co_ordinate_ptr vis_offset,
 		begin_r = last_line->r_num;
 		end_r = cur_line->r_num;
 
-		wrap_r = UseMemory(pg->wrap_area);
+		wrap_r = (rectangle_ptr) UseMemory(pg->wrap_area);
 		
 		++wrap_r;
 		
@@ -3041,7 +3041,7 @@ static void extend_visual_pages (paige_rec_ptr pg, short draw_mode)
 /* This returns TRUE if any char in text is a control type char. The text is
 assumed to all be the current insertion style. */
 
-static pg_boolean has_any_controls (paige_rec_ptr pg, pg_char_ptr text, long length)
+static pg_boolean has_any_controls (paige_rec_ptr pg, pg_char_ptr text, size_t length)
 {
 	register long			byte_ctr;
 
@@ -3213,7 +3213,7 @@ static void set_fastest_drawing_path (paige_rec_ptr pg, text_block_ptr block,
 					beginning_offset = local_offset;
 					end_of_block = block->end - block->begin;
 					
-					text = UseMemory(block->text);
+					text = (pg_char_ptr) UseMemory(block->text);
 					
 					while (bytes_to_end) {
 						
@@ -3479,7 +3479,7 @@ static long draw_line (paige_rec_ptr pg, text_block_ptr block, pg_char_ptr text,
 			previous_line_ref = block->lines;
 			++block;
 
-			previous_start = UseMemory(previous_line_ref);
+			previous_start = (point_start_ptr) UseMemory(previous_line_ref);
 			
 			while (previous_start->flags != TERMINATOR_BITS)
 				++previous_start;
@@ -3695,7 +3695,7 @@ static void set_caret (paige_rec_ptr pg, short verb)
 {
 	if (!pg->num_selects) {
 	
-		pg->procs.cursor_proc(pg, UseMemory(pg->select), verb);
+		pg->procs.cursor_proc(pg, (t_select_ptr) UseMemory(pg->select), verb);
 		UnuseMemory(pg->select);
 	}
 }
@@ -3711,8 +3711,8 @@ static void delete_style_records (paige_rec_ptr pg, long first_rec, long num_rec
 	pg_short_t				index;
 	long					run_qty;
 	
-	style_base = UseMemory(pg->t_formats);
-	run = UseMemoryRecord(pg->t_style_run, first_rec, USE_ALL_RECS, TRUE);
+	style_base = (style_info_ptr) UseMemory(pg->t_formats);
+	run = (style_run_ptr) UseMemoryRecord(pg->t_style_run, first_rec, USE_ALL_RECS, TRUE);
 	
 	for (run_qty = 0; run_qty < num_recs; ++run, ++run_qty) {
 		
@@ -3737,8 +3737,8 @@ static void delete_par_records (paige_rec_ptr pg, long first_rec, long num_recs)
 	pg_short_t				index;
 	long					run_qty;
 	
-	style_base = UseMemory(pg->par_formats);
-	run = UseMemoryRecord(pg->par_style_run, first_rec, USE_ALL_RECS, TRUE);
+	style_base = (par_info_ptr) UseMemory(pg->par_formats);
+	run = (style_run_ptr) UseMemoryRecord(pg->par_style_run, first_rec, USE_ALL_RECS, TRUE);
 	
 	for (run_qty = 0; run_qty < num_recs; ++run, ++run_qty) {
 		
@@ -3775,7 +3775,7 @@ static void delete_par_exclusions (paige_rec_ptr pg, long position, long length)
 			
 			UnuseMemory(pg->par_exclusions);
 			DeleteMemory(pg->par_exclusions, par_index, 1);
-			run = UseMemory(pg->par_exclusions);
+			run = (style_run_ptr) UseMemory(pg->par_exclusions);
 			run += par_index;
 			num_par_exclusions -= 1;
 		}

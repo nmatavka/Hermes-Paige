@@ -128,7 +128,7 @@ PG_PASCAL (void) pgPt2OffsetProc (paige_rec_ptr pg, co_ordinate_ptr point,
 	system_direction = pgSystemDirection(pg->globals);
 	no_half_chars = conversion_info & NO_HALFCHARS;
 
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	block_qty = (pg_short_t)GetMemorySize(pg->t_blocks);
 
 	for (block_num = 0; block_num < block_qty; ++block, ++block_num) {
@@ -155,7 +155,7 @@ PG_PASCAL (void) pgPt2OffsetProc (paige_rec_ptr pg, co_ordinate_ptr point,
 	if (pg->subset_focus) {
 		paige_sub_ptr		sub_ptr;
 		
-		sub_ptr = UseMemory(pg->subset_focus);
+		sub_ptr = (paige_sub_ptr) UseMemory(pg->subset_focus);
 		bounds_check = sub_ptr->subset_bounds;
 		UnuseMemory(pg->subset_focus);
 	}
@@ -169,7 +169,7 @@ PG_PASCAL (void) pgPt2OffsetProc (paige_rec_ptr pg, co_ordinate_ptr point,
 			pgShapeBounds(pg->wrap_area, &bounds_check);
 		else {
 		
-			block = UseMemoryRecord(pg->t_blocks, block_qty - 1, 0, FALSE);
+			block = (text_block_ptr) UseMemoryRecord(pg->t_blocks, block_qty - 1, 0, FALSE);
 			
 			while ((block->flags & (BELOW_CONTAINERS | ALL_TEXT_HIDDEN))
 				&& block->begin)
@@ -224,10 +224,10 @@ PG_PASCAL (void) pgPt2OffsetProc (paige_rec_ptr pg, co_ordinate_ptr point,
 	
 	point_to_start(pg, point, &block_num, &start_num);
 
-	block = UseMemoryRecord(pg->t_blocks, block_num, USE_ALL_RECS, TRUE);
+	block = (text_block_ptr) UseMemoryRecord(pg->t_blocks, block_num, USE_ALL_RECS, TRUE);
 	
 	pgPaginateBlock(pg, block, NULL, TRUE);
-	starts = UseMemoryRecord(block->lines, start_num, 0, TRUE);
+	starts = (point_start_ptr) UseMemoryRecord(block->lines, start_num, 0, TRUE);
 	selection->line = start_num;
 
 	if (starts->cell_num)
@@ -266,7 +266,7 @@ PG_PASCAL (void) pgPt2OffsetProc (paige_rec_ptr pg, co_ordinate_ptr point,
 		j_extra = pgGetJExtra(starts);
 			
 		special_locs = pgGetSpecialLocs(pg, block, starts, text_size, j_extra, COMPENSATE_SCALE);
-		char_locs = UseMemory(special_locs);
+		char_locs = (long *) UseMemory(special_locs);
 
 		selection->offset = running_offset;
 		selection->primary_caret = 0;
@@ -425,7 +425,7 @@ PG_PASCAL (pg_boolean) pgIdle (pg_ref pg)
 
 			pg_rec->procs.set_device(pg_rec, set_pg_device, &pg_rec->port, &pg_rec->bk_color);
 			pgClipGrafDevice(pg_rec, clip_standard_verb, MEM_NULL);
-			pg_rec->procs.cursor_proc(pg_rec, UseMemory(pg_rec->select), verb);
+			pg_rec->procs.cursor_proc(pg_rec, (t_select_ptr) UseMemory(pg_rec->select), verb);
 			UnuseMemory(pg_rec->select);
 	
 			pg_rec->procs.set_device(pg_rec, unset_pg_device, &pg_rec->port, NULL);
@@ -502,7 +502,7 @@ PG_PASCAL (long) pgDragSelect (pg_ref pg, const co_ordinate_ptr location, short 
 		
 		if (pg_rec->num_selects) {
 		
-			selection = UseMemory(pg_rec->select);
+			selection = (t_select_ptr) UseMemory(pg_rec->select);
 			
 			for (qty = pg_rec->num_selects; qty; selection += 2, --qty)
 				if (selection->offset > selection[1].offset)
@@ -610,7 +610,7 @@ PG_PASCAL (long) pgDragSelect (pg_ref pg, const co_ordinate_ptr location, short 
 		}
 	}
 
-	selection = UseMemory(pg_rec->select);
+	selection = (t_select_ptr) UseMemory(pg_rec->select);
 
 	if (sel_rec = pg_rec->num_selects) {
 		
@@ -651,7 +651,7 @@ PG_PASCAL (void) pgSetCursorState (pg_ref pg, short cursor_state)
 		pg_rec->procs.set_device(pg_rec, set_pg_device, &pg_rec->port, &pg_rec->bk_color);
 		pgClipGrafDevice(pg_rec, clip_standard_verb, MEM_NULL);
 
-		pg_rec->procs.cursor_proc(pg_rec, UseMemory(pg_rec->select), cursor_state);
+		pg_rec->procs.cursor_proc(pg_rec, (t_select_ptr) UseMemory(pg_rec->select), cursor_state);
 
 		UnuseMemory(pg_rec->select);
 
@@ -740,7 +740,7 @@ PG_PASCAL (pg_boolean) pgCaretPosition (pg_ref pg, long offset, rectangle_ptr ca
 	
 	answer_rect = caret_rect;
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	starts += use_select.line;
 	answer_rect->top_left.h = answer_rect->bot_right.h = starts->bounds.top_left.h + use_select.primary_caret;
 	answer_rect->top_left.v = starts->bounds.top_left.v;
@@ -770,7 +770,7 @@ PG_PASCAL (void) pgTurnOffHighlight (paige_rec_ptr pg, pg_boolean set_port)
 	if (pg->num_selects)
 		pgDrawHighlight(pg, hide_cursor);
 	else {
-		pg->procs.cursor_proc(pg, UseMemory(pg->select), hide_cursor);
+		pg->procs.cursor_proc(pg, (t_select_ptr) UseMemory(pg->select), hide_cursor);
 		UnuseMemory(pg->select);
 	}
 
@@ -857,7 +857,7 @@ PG_PASCAL (void) pgSetHiliteStates (pg_ref pg, short front_back_state,
 	if (new_is_active && (pg_rec->num_selects == 0) && should_draw) {
 		t_select_ptr				select;
 		
-		select = UseMemory(pg_rec->select);
+		select = (t_select_ptr) UseMemory(pg_rec->select);
 		pgSetupGrafDevice(pg_rec, &pg_rec->port, MEM_NULL, clip_standard_verb);
 		pg_rec->procs.cursor_proc(pg_rec, select, restore_cursor);
 		UnuseMemory(pg_rec->select);
@@ -900,12 +900,12 @@ PG_PASCAL (void) pgGetHiliteStates (pg_ref pg, short PG_FAR *front_back_state,
 /* This function sets a selection range according to the modifiers (which can
 be the same as modifiers in pgDragSelect).    */
 
-PG_PASCAL (void) pgSetSelection (pg_ref pg, long begin_sel, long end_sel,
+PG_PASCAL (void) pgSetSelection (pg_ref pg, size_t begin_sel, size_t end_sel,
 		short modifiers, short show_hilite)
 {
 	paige_rec_ptr			pg_rec;
 	t_select_ptr			selections;
-	long					beginning_select, ending_select;
+	size_t					beginning_select, ending_select;
 	long					unused_offset, first_select_flags, second_select_flags;
 	short					will_draw, left_can_extend, right_can_extend;
 	pg_short_t				select_qty;
@@ -1009,7 +1009,7 @@ PG_PASCAL (void) pgSetSelection (pg_ref pg, long begin_sel, long end_sel,
 		select_qty = 0;
 	}
 
-	selections = UseMemory(pg_rec->select);
+	selections = (t_select_ptr) UseMemory(pg_rec->select);
 	selections += select_qty;
 	selections->offset = beginning_select;
 	selections[1].offset = ending_select;
@@ -1024,7 +1024,7 @@ PG_PASCAL (void) pgSetSelection (pg_ref pg, long begin_sel, long end_sel,
 	if (pg_rec->active_subset) {
 		paige_sub_ptr		sub_ptr;
 		
-		sub_ptr = UseMemory(pg_rec->active_subset);
+		sub_ptr = (paige_sub_ptr) UseMemory(pg_rec->active_subset);
 		sub_ptr->num_selects = pg_rec->num_selects;
 		UnuseMemory(pg_rec->active_subset);
 	}
@@ -1052,14 +1052,14 @@ selection pairs exist).  Either parameter can be null.
 Modified 10/20/94 -- if multiple selections, the outside boundaries are
 computed for "begin" end "end" selection points.  */
 
-PG_PASCAL (void) pgGetSelection (pg_ref pg, long PG_FAR *begin_sel, long PG_FAR *end_sel)
+PG_PASCAL (void) pgGetSelection (pg_ref pg, size_t PG_FAR *begin_sel, size_t PG_FAR *end_sel)
 {
 	paige_rec_ptr	pg_rec;
 	register t_select_ptr	selections;
 	register pg_short_t		num_selections;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
-	selections = UseMemory(pg_rec->select);
+	selections = (t_select_ptr) UseMemory(pg_rec->select);
 	
 	if (begin_sel)
 		*begin_sel = selections->offset;
@@ -1118,7 +1118,7 @@ PG_PASCAL (void) pgExtendSelection (pg_ref pg, long amount_ext, short modifiers,
 
 	if ((modifiers & PIVOT_EXTEND_BIT) && pg_rec->num_selects) {
 		
-		select = UseMemory(pg_rec->select);
+		select = (t_select_ptr) UseMemory(pg_rec->select);
 		if (select->offset >= pg_rec->hilite_anchor)
 			use_sel_rec = 1;
 		
@@ -1140,7 +1140,7 @@ PG_PASCAL (void) pgExtendSelection (pg_ref pg, long amount_ext, short modifiers,
 		t_select_ptr			selections;
 		long					sel_from, sel_to, temp_sel;
 
-		selections = UseMemory(pg_rec->select);
+		selections = (t_select_ptr) UseMemory(pg_rec->select);
 		
 		if (pg_rec->num_selects && (amount_ext < 0)) {
 					
@@ -1207,7 +1207,7 @@ PG_PASCAL (void) pgSetInsertSelect (paige_rec_ptr pg, long offset)
 
 	use_offset = pgFixOffset(pg, offset);
 
-	selections = UseMemory(pg->select);
+	selections = (t_select_ptr) UseMemory(pg->select);
 	
 	if (selections->offset != use_offset) {
 	
@@ -1236,7 +1236,7 @@ PG_PASCAL (void) pgCalcSelect (paige_rec_ptr pg, t_select_ptr selection)
 	pg_short_t						text_size, text_size_index;
 
 	block = pgFindTextBlock(pg, selection->offset, NULL, TRUE, TRUE);
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	old_flags = selection->flags;
 	line_ctr = 0;
 	selection->primary_caret = 0;
@@ -1274,7 +1274,7 @@ PG_PASCAL (void) pgCalcSelect (paige_rec_ptr pg, t_select_ptr selection)
 		else {
 
 			special_locs = pgGetSpecialLocs(pg, block, starts, text_size, j_extra, COMPENSATE_SCALE);
-			char_locs = UseMemory(special_locs);
+			char_locs = (long *) UseMemory(special_locs);
 			selection->primary_caret = char_locs[local_offset - starts->offset];
 			UnuseAndDispose(special_locs);
 		}
@@ -1298,7 +1298,7 @@ PG_PASCAL (void) pgDrawHighlight (paige_rec_ptr pg, short cursor_verb)
 {
 	t_select_ptr		selections;
 
-	selections = UseMemory(pg->select);
+	selections = (t_select_ptr) UseMemory(pg->select);
 	
 	if (pg->num_selects) {
 		
@@ -1327,7 +1327,7 @@ PG_PASCAL (void) pgInvalidateHilite (paige_rec_ptr pg_rec, pg_boolean remove_car
 	t_select_ptr			select;
 	pg_short_t				num_selects;
 
-	select = UseMemory(pg_rec->select);
+	select = (t_select_ptr) UseMemory(pg_rec->select);
 
 	if (!(num_selects = pg_rec->num_selects)) {
 		
@@ -1351,7 +1351,7 @@ PG_PASCAL (void) pgInvalidateHilite (paige_rec_ptr pg_rec, pg_boolean remove_car
 
 /* pgInvalSelect sets the range specified to require recalculation  */
 
-PG_PASCAL (void) pgInvalSelect (pg_ref pg, long select_from, long select_to)
+PG_PASCAL (void) pgInvalSelect (pg_ref pg, size_t select_from, size_t select_to)
 {
 	paige_rec_ptr					pg_rec;
 	register text_block_ptr			block;
@@ -1383,7 +1383,7 @@ PG_PASCAL (void) pgInvalSelect (pg_ref pg, long select_from, long select_to)
 
 	UnuseMemory(pg_rec->t_blocks);
 
-	selections = UseMemory(pg_rec->select);
+	selections = (t_select_ptr) UseMemory(pg_rec->select);
 	if (!(num_starts = pg_rec->num_selects)) {
 	
 		if (selections->offset >= lowest_select) {
@@ -1654,7 +1654,7 @@ PG_PASCAL (short) pgTextRect (pg_ref pg, const select_pair_ptr range, pg_boolean
 	
 	if (select_list = pgSetupOffsetRun(pg_rec, range, FALSE, FALSE)) {
 		
-		for (selections = UseMemory(select_list), num_selects = (pg_short_t)GetMemorySize(select_list);
+		for (selections = (select_pair_ptr) UseMemory(select_list), num_selects = (pg_short_t)GetMemorySize(select_list);
 				num_selects; ++selections, --num_selects)
 			add_to_text_rect(pg_rec, selections, rect, &first_baseline);
 		
@@ -1726,7 +1726,7 @@ example would be in the middle of hidden text.
 If direction is positive the alignment is adjusted forward, if negative the
 alignment is adjusted backwards.  */
 
-PG_PASCAL (pg_boolean) pgAlignSelection (paige_rec_ptr pg, short align_verb, long PG_FAR *select_offset)
+PG_PASCAL (pg_boolean) pgAlignSelection (paige_rec_ptr pg, short align_verb, size_t PG_FAR *select_offset)
 {
 	text_block_ptr			block;
 	pg_char_ptr				text;
@@ -1743,7 +1743,7 @@ PG_PASCAL (pg_boolean) pgAlignSelection (paige_rec_ptr pg, short align_verb, lon
 		*offset = pg->t_length;
 
 	block = pgFindTextBlock(pg, *offset, NULL, FALSE, TRUE);
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 	pgPrepareStyleWalk(pg, *offset, &walker, FALSE);
 	
 	local_offset = *offset - block->begin;
@@ -1780,7 +1780,7 @@ PG_PASCAL (pg_boolean) pgAlignSelection (paige_rec_ptr pg, short align_verb, lon
 		point_start_ptr		starts;
 		pg_short_t			start_offset;
 		
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		start_offset = (pg_short_t)local_offset;
 		
 		while (starts[1].flags != TERMINATOR_BITS) {
@@ -1845,7 +1845,7 @@ PG_PASCAL (pg_short_t) pgFindEmptyHilite (paige_rec_ptr pg, pg_short_t PG_FAR *r
 	if (!pg->num_selects)
 		return	0;
 
-	select1 = select2 = UseMemory(pg->select);
+	select1 = (t_select_ptr) (t_select_ptr) select2 = UseMemory(pg->select);
 	++select2;
 
 	num_delete = *rec = 0;
@@ -1896,8 +1896,8 @@ static select_ref hilite_avoid_list (paige_rec_ptr pg, t_select_ptr cur_select,
 	
 	result = MEM_NULL;
 	
-	style_base = UseMemory(pg->t_formats);
-	run = UseMemory(pg->t_style_run);
+	style_base = (style_info_ptr) UseMemory(pg->t_formats);
+	run = (style_run_ptr) UseMemory(pg->t_style_run);
 	t_length = pg->t_length;
 
 	while (run->offset < t_length) {
@@ -1914,7 +1914,7 @@ static select_ref hilite_avoid_list (paige_rec_ptr pg, t_select_ptr cur_select,
 					result = MemoryAlloc(pg->globals->mem_globals,
 							sizeof(t_select), 0, 4);
 					
-				new_list = AppendMemory(result, 2, FALSE);
+				new_list = (t_select_ptr) AppendMemory(result, 2, FALSE);
 				new_list->offset = test_range.begin;
 				new_list[1].offset = test_range.end;
 				new_list->flags = SELECTION_DIRTY;
@@ -1991,7 +1991,7 @@ static void insert_select_rects (paige_rec_ptr pg, shape_ref rgn,
 	last_block = pgFindTextBlock(pg, last_select->offset, NULL, FALSE, TRUE);
 	UnuseMemory(pg->t_blocks);	/* Is now used only once by me */
 
-	wrap_base = UseMemory(pg->wrap_area);
+	wrap_base = (rectangle_ptr) UseMemory(pg->wrap_area);
 	++wrap_base;			/* = first rectangle in wrap area */
 
 	if (first_select->flags & SELECTION_DIRTY)
@@ -2015,7 +2015,7 @@ static void insert_select_rects (paige_rec_ptr pg, shape_ref rgn,
 			
 			pgOffsetRect(&vis_bounds, pg->scroll_pos.h, pg->scroll_pos.v);
 
-			starts = UseMemoryRecord(first_block->lines, first_select->line, USE_ALL_RECS, TRUE);
+			starts = (point_start_ptr) UseMemoryRecord(first_block->lines, first_select->line, USE_ALL_RECS, TRUE);
 			get_wrap_rect(pg, wrap_base, starts->r_num, first_select, &wrap_rect);
 			pgInsertHiliteRect(pg, first_block, rgn, first_select, NULL,
 					starts->bounds.top_left.v, &wrap_rect, first_select->offset,
@@ -2041,7 +2041,7 @@ static void insert_select_rects (paige_rec_ptr pg, shape_ref rgn,
 				if (first_block->begin == last_block->begin) {
 					
 					pgCalcSelect(pg, last_select);
-					starts = UseMemoryRecord(first_block->lines, last_select->line, USE_ALL_RECS, TRUE);
+					starts = (point_start_ptr) UseMemoryRecord(first_block->lines, last_select->line, USE_ALL_RECS, TRUE);
 					insert_rect.bot_right.v = starts->bounds.top_left.v;
 					pgAddRectToShape(rgn, &insert_rect);
 					
@@ -2065,7 +2065,7 @@ static void insert_select_rects (paige_rec_ptr pg, shape_ref rgn,
 		}
 	}
 	
-	starts = UseMemoryRecord(first_block->lines, first_select->line, USE_ALL_RECS, TRUE);
+	starts = (point_start_ptr) UseMemoryRecord(first_block->lines, first_select->line, USE_ALL_RECS, TRUE);
 	begin_r = end_begin_r = (pg_short_t)starts->r_num;
 	
 	if ((first_block->begin != last_block->begin)
@@ -2074,7 +2074,7 @@ static void insert_select_rects (paige_rec_ptr pg, shape_ref rgn,
 		if (starts[1].flags == TERMINATOR_BITS) {
 
 			pgPaginateBlock(pg, &first_block[1], NULL, TRUE);
-			starts = UseMemory(first_block[1].lines);
+			starts = (point_start_ptr) UseMemory(first_block[1].lines);
 			end_begin_r = (pg_short_t)starts->r_num;
 			UnuseMemory(first_block[1].lines);
 		}
@@ -2084,7 +2084,7 @@ static void insert_select_rects (paige_rec_ptr pg, shape_ref rgn,
 
 	UnuseMemory(first_block->lines);
 	
-	starts = UseMemoryRecord(last_block->lines, last_select->line, USE_ALL_RECS, TRUE);
+	starts = (point_start_ptr) UseMemoryRecord(last_block->lines, last_select->line, USE_ALL_RECS, TRUE);
 	end_r = (pg_short_t)starts->r_num;
 	UnuseMemory(last_block->lines);
 
@@ -2297,7 +2297,7 @@ static long track_style_control (paige_rec_ptr pg, t_select_ptr new_select,
 			pg->num_selects = 0;
 			SetMemorySize(pg->select, 2);
 			
-			selections = UseMemory(pg->select);
+			selections = (t_select_ptr) UseMemory(pg->select);
 			*selections = selections[1] = *new_select;
 			
 			UnuseMemory(pg->select);
@@ -2317,8 +2317,8 @@ static long track_style_control (paige_rec_ptr pg, t_select_ptr new_select,
 
 	block = pgFindTextBlock(pg, text_offset, NULL, TRUE, TRUE);
 	local_offset = text_offset - block->begin;
-	examine_text = UseMemory(block->text);
-	starts = UseMemory(block->lines);
+	examine_text = (pg_char_ptr) UseMemory(block->text);
+	starts = (point_start_ptr) UseMemory(block->lines);
 
 	refcon_result = walker.cur_style->procs.track_ctl(pg, verb, &first_select,
 			new_select, &walker, &examine_text[local_offset], &starts[first_select.line],
@@ -2347,7 +2347,7 @@ static void update_hilite_rgn (paige_rec_ptr pg)
 
 		if (selection_dirty) {
 			
-			selections = UseMemory(pg->select);
+			selections = (t_select_ptr) UseMemory(pg->select);
 			pgBuildHiliteRgn(pg, selections, pg->num_selects, pg->hilite_rgn);
 			UnuseMemory(pg->select);
 		}
@@ -2367,7 +2367,7 @@ static pg_boolean is_selection_dirty (paige_rec_ptr pg)
 	pg_boolean					result;
 	
 	result = FALSE;
-	selections = UseMemory(pg->select);
+	selections = (t_select_ptr) UseMemory(pg->select);
 	num_selections = pg->num_selects;
 	
 	if (!num_selections)
@@ -2733,7 +2733,7 @@ static void add_to_text_rect (paige_rec_ptr pg, select_pair_ptr selection,
 
 // Determine if the second point is on the same line (fixes bug with end-char select):
 
-	starts = UseMemory(first_block->lines);
+	starts = (point_start_ptr) UseMemory(first_block->lines);
 	starts += first_pt.line;
 	
 	while (!(starts->flags & LINE_BREAK_BIT)) {
@@ -2767,7 +2767,7 @@ static void add_to_text_rect (paige_rec_ptr pg, select_pair_ptr selection,
 		rect->bot_right.h = last_rect.bot_right.h;
 	else {
 		
-		starts = UseMemory(first_block->lines);
+		starts = (point_start_ptr) UseMemory(first_block->lines);
 		start_ctr = first_pt.line;
 		starts += start_ctr;
 
@@ -2785,7 +2785,7 @@ static void add_to_text_rect (paige_rec_ptr pg, select_pair_ptr selection,
 			UnuseMemory(first_block->lines);
 			
 			++first_block;
-			starts = UseMemory(first_block->lines);
+			starts = (point_start_ptr) UseMemory(first_block->lines);
 			start_ctr = 0;
 		}
 		
@@ -2834,7 +2834,7 @@ static void point_to_start (paige_rec_ptr pg, co_ordinate_ptr point,
 		
 		inset.h = inset.v = 0;
 		required_r_num = -1;
-		page_ptr = UseMemory(pg->wrap_area);
+		page_ptr = (rectangle_ptr) UseMemory(pg->wrap_area);
 		++page_ptr;
 
 		while (required_r_num < 0) {
@@ -2858,7 +2858,7 @@ static void point_to_start (paige_rec_ptr pg, co_ordinate_ptr point,
 		UnuseMemory(pg->wrap_area);
 	}
 
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	num_blocks = (pg_short_t)GetMemorySize(pg->t_blocks);
 
 	for (block_index = 0; block_index < num_blocks; ++block_index, ++block) {
@@ -2879,7 +2879,7 @@ static void point_to_start (paige_rec_ptr pg, co_ordinate_ptr point,
 	
 	if (block_index == num_blocks) {
 		
-		block = UseMemoryRecord(pg->t_blocks, 0, 0, FALSE);
+		block = (text_block_ptr) UseMemoryRecord(pg->t_blocks, 0, 0, FALSE);
 
 		for (block_index = 0; block_index < num_blocks; ++block_index, ++block) {
 			
@@ -2928,7 +2928,7 @@ static pg_boolean point_to_exact_start (paige_rec_ptr pg, text_block_ptr block, 
 	if (block->flags & LINES_PURGED)
 		pgPaginateBlock(pg, block, NULL, TRUE);
 	
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	starts_index = ending_starts_index = 0;
 
 	while (starts->flags != TERMINATOR_BITS) {
@@ -2959,7 +2959,7 @@ static pg_boolean point_to_exact_start (paige_rec_ptr pg, text_block_ptr block, 
 	
 	if (!result && must_find_one) {
 		
-		starts = UseMemoryRecord(block->lines, (long)ending_starts_index, 0, FALSE);
+		starts = (point_start_ptr) UseMemoryRecord(block->lines, (long)ending_starts_index, 0, FALSE);
 		starts_index = ending_starts_index;
 		result = TRUE;
 	}
@@ -2985,7 +2985,7 @@ static pg_boolean point_to_exact_start (paige_rec_ptr pg, text_block_ptr block, 
 				table_offsets.begin = block->begin;
 			
 			local_position = (pg_short_t)(table_offsets.begin - block->begin);
-			starts = UseMemoryRecord(block->lines, 0, 0, FALSE);
+			starts = (point_start_ptr) UseMemoryRecord(block->lines, 0, 0, FALSE);
 			starts_index = ending_starts_index = 0;
 
 			while (starts[1].offset <= local_position) {
@@ -3066,7 +3066,7 @@ static pg_boolean whole_doc_hidden (paige_rec_ptr pg)
 	register text_block_ptr	blocks;
 	register long			num_blocks;
 	
-	blocks = UseMemory(pg->t_blocks);
+	blocks = (text_block_ptr) UseMemory(pg->t_blocks);
 	
 	for (num_blocks = GetMemorySize(pg->t_blocks); num_blocks; ++blocks, --num_blocks)
 		if (!(blocks->flags & ALL_TEXT_HIDDEN)) {
@@ -3120,7 +3120,7 @@ static long hyperlink_callback (paige_rec_ptr pg, short verb, short modifiers, m
 		if (callback_link.alt_URL != MEM_NULL) {
 			
 			URL_ref = MemoryDuplicate(callback_link.alt_URL);
-			URL = UseMemory(URL_ref);
+			URL = (pg_char_ptr) UseMemory(URL_ref);
 		}
 		else {
 		

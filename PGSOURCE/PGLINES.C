@@ -23,7 +23,7 @@ PG_PASCAL (long) pgNumLines (pg_ref pg)
 		result = 0;
 	else {
 	
-		block = UseMemory(pg_rec->t_blocks);
+		block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 		block += (GetMemorySize(pg_rec->t_blocks) - 1);
 		
 		if (block->flags & NEEDS_CALC)
@@ -62,7 +62,7 @@ PG_PASCAL (long) pgOffsetToLineNum (pg_ref pg, long offset,
 		use_offset = pgFixOffset(pg_rec, offset);
 		block = pgFindTextBlock(pg_rec, use_offset, NULL, TRUE, TRUE);
 		local_offset = (pg_short_t) ((long)(use_offset - block->begin));
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		
 		result = block->first_line_num;
 		
@@ -116,7 +116,7 @@ PG_PASCAL (void) pgLineNumToOffset (pg_ref pg, long line_num,
 		local_begin = local_end = 0;
 	else {
 	
-		block = UseMemory(pg_rec->t_blocks);
+		block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 		wanted_num = line_num - 1;
 	
 		for (;;) {
@@ -135,7 +135,7 @@ PG_PASCAL (void) pgLineNumToOffset (pg_ref pg, long line_num,
 			++block;
 		}
 		
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		line_gauge = wanted_num - block->first_line_num + 1;
 	
 		while (line_gauge) {
@@ -198,7 +198,7 @@ PG_PASCAL (long) pgNumPars (pg_ref pg)
 		result = 0;
 	else {
 	
-		block = UseMemory(pg_rec->t_blocks);
+		block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 		block += (GetMemorySize(pg_rec->t_blocks) - 1);
 		
 		if (block->flags & NEEDS_CALC)
@@ -235,7 +235,7 @@ PG_PASCAL (long) pgOffsetToParNum (pg_ref pg, long offset)
 	
 		block = pgFindTextBlock(pg_rec, offset, NULL, TRUE, TRUE);
 		local_offset = (pg_short_t) ((long)(offset - block->begin));
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		
 		result = block->first_par_num + 1;
 		
@@ -290,7 +290,7 @@ PG_PASCAL (void) pgParNumToOffset (pg_ref pg, long par_num,
 		local_begin = local_end = 0;
 	else {
 	
-		block = UseMemory(pg_rec->t_blocks);
+		block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 		wanted_num = par_num - 1;
 	
 		for (;;) {
@@ -309,7 +309,7 @@ PG_PASCAL (void) pgParNumToOffset (pg_ref pg, long par_num,
 			++block;
 		}
 		
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		line_gauge = wanted_num - block->first_par_num + 1;
 	
 		while (line_gauge) {

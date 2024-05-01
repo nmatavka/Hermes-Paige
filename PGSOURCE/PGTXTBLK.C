@@ -62,7 +62,7 @@ PG_PASCAL (void) pgInitTextblock (paige_rec_ptr pg_rec, long offset_begin,
 
 	block->subref_list = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(memory_ref), 0, 8);
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	starts->flags = NEW_LINE_BIT | LINE_BREAK_BIT;
 	++starts;
 	starts->flags = TERMINATOR_BITS;
@@ -142,7 +142,7 @@ PG_PASCAL (void) pgTextLoadProc (paige_rec_ptr pg, text_block_ptr block)
 		}
 
 		block->text = MemoryAllocID(globals->mem_globals, sizeof(pg_char), data_size, 32, pg->mem_id);		
-		text = UseMemory(block->text);
+		text = (pg_char_ptr) UseMemory(block->text);
 		pg->cache_read_proc((void PG_FAR *)text, io_data_direct, &file_position, &byte_size, pg->cache_file);
 		
 		UnuseMemory(block->text);
@@ -157,7 +157,7 @@ PG_PASCAL (void) pgTextLoadProc (paige_rec_ptr pg, text_block_ptr block)
 		}
 
 		block->text = MemoryAllocID(globals->mem_globals, 1, byte_size, 32, pg->mem_id);		
-		text = UseMemory(block->text);
+		text = (pg_char_ptr) UseMemory(block->text);
 		pg->cache_read_proc((void PG_FAR *)text, io_data_direct, &file_position, &byte_size, pg->cache_file);
 		
 		UnuseMemory(block->text);
@@ -191,7 +191,7 @@ PG_PASCAL (void) pgBlockToUnicode (paige_rec_ptr pg, text_block_ptr block)
 	if (block->end == block->begin)
 		return;
 
-	bytes_ptr = UseMemory(block->text);
+	bytes_ptr = (pg_bits8_ptr) UseMemory(block->text);
 	
 	if (pgBytesToUnicode(bytes_ptr, NULL, NULL, byte_size)) {  // Already Unicode
 		
@@ -215,7 +215,7 @@ PG_PASCAL (void) pgBlockToUnicode (paige_rec_ptr pg, text_block_ptr block)
 				byte_size = block->end - text_index;
 			
 			pre_size = GetMemorySize(output_ref);
-			unicode_ptr = AppendMemory(output_ref, byte_size, FALSE);
+			unicode_ptr = (pg_short_t *) AppendMemory(output_ref, byte_size, FALSE);
 			char_size = walker.cur_style->procs.bytes_to_unicode(bytes_ptr, unicode_ptr, walker.cur_font, byte_size);
 			UnuseMemory(output_ref);
 			
@@ -246,7 +246,7 @@ PG_PASCAL (void) pgUnicodeToBlock (paige_rec_ptr pg, text_block_ptr block)
 	long				text_index, byte_size, char_size;
 
 	byte_size = GetByteSize(block->text);
-	bytes_ptr = UseMemory(block->text);
+	bytes_ptr = (pg_bits8_ptr) UseMemory(block->text);
 	
 	if (pgBytesToUnicode(bytes_ptr, NULL, NULL, byte_size)) {
 
@@ -311,7 +311,7 @@ PG_PASCAL (long) pgTextBreakProc (paige_rec_ptr pg, text_block_ptr block)
 					
 					result = text_size / 2;
 					pgSetWalkStyle(&walker, block->begin + result);
-					text = UseMemory(block->text);
+					text = (pg_char_ptr) UseMemory(block->text);
 					initial_result = result;
 					max_offset = block->end - block->begin;
 
@@ -364,7 +364,7 @@ PG_PASCAL (void) pgAdjustDirection (paige_rec_ptr pg, text_block_ptr block)
 		pgPrepareStyleWalk(pg, block->begin, &walker, TRUE);
 		block->bounds.top_left.h = block->bounds.bot_right.h;
 		
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		
 		while (starts->flags != TERMINATOR_BITS) {
 			
@@ -426,7 +426,7 @@ PG_PASCAL (long) pgRectFromSelection (paige_rec_ptr pg, text_block_ptr block,
 	long						caret_point;
 	pg_short_t					begin_start, num_starts;
 
-	alternate_start = first_start = UseMemory(block->lines);
+	alternate_start = (point_start_ptr) (point_start_ptr) first_start = UseMemory(block->lines);
 	alternate_start += selection->line;
 
 	if (baseline)
@@ -510,7 +510,7 @@ PG_PASCAL (text_block_ptr) pgFindTextBlock (paige_rec_ptr pg_rec, long offset,
 	pg_short_t					num_blocks, block_ctr;
 
 	num_blocks = (pg_short_t)GetMemorySize(pg_rec->t_blocks) - 1;
-	block = UseMemory(pg_rec->t_blocks);
+	block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 	
 	wanted_offset = offset;
 	block_ctr = 0;
@@ -551,7 +551,7 @@ PG_PASCAL (short) pgFixBadBlocks (paige_rec_ptr pg)
 	short					some_fixed;
 
 	max_block_size = pg->globals->max_block_size;
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	num_blocks = (pg_short_t)GetMemorySize(pg->t_blocks);
 	block_ctr = 0;
 	some_fixed = FALSE;
@@ -588,7 +588,7 @@ PG_PASCAL (short) pgFixBadBlocks (paige_rec_ptr pg)
 				block->begin = old_block_begin;
 				pgTrueUnionRect(&old_bounds, &block->bounds, &block->bounds);
 				
-				inserted_text = InsertMemory(block->text, 0, old_text_size);
+				inserted_text = (pg_char_ptr) InsertMemory(block->text, 0, old_text_size);
 				pgBlockMove(UseMemory(src_text_ref), inserted_text, old_text_size * sizeof(pg_char));
 				UnuseMemory(block->text);
 				UnuseMemory(src_text_ref);
@@ -604,7 +604,7 @@ PG_PASCAL (short) pgFixBadBlocks (paige_rec_ptr pg)
 				
 				if ((num_subs = GetMemorySize(src_subrefs)) > 0) {
 					
-					subref_list = InsertMemory(block->subref_list, 0, num_subs);
+					subref_list = (pg_subref_ptr) InsertMemory(block->subref_list, 0, num_subs);
 					pgBlockMove(UseMemory(src_subrefs), subref_list, num_subs * sizeof(pg_subref));
 					UnuseMemory(src_subrefs);
 					SetMemorySize(src_subrefs, 0);
@@ -634,7 +634,7 @@ PG_PASCAL (short) pgFixBadBlocks (paige_rec_ptr pg)
 				UnuseMemory(pg->t_blocks);
 				DeleteMemory(pg->t_blocks, block_ctr, 1);
 
-				block = UseMemory(pg->t_blocks);
+				block = (text_block_ptr) UseMemory(pg->t_blocks);
 				block += block_ctr;
 				
 				if (num_blocks == 1)
@@ -670,7 +670,7 @@ PG_PASCAL (short) pgFixBadBlocks (paige_rec_ptr pg)
 					
 					pg->procs.load_proc(pg, block);
 	
-					src_text = UseMemoryRecord(block->text, old_text_size, new_text_size - 1, TRUE);
+					src_text = (pg_char_ptr) UseMemoryRecord(block->text, old_text_size, new_text_size - 1, TRUE);
 					pgBlockMove(src_text, UseMemory(new_text_ref), new_text_size * sizeof(pg_char));
 					UnuseMemory(block->text);
 					UnuseMemory(new_text_ref);
@@ -680,7 +680,7 @@ PG_PASCAL (short) pgFixBadBlocks (paige_rec_ptr pg)
 					old_bounds_bottom = block->bounds.bot_right.v;
 					++block_ctr;
 					
-					block = InsertMemory(pg->t_blocks, block_ctr, 1);
+					block = (text_block_ptr) InsertMemory(pg->t_blocks, block_ctr, 1);
 					
 					pgInitTextblock(pg, split_offset, new_text_ref, block, FALSE);
 					block->bounds.top_left.v = block->bounds.bot_right.v = old_bounds_bottom;
@@ -738,7 +738,7 @@ PG_PASCAL (pg_char_ptr) pgTextFromOffset (paige_rec_ptr pg, long offset,
 
 	UnuseMemory(pg->t_blocks);
 	
-	text_result = UseMemory(*the_ref);
+	text_result = (pg_char_ptr) UseMemory(*the_ref);
 	text_result += local_offset;
 	
 	return	text_result;
@@ -758,7 +758,7 @@ PG_PASCAL (void) pgCalcTableSpace (paige_rec_ptr pg, text_block_ptr block)
 	pg_short_t						flags;
 
 	pgPrepareStyleWalk(pg, block->begin, &walker, TRUE);
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 
 	while (starts->flags != TERMINATOR_BITS) {
 
@@ -837,7 +837,7 @@ static void inval_selections (paige_rec_ptr pg)
 	register t_select_ptr		selections;
 	register pg_short_t			num_selects;
 	
-	selections = UseMemory(pg->select);
+	selections = (t_select_ptr) UseMemory(pg->select);
 	
 	if (!(num_selects = pg->num_selects))
 		selections->flags |= SELECTION_DIRTY;
@@ -872,7 +872,7 @@ static long find_breaking_char (paige_rec_ptr pg, text_block_ptr block,
 
 	walker = styles;
 	pgSetWalkStyle(walker, block->begin + begin_offset);
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 	max_offset = block->end - block->begin;
 
 	remaining_bytes = byte_count;
@@ -926,7 +926,7 @@ static void split_subref_list (text_block_ptr block1, text_block_ptr block2)
 	if (num_subs = GetMemorySize(block1->subref_list)) {
 		
 		text_size = GetMemorySize(block2->text);
-		text = UseMemory(block2->text);
+		text = (pg_char_ptr) UseMemory(block2->text);
 		split_refs = 0;
 
 		while (text_size) {
@@ -942,7 +942,7 @@ static void split_subref_list (text_block_ptr block1, text_block_ptr block2)
 		if (split_refs) {
 			
 			SetMemorySize(block2->subref_list, split_refs);
-			subref_list = UseMemory(block1->subref_list);
+			subref_list = (pg_subref_ptr) UseMemory(block1->subref_list);
 			list1_size = num_subs - split_refs;
 			pgBlockMove(&subref_list[list1_size], UseMemory(block2->subref_list),
 						split_refs * sizeof(pg_subref));

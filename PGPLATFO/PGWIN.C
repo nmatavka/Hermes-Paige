@@ -43,7 +43,7 @@ static void GetStringTypeEx(LCID,DWORD,LPCSTR,int,LPWORD);
 #endif
 
 #ifdef UNICODE
-#define x_GetFontLanguageInfo GetFontLanguageInfo
+// #define x_GetFontLanguageInfo GetFontLanguageInfo
 #define FirstMultiCharByte(unused1, unused2) FALSE
 #ifndef LANG_ARABIC
 #define LANG_ARABIC                      0x01
@@ -286,10 +286,10 @@ PG_PASCAL (void) pgMachineShutdown (const pg_globals_ptr globals)
       DeleteDC((HDC)global_vars->machine_const);
 
    if (global_vars->font_objects) {
-      font_object_ptr         font_objects;
-      long              num_fonts;
+      font_object_ptr       font_objects;
+      size_t                num_fonts;
       
-      font_objects = UseMemory(global_vars->font_objects);
+      font_objects = (font_object_ptr) UseMemory(global_vars->font_objects);
       num_fonts = GetMemorySize(global_vars->font_objects);
       
       while (num_fonts) {
@@ -330,7 +330,7 @@ let this machine-specific function initialize a generic Paige graf_device.
 FOR MACINTOSH: the_port is a GrafPtr. */
 
 PG_PASCAL (void) pgInitDevice (const pg_globals_ptr globals, const generic_var the_port,
-      long machine_ref, graf_device_ptr device)
+      size_t machine_ref, graf_device_ptr device)
 {
    make_graf_device(globals, the_port, machine_ref, device);
 }
@@ -406,17 +406,17 @@ highlight. It is obviously machine-dependent. */
 
 PG_PASCAL (void) pgDrawHiliteProc (paige_rec_ptr pg, shape_ref rgn)
 {
-   Rect                  piece_of_shape;
+   Rect                     piece_of_shape;
    rectangle                vis_bounds, scaled_r, container;
    co_ordinate              scroll_adjust, repeat_offset;
-   register rectangle_ptr     r_ptr;
-   register long            r_qty;
-   long                  container_proc_refcon;
+   register rectangle_ptr   r_ptr;
+   register size_t          r_qty;
+   long                     container_proc_refcon;
    pg_short_t               last_container, real_container;
    HDC                      hdc = pgGetPlatformDevice(&pg->port);
    
    SetMapMode(hdc, MM_TEXT);
-   r_ptr = UseMemory(rgn);
+   r_ptr = (rectangle_ptr) UseMemory(rgn);
     
     pg->scale_factor.scale = pg->port.scale.scale;
     
@@ -769,7 +769,7 @@ PG_PASCAL (void) pgMeasureProc (paige_rec_ptr pg, style_walk_ptr walker,
    }
    
    if (transliterate_ref = pgConvertTextCaps(pg, style, data, length))
-      measure_data = UseMemory(transliterate_ref);
+      measure_data = (pg_char_ptr) UseMemory(transliterate_ref);
    else
       measure_data = data;
    
@@ -808,7 +808,7 @@ PG_PASCAL (void) pgMeasureProc (paige_rec_ptr pg, style_walk_ptr walker,
          
          if (!info_flags) {
             
-            style = UseMemoryRecord(pg->t_formats, style->small_caps_index,
+            style = (style_info_ptr) UseMemoryRecord(pg->t_formats, style->small_caps_index,
                   0, FALSE);
             walker->cur_style = style;
          }
@@ -1045,8 +1045,8 @@ PG_PASCAL (long) pgCharInfoProc (paige_rec_ptr pg, style_walk_ptr style_walker,
    char_bytes = walker->cur_style->char_bytes + 1;
 
    if ((char_bytes > 1) || (class_bits & NON_TEXT_BITS)) {
-      long      distance_in;
-      short    byte_remainder;
+      size_t    distance_in;
+      short     byte_remainder;
       
       /* Multi-byte char or non-text chars */
       
@@ -1576,7 +1576,7 @@ PG_PASCAL (void) pgDrawProc (paige_rec_ptr pg, style_walk_ptr walker, pg_char_pt
 
    if (non_transparent_text) {
    
-      pgColorToOS(&walker->superimpose.bk_color, (void PG_FAR *)&bk_color);
+      pgColorToOS(&walker->superimpose.bk_color, &bk_color);
       bk_color |= pg->port.palette_select;
          
       SetBkColor(hdc, bk_color);
@@ -1590,7 +1590,7 @@ PG_PASCAL (void) pgDrawProc (paige_rec_ptr pg, style_walk_ptr walker, pg_char_pt
       special_locs = pgGetSpecialLocs(pg, draw_position->block, draw_position->starts,
             length, extra, PLAIN_SCALE);
 
-      small_caps_locs = UseMemory(special_locs);
+      small_caps_locs = (long *) UseMemory(special_locs);
    }
    else
       small_caps_locs = NULL;
@@ -1607,7 +1607,7 @@ PG_PASCAL (void) pgDrawProc (paige_rec_ptr pg, style_walk_ptr walker, pg_char_pt
             draw_position->real_offset, total_length, &info_flags);
 
          if (!info_flags)
-            walker->cur_style = UseMemoryRecord(pg->t_formats,
+            walker->cur_style = (style_info_ptr) UseMemoryRecord(pg->t_formats,
                   original_style->small_caps_index, 0, FALSE);
 
          small_caps_extra = (short)(original_style->ascent - walker->cur_style->ascent);
@@ -1617,7 +1617,7 @@ PG_PASCAL (void) pgDrawProc (paige_rec_ptr pg, style_walk_ptr walker, pg_char_pt
 
       text = data + draw_offset;
       if (transliterate_ref = pgConvertTextCaps(pg, original_style, text, draw_length))
-         text = UseMemory(transliterate_ref);
+         text = (pg_char_ptr) UseMemory(transliterate_ref);
 
       if (small_caps_locs) {
          long        compensated_width, real_width;
@@ -1669,7 +1669,7 @@ PG_PASCAL (void) pgDrawProc (paige_rec_ptr pg, style_walk_ptr walker, pg_char_pt
          x_widths_ref = pg->globals->alpha_widths;
          
          SetMemorySize(x_widths_ref, draw_length + 1);
-         x_widths = UseMemory(x_widths_ref);
+         x_widths = (int *) UseMemory(x_widths_ref);
          
          pgSetMeasureDevice(pg);
       
@@ -1770,7 +1770,7 @@ PG_PASCAL (void) pgDrawProc (paige_rec_ptr pg, style_walk_ptr walker, pg_char_pt
       GetTextMetrics(hdc, &tm);
       
       hidden_pen = CreatePen(PS_SOLID, 1, (COLORREF)0x00808080);
-      old_pen = SelectObject(hdc, hidden_pen);
+      old_pen = (HPEN) SelectObject(hdc, hidden_pen);
       vertical = (short)(start_pt.v - (tm.tmAscent / 3));
       MoveToEx(hdc, start_pt.h, vertical, NULL);
       LineTo(hdc, end_pen.h, vertical);
@@ -1780,7 +1780,7 @@ PG_PASCAL (void) pgDrawProc (paige_rec_ptr pg, style_walk_ptr walker, pg_char_pt
 
    if (non_transparent_text) {
    
-      pgColorToOS(&pg->bk_color, (void PG_FAR *)&bk_color);
+      pgColorToOS(&pg->bk_color, &bk_color);
       bk_color |= pg->port.palette_select;;
       SetBkColor(hdc, bk_color);
    }
@@ -1813,7 +1813,7 @@ PG_PASCAL (void) pgTabDrawProc (paige_rec_ptr pg, style_walk_ptr walker, tab_sto
       filler_size = needed_width / single_width + 2;
       filler = MemoryAlloc(pg->globals->mem_globals, sizeof(pg_char),
             filler_size, 0);
-      filler_text = UseMemory(filler);
+      filler_text = (pg_char_ptr) UseMemory(filler);
       pgFillBlock(filler_text, filler_size * sizeof(pg_char), (char)leader);
    
       while (filler_size) {
@@ -1907,7 +1907,7 @@ PG_PASCAL (void) pgSpecialCharProc (paige_rec_ptr pg, style_walk_ptr walker, pg_
          special_locs = pgGetSpecialLocs(pg, draw_position->block, draw_position->starts,
                length, extra, PLAIN_SCALE);
 
-         locs = UseMemory(special_locs);
+         locs = (long *) UseMemory(special_locs);
 
          local_offset = 0;
          draw_point.h = draw_position->from.h;
@@ -1954,15 +1954,15 @@ PG_PASCAL (void) pgSpecialCharProc (paige_rec_ptr pg, style_walk_ptr walker, pg_
          if (bullet_type == 2) {
             
             if (pgTransColor(pg->globals, &walker->cur_style->bk_color))
-            	pgColorToOS(&pg->bk_color, (void PG_FAR *)&fg_color);
+            	pgColorToOS(&pg->bk_color, &fg_color);
             else
-            	pgColorToOS(&walker->cur_style->bk_color, (void PG_FAR *)&fg_color);
+            	pgColorToOS(&walker->cur_style->bk_color, &fg_color);
          }
          else
-            pgColorToOS(&walker->cur_style->fg_color, (void PG_FAR *)&fg_color);
+            pgColorToOS(&walker->cur_style->fg_color, &fg_color);
          brush = CreateSolidBrush((COLORREF)(fg_color & 0x00FFFFFF));
 
-         pgColorToOS(&walker->cur_style->fg_color, (void PG_FAR *)&fg_color);
+         pgColorToOS(&walker->cur_style->fg_color, &fg_color);
          logpen.lopnStyle = PS_SOLID;
          logpen.lopnWidth.x = logpen.lopnWidth.y = 1;
          // Give a light shadow when going onscreen so that the bullet looks better,
@@ -1973,8 +1973,8 @@ PG_PASCAL (void) pgSpecialCharProc (paige_rec_ptr pg, style_walk_ptr walker, pg_
          if ( (bullet_type == 1) && !(pg->flags & PRINT_MODE_BIT) )
              logpen.lopnColor |= 0x808080;
          pen = CreatePenIndirect(&logpen);
-         old_pen = SelectObject(hdc, pen);
-         old_brush = SelectObject(hdc, brush);
+         old_pen = (HPEN) SelectObject(hdc, pen);
+         old_brush = (HBRUSH) SelectObject(hdc, brush);
 
          draw_point = draw_position->from;
          bullet.left = bullet.right = (short)(draw_point.h - 5);
@@ -2144,14 +2144,14 @@ PG_PASCAL (void) pgSetGrafDevice (paige_rec_ptr pg, short verb, graf_device_ptr 
    pg_globals_ptr             globals;
    HDC                     	  hdc;
    COLORREF             	  color;
-   long                       stack_size;
+   size_t                     stack_size;
 
    globals = pg->globals;
 
    if (verb == unset_pg_device) {
    
       stack_size = GetMemorySize(device->graf_stack) - 1;
-      preserve_ptr = UseMemory(device->graf_stack);
+      preserve_ptr = (port_preserve *) UseMemory(device->graf_stack);
       preserve_ptr += stack_size;
 
       globals->current_port = preserve_ptr->last_device;
@@ -2165,7 +2165,7 @@ PG_PASCAL (void) pgSetGrafDevice (paige_rec_ptr pg, short verb, graf_device_ptr 
    }
    else {
    
-      preserve_ptr = AppendMemory(device->graf_stack, 1, FALSE);
+      preserve_ptr = (port_preserve *) AppendMemory(device->graf_stack, 1, FALSE);
       preserve_ptr->last_device = globals->current_port;
       globals->current_port = device;
    
@@ -2182,7 +2182,7 @@ PG_PASCAL (void) pgSetGrafDevice (paige_rec_ptr pg, short verb, graf_device_ptr 
              device->bk_color = *bk_color;
       }
    
-      pgColorToOS(&device->bk_color, (void PG_FAR *)&color);
+      pgColorToOS(&device->bk_color, &color);
        color |= device->palette_select;;
       SetBkColor(hdc, color);
       UnuseMemory(device->graf_stack);
@@ -2295,7 +2295,7 @@ PG_PASCAL (void) pgPrepareOffscreen (paige_rec_ptr pg, rectangle_ptr target_area
       //bitmap = CreateCompatibleBitmap((HDC)pg->port.machine_ref, target.right, target.bottom);
       bitmap = CreateCompatibleBitmap((HDC)pg->port.machine_ref, (int)bitmapWidth, (int)bitmapHeight);
       globals->offscreen_buf = PG_LONGWORD(memory_ref) bitmap;
-      globals->offscreen_port.previous_items[PREVIOUS_BITMAP] = PG_LONGWORD(long)SelectObject(bitmap_dc, bitmap);
+      globals->offscreen_port.previous_items[PREVIOUS_BITMAP] = PG_LONGWORD(size_t)SelectObject(bitmap_dc, bitmap);
       globals->offscreen_port.machine_ref = PG_LONGWORD(generic_var) bitmap_dc;
         globals->current_port = (graf_device_ptr) &globals->offscreen_port;
       pgColorToOS(&pg->bk_color, &bk_color);
@@ -2851,7 +2851,7 @@ PG_PASCAL (void) pgDrawSpecialUnderline (paige_rec_ptr pg, Point from_pt,
       pen_size = 1;
 
    underline_pen = CreatePen(pen_type, (short)pen_size, pen_color);
-   old_pen = SelectObject(hdc, underline_pen);
+   old_pen = (HPEN) SelectObject(hdc, underline_pen);
 
    MoveToEx(hdc, start_pt.h, start_pt.v, NULL);
    LineTo(hdc, start_pt.h + distance, start_pt.v);
@@ -2976,7 +2976,7 @@ PG_PASCAL (HDC) pgGetPlatformDevice (graf_device_ptr the_device)
    if (!the_device->access_ctr) {
       
       if (the_device->machine_var)
-         the_device->machine_ref = PG_LONGWORD(long) GetDC((HWND)the_device->machine_var);
+         the_device->machine_ref = PG_LONGWORD(size_t) GetDC((HWND)the_device->machine_var);
       else
          the_device->machine_ref = the_device->machine_ref3;
       
@@ -2984,7 +2984,7 @@ PG_PASCAL (HDC) pgGetPlatformDevice (graf_device_ptr the_device)
 
       if (the_device->palette) {
          
-         the_device->previous_items[PREVIOUS_PALETTE] = PG_LONGWORD(long)SelectPalette(dc, (HPALETTE)the_device->palette, FALSE);
+         the_device->previous_items[PREVIOUS_PALETTE] = PG_LONGWORD(size_t)SelectPalette(dc, (HPALETTE)the_device->palette, FALSE);
          RealizePalette(dc);
          the_device->palette_select = 0x02000000L;
       }
@@ -3048,15 +3048,15 @@ PG_PASCAL (void) SetFontCharWidths (pg_ref pg, style_info_ptr style, int PG_FAR 
             SIGNIFICANT_STYLE_SIZE)) > 0) {
       style_info_ptr    found_style;
       
-      found_style = UseMemoryRecord(pg_rec->t_formats, (long)(style_index - 1), 0, TRUE);
+      found_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long)(style_index - 1), 0, TRUE);
       found_style->maintenance |= HAS_FORCED_WIDTHS;
       UnuseMemory(pg_rec->t_formats);
    }
 
-   font = UseMemoryRecord(pg_rec->fonts, (long)style->font_index, 0, TRUE);
+   font = (font_info_ptr) UseMemoryRecord(pg_rec->fonts, (long)style->font_index, 0, TRUE);
    get_windows_font_object(pg_rec, style, font);
    
-   fonttable = UseMemoryRecord(pg_rec->globals->font_objects, style->machine_var2, 0, TRUE);
+   fonttable = (font_object_ptr) UseMemoryRecord(pg_rec->globals->font_objects, style->machine_var2, 0, TRUE);
    pgBlockMove(charwidths, fonttable->widths, sizeof(int) * 256);
 
    fonttable->valid_widths |= CHARWIDTHS_COMPUTED;
@@ -3081,7 +3081,7 @@ PG_PASCAL (void) pgOpenPrinter (paige_rec_ptr pg_rec, graf_device_ptr print_dev,
     short               print_x, print_y;
 
    screen_dc = pgGetPlatformDevice(&pg_rec->port);
-   print_dev->machine_ref4 = PG_LONGWORD(long)screen_dc;
+   print_dev->machine_ref4 = PG_LONGWORD(size_t)screen_dc;
 
 /* Paginate the text blocks that will print to assure all font objects
 are created and the line(s) are in place: */
@@ -3132,7 +3132,7 @@ PG_PASCAL (void) pgPrintDeviceChanged (paige_rec_ptr pg)
    font_object_ptr         fonts;
    long              font_qty;
 
-   fonts = UseMemory(pg->globals->font_objects);
+   fonts = (font_object_ptr) UseMemory(pg->globals->font_objects);
    
    for (font_qty = GetMemorySize(pg->globals->font_objects); font_qty; ++fonts, --font_qty)
       fonts->valid_widths |= USE_TEMP_WIDTHS;
@@ -3157,7 +3157,7 @@ PG_PASCAL (void) pgClosePrinter (paige_rec_ptr pg_rec, graf_device_ptr print_dev
       font_object_ptr         fonts;
       long              font_qty;
    
-      fonts = UseMemory(pg_rec->globals->font_objects);
+      fonts = (font_object_ptr) UseMemory(pg_rec->globals->font_objects);
       
       for (font_qty = GetMemorySize(pg_rec->globals->font_objects); font_qty; ++fonts, --font_qty)
          fonts->valid_widths &= (~USE_TEMP_WIDTHS);
@@ -3174,10 +3174,10 @@ PG_PASCAL (void) pgClosePrinter (paige_rec_ptr pg_rec, graf_device_ptr print_dev
 PG_PASCAL (memory_ref) HandleToMemory (pgm_globals_ptr mem_globals, HANDLE h,
       pg_short_t rec_size)
 {
-   mem_rec_ptr           mem_ptr;
-   register pg_bits8_ptr   src, dest;
-   long               h_size, new_size, block_size;
-   HANDLE             hNew;
+   mem_rec_ptr              mem_ptr;
+   register pg_bits8_ptr    src, dest;
+   size_t                   h_size, new_size, block_size;
+   HANDLE                   hNew;
 
    h_size = GlobalSize(h);
    new_size = (h_size / rec_size);
@@ -3198,7 +3198,7 @@ PG_PASCAL (memory_ref) HandleToMemory (pgm_globals_ptr mem_globals, HANDLE h,
       return MEM_NULL;
    }
 
-    src = GlobalLock(h);
+    src = (pg_bits8_ptr) GlobalLock(h);
     mem_ptr = (mem_rec_ptr)src;
  
     dest = src;
@@ -3206,7 +3206,7 @@ PG_PASCAL (memory_ref) HandleToMemory (pgm_globals_ptr mem_globals, HANDLE h,
     
     src += h_size;
     dest += h_size;
-    pgBlockMove(src, dest, -h_size);
+    pgBlockMove(src, dest, -(ptrdiff_t)h_size);
    
    mem_globals->total_unpurged += block_size;
    
@@ -3254,7 +3254,7 @@ PG_PASCAL (HANDLE) MemoryToHandle (memory_ref ref)
 {
    HANDLE            result;
    pg_bits8_ptr      src, target;
-   long           bytesize;
+   size_t            bytesize;
    
    bytesize = GetByteSize(ref);
    UseMemory(ref);         // forces a re-load
@@ -3262,7 +3262,7 @@ PG_PASCAL (HANDLE) MemoryToHandle (memory_ref ref)
    
    if (bytesize) {
       
-      target = src = GlobalLock(result);
+      target = src = (pg_bits8_ptr) GlobalLock(result);
       src += sizeof(mem_rec);
       pgBlockMove(src, target, bytesize);
       GlobalUnlock(result);
@@ -3304,15 +3304,15 @@ PG_PASCAL (pg_boolean) pgIsCaretTime(paige_rec_ptr pg)
 
 PG_PASCAL (void) pgIdleProc (paige_rec_ptr pg, short verb)
 {
-   style_info_ptr info, info_1;
-   long        i, count;
-   pg_boolean     got_blinks = FALSE;
+   style_info_ptr   info, info_1;
+   size_t           i, count;
+   pg_boolean       got_blinks = FALSE;
    
    if (verb == toggle_cursor)
    {
       if (!(pg->flags & DEACT_BITS) || ((pg->flags & DEACT_BITS) && (pg->flags2 & BLINK_ON_DEACTIVE)))
       {
-         info = info_1 = UseMemory (pg->t_formats);
+         info = info_1 = (style_info_ptr) UseMemory (pg->t_formats);
          count =  GetMemorySize(pg->t_formats);
          
          for (i = 0; i < count; i++, info++)
@@ -3333,16 +3333,16 @@ PG_PASCAL (void) pgIdleProc (paige_rec_ptr pg, short verb)
                if (info_1->styles[blink_var])
                {
                   style_run_ptr  run;
-                  long        j, count2;
+                  size_t        j, count2;
                   
-                  run = UseMemory (pg->t_style_run);
+                  run = (style_run_ptr) UseMemory (pg->t_style_run);
                   count2 =  GetMemorySize(pg->t_style_run);
                   
                   for (j = 0; j < count2; j++, run++)
                   {
                      if (run->style_item == (pg_short_t)i)
                      {
-                        long  beginning_offset, ending_offset;
+                        size_t beginning_offset, ending_offset;
                         
                         beginning_offset = run->offset;
                         
@@ -3423,7 +3423,7 @@ PG_PASCAL (pg_short_t) pgMeasureText32 (paige_rec_ptr pg, short measure_verb, pg
 
       int_positions = positions;
       text = data;
-      fonts = UseMemoryRecord(globals->font_objects, walker->superimpose.machine_var2, 0, TRUE);
+      fonts = (font_object_ptr) UseMemoryRecord(globals->font_objects, walker->superimpose.machine_var2, 0, TRUE);
       n_widths = fonts->widths;
 
       for (running_width = 0, ctr = 0; ctr < length; ++int_positions, ++ctr) {
@@ -3592,7 +3592,7 @@ PG_PASCAL (pg_short_t) pgMeasureText16 (paige_rec_ptr pg, short measure_verb, pg
     overhang = (pg_fixed)tm.tmOverhang;
     overhang <<= 16;
 
-   fonts = UseMemoryRecord(globals->font_objects, walker->superimpose.machine_var2, 0, TRUE);
+   fonts = (font_object_ptr) UseMemoryRecord(globals->font_objects, walker->superimpose.machine_var2, 0, TRUE);
    
    n_widths = fonts->widths;
    
@@ -3914,20 +3914,20 @@ static void make_graf_device (pg_globals_ptr globals, generic_var port, generic_
 static void draw_cursor (paige_rec_ptr pg, t_select_ptr select, short verb)
 {
    point_start_ptr      starts;
-   style_info_ptr    caret_style;
-   text_block_ptr    block;
-   rectangle         wrap_rect;
-   co_ordinate       caret_top, caret_bot, scroll_adjust, repeat_offset;
-   Point          top_caret, bottom_caret;
-   long            caret_height, style_offset, r_num;
-   long            container_proc_refcon;
-   short             top_height, bottom_height;
+   style_info_ptr       caret_style;
+   text_block_ptr       block;
+   rectangle            wrap_rect;
+   co_ordinate          caret_top, caret_bot, scroll_adjust, repeat_offset;
+   Point                top_caret, bottom_caret;
+   size_t               style_offset, r_num;
+   long                 container_proc_refcon, caret_height;
+   short                top_height, bottom_height;
 
    if (select->flags & SELECTION_DIRTY)
       pgCalcSelect(pg, select);
 
    block = pgFindTextBlock(pg, select->offset, NULL, TRUE, TRUE);
-   starts = UseMemoryRecord(block->lines, select->line, USE_ALL_RECS, TRUE);
+   starts = (point_start_ptr) UseMemoryRecord(block->lines, select->line, USE_ALL_RECS, TRUE);
    
    container_proc_refcon = 0;
    scroll_adjust = pg->scroll_pos;
@@ -4061,9 +4061,9 @@ static void install_machine_font (paige_rec_ptr pg, style_info_ptr style,
    previous_font = SelectObject(hdc, (HANDLE) the_style->machine_var);
    
    if (globals->current_port->previous_items[PREVIOUS_FONT] == 0)
-      globals->current_port->previous_items[PREVIOUS_FONT] = PG_LONGWORD(long)previous_font;
+      globals->current_port->previous_items[PREVIOUS_FONT] = PG_LONGWORD(size_t)previous_font;
 
-   pgColorToOS(&the_style->fg_color, (void PG_FAR *)&text_color);
+   pgColorToOS(&the_style->fg_color, &text_color);
    text_color |= globals->current_port->palette_select;
    SetTextColor(hdc, text_color);
    SetTextJustification(hdc, 0, 0);
@@ -4194,15 +4194,15 @@ are not at end of line). */
 static void draw_box_style (paige_rec_ptr pg, style_walk_ptr walker,
       draw_points_ptr draw_position)
 {
-   register style_info_ptr       style_base;
-   rectangle                  box_frame;
-   Rect                    frame;
-   point_start_ptr               line_start;
-   pg_short_t                 style_index;
-   pg_boolean                 draw_edge;
-   long                    line_width, descent, next_offset;
-   long                    original_walker;
-   HDC                        hdc;
+   register style_info_ptr  style_base;
+   rectangle                box_frame;
+   Rect                     frame;
+   point_start_ptr          line_start;
+   pg_short_t               style_index;
+   pg_boolean               draw_edge;
+   long                     line_width, descent, next_offset;
+   size_t                   original_walker;
+   HDC                      hdc;
    
    hdc = (HDC)pg->globals->current_port->machine_ref;
    SelectObject(hdc, GetStockBrush(BLACK_BRUSH));
@@ -4403,10 +4403,11 @@ Note, this only gets called at style initialization time. */
 
 static void get_windows_font_object (paige_rec_ptr pg, style_info_ptr the_style, font_info_ptr font)
 {
-   pg_globals_ptr    globals;
-   LOGFONT           log_font;
-   font_object_ptr      available_fonts;
-   long           pointsize, resolution, widthsize, num_fonts, font_ctr;
+   pg_globals_ptr   globals;
+   LOGFONT          log_font;
+   font_object_ptr  available_fonts;
+   long             pointsize, resolution, widthsize, font_ctr;
+   size_t           num_fonts;
     
     globals = pg->globals;
    pgFillBlock(&log_font, sizeof(LOGFONT), 0);
@@ -4446,7 +4447,7 @@ static void get_windows_font_object (paige_rec_ptr pg, style_info_ptr the_style,
  // See if the font exists:
  
    num_fonts = GetMemorySize(globals->font_objects);
-   available_fonts = UseMemory(globals->font_objects);
+   available_fonts = (font_object_ptr) UseMemory(globals->font_objects);
    
    for (font_ctr = 0; font_ctr < num_fonts; ++font_ctr) {
       
@@ -4464,10 +4465,10 @@ static void get_windows_font_object (paige_rec_ptr pg, style_info_ptr the_style,
    
    UnuseMemory(globals->font_objects);
  
-   the_style->machine_var = PG_LONGWORD(long) CreateFontIndirect(&log_font);
+   the_style->machine_var = PG_LONGWORD(size_t) CreateFontIndirect(&log_font);
    the_style->machine_var2 = GetMemorySize(globals->font_objects);
    
-   available_fonts = AppendMemory(globals->font_objects, 1, TRUE);
+   available_fonts = (font_object_ptr) AppendMemory(globals->font_objects, 1, TRUE);
    available_fonts->the_font = the_style->machine_var;
    available_fonts->style_ptsize = pointsize;
    pgBlockMove(&log_font, &available_fonts->log, sizeof(LOGFONT));
@@ -4537,7 +4538,7 @@ static pg_boolean create_caret (paige_rec_ptr pg, short h_loc, short v_loc, shor
       pg->flags &= (long) (~(CARET_BIT | CARET_CREATED_BIT));
    }
    
-    vis_ptr = UseMemory(pg->vis_area);
+    vis_ptr = (rectangle_ptr) UseMemory(pg->vis_area);
     left_loc = right_loc = h_loc - pg->port.origin.h;
     ++right_loc;
     top_loc = bottom_loc = v_loc - pg->port.origin.v;
@@ -4566,7 +4567,7 @@ static HBRUSH build_background_brush (graf_device_ptr device)
    LOGBRUSH    brush;
    
    brush.lbStyle = BS_SOLID;
-   pgColorToOS(&device->bk_color, (void PG_FAR *)&brush.lbColor);
+   pgColorToOS(&device->bk_color, &brush.lbColor);
    brush.lbColor |= device->palette_select;
    brush.lbHatch = 0;
 
@@ -4854,7 +4855,7 @@ static void init_font_record (paige_rec_ptr pg, font_info_ptr font)
    {
       font_object_ptr               fonts;
    
-      fonts = UseMemoryRecord(globals->font_objects, the_style.machine_var2, 0, TRUE);
+      fonts = (font_object_ptr) UseMemoryRecord(globals->font_objects, the_style.machine_var2, 0, TRUE);
       font->char_type = (short)fonts->log.lfCharSet & SCRIPT_CODE_MASK;
       UnuseMemory(globals->font_objects); 
    }
@@ -4902,7 +4903,7 @@ static void init_font_language (pg_globals_ptr globals, font_info_ptr font, HDC 
    {
 	   // QUALCOMM: Win95 call the 16 bit version.
 	   if (globals->machine_specific == RUNTIME_PLATFORM_WIN32S )
-			font->machine_var[PG_LANGINFO] = (long)(x_GetFontLanguageInfo(hdc));
+			font->machine_var[PG_LANGINFO] = (long)(GetFontLanguageInfo(hdc));
 	   else
 	   		font->machine_var[PG_LANGINFO] = (long)(GetFontLanguageInfo(hdc));
    }

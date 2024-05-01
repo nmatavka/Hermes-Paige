@@ -184,7 +184,7 @@ PG_PASCAL (void) pgChangeStyle (pg_ref pg, short style_id, const style_info_ptr 
 /* Now walk through all style_info's and locate any "offspring" from this
 original stylesheet. If found, I need to change original fields. */
 
-		each_style = UseMemoryRecord(pg_rec->t_formats, 0, USE_ALL_RECS, FALSE);
+		each_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, 0, USE_ALL_RECS, FALSE);
 		negative_style_id = -style_id;
 		qty = GetMemorySize(pg_rec->t_formats);
 		
@@ -247,7 +247,7 @@ original stylesheet. If found, I need to change original fields. */
 					
 					if (old_caps_index) {
 						
-						caps_style = UseMemoryRecord(pg_rec->t_formats, old_caps_index - 1, 0, FALSE);
+						caps_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, old_caps_index - 1, 0, FALSE);
 						caps_style->used_ctr -= 1;
 					}
 					
@@ -255,9 +255,9 @@ original stylesheet. If found, I need to change original fields. */
 					UnuseMemory(pg_rec->t_formats);
 					
 					new_caps_index = pgAddSmallCapsStyle(pg_rec, NULL, internal_clone_reason, &new_caps_style);
-					each_style = UseMemoryRecord(pg_rec->t_formats, change_index, USE_ALL_RECS, TRUE);
+					each_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, change_index, USE_ALL_RECS, TRUE);
 					each_style->small_caps_index = new_caps_index;
-					caps_style = UseMemoryRecord(pg_rec->t_formats, new_caps_index, 0, FALSE);
+					caps_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, new_caps_index, 0, FALSE);
 					caps_style->used_ctr += 1;
 				}
 			}
@@ -357,7 +357,7 @@ PG_PASCAL (short) pgFindStyleSheet (pg_ref pg, const style_info_ptr compare_styl
 	compare_mask.machine_var = compare_mask.machine_var2 = 0;
 	compare_mask.future[0] = compare_mask.future[1] = compare_mask.future[2] = 0;
 
-	target = UseMemory(pg_rec->t_formats);
+	target = (style_info_ptr) UseMemory(pg_rec->t_formats);
 	
 	for (style_qty = GetMemorySize(pg_rec->t_formats); style_qty; ++target, --style_qty)
 		if (target->style_sheet_id > 0) {
@@ -388,7 +388,7 @@ PG_PASCAL (short) pgGetIndStyleSheet (pg_ref pg, short index, style_info_ptr sty
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = 0;
 
-	for (styles = UseMemory(pg_rec->t_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->t_formats),
+	for (styles = (style_info_ptr) UseMemory(pg_rec->t_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->t_formats),
 			ctr = 0; style_qty; ++styles, --style_qty)
 		if (styles->style_sheet_id > 0) {
 			
@@ -539,7 +539,7 @@ PG_PASCAL (void) pgChangeParStyle (pg_ref pg, short style_id, const par_info_ptr
 /* Now walk through all par_info's and locate any "offspring" from this
 original stylesheet. If found, I need to change original fields. */
 		
-		each_style = UseMemoryRecord(pg_rec->par_formats, 0, USE_ALL_RECS, FALSE);
+		each_style = (par_info_ptr) UseMemoryRecord(pg_rec->par_formats, 0, USE_ALL_RECS, FALSE);
 		negative_style_id = -style_id;
 
 		for (qty = GetMemorySize(pg_rec->par_formats); qty; ++each_style, --qty) {
@@ -642,7 +642,7 @@ PG_PASCAL (short) pgFindParStyleSheet (pg_ref pg, const par_info_ptr compare_sty
 	
 	compare_mask.style_sheet_id = 0;
 
-	target = UseMemory(pg_rec->par_formats);
+	target = (par_info_ptr) UseMemory(pg_rec->par_formats);
 	
 	for (style_qty = GetMemorySize(pg_rec->par_formats); style_qty; ++target, --style_qty)
 		if (target->style_sheet_id > 0) {
@@ -675,7 +675,7 @@ PG_PASCAL (short) pgGetIndParStyleSheet (pg_ref pg, short index, par_info_ptr st
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = 0;
 
-	for (styles = UseMemory(pg_rec->par_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->par_formats),
+	for (styles = (par_info_ptr) UseMemory(pg_rec->par_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->par_formats),
 			ctr = 0; style_qty; ++styles, --style_qty)
 		if (styles->style_sheet_id > 0) {
 			
@@ -708,7 +708,7 @@ PG_PASCAL (par_info_ptr) pgLocateParStyleSheet (paige_rec_ptr pg, short style_id
 	if (!style_id)
 		return	NULL;
 
-	styles = UseMemory(pg->par_formats);
+	styles = (par_info_ptr) UseMemory(pg->par_formats);
 
 	for (style_qty = (pg_short_t)GetMemorySize(pg->par_formats); style_qty; ++styles, --style_qty)
 		if (styles->style_sheet_id == style_id)
@@ -808,7 +808,7 @@ PG_PASCAL (long) pgAddNamedStyle (pg_ref pg, pg_c_string_ptr stylename, const sh
 		style_info_ptr		old_style;
 		par_info_ptr		old_par;
 
-		named_style = UseMemoryRecord(pg_rec->named_styles, style_index - 1, 0, TRUE);
+		named_style = (named_stylesheet_ptr) UseMemoryRecord(pg_rec->named_styles, style_index - 1, 0, TRUE);
 
 		if (named_style->stylesheet_id)
 			if (old_style = pgLocateStyleSheet(pg_rec, named_style->stylesheet_id, NULL)) {
@@ -826,7 +826,7 @@ PG_PASCAL (long) pgAddNamedStyle (pg_ref pg, pg_c_string_ptr stylename, const sh
 	}
 	else {
 		
-		named_style = AppendMemory(pg_rec->named_styles, 1, TRUE);
+		named_style = (named_stylesheet_ptr) AppendMemory(pg_rec->named_styles, 1, TRUE);
 		style_index = GetMemorySize(pg_rec->named_styles);
 		
 		for (name_index = 0; name_index < (FONT_SIZE - 1); ++name_index)
@@ -936,7 +936,7 @@ PG_PASCAL (long) pgGetNamedStyleIndex (pg_ref pg, pg_c_string_ptr stylename)
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	num_styles = GetMemorySize(pg_rec->named_styles);
-	named_style = UseMemory(pg_rec->named_styles);
+	named_style = (named_stylesheet_ptr) UseMemory(pg_rec->named_styles);
 	index_result = 0;
 
 	for (style_index = 1; style_index <= num_styles; ++style_index, ++named_style) 
@@ -968,7 +968,7 @@ PG_PASCAL (void) pgGetNamedStyleInfo (pg_ref pg, long index, style_info_ptr styl
 	
 	if (index > 0 && index <= GetMemorySize(pg_rec->named_styles)) {
 		
-		the_style = UseMemoryRecord(pg_rec->named_styles, index - 1, 0, TRUE);
+		the_style = (named_stylesheet_ptr) UseMemoryRecord(pg_rec->named_styles, index - 1, 0, TRUE);
 		
 		if (style) {
 			
@@ -1145,7 +1145,7 @@ PG_PASCAL (pg_boolean) pgGetAppliedNamedStyle (pg_ref pg, select_pair_ptr select
 	if (style_id > 0 || par_id > 0) {
 	
 		pg_rec = (paige_rec_ptr) UseMemory(pg);
-		named_style = UseMemory(pg_rec->named_styles);
+		named_style = (named_stylesheet_ptr) UseMemory(pg_rec->named_styles);
 		num_styles = GetMemorySize(pg_rec->named_styles);
 		*stylename = 0;
 	
@@ -1208,7 +1208,7 @@ PG_PASCAL (memory_ref) pgSetGlobalNamedStyles (pg_ref pg, pg_ref global_pg,
 	long					num_styles, style_index;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
-	global_pg_rec = UseMemory(global_pg);
+	global_pg_rec = (paige_rec_ptr) UseMemory(global_pg);
 	pg_rec->global_styles = MEM_NULL;			// to make sure we dont add them globally yet.
 
 // First, merge all styles that are the same if merge_duplicates is TRUE.
@@ -1228,7 +1228,7 @@ PG_PASCAL (memory_ref) pgSetGlobalNamedStyles (pg_ref pg, pg_ref global_pg,
 				long		num_style_infos;
 				
 				num_style_infos = GetMemorySize(pg_rec->t_formats);
-				source_style = UseMemory(pg_rec->t_formats);
+				source_style = (style_info_ptr) UseMemory(pg_rec->t_formats);
 				
 				while (num_style_infos) {
 					
@@ -1251,7 +1251,7 @@ PG_PASCAL (memory_ref) pgSetGlobalNamedStyles (pg_ref pg, pg_ref global_pg,
 	}
 
 	num_styles = GetMemorySize(pg_rec->named_styles);
-	named_styles = UseMemory(pg_rec->named_styles);
+	named_styles = (named_stylesheet_ptr) UseMemory(pg_rec->named_styles);
 
 // Second, add styles from child to parent (or remove from child if remove_from_child is TRUE):
 
@@ -1261,7 +1261,7 @@ PG_PASCAL (memory_ref) pgSetGlobalNamedStyles (pg_ref pg, pg_ref global_pg,
 		source_par = pgLocateParStyleSheet(pg_rec, named_styles->par_stylesheet_id);
 
 		if (source_style)
-			source_font = UseMemoryRecord(pg_rec->fonts, (long)source_style->font_index, 0, TRUE);
+			source_font = (font_info_ptr) UseMemoryRecord(pg_rec->fonts, (long)source_style->font_index, 0, TRUE);
 		else
 			source_font = NULL;
 		
@@ -1362,7 +1362,7 @@ PG_PASCAL (memory_ref) pgSetGlobalNamedStyles (pg_ref pg, pg_ref global_pg,
 				UnuseMemory(pg_rec->named_styles);
 
 				delete_named_style(pg, child_index);
-				named_styles = UseMemory(pg_rec->named_styles);
+				named_styles = (named_stylesheet_ptr) UseMemory(pg_rec->named_styles);
 				named_styles += (child_index - 1);
 				
 				if (num_styles > 1)
@@ -1389,7 +1389,7 @@ PG_PASCAL (memory_ref) pgSetGlobalNamedStyles (pg_ref pg, pg_ref global_pg,
 	
 // Now add all the parent styles to the child:
 	
-	named_styles = UseMemory(global_pg_rec->named_styles);
+	named_styles = (named_stylesheet_ptr) UseMemory(global_pg_rec->named_styles);
 	num_styles = GetMemorySize(global_pg_rec->named_styles);
 	
 	while (num_styles) {
@@ -1401,7 +1401,7 @@ PG_PASCAL (memory_ref) pgSetGlobalNamedStyles (pg_ref pg, pg_ref global_pg,
 			source_par = pgLocateParStyleSheet(global_pg_rec, named_styles->par_stylesheet_id);
 		
 			if (source_style)
-				source_font = UseMemoryRecord(global_pg_rec->fonts, (long)source_style->font_index, 0, TRUE);
+				source_font = (font_info_ptr) UseMemoryRecord(global_pg_rec->fonts, (long)source_style->font_index, 0, TRUE);
 			else
 				source_font = NULL;
 			
@@ -1413,7 +1413,7 @@ PG_PASCAL (memory_ref) pgSetGlobalNamedStyles (pg_ref pg, pg_ref global_pg,
 			if (duplicate_index) {
 				named_stylesheet_ptr	renamed_style;
 				
-				renamed_style = UseMemoryRecord(pg_rec->named_styles, duplicate_index - 1, 0, TRUE);
+				renamed_style = (named_stylesheet_ptr) UseMemoryRecord(pg_rec->named_styles, duplicate_index - 1, 0, TRUE);
 				pgBlockMove(named_styles->name, renamed_style->name, sizeof(pg_char) * FONT_SIZE);
 				UnuseMemory(pg_rec->named_styles);
 			}
@@ -1503,7 +1503,7 @@ PG_PASCAL (pg_boolean) pgUpdateNamedStyleChild (pg_ref pg, pg_char_ptr stylename
 				par_info			par, child_par;
 				font_info			font, child_font;
 				
-				global_pg_rec = UseMemory(pg_rec->global_styles);
+				global_pg_rec = (paige_rec_ptr) UseMemory(pg_rec->global_styles);
 
 				pgGetNamedStyle(pg, child_index, &child_named_style);
 				pgGetNamedStyle(pg_rec->global_styles, parent_index, &parent_named_style);
@@ -1564,7 +1564,7 @@ PG_PASCAL (long) pgFindSameNamedStyle (pg_ref pg, style_info_ptr style, font_inf
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	num_styles = GetMemorySize(pg_rec->named_styles);
-	named_styles = UseMemory(pg_rec->named_styles);
+	named_styles = (named_stylesheet_ptr) UseMemory(pg_rec->named_styles);
 	
 	for (index = 1; index <= num_styles; ++index, ++named_styles) {
 		
@@ -1588,7 +1588,7 @@ PG_PASCAL (long) pgFindSameNamedStyle (pg_ref pg, style_info_ptr style, font_inf
 						
 						if (font) {
 							
-							source_font = UseMemoryRecord(pg_rec->fonts, (long)source_style->font_index, 0, TRUE);
+							source_font = (font_info_ptr) UseMemoryRecord(pg_rec->fonts, (long)source_style->font_index, 0, TRUE);
 							if (!pgBasicallyEqualFonts(source_font, font))
 								result = 0;
 						}
@@ -1638,7 +1638,7 @@ static short count_style_sheets (paige_rec_ptr pg, short PG_FAR *highest_id)
 	register pg_short_t			style_qty;
 	short						num_styles, highest;
 
-	styles = UseMemory(pg->t_formats);
+	styles = (style_info_ptr) UseMemory(pg->t_formats);
 	style_qty = (pg_short_t)GetMemorySize(pg->t_formats);
 
 	for (num_styles = highest = 0; style_qty; ++styles, --style_qty)
@@ -1667,7 +1667,7 @@ static short count_par_style_sheets (paige_rec_ptr pg, short PG_FAR *highest_id)
 	register pg_short_t			style_qty;
 	short						num_styles, highest;
 
-	styles = UseMemory(pg->par_formats);
+	styles = (par_info_ptr) UseMemory(pg->par_formats);
 	style_qty = (pg_short_t)GetMemorySize(pg->par_formats);
 
 	for (num_styles = highest = 0; style_qty; ++styles, --style_qty)
@@ -1710,8 +1710,8 @@ static void affected_text_range (paige_rec_ptr pg, short compare_type,
 	if (compare_type == style_compare) {
 		register style_info_ptr		base;
 
-		run = UseMemory(pg->t_style_run);
-		base = UseMemory(pg->t_formats);
+		run = (style_run_ptr) UseMemory(pg->t_style_run);
+		base = (style_info_ptr) UseMemory(pg->t_formats);
 		
 		for (qty = GetMemorySize(pg->t_style_run) - 1; qty; ++run, --qty) {
 			
@@ -1733,8 +1733,8 @@ static void affected_text_range (paige_rec_ptr pg, short compare_type,
 	else {
 		register par_info_ptr		base;
 
-		run = UseMemory(pg->par_style_run);
-		base = UseMemory(pg->par_formats);
+		run = (style_run_ptr) UseMemory(pg->par_style_run);
+		base = (par_info_ptr) UseMemory(pg->par_formats);
 		
 		for (qty = GetMemorySize(pg->par_style_run); qty; ++run, --qty) {
 			
@@ -1811,7 +1811,7 @@ static void rename_style (pg_ref pg, long named_style_index, pg_c_string_ptr sty
 	
 	if ( (named_style_index > 0) && (named_style_index <= GetMemorySize(pg_rec->named_styles)) ) {
 		
-		the_style = UseMemoryRecord(pg_rec->named_styles, named_style_index - 1, 0, TRUE);
+		the_style = (named_stylesheet_ptr) UseMemoryRecord(pg_rec->named_styles, named_style_index - 1, 0, TRUE);
 		pgFillBlock(the_style->name, FONT_SIZE * sizeof(pg_char), 0);
 		
 		for (ctr = 0; ctr < (FONT_SIZE) - 1; ++ctr)
@@ -1847,7 +1847,7 @@ static void delete_named_style (pg_ref pg, long named_style_index)
 		
 	// Walk through and adjust all the named style refs in the format records:
 	
-		styles = UseMemory(pg_rec->t_formats);
+		styles = (style_info_ptr) UseMemory(pg_rec->t_formats);
 		num_items = GetMemorySize(pg_rec->t_formats);
 		
 		while (num_items) {
@@ -1864,7 +1864,7 @@ static void delete_named_style (pg_ref pg, long named_style_index)
 		
 		UnuseMemory(pg_rec->t_formats);
 
-		pars = UseMemory(pg_rec->par_formats);
+		pars = (par_info_ptr) UseMemory(pg_rec->par_formats);
 		num_items = GetMemorySize(pg_rec->par_formats);
 		
 		while (num_items) {
@@ -1946,7 +1946,7 @@ static void change_stylesheet_id (paige_rec_ptr pg_rec, short style_id, short ne
 /* Now walk through all style_info's and locate any "offspring" from this
 original stylesheet. If found, I need to change original fields. */
 
-		each_style = UseMemoryRecord(pg_rec->t_formats, 0, USE_ALL_RECS, FALSE);
+		each_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, 0, USE_ALL_RECS, FALSE);
 		negative_style_id = -style_id;
 		qty = GetMemorySize(pg_rec->t_formats);
 		
@@ -1981,7 +1981,7 @@ original stylesheet. If found, I need to change original fields. */
 					
 					if (old_caps_index) {
 						
-						caps_style = UseMemoryRecord(pg_rec->t_formats, old_caps_index - 1, 0, FALSE);
+						caps_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, old_caps_index - 1, 0, FALSE);
 						caps_style->used_ctr -= 1;
 					}
 					
@@ -1989,9 +1989,9 @@ original stylesheet. If found, I need to change original fields. */
 					UnuseMemory(pg_rec->t_formats);
 					
 					new_caps_index = pgAddSmallCapsStyle(pg_rec, NULL, internal_clone_reason, &new_caps_style);
-					each_style = UseMemoryRecord(pg_rec->t_formats, change_index, USE_ALL_RECS, TRUE);
+					each_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, change_index, USE_ALL_RECS, TRUE);
 					each_style->small_caps_index = new_caps_index;
-					caps_style = UseMemoryRecord(pg_rec->t_formats, new_caps_index, 0, FALSE);
+					caps_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, new_caps_index, 0, FALSE);
 					caps_style->used_ctr += 1;
 				}
 			}
@@ -2033,7 +2033,7 @@ static void change_par_stylesheet_id (paige_rec_ptr pg_rec, short style_id, shor
 /* Now walk through all style_info's and locate any "offspring" from this
 original stylesheet. If found, I need to change original fields. */
 
-		each_style = UseMemoryRecord(pg_rec->par_formats, 0, USE_ALL_RECS, FALSE);
+		each_style = (par_info_ptr) UseMemoryRecord(pg_rec->par_formats, 0, USE_ALL_RECS, FALSE);
 		negative_style_id = -style_id;
 		qty = GetMemorySize(pg_rec->par_formats);
 		

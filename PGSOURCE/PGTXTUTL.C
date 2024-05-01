@@ -26,7 +26,7 @@ static void append_range (memory_ref ref, select_pair_ptr range);
 /* pgPtToChar returns a text offset that corresponds to point + offset_extra.
 (The offset_extra pointer can be NULL).  */
 
-PG_PASCAL (long) pgPtToChar (pg_ref pg, const co_ordinate_ptr point, const co_ordinate_ptr offset_extra)
+PG_PASCAL (size_t) pgPtToChar (pg_ref pg, const co_ordinate_ptr point, const co_ordinate_ptr offset_extra)
 {
 	paige_rec_ptr			pg_rec;
 	co_ordinate				the_point;
@@ -62,7 +62,7 @@ style is returned). Note: Either style or range can be NULL if you don't need
 those values.  The conversion info param can be 0 (style will be as if clicked),
 or NO_HALFCHARS and/or NO_CHAR_ALIGN  */
 
-PG_PASCAL (long) pgPtToStyleInfo (pg_ref pg, const co_ordinate_ptr point,
+PG_PASCAL (size_t) pgPtToStyleInfo (pg_ref pg, const co_ordinate_ptr point,
 		short conversion_info, style_info_ptr style, select_pair_ptr range)
 {
 	paige_rec_ptr		pg_rec;
@@ -145,7 +145,7 @@ PG_PASCAL (void) pgTextboxDisplay (pg_ref pg, paige_rec_ptr target_pg, const rec
 	if (target_pg) {
 
 		pg_rec->port.access_ctr += 1;
-		pg_rec->port.machine_ref = PG_LONGWORD(long)pgGetPlatformDevice(&target_pg->port);
+		pg_rec->port.machine_ref = PG_LONGWORD(size_t)pgGetPlatformDevice(&target_pg->port);
 		pg_rec->port.machine_var = target_pg->port.machine_var;
 		pg_rec->port.scale = target_pg->port.scale;
 		pg_rec->scale_factor = target_pg->scale_factor;
@@ -217,7 +217,8 @@ PG_PASCAL (short) pgCharacterRect (pg_ref pg, long position, pg_boolean want_scr
 	t_select			selection;
 	memory_ref			locs_ref;
 	long PG_FAR			*positions;
-	long				caret_pt, char_bytes, local_begin, local_end;
+	size_t				char_bytes, local_begin, local_end;
+	long				caret_pt;
 	short				baseline;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
@@ -283,10 +284,10 @@ PG_PASCAL (void) pgMaxTextBounds (pg_ref pg, rectangle_ptr bounds, pg_boolean pa
 	paige_rec_ptr				pg_rec;
 	register point_start_ptr	starts;
 	text_block_ptr				block;
-	long						num_blocks;
+	size_t						num_blocks;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
-	block = UseMemory(pg_rec->t_blocks);
+	block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 	
 	if (!pg_rec->t_length)
 		pgBlockMove(&block->bounds, bounds, sizeof(rectangle));
@@ -301,7 +302,7 @@ PG_PASCAL (void) pgMaxTextBounds (pg_ref pg, rectangle_ptr bounds, pg_boolean pa
 
 			if (!(block->flags & (NEEDS_CALC | ALL_TEXT_HIDDEN))) {
 				
-				for (starts = UseMemory(block->lines); starts->flags != TERMINATOR_BITS; ++starts)
+				for (starts = (point_start_ptr) UseMemory(block->lines); starts->flags != TERMINATOR_BITS; ++starts)
 					pgUnionRect(&starts->bounds, bounds, bounds);
 				
 				UnuseMemory(block->lines);
@@ -323,7 +324,8 @@ PG_PASCAL (long) pgCharType (pg_ref pg, long offset, long mask_bits)
 	paige_rec_ptr		pg_rec;
 	style_walk			walker;
 	text_block_ptr		block;
-	long				use_offset, result;
+	size_t				use_offset;
+	long				result;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
@@ -332,7 +334,7 @@ PG_PASCAL (long) pgCharType (pg_ref pg, long offset, long mask_bits)
 
 	pgPrepareStyleWalk(pg_rec, use_offset, &walker, FALSE);
 	
-	result = walker.cur_style->procs.char_info(pg_rec, &walker, UseMemory(block->text),
+	result = walker.cur_style->procs.char_info(pg_rec, &walker, (pg_char_ptr) UseMemory(block->text),
 			block->begin, 0, block->end - block->begin, use_offset - block->begin, mask_bits);
 	
 	UnuseMemory(block->text);
@@ -352,13 +354,13 @@ adjusts accordingly and returns the full character in char_bytes. The function
 result is the number of bytes placed in the pointer. If char_bytes is NULL the
 function simply returns how many bytes the character is.   */
 
-PG_PASCAL (pg_short_t) pgCharByte (pg_ref pg, long offset, pg_char_ptr char_bytes)
+PG_PASCAL (pg_short_t) pgCharByte (pg_ref pg, size_t offset, pg_char_ptr char_bytes)
 {
 	paige_rec_ptr		pg_rec;
 	style_walk			walker;
 	text_block_ptr		block;
 	pg_char_ptr			text;
-	long				use_offset, c_info, byte_position, begin_offset, end_offset;
+	size_t				use_offset, c_info, byte_position, begin_offset, end_offset;
 	pg_short_t			result;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
@@ -371,7 +373,7 @@ PG_PASCAL (pg_short_t) pgCharByte (pg_ref pg, long offset, pg_char_ptr char_byte
 		block = pgFindTextBlock(pg_rec, use_offset, NULL, FALSE, TRUE);
 		
 		pgPrepareStyleWalk(pg_rec, use_offset, &walker, FALSE);
-		text = UseMemory(block->text);
+		text = (pg_char_ptr) UseMemory(block->text);
 		end_offset = block->end - block->begin;
 
 		while (walker.cur_style->procs.char_info(pg_rec, &walker, text,
@@ -418,14 +420,15 @@ non-zero beginning at (and including) *offset. If a match is found, *offset
 is updated to the byte offset and the actual info flags are returned. A zero
 result implies no match.  If the_byte is non-NULL the byte found is returned. */
 
-PG_PASCAL (long) pgFindCharType (pg_ref pg, long char_info, long PG_FAR *offset,
+PG_PASCAL (long) pgFindCharType (pg_ref pg, long char_info, size_t PG_FAR *offset,
 		pg_char_ptr the_byte)
 {
 	paige_rec_ptr		pg_rec;
 	style_walk			walker;
 	text_block_ptr		block;
 	pg_char_ptr			text;
-	long				use_offset, c_info, byte_position, begin_offset, end_offset;
+	size_t				use_offset, byte_position, begin_offset, end_offset;
+	long				c_info;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
@@ -437,7 +440,7 @@ PG_PASCAL (long) pgFindCharType (pg_ref pg, long char_info, long PG_FAR *offset,
 		block = pgFindTextBlock(pg_rec, use_offset, NULL, FALSE, TRUE);
 
 		pgPrepareStyleWalk(pg_rec, use_offset, &walker, FALSE);
-		text = UseMemory(block->text);
+		text = (pg_char_ptr) UseMemory(block->text);
 		byte_position = use_offset - block->begin;
 		begin_offset = byte_position;
 		end_offset = block->end - block->begin;
@@ -471,7 +474,7 @@ PG_PASCAL (long) pgFindCharType (pg_ref pg, long char_info, long PG_FAR *offset,
 				++block;
 				pg_rec->procs.load_proc(pg_rec, block);
 
-				text = UseMemory(block->text);
+				text = (pg_char_ptr) UseMemory(block->text);
 				byte_position = 0;
 			}
 		}
@@ -499,7 +502,7 @@ PG_PASCAL (memory_ref) pgMaskedSelection (pg_ref pg, const select_pair_ptr range
 {
 	paige_rec_ptr			pg_rec;
 	style_walk				walker;
-	long					begin_select, end_select, next_position;
+	size_t					begin_select, end_select, next_position;
 	select_pair				current_range;
 	memory_ref				result = MEM_NULL;
 	
@@ -697,8 +700,8 @@ PG_PASCAL (void) pgSetSelectionList (pg_ref pg, memory_ref select_list,
 	select_qty = pg_rec->num_selects = (pg_short_t)GetMemorySize(select_list);
 	SetMemorySize(pg_rec->select, (select_qty * 2) + MINIMUM_SELECT_MEMSIZE);
 	
-	selections = UseMemory(pg_rec->select);
-	offset_pairs = UseMemory(select_list);
+	selections = (t_select_ptr) UseMemory(pg_rec->select);
+	offset_pairs = (select_pair_ptr) UseMemory(select_list);
 	
 	while (select_qty) {
 		
@@ -756,7 +759,7 @@ PG_PASCAL (pg_boolean) pgGetHiliteRgn (pg_ref pg, const select_pair_ptr range,
 			
 			qty = 2;
 			selections = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(t_select), 2, 0);
-			selection_ptr = UseMemory(selections);
+			selection_ptr = (t_select_ptr) UseMemory(selections);
 			selection_ptr->offset = range->begin;
 			selection_ptr[1].offset = range->end;
 		}
@@ -764,8 +767,8 @@ PG_PASCAL (pg_boolean) pgGetHiliteRgn (pg_ref pg, const select_pair_ptr range,
 			
 			qty = (pg_short_t)(GetMemorySize(select_list) * 2);
 			selections = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(t_select), qty, 0);
-			selection_ptr = UseMemory(selections);
-			pairs_ptr = UseMemory(select_list);
+			selection_ptr = (t_select_ptr) UseMemory(selections);
+			pairs_ptr = (select_pair_ptr) UseMemory(select_list);
 			
 			for (ctr = 0; ctr < qty; ++pairs_ptr) {
 				
@@ -829,7 +832,7 @@ PG_PASCAL (long) pgGetEndingPage (pg_ref pg, rectangle_ptr page_rect)
 	long					page_num;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
-	block = UseMemoryRecord(pg_rec->t_blocks, GetMemorySize(pg_rec->t_blocks) - 1, USE_ALL_RECS, TRUE);
+	block = (text_block_ptr) UseMemoryRecord(pg_rec->t_blocks, GetMemorySize(pg_rec->t_blocks) - 1, USE_ALL_RECS, TRUE);
 	pgPaginateBlock(pg_rec, block, (smart_update_ptr)NULL, FALSE);
 	page_point.h = block->bounds.top_left.h;
 	page_point.v = block->bounds.bot_right.v - 1;
@@ -906,7 +909,7 @@ PG_PASCAL (void) pgSetCaretPosition (pg_ref pg, pg_short_t position_verb, pg_boo
 
 		case begin_line_caret:
 		case end_line_caret:
-			select = UseMemory(pg_rec->select);
+			select = (t_select_ptr) UseMemory(pg_rec->select);
 			
 			if (use_position_verb == end_line_caret && extend_flag) {
 			
@@ -924,7 +927,7 @@ PG_PASCAL (void) pgSetCaretPosition (pg_ref pg, pg_short_t position_verb, pg_boo
 			}
 
 			block = pgFindTextBlock(pg_rec, select->offset, NULL, FALSE, TRUE);
-			starts = UseMemory(block->lines);
+			starts = (point_start_ptr) UseMemory(block->lines);
 			starts += select->line;
 			
 			if (use_position_verb == begin_line_caret) {
@@ -953,7 +956,7 @@ PG_PASCAL (void) pgSetCaretPosition (pg_ref pg, pg_short_t position_verb, pg_boo
 					pgCalcSelect(pg_rec, select);
 
 					block = pgFindTextBlock(pg_rec, select->offset, NULL, FALSE, TRUE);
-					starts = UseMemory(block->lines);
+					starts = (point_start_ptr) UseMemory(block->lines);
 					starts += select->line;
 				}
 			}
@@ -996,7 +999,7 @@ PG_PASCAL (void) pgSetCaretPosition (pg_ref pg, pg_short_t position_verb, pg_boo
 					select->offset += 1;
 					pgCalcSelect(pg_rec, select);
 					block = pgFindTextBlock(pg_rec, select->offset, NULL, FALSE, TRUE);
-					starts = UseMemory(block->lines);
+					starts = (point_start_ptr) UseMemory(block->lines);
 					starts += select->line;
 				}
 				
@@ -1023,7 +1026,7 @@ PG_PASCAL (void) pgSetCaretPosition (pg_ref pg, pg_short_t position_verb, pg_boo
 		case next_word_caret:
 			if (extend_flag && pg_rec->num_selects) {
 				
-				select = UseMemory(pg_rec->select);
+				select = (t_select_ptr) UseMemory(pg_rec->select);
 				position = original_position = select[1].offset;
 				UnuseMemory(pg_rec->select);
 			}
@@ -1113,10 +1116,10 @@ PG_PASCAL (pg_boolean) pgInsertBytes (pg_ref pg, const pg_bits8_ptr data, long l
 	PG_TRY(mem_globals) {
 		
 		temp_ref = MemoryAlloc(mem_globals, sizeof(pg_char), length, 0);
-		chars = UseMemory(temp_ref);
+		chars = (pg_char_ptr) UseMemory(temp_ref);
 
-		insert_style = UseMemoryRecord(pg_rec->t_formats, (long)pg_rec->insert_style, 0, TRUE);
-		insert_font = UseMemoryRecord(pg_rec->fonts, (long)insert_style->font_index, 0, TRUE);
+		insert_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long)pg_rec->insert_style, 0, TRUE);
+		insert_font = (font_info_ptr) UseMemoryRecord(pg_rec->fonts, (long)insert_style->font_index, 0, TRUE);
 		
 		character_count = insert_style->procs.bytes_to_unicode(data, chars, insert_font, length);
 		
@@ -1168,7 +1171,7 @@ static void append_range (memory_ref ref, select_pair_ptr range)
 	if (range->end > range->begin) {
 		select_pair_ptr		range_ptr;
 		
-		range_ptr = AppendMemory(ref, 1, FALSE);
+		range_ptr = (select_pair_ptr) AppendMemory(ref, 1, FALSE);
 		*range_ptr = *range;
 		UnuseMemory(ref);
 	}

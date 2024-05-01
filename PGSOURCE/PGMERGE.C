@@ -254,7 +254,7 @@ static pg_boolean walk_merge_styles (paige_rec_ptr pg, style_info_ptr matching_s
 				else
 					UnuseMemory(used_text_ref);
 
-				appended_pairs = AppendMemory(merged_pairs, 1, FALSE);
+				appended_pairs = (select_pair_ptr) AppendMemory(merged_pairs, 1, FALSE);
 				*appended_pairs = merge_range;
 				UnuseMemory(merged_pairs);
 			}
@@ -287,7 +287,7 @@ static void restore_merge (paige_rec_ptr pg, short draw_mode)
 	
 	GetMemoryRecord(select_ref, 0, &paste_position);
 
-	for (styles_to_clear = UseMemory(pg->t_formats), 
+	for (styles_to_clear = (style_info_ptr) UseMemory(pg->t_formats), 
 			style_qty = (pg_short_t)GetMemorySize(pg->t_formats); style_qty;
 			++styles_to_clear, --style_qty)
 		styles_to_clear->class_bits &= CLR_STYLE_MERGE;

@@ -39,7 +39,7 @@ enum {
 
 
 static shape_ref copy_shape_param (pg_globals_ptr globals, shape_ref shape_param);
-static long free_cached_blocks (paige_rec_ptr pg, memory_ref ref_mask, long needed_free);
+static size_t free_cached_blocks (paige_rec_ptr pg, memory_ref ref_mask, size_t needed_free);
 void set_max_run (paige_rec_ptr pg_rec, memory_ref the_run);
 static void draw_border_line (paige_rec_ptr pg, co_ordinate_ptr begin_pt,
 		co_ordinate_ptr end_pt, long source_border_info, long border_info,
@@ -203,12 +203,12 @@ PG_PASCAL (void) pgAdjustBorders (par_info_ptr par_style, long PG_FAR *left_extr
 /* pgCacheFree is the function (for 2.0) which frees text_blocks that are cached but not
 changed. This occurs before memory_refs are purged. */
 
-PG_PASCAL (long) pgCacheFree (pgm_globals_ptr mem_globals, memory_ref dont_free, long desired_free)
+PG_PASCAL (size_t) pgCacheFree (pgm_globals_ptr mem_globals, memory_ref dont_free, size_t desired_free)
 {
 	pg_ref PG_FAR	*paige_refs;
 	paige_rec_ptr	pg_rec;
-	long			num_refs;
-	long			freed_memory = 0;
+	size_t			num_refs;
+	size_t			freed_memory = 0;
 
 	if (mem_globals->freemem_info) {
 		
@@ -348,7 +348,8 @@ PG_PASCAL (void) pgDrawPageProc (paige_rec_ptr pg, shape_ptr page_shape,
 		pgm_globals_ptr		mem_globals;
 		co_ordinate			top_vis, repeat_offset;
 		rectangle			page_bounds;
-		long				page_height, num_rects;
+		size_t				num_rects;
+		long				page_height;
 		
 		negative_extra = pg->scroll_pos;
 		pgNegatePt(&negative_extra);
@@ -1047,7 +1048,7 @@ PG_PASCAL (void) pgSetDefaultStyle (pg_ref pg, const style_info_ptr def_style, s
 {
 	paige_rec_ptr			pg_rec;
 	style_info_ptr			style;
-	long					real_used_ctr;
+	size_t					real_used_ctr;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, pg_rec->def_style_index, 0, TRUE);
@@ -1203,7 +1204,7 @@ PG_PASCAL (pg_boolean) pgSetAttributes (pg_ref pg, long attributes)
 			t_select_ptr		selections;
 			style_info_ptr		select_style;
 			pg_boolean			select_changed;
-			long				offset_for_style;
+			size_t				offset_for_style;
 			
 			if (!(select_ctr = pg_rec->num_selects * 2))
 				++select_ctr;
@@ -1646,7 +1647,7 @@ PG_PASCAL (void) pgOffsetAreas (pg_ref pg, long h, long v, pg_boolean offset_pag
 	paige_rec_ptr				pg_rec;
 	register text_block_ptr		block;
 	register point_start_ptr	starts;
-	register long				num_blocks, num_lines;
+	register size_t				num_blocks, num_lines;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
@@ -1731,8 +1732,8 @@ PG_PASCAL (void) pgSetExtraStruct (pg_ref pg, const void PG_FAR *extra_struct,
 		long ref_id)
 {
 	paige_rec_ptr		pg_rec;
-	long PG_FAR			*extra_ptr;
-	long				current_size;
+	size_t PG_FAR		*extra_ptr;
+	size_t				current_size;
 	long				id;
 
 	if ((id = ref_id + EXTRA_STRUCT_RSRV) < 0)
@@ -1747,8 +1748,8 @@ PG_PASCAL (void) pgSetExtraStruct (pg_ref pg, const void PG_FAR *extra_struct,
 	if (id >= current_size)
 		SetMemorySize(pg_rec->extra_stuff, id + 1);
 
-	extra_ptr = (long PG_FAR*) UseMemoryRecord(pg_rec->extra_stuff, id, 0, TRUE);
-	*extra_ptr = (long) extra_struct;
+	extra_ptr = (size_t PG_FAR*) UseMemoryRecord(pg_rec->extra_stuff, id, 0, TRUE);
+	*extra_ptr = (size_t) extra_struct;
 	
 	UnuseMemory(pg_rec->extra_stuff);
 	UnuseMemory(pg);
@@ -1759,8 +1760,8 @@ PG_PASCAL (void PG_FAR *) pgGetExtraStruct (pg_ref pg, long ref_id)
 {
 	paige_rec_ptr		pg_rec;
 	void PG_FAR			*result;
-	long PG_FAR			*extra_ptr;
-	long				current_size;
+	size_t PG_FAR		*extra_ptr;
+	size_t				current_size;
 	long				id;
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
@@ -1772,7 +1773,7 @@ PG_PASCAL (void PG_FAR *) pgGetExtraStruct (pg_ref pg, long ref_id)
 		
 		if (id < current_size) {
 			
-			extra_ptr = (long PG_FAR*) UseMemory(pg_rec->extra_stuff);
+			extra_ptr = (size_t PG_FAR*) UseMemory(pg_rec->extra_stuff);
 			result = (void PG_FAR *) extra_ptr[id];
 			UnuseMemory(pg_rec->extra_stuff);
 		}
@@ -1793,7 +1794,7 @@ PG_PASCAL (void) pgInitExtraStruct (paige_rec_ptr pg)
 		pgPushMemoryID(pg);
 
 		pg->extra_stuff = MemoryAllocClear(pg->globals->mem_globals,
-				sizeof(long), EXTRA_STRUCT_RSRV, 4);
+				sizeof(size_t), EXTRA_STRUCT_RSRV, 4);
 		
 		pgPopMemoryID(pg);
 	}
@@ -1807,7 +1808,7 @@ PG_PASCAL (long) pgExtraUniqueID (pg_ref pg)
 {
 	paige_rec_ptr		pg_rec;
 	long PG_FAR			*extra_ptr;
-	long				extra_size;
+	size_t				extra_size;
 	long				next_id;
 	
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
@@ -1913,7 +1914,8 @@ PG_PASCAL (long) pgTotalTextHeight (pg_ref pg, short paginate)
 PG_PASCAL (long) pgInCacheList (pgm_globals_ptr mem_globals, pg_ref pg)
 {
 	pg_ref  PG_FAR			*refs;
-	long					num_refs, index, result;
+	size_t					num_refs;
+	long					index, result;
 	
 	if (!mem_globals->freemem_info)
 		return	0;
@@ -2017,12 +2019,12 @@ any, can be unloaded. This is for the 2.0 disk paging (cache) system. The
 ref_mask memory_ref cannot be freed, however. If we unload >= needed_free,
 we exit.  */
 
-static long free_cached_blocks (paige_rec_ptr pg, memory_ref ref_mask, long needed_free)
+static size_t free_cached_blocks (paige_rec_ptr pg, memory_ref ref_mask, size_t needed_free)
 {
 	rectangle				vis_bounds;
 	text_block_ptr			block;
-	long					num_blocks;
-	long					freed = 0;
+	size_t					num_blocks;
+	size_t					freed = 0;
 
 	pgShapeBounds(pg->vis_area, &vis_bounds);
 	pg->port.scale.scale = -pg->port.scale.scale;

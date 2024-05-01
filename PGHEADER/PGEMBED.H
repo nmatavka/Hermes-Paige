@@ -125,7 +125,7 @@ typedef pg_embed_rec PG_FAR *	pg_embed_ptr;
 
 typedef PG_FN_PASCAL (long, embed_callback) (paige_rec_ptr pg, pg_embed_ptr embed_ptr,
 		long embed_type, short command, long user_refcon,
-		long param1, long param2);
+		void *param1, void *param2);
 
 #define BOOKMARK_SIZE		44
 #define ALT_SIZE			BOOKMARK_SIZE   // in-line data size option must be >= sizeof(pg_pic_embed) (28)
@@ -305,7 +305,7 @@ typedef pg_embed_activate PG_FAR *pg_embed_activate_ptr;
 /* The meta file struct (given to pgNewEmbedRef): */
 
 struct metafile_struct {
-	long				metafile;			/* Metafile data (HANDLE if Windows) */
+	size_t				metafile;			/* Metafile data (HANDLE if Windows) */
 	long				mapping_mode;		/* Mapping mode (Windows only) */
 	short				x_ext;				/* Original x-extent */
 	short				y_ext;				/* Original y-extent */
@@ -366,7 +366,7 @@ extern PG_PASCAL (memory_ref) pgUnpackEmbedRef (paige_rec_ptr pg, pack_walk_ptr 
 
 /* Default callback (when app passes NULL), also app can call this directly */
 
-extern PG_PASCAL (long) pgDefaultEmbedCallback (paige_rec_ptr pg, pg_embed_ptr embed_ptr,
+extern PG_PASCAL (size_t) pgDefaultEmbedCallback (paige_rec_ptr pg, pg_embed_ptr embed_ptr,
 		long embed_type, short command, long user_refcon,
 		long param1, long param2);
 extern PG_PASCAL (void) pgEmbedStyleInit (paige_rec_ptr pg, style_info_ptr style,

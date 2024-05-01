@@ -57,14 +57,14 @@ typedef tab_width_info PG_FAR *tab_width_ptr;
 extern	"C" {
 #endif
 
-extern PG_PASCAL (void) pgInitTextblock (paige_rec_ptr pg_rec, long offset_begin,
+extern PG_PASCAL (void) pgInitTextblock (paige_rec_ptr pg_rec, size_t offset_begin,
 			text_ref the_text, text_block_ptr block, pg_boolean cache_text);
-extern PG_PASCAL (text_block_ptr) pgFindTextBlock (paige_rec_ptr pg_rec, long offset,
+extern PG_PASCAL (text_block_ptr) pgFindTextBlock (paige_rec_ptr pg_rec, size_t offset,
 			pg_short_t PG_FAR *block_num, pg_boolean want_build,
 			pg_boolean will_access_text);
 extern PG_PASCAL (void) pgPaginateBlock (paige_rec_ptr pg, text_block_ptr block,
 			smart_update_ptr update_info, pg_boolean will_access_text);
-extern PG_PASCAL (void) pgPaginateStarts (paige_rec_ptr pg, text_block_ptr block, long initial_offset,
+extern PG_PASCAL (void) pgPaginateStarts (paige_rec_ptr pg, text_block_ptr block, size_t initial_offset,
 		smart_update_ptr update_info);
 extern PG_PASCAL (pg_short_t) pgLineBoundary (paige_rec_ptr pg, text_block_ptr block,
 			pg_short_t PG_FAR *from_start, pg_short_t PG_FAR *line_begin_offset,
@@ -72,8 +72,8 @@ extern PG_PASCAL (pg_short_t) pgLineBoundary (paige_rec_ptr pg, text_block_ptr b
 extern PG_PASCAL (long) pgRectFromSelection (paige_rec_ptr pg, text_block_ptr block,
 		t_select_ptr selection, rectangle_ptr line_rect, short PG_FAR *baseline);
 extern PG_PASCAL (short) pgFixBadBlocks (paige_rec_ptr pg);
-extern PG_PASCAL (pg_char_ptr) pgTextFromOffset (paige_rec_ptr pg, long offset,
-		text_ref PG_FAR *the_ref, long PG_FAR *max_length);
+extern PG_PASCAL (pg_char_ptr) pgTextFromOffset (paige_rec_ptr pg, size_t offset,
+		text_ref PG_FAR *the_ref, size_t PG_FAR *max_length);
 extern PG_PASCAL (void) pgBlockToUnicode (paige_rec_ptr pg, text_block_ptr block);
 extern PG_PASCAL (void) pgUnicodeToBlock (paige_rec_ptr pg, text_block_ptr block);
 extern PG_PASCAL (void) pgResetStartingLine (pg_measure_ptr line_stuff);

@@ -37,7 +37,7 @@ static pg_boolean first_line_on_page (paige_rec_ptr pg, text_block_ptr block, po
 static long adjust_for_multibyte (paige_rec_ptr pg, style_walk_ptr walker, pg_char_ptr text,
 		long block_begin, long offset_begin, long offset_end, long char_offset,
 		short increment_direction);
-static pg_boolean is_real_text (paige_rec_ptr pg, long offset_to_test);
+static pg_boolean is_real_text (paige_rec_ptr pg, size_t offset_to_test);
 static long compute_overflow_size (paige_rec_ptr pg, text_block_ptr blocks, long bottom_side);
 static long get_cell_bottom (par_info_ptr par);
 
@@ -162,7 +162,7 @@ PG_PASCAL (void) pgPostPaginateProc (paige_rec_ptr pg, text_block_ptr block,
 		if (pg->t_length && (pg->flags2 & CHECK_PAGE_OVERFLOW) && (pg->doc_info.attributes & BOTTOM_FIXED_BIT)) {
 			rectangle		page_bounds;
 
-			back_blocks = UseMemoryRecord(pg->t_blocks, GetMemorySize(pg->t_blocks) - 1, USE_ALL_RECS, FALSE);
+			back_blocks = (text_block_ptr) UseMemoryRecord(pg->t_blocks, GetMemorySize(pg->t_blocks) - 1, USE_ALL_RECS, FALSE);
 			pgShapeBounds(pg->wrap_area, &page_bounds);
 
 			if (!(back_blocks->flags & (NEEDS_CALC | NEEDS_PAGINATE))) {
@@ -319,9 +319,9 @@ TRUE if beginning offset requested is the beginning of a new par. */
 PG_PASCAL (pg_boolean) pgParBoundaryProc (paige_rec_ptr pg, select_pair_ptr boundary)
 {
 	register pg_char_ptr		text;
-	register long				local_offset;
+	register size_t				local_offset;
 	text_block_ptr				block, starting_block;
-	long						offset, starting_offset;
+	size_t						offset, starting_offset;
 	pg_boolean					valid_cr, starts_on_par;
 	pg_char						cr_char;
 
@@ -336,7 +336,7 @@ PG_PASCAL (pg_boolean) pgParBoundaryProc (paige_rec_ptr pg, select_pair_ptr boun
 		
 		block = starting_block = pgFindTextBlock(pg, offset, NULL, FALSE, TRUE);
 		local_offset = starting_offset = offset - block->begin;
-		text = UseMemory(block->text);
+		text = (pg_char_ptr) UseMemory(block->text);
 		text += local_offset;
 	
 	/* Locate beginning of paragraph */
@@ -369,7 +369,7 @@ PG_PASCAL (pg_boolean) pgParBoundaryProc (paige_rec_ptr pg, select_pair_ptr boun
 				pg->procs.load_proc(pg, block);
 
 				local_offset = block->end - block->begin;
-				text = UseMemory(block->text);
+				text = (pg_char_ptr) UseMemory(block->text);
 				text += local_offset;
 			}
 			else
@@ -386,7 +386,7 @@ PG_PASCAL (pg_boolean) pgParBoundaryProc (paige_rec_ptr pg, select_pair_ptr boun
 		block = starting_block;
 		pg->procs.load_proc(pg, block);
 
-		text = UseMemory(block->text);
+		text = (pg_char_ptr) UseMemory(block->text);
 		text += starting_offset;
 		
 		valid_cr = FALSE;
@@ -413,7 +413,7 @@ PG_PASCAL (pg_boolean) pgParBoundaryProc (paige_rec_ptr pg, select_pair_ptr boun
 				UnuseMemory(block->text);
 				++block;
 				pg->procs.load_proc(pg, block);
-				text = UseMemory(block->text);
+				text = (pg_char_ptr) UseMemory(block->text);
 			}
 		}
 	
@@ -432,7 +432,7 @@ PG_PASCAL (pg_boolean) pgParBoundaryProc (paige_rec_ptr pg, select_pair_ptr boun
 			offset -= 1;
 			block = pgFindTextBlock(pg, offset, NULL, FALSE, TRUE);
 			local_offset = offset - block->begin;
-			text = UseMemory(block->text);
+			text = (pg_char_ptr) UseMemory(block->text);
 			
 			if (text[local_offset] != cr_char)
 				starts_on_par = FALSE;
@@ -748,12 +748,12 @@ PG_PASCAL (pg_boolean) pgTiedParagraphRange (paige_rec_ptr pg, select_pair_ptr r
 {
 	register par_info_ptr			par_base;
 	register style_run_ptr			run;
-	long							end_range;
+	size_t							end_range;
 	pg_short_t						index;
 	pg_boolean						some_tied;
 
 	run = pgFindParStyleRun(pg, range->begin, NULL);
-	par_base = UseMemory(pg->par_formats);
+	par_base = (par_info_ptr) UseMemory(pg->par_formats);
 	end_range = range->end;
 	some_tied = FALSE;
 	
@@ -832,7 +832,7 @@ PG_PASCAL (pg_boolean) pgGetBorderInfo (paige_rec_ptr pg, text_block_ptr block,
 	pg_boolean					cr_top = FALSE;
 	pg_boolean					cr_bottom = FALSE;
 
-	par_base = UseMemory(pg->par_formats);
+	par_base = (par_info_ptr) UseMemory(pg->par_formats);
 	
 	abs_offset = (long)line_start->offset;
 	abs_offset += block->begin;
@@ -1024,7 +1024,7 @@ PG_PASCAL (pg_boolean) pgGetBorderInfo (paige_rec_ptr pg, text_block_ptr block,
 				}
 				else {
 					rectangle		extra_indents;
-					long			page_num;
+					size_t			page_num;
 					
 					border_box->top_left.h += par->indents.left_indent;
 					border_box->bot_right.h -= par->indents.right_indent;
@@ -1093,7 +1093,7 @@ The word is what would invert if it were selected (highlighted). If left_side is
 TRUE the word to the left is chosen if the offset is in between "real" words.
 If smart_select is TRUE the blank(s) are selected to the right side of the word. */
 
-PG_PASCAL (void) pgFindWord (pg_ref pg, long offset, long PG_FAR *first_byte,
+PG_PASCAL (void) pgFindWord (pg_ref pg, size_t offset, size_t PG_FAR *first_byte,
 		long PG_FAR *last_byte, pg_boolean left_side, pg_boolean smart_select)
 {
 	paige_rec_ptr				pg_rec;
@@ -1171,7 +1171,7 @@ PG_PASCAL (void) pgFindLine (pg_ref pg, long offset, long PG_FAR *first_byte,
 	block = pgFindTextBlock(pg_rec, use_offset, NULL, TRUE, TRUE);
 	local_begin = (pg_short_t)(use_offset - block->begin);
 	
-	for (starts = UseMemory(block->lines), first_start = 0; starts->offset < local_begin;
+	for (starts = (point_start_ptr) UseMemory(block->lines), first_start = 0; starts->offset < local_begin;
 			++starts, ++first_start) ;
 	
 	if (starts->offset > local_begin)
@@ -1321,7 +1321,7 @@ static void find_word_boundary (paige_rec_ptr pg, long offset, long info_mask,
 	else {
 
 		block = pgFindTextBlock(pg, offset, NULL, FALSE, TRUE);
-		text = UseMemory(block->text);
+		text = (pg_char_ptr) UseMemory(block->text);
 		local_offset = offset - block->begin;
 		end_offset = block->end - block->begin;
 		
@@ -1544,7 +1544,7 @@ static long lines_on_different_page (text_block_ptr block, select_pair_ptr range
 	long						r_num, abs_offset, abs_begin;
 	pg_short_t					local_begin, previous_flags;
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	local_begin = (pg_short_t)(range->begin - block->begin);
 	
 	while (starts->offset < local_begin)
@@ -1584,7 +1584,7 @@ static long lines_on_different_page (text_block_ptr block, select_pair_ptr range
 			
 			UnuseMemory(block->lines);
 			++block;
-			starts = UseMemory(block->lines);
+			starts = (point_start_ptr) UseMemory(block->lines);
 		}
 	}
 
@@ -1614,7 +1614,7 @@ static short top_page_this_block (paige_rec_ptr pg, text_block_ptr block,
 		if (found_offset < block->begin)
 			found_offset = block->begin;
 
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		local_offset = (pg_short_t)(found_offset - block->begin);
 		while (local_offset > starts->offset)
 			++starts;
@@ -1674,7 +1674,7 @@ static short bottom_page_this_block (paige_rec_ptr pg, text_block_ptr block,
 		if (found_offset < block->begin)
 			found_offset = block->begin;
 
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		local_offset = (pg_short_t)(found_offset - block->begin);
 		while (local_offset > starts->offset)
 			++starts;
@@ -1794,7 +1794,7 @@ static long adjust_for_multibyte (paige_rec_ptr pg, style_walk_ptr walker, pg_ch
 
 /* is_real_text returns TRUE if the offset in question is not part of a non-text style. */
 
-static pg_boolean is_real_text (paige_rec_ptr pg, long offset_to_test)
+static pg_boolean is_real_text (paige_rec_ptr pg, size_t offset_to_test)
 {
 	style_info_ptr	the_style;
 	long			style_check;
@@ -1828,7 +1828,7 @@ static long compute_overflow_size (paige_rec_ptr pg, text_block_ptr blocks, long
 		
 		if (!(block->flags & (NEEDS_CALC | NEEDS_PAGINATE))) {
 		
-			starts = UseMemory(block->lines);
+			starts = (point_start_ptr) UseMemory(block->lines);
 			
 			while (starts->flags &= TERMINATOR_BITS) {
 				

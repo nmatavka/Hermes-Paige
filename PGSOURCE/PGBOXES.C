@@ -339,12 +339,12 @@ PG_PASCAL (pg_short_t) pgCharToContainer (pg_ref pg, long offset)
 /* pgContainerToChar returns the first character in container position.
 If -1 returns, container has no chars.  */
 
-PG_PASCAL (long) pgContainerToChar (pg_ref pg, pg_short_t position)
+PG_PASCAL (size_t) pgContainerToChar (pg_ref pg, pg_short_t position)
 {
 	paige_rec_ptr				pg_rec;
 	register text_block_ptr		block;
 	register point_start_ptr	starts;
-	long						result, qty, r_num;
+	size_t						result, qty, r_num;
 	
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
@@ -396,7 +396,7 @@ of containers and, if not, fixes it. (This could happen by app starting with
 
 static void validate_container_refcons (paige_rec_ptr pg)
 {
-	long		refcon_size, container_size;
+	size_t		refcon_size, container_size;
 	
 	refcon_size = GetMemorySize(pg->containers);
 	container_size = GetMemorySize(pg->wrap_area) - 1;
@@ -421,7 +421,7 @@ returned. It also stops (and returns) first block that needs re-calc. */
 static text_block_ptr find_first_block (paige_rec_ptr pg, pg_short_t position)
 {
 	register text_block_ptr		block;
-	register long				num_blocks;
+	register size_t				num_blocks;
 	short						r_num;
 	
 	num_blocks = GetMemorySize(pg->t_blocks);

@@ -52,13 +52,13 @@ PG_PASCAL (void) pgBeginImport (pg_ref pg, long import_position)
 	memory_id = pg_rec->mem_id;
 	
 	import_ref = MemoryAllocClearID(mem_globals, sizeof(pg_import_rec), 1, 0, memory_id);
-	import_ptr = UseMemory(import_ref);
+	import_ptr = (pg_import_ptr) UseMemory(import_ref);
 	import_ptr->previous_import = pg_rec->import_control;
 	pg_rec->import_control = import_ref;
 	
 	import_ptr->target_pos = import_position;
 	import_ptr->t_blocks = MemoryAllocClearID(mem_globals, sizeof(text_block), 1, 4, memory_id);
-	block = UseMemory(import_ptr->t_blocks);
+	block = (text_block_ptr) UseMemory(import_ptr->t_blocks);
 	pgInitTextblock(pg_rec, 0, MEM_NULL, block, FALSE);
 	UnuseMemory(import_ptr->t_blocks);
 
@@ -76,7 +76,7 @@ PG_PASCAL (void) pgBeginImport (pg_ref pg, long import_position)
 	import_ptr->last_par_item = run->style_item;
 	UnuseMemory(pg_rec->par_style_run);
 
-	style = UseMemoryRecord(pg_rec->t_formats, (long)import_ptr->last_style_item, 0, TRUE);
+	style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long)import_ptr->last_style_item, 0, TRUE);
 	import_ptr->last_font_index = style->font_index;
 	UnuseMemory(pg_rec->t_formats);
 
@@ -104,7 +104,7 @@ PG_PASCAL (void) pgEndImport (pg_ref pg, pg_boolean keep_selection, short draw_m
 
 	if ((import_ref = pg_rec->import_control) != MEM_NULL) {
 		
-		import_ptr = UseMemory(import_ref);
+		import_ptr = (pg_import_ptr) UseMemory(import_ref);
 		pg_rec->import_control = import_ptr->previous_import;
 		
 		num_blocks = GetMemorySize(import_ptr->t_blocks);
@@ -112,7 +112,7 @@ PG_PASCAL (void) pgEndImport (pg_ref pg, pg_boolean keep_selection, short draw_m
 
 		if (result = (pg_boolean)(import_ptr->t_length) != 0) {
 			
-			import_block = UseMemory(import_ptr->t_blocks);
+			import_block = (text_block_ptr) UseMemory(import_ptr->t_blocks);
 			
 			if (num_blocks > 1) {
 				
@@ -126,14 +126,14 @@ PG_PASCAL (void) pgEndImport (pg_ref pg, pg_boolean keep_selection, short draw_m
 					
 					--num_blocks;
 					SetMemorySize(import_ptr->t_blocks, num_blocks);
-					import_block = UseMemory(import_ptr->t_blocks);
+					import_block = (text_block_ptr) UseMemory(import_ptr->t_blocks);
 				}
 			}
 
 			if (pg_rec->t_length == 0) {
 				// We can just insert everything, empty doc.
 				
-				block = UseMemory(pg_rec->t_blocks);
+				block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 				
 				if (import_block->text && block->text)
 					MemoryCopy(import_block->text, block->text);
@@ -149,7 +149,7 @@ PG_PASCAL (void) pgEndImport (pg_ref pg, pg_boolean keep_selection, short draw_m
 					
 					append_qty = num_blocks - 1;
 
-					block = AppendMemory(pg_rec->t_blocks, append_qty, FALSE);
+					block = (text_block_ptr) AppendMemory(pg_rec->t_blocks, append_qty, FALSE);
 					pgBlockMove(&import_block[1], block, sizeof(text_block) * append_qty);
 					UnuseMemory(pg_rec->t_blocks);
 				}
@@ -168,7 +168,7 @@ PG_PASCAL (void) pgEndImport (pg_ref pg, pg_boolean keep_selection, short draw_m
 			copy_hyperlink_run(pg_rec, target_pos, import_ptr->hyperlinks_target, pg_rec->target_hyperlinks, import_ptr->t_length);
 
 			SetMemorySize(pg_rec->select, 2);
-			selections = UseMemory(pg_rec->select);
+			selections = (t_select_ptr) UseMemory(pg_rec->select);
 			
 			if (keep_selection)
 				selections->offset = import_ptr->target_pos;
@@ -185,7 +185,7 @@ PG_PASCAL (void) pgEndImport (pg_ref pg, pg_boolean keep_selection, short draw_m
 
 		// Insert possible frames:
 		
-		frame = UseMemory(import_ptr->frames);
+		frame = (pg_frame_ptr) UseMemory(import_ptr->frames);
 		num_frames = GetMemorySize(import_ptr->frames);
 		
 		while (num_frames) {
@@ -200,7 +200,7 @@ PG_PASCAL (void) pgEndImport (pg_ref pg, pg_boolean keep_selection, short draw_m
 
 	// First text block is never inserted directly (only the other blocks get inserted).
 	
-		import_block = UseMemory(import_ptr->t_blocks);
+		import_block = (text_block_ptr) UseMemory(import_ptr->t_blocks);
 
 		DisposeMemory(import_block->lines);
 		DisposeNonNilMemory(import_block->text);
@@ -238,7 +238,7 @@ PG_PASCAL (void) pgEndImport (pg_ref pg, pg_boolean keep_selection, short draw_m
 			pg_hyperlink_ptr		links;
 			long					link_index;
 			
-			links = UseMemory(pg_rec->target_hyperlinks);
+			links = (pg_hyperlink_ptr) UseMemory(pg_rec->target_hyperlinks);
 			
 			for (link_index = 0; link_index < num_links; ++link_index, ++links) {
 				
@@ -289,9 +289,9 @@ PG_PASCAL (pg_boolean) pgInsertText (pg_ref pg, pg_char_ptr data, long length,
 		long				initial_block_size, source_size, style_position;
 		long				inserted_default, previous_cache_pos;
 		
-		import_ptr = UseMemory(pg_rec->import_control);
+		import_ptr = (pg_import_ptr) UseMemory(pg_rec->import_control);
 		num_blocks = GetMemorySize(import_ptr->t_blocks);
-		block = UseMemoryRecord(import_ptr->t_blocks, num_blocks - 1, USE_ALL_RECS, TRUE);
+		block = (text_block_ptr) UseMemoryRecord(import_ptr->t_blocks, num_blocks - 1, USE_ALL_RECS, TRUE);
 		block->file_os = import_ptr->file_os;
 
 		threefourths_of_max = pg_rec->globals->max_block_size - (pg_rec->globals->max_block_size / 4);
@@ -310,7 +310,7 @@ PG_PASCAL (pg_boolean) pgInsertText (pg_ref pg, pg_char_ptr data, long length,
 				
 				if (!cached_file) {
 				
-					text = AppendMemory(block->text, cr_break, FALSE);
+					text = (pg_char_ptr) AppendMemory(block->text, cr_break, FALSE);
 					pgBlockMove(source_text, text, cr_break * sizeof(pg_char));
 					UnuseMemory(block->text);
 				}
@@ -318,7 +318,7 @@ PG_PASCAL (pg_boolean) pgInsertText (pg_ref pg, pg_char_ptr data, long length,
 				block->end += cr_break;
 				end_pos = block->end;
 				previous_cache_pos = block->cache_begin;
-				block = AppendMemory(import_ptr->t_blocks, 1, TRUE);
+				block = (text_block_ptr) AppendMemory(import_ptr->t_blocks, 1, TRUE);
 				pgInitTextblock(pg_rec, end_pos, MEM_NULL, block, cached_file);	
 				block->file_os = import_ptr->file_os;			
 				source_size -= cr_break;
@@ -333,7 +333,7 @@ PG_PASCAL (pg_boolean) pgInsertText (pg_ref pg, pg_char_ptr data, long length,
 			
 			if (!cached_file) {
 			
-				text = AppendMemory(block->text, source_size, FALSE);
+				text = (pg_char_ptr) AppendMemory(block->text, source_size, FALSE);
 				pgBlockMove(source_text, text, source_size * sizeof(pg_char));
 				UnuseMemory(block->text);
 			}
@@ -389,17 +389,17 @@ PG_PASCAL (pg_boolean) pgInsertText (pg_ref pg, pg_char_ptr data, long length,
 			else
 				last_run.offset = -1;
 
-			style_access = UseMemory(pg_rec->t_formats);
+			style_access = (style_info_ptr) UseMemory(pg_rec->t_formats);
 
 			if (last_run.offset == style_position) {
 				pg_short_t		previous_index;
 				
 				previous_index = last_run.style_item;
-				run = UseMemoryRecord(import_ptr->t_style_run, last_run_index - 1, 0, TRUE);
+				run = (style_run_ptr) UseMemoryRecord(import_ptr->t_style_run, last_run_index - 1, 0, TRUE);
 				style_access[previous_index].used_ctr -= 1;
 			}
 			else
-				run = AppendMemory(import_ptr->t_style_run, 1, FALSE);
+				run = (style_run_ptr) AppendMemory(import_ptr->t_style_run, 1, FALSE);
 
 			run->offset = style_position;
 			run->style_item = style_index;
@@ -430,17 +430,17 @@ PG_PASCAL (pg_boolean) pgInsertText (pg_ref pg, pg_char_ptr data, long length,
 				else
 					last_run.offset = -1;
 
-				par_access = UseMemory(pg_rec->par_formats);
+				par_access = (par_info_ptr) UseMemory(pg_rec->par_formats);
 
 				if (last_run.offset == par_position) {
 					pg_short_t		previous_index;
 					
 					previous_index = last_run.style_item;
-					run = UseMemoryRecord(import_ptr->par_style_run, last_run_index - 1, 0, TRUE);
+					run = (style_run_ptr) UseMemoryRecord(import_ptr->par_style_run, last_run_index - 1, 0, TRUE);
 					par_access[previous_index].used_ctr -= 1;
 				}
 				else
-					run = AppendMemory(import_ptr->par_style_run, 1, FALSE);
+					run = (style_run_ptr) AppendMemory(import_ptr->par_style_run, 1, FALSE);
 
 				run->offset = par_position;
 				run->style_item = style_index;
@@ -520,17 +520,17 @@ PG_PASCAL (void) pgRemoveLastInsert (paige_rec_ptr pg_rec, pg_char match_char)
 		text_block_ptr		block;
 		long				num_blocks, text_pos;
 
-		import_ptr = UseMemory(pg_rec->import_control);
+		import_ptr = (pg_import_ptr) UseMemory(pg_rec->import_control);
 		
 		if (import_ptr->t_length) {
 		
 			num_blocks = GetMemorySize(import_ptr->t_blocks);
-			block = UseMemoryRecord(import_ptr->t_blocks, num_blocks - 1, USE_ALL_RECS, TRUE);
+			block = (text_block_ptr) UseMemoryRecord(import_ptr->t_blocks, num_blocks - 1, USE_ALL_RECS, TRUE);
 			
 			if ((text_pos = block->end - block->begin) > 0) {
 				pg_char			end_char;
 
-				text = UseMemory(block->text);
+				text = (pg_char_ptr) UseMemory(block->text);
 				end_char = text[text_pos - 1];
 				UnuseMemory(block->text);
 				
@@ -707,7 +707,7 @@ PG_PASCAL (void) pgMapCharacters (paige_rec_ptr pg, text_block_ptr block)
 	globals = pg->globals;
 	pgPrepareStyleWalk(pg, block->begin, &walker, FALSE);
 	
-	table_ptr = UseMemory(block->text);
+	table_ptr = (pg_char_ptr) UseMemory(block->text);
 	num_chars = GetMemorySize(block->text);
 
 	for (byte_qty = 0; byte_qty < num_chars; ++byte_qty, ++table_ptr) {
@@ -807,8 +807,8 @@ PG_PASCAL (void) pgMatchParStyles (paige_rec_ptr pg, long wait_progress, long wa
 
 	pgPrepareStyleWalk(pg, 0, &walker, TRUE);
 	global_offset = 0;
-	block = UseMemory(pg->t_blocks);
-	text = UseMemory(block->text);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
+	text = (pg_char_ptr) UseMemory(block->text);
 
 	while (global_offset < pg->t_length) {
 		
@@ -835,12 +835,12 @@ PG_PASCAL (void) pgMatchParStyles (paige_rec_ptr pg, long wait_progress, long wa
 							def_par_id = pgNewParStyle(pg->myself, &pg->globals->def_par);
 
 						the_style.par_stylesheet_id = def_par_id;
-						target_style = UseMemoryRecord(pg->named_styles, source_id - 1, 0, TRUE);
+						target_style = (named_stylesheet_ptr) UseMemoryRecord(pg->named_styles, source_id - 1, 0, TRUE);
 						target_style->par_stylesheet_id = def_par_id;
 						UnuseMemory(pg->named_styles);
 					}
 					
-					append = AppendMemory(changes_ref, 1, FALSE);
+					append = (long *) AppendMemory(changes_ref, 1, FALSE);
 					append[0] = global_offset;
 					append[1] = source_id;
 					append[2] = the_style.par_stylesheet_id;
@@ -859,7 +859,7 @@ PG_PASCAL (void) pgMatchParStyles (paige_rec_ptr pg, long wait_progress, long wa
 
 				UnuseMemory(block->text);
 				++block;
-				text = UseMemory(block->text);
+				text = (pg_char_ptr) UseMemory(block->text);
 			}
 			
 			++global_offset;
@@ -881,7 +881,7 @@ PG_PASCAL (void) pgMatchParStyles (paige_rec_ptr pg, long wait_progress, long wa
 		mask.style_sheet_id = -1;
 		mask.named_style_index = -1;
 
-		append = UseMemory(changes_ref);
+		append = (long *) UseMemory(changes_ref);
 		
 		while (num_changes) {
 			
@@ -1191,7 +1191,7 @@ static void copy_style_run (paige_rec_ptr pg, long position, memory_ref source_r
 
 	if ((imported_length > 0) && (position < (pg->t_length - imported_length))) {
 		
-		run = InsertMemory(target_ref, rec_num + 1, 1);
+		run = (style_run_ptr) InsertMemory(target_ref, rec_num + 1, 1);
 		run->style_item = first_target_run.style_item;
 		run->offset = position + imported_length;
 		UnuseMemory(target_ref);
@@ -1199,14 +1199,14 @@ static void copy_style_run (paige_rec_ptr pg, long position, memory_ref source_r
 
 	if ((num_source_runs = GetMemorySize(source_ref)) > 0) {
 		
-		source_run = UseMemory(source_ref);
+		source_run = (style_run_ptr) UseMemory(source_ref);
 
 		if (first_target_run.offset == position)
 			DeleteMemory(target_ref, rec_num, 1);
 		else 
 			rec_num += 1;
 		
-		run = InsertMemory(target_ref, rec_num, num_source_runs);
+		run = (style_run_ptr) InsertMemory(target_ref, rec_num, num_source_runs);
 		
 		while (num_source_runs) {
 			
@@ -1222,7 +1222,7 @@ static void copy_style_run (paige_rec_ptr pg, long position, memory_ref source_r
 		UnuseMemory(source_ref);
 	}
 
-	run = UseMemoryRecord(target_ref, GetMemorySize(target_ref) - 1, 0, TRUE);
+	run = (style_run_ptr) UseMemoryRecord(target_ref, GetMemorySize(target_ref) - 1, 0, TRUE);
 	run->offset = pg->t_length + ZERO_TEXT_PAD;
 	UnuseMemory(target_ref);
 }
@@ -1241,9 +1241,9 @@ static void copy_hyperlink_run (paige_rec_ptr pg, long position, memory_ref sour
 	if (num_source_items > 0) {
 	
 		target_run = pgFindHypertextRun(target_ref, position, &index);
-		target_run = InsertMemory(target_ref, index, num_source_items);
+		target_run = (pg_hyperlink_ptr) InsertMemory(target_ref, index, num_source_items);
 		
-		run = UseMemory(source_ref);
+		run = (pg_hyperlink_ptr) UseMemory(source_ref);
 		
 		while (num_source_items) {
 			
@@ -1260,7 +1260,7 @@ static void copy_hyperlink_run (paige_rec_ptr pg, long position, memory_ref sour
 		UnuseMemory(target_ref);
 	}
 
-	run = UseMemoryRecord(target_ref, GetMemorySize(target_ref) - 1, 0, TRUE);
+	run = (pg_hyperlink_ptr) UseMemoryRecord(target_ref, GetMemorySize(target_ref) - 1, 0, TRUE);
 	run->applied_range.begin = run->applied_range.end = pg->t_length + ZERO_TEXT_PAD;
 	UnuseMemory(target_ref);
 }
@@ -1283,11 +1283,11 @@ static void merge_text_blocks (paige_rec_ptr pg, text_block_ptr import_blocks,
 	if (num_import_blocks > 1) {
 		// Adjust beginning and ending text so we can just append
 		
-		source_text = UseMemory(block->text);
+		source_text = (pg_char_ptr) UseMemory(block->text);
 
 		if (local_position > 0) {
 			
-			text = InsertMemory(import_blocks->text, 0, local_position);
+			text = (pg_char_ptr) InsertMemory(import_blocks->text, 0, local_position);
 			pgBlockMove(source_text, text, local_position * sizeof(pg_char));
 			UnuseMemory(import_blocks->text);
 			
@@ -1297,7 +1297,7 @@ static void merge_text_blocks (paige_rec_ptr pg, text_block_ptr import_blocks,
 		if ((end_block_size = block->end - target_pos) > 0) {
 			
 			last_block = &import_blocks[num_import_blocks - 1];
-			text = AppendMemory(last_block->text, end_block_size, FALSE);
+			text = (pg_char_ptr) AppendMemory(last_block->text, end_block_size, FALSE);
 			pgBlockMove(&source_text[local_position], text, end_block_size * sizeof(pg_char));
 			UnuseMemory(last_block->text);
 			
@@ -1315,7 +1315,7 @@ static void merge_text_blocks (paige_rec_ptr pg, text_block_ptr import_blocks,
 		UnuseMemory(pg->t_blocks);
 		DeleteMemory(pg->t_blocks, 0, 1);
 		
-		block = InsertMemory(pg->t_blocks, 0, num_import_blocks);
+		block = (text_block_ptr) InsertMemory(pg->t_blocks, 0, num_import_blocks);
 		pgBlockMove(import_blocks, block, num_import_blocks * sizeof(text_block));
 		
 	// See if ending block terminates on a CR or not:
@@ -1325,15 +1325,15 @@ static void merge_text_blocks (paige_rec_ptr pg, text_block_ptr import_blocks,
 		
 		if (last_block_num < (pg_short_t)num_blocks) {
 		
-			last_block = UseMemoryRecord(pg->t_blocks, last_block_num - 1, 0, FALSE);
-			source_text = UseMemory(last_block->text);
+			last_block = (text_block_ptr) UseMemoryRecord(pg->t_blocks, last_block_num - 1, 0, FALSE);
+			source_text = (pg_char_ptr) UseMemory(last_block->text);
 			end_char = (pg_short_t)source_text[last_block->end - last_block->begin - 1];
 			
 			if (end_char != pg->globals->line_wrap_char) {
 				long			text_size;
 				
 				text_size = GetMemorySize(last_block->text);
-				text = InsertMemory(last_block[1].text, 0, text_size);
+				text = (pg_char_ptr) InsertMemory(last_block[1].text, 0, text_size);
 				pgBlockMove(source_text, text, text_size * sizeof(pg_char));
 				last_block[1].end += text_size;
 				last_block[1].flags |= NEEDS_CALC;
@@ -1345,13 +1345,13 @@ static void merge_text_blocks (paige_rec_ptr pg, text_block_ptr import_blocks,
 				UnuseMemory(pg->t_blocks);
 				DeleteMemory(pg->t_blocks, last_block_num - 1, 1);
 				
-				block = UseMemory(pg->t_blocks);
+				block = (text_block_ptr) UseMemory(pg->t_blocks);
 			}
 		}
 	}
 	else {
 		
-		text = InsertMemory(block->text, local_position, first_block_size);
+		text = (pg_char_ptr) InsertMemory(block->text, local_position, first_block_size);
 		pgBlockMove(UseMemory(import_blocks->text), text, first_block_size * sizeof(pg_char));
 		UnuseMemory(import_blocks->text);
 		UnuseMemory(block->text);
@@ -1360,7 +1360,7 @@ static void merge_text_blocks (paige_rec_ptr pg, text_block_ptr import_blocks,
 		block->end += first_block_size;
 	}
 	
-	block = UseMemoryRecord(pg->t_blocks, (long)block_num, 0, FALSE);
+	block = (text_block_ptr) UseMemoryRecord(pg->t_blocks, (long)block_num, 0, FALSE);
 	
 	num_blocks = GetMemorySize(pg->t_blocks) - (long)block_num;
 	end_pos = block->begin;
@@ -1411,7 +1411,7 @@ static long find_par_position (pg_import_ptr import_ptr, pg_char cr_char)
 		return	import_ptr->par_format_mark;
 	
 	num_blocks = GetMemorySize(import_ptr->t_blocks) - 1;
-	block = UseMemoryRecord(import_ptr->t_blocks, num_blocks, 0, TRUE);
+	block = (text_block_ptr) UseMemoryRecord(import_ptr->t_blocks, num_blocks, 0, TRUE);
 
 	if (import_ptr->par_format_verb == par_forward)
 		position = block->begin + GetMemorySize(block->text);
@@ -1423,7 +1423,7 @@ static long find_par_position (pg_import_ptr import_ptr, pg_char cr_char)
 
 		if ((text_size = GetMemorySize(block->text)) > 0) {
 		
-			text = UseMemory(block->text);
+			text = (pg_char_ptr) UseMemory(block->text);
 			text_size -= 1;
 			text += text_size;
 
@@ -1458,7 +1458,7 @@ static long insert_default_item (memory_ref runref, pg_short_t style_item)
 
 	if (GetMemorySize(runref) == 0) {
 		
-		run = AppendMemory(runref, 1, TRUE);
+		run = (style_run_ptr) AppendMemory(runref, 1, TRUE);
 		run->style_item = style_item;
 		result = (long)style_item;
 		++result;
@@ -1478,7 +1478,7 @@ static void set_embed_info (paige_rec_ptr pg, pg_import_ptr import_ptr, style_in
 
 	if ((embed = embed_style->embed_object) != MEM_NULL) {
 		
-		embed_ptr = UseMemory(embed);
+		embed_ptr = (pg_embed_ptr) UseMemory(embed);
 		embed_ptr->lowlevel_index = (long)style_item;
 		UnuseMemory(embed);
 		

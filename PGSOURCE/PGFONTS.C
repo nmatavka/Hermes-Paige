@@ -57,7 +57,7 @@ PG_PASCAL (long) pgGetFontInfo (pg_ref pg, const select_pair_ptr selection,
 		stuff_to_report.base = UseMemory(pg_rec->t_formats);
 	
 		num_selects = (pg_short_t)GetMemorySize(select_list);
-		select_run = UseMemory(select_list);
+		select_run = (select_pair_ptr) UseMemory(select_list);
 		first_select = select_run->begin;
 
 		while (num_selects) {
@@ -236,7 +236,7 @@ PG_PASCAL (short) pgCrossFont (pg_ref src_pg, pg_ref new_pg, short src_index)
 	
 	GetMemoryRecord(src_ref, src_index, &src_font);
 	
-	for (target_fonts = UseMemory(target_ref), ctr = 0; target_qty;
+	for (target_fonts = (font_info_ptr) UseMemory(target_ref), ctr = 0; target_qty;
 			++target_fonts, ++ctr, --target_qty)
 		if (pgEqualStruct(target_fonts->name, src_font.name, FONT_SIZE)) {
 			

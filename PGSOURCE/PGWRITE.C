@@ -84,7 +84,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 
 	walker.data_ref = key_data;
 	walker.remaining_ctr = GetMemorySize(walker.data_ref);
-	walker.data = UseMemory(walker.data_ref);
+	walker.data = (pg_bits8_ptr) UseMemory(walker.data_ref);
 
 	switch (key) {
 		
@@ -148,7 +148,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 			no_line_save = (pg_boolean)((pgr->flags & NO_LINE_SAVE_BIT) != 0);
 			
 			*element_info = GetMemorySize(pgr->t_blocks);
-			for (block = use_array(pgr->t_blocks, &general_ctr); general_ctr;
+			for (block = (text_block_ptr) use_array(pgr->t_blocks, &general_ctr); general_ctr;
 					++block, --general_ctr) {
 
 				pgPackTextBlock(&walker, block, FALSE, no_line_save);
@@ -234,7 +234,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 				*element_info = GetMemorySize(pgr->t_formats);
 				*unpacked_size = GetByteSize(pgr->t_formats);
 	
-				for (style_ptr = use_array(pgr->t_formats, &general_ctr); general_ctr;
+				for (style_ptr = (style_info_ptr) use_array(pgr->t_formats, &general_ctr); general_ctr;
 					++style_ptr, --general_ctr)
 					if (!(style_ptr->class_bits & NO_SAVEDOC_BIT))
 						pack_style_info(pgr, &walker, style_ptr);
@@ -255,7 +255,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 				*element_info = GetMemorySize(pgr->par_formats);
 				*unpacked_size = GetByteSize(pgr->par_formats);
 	
-				for (par_ptr = use_array(pgr->par_formats, &general_ctr); general_ctr;
+				for (par_ptr = (par_info_ptr) use_array(pgr->par_formats, &general_ctr); general_ctr;
 						++par_ptr, --general_ctr)
 					if (!(par_ptr->class_info & NO_SAVEDOC_PAR))
 						pack_par_info(&walker, par_ptr);
@@ -276,7 +276,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 				*element_info = GetMemorySize(pgr->fonts);
 				*unpacked_size = GetByteSize(pgr->fonts);
 	
-				for (fonts = use_array(pgr->fonts, &general_ctr); general_ctr;
+				for (fonts = (font_info_ptr) use_array(pgr->fonts, &general_ctr); general_ctr;
 					++fonts, --general_ctr)
 					if (!(fonts->environs & FONT_NOT_SAVED))
 						pack_font_info(&walker, fonts);
@@ -325,7 +325,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 
 			*element_info = general_ctr;
 
-			for (selections = UseMemory(pgr->select); general_ctr;
+			for (selections = (t_select_ptr) UseMemory(pgr->select); general_ctr;
 				++selections, --general_ctr) {
 				
 				*unpacked_size += sizeof(t_select);
@@ -354,7 +354,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 				*element_info = general_ctr;
 				*unpacked_size = GetByteSize(pgr->applied_range);
 				
-				for (pair_ptr = UseMemory(pgr->applied_range); general_ctr;
+				for (pair_ptr = (select_pair_ptr) UseMemory(pgr->applied_range); general_ctr;
 						++pair_ptr, --general_ctr)
 					pgPackSelectPair(&walker, pair_ptr);
 
@@ -451,7 +451,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 					
 					general_ctr = GetMemorySize(pgr->exclusions);
 					*element_info = general_ctr;
-					frames = UseMemory(pgr->exclusions);
+					frames = (memory_ref *) UseMemory(pgr->exclusions);
 					
 					while (general_ctr) {
 						
@@ -511,7 +511,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 				*element_info = GetMemorySize(pgr->named_styles);
 				*unpacked_size = GetByteSize(pgr->named_styles);
 	
-				for (named_styles = use_array(pgr->named_styles, &general_ctr); general_ctr;
+				for (named_styles = (named_stylesheet_ptr) use_array(pgr->named_styles, &general_ctr); general_ctr;
 					++named_styles, --general_ctr) {
 					
 					pgPackUnicodeBytes(&walker, (pg_bits8_ptr)named_styles->name, FONT_SIZE * sizeof(pg_char), FALSE);
@@ -725,7 +725,7 @@ PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 		
 		wait_proc(pg_rec, save_wait, 0, total_to_save);
 
-		handlers = UseMemory(handlers_to_use);
+		handlers = (pg_handler_ptr) UseMemory(handlers_to_use);
 		
 		pgInitOneHandler(&header_handler, pg_signature);
 		result = do_write_handler(pg_rec, MEM_NULL, &header_handler, key_data,
@@ -738,7 +738,7 @@ PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 
 			if ((handlers->key == text_key) || (handlers->key == line_key)) {
 				
-				for (block = UseMemory(pg_rec->t_blocks), ctr = (pg_short_t)GetMemorySize(pg_rec->t_blocks);
+				for (block = (text_block_ptr) UseMemory(pg_rec->t_blocks), ctr = (pg_short_t)GetMemorySize(pg_rec->t_blocks);
 						ctr;  ++block, --ctr) {
 						
 					result = do_write_handler(pg_rec, handlers_to_use, handlers, key_data,
@@ -762,7 +762,7 @@ PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 				if (pg_rec->extra_stuff) {
 					long PG_FAR		*extra_ptr;
 					
-					extra_ptr = UseMemory(pg_rec->extra_stuff);
+					extra_ptr = (long *) UseMemory(pg_rec->extra_stuff);
 					ctr = (pg_short_t)GetMemorySize(pg_rec->extra_stuff);
 					
 					
@@ -868,7 +868,7 @@ PG_PASCAL (pg_error) pgCacheSaveDoc (pg_ref pg, long PG_FAR *file_position, cons
 			text_block_ptr			block;
 			long					ctr;
 
-			block = UseMemory(pg_rec->t_blocks);
+			block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 			
 			for (ctr = GetMemorySize(pg_rec->t_blocks); ctr; ++block, --ctr)
 				block->cache_flags &= (~(CACHE_SAVED_FLAG | CACHE_CHANGED_FLAG));
@@ -1061,11 +1061,11 @@ PG_PASCAL (void) pgPackNumbers (pack_walk_ptr out_data, void PG_FAR *ptr, short 
 	register long  PG_FAR	*long_ptr;
 
 	if (data_code == short_data) {
-		for (ctr = 0, short_ptr = ptr; ctr < qty; ++ctr)
+		for (ctr = (short *) (short) (short *) 0, short_ptr = ptr; ctr < qty; ++ctr)
 			pgPackNum(out_data, short_data, short_ptr[ctr]);
 	}
 	else {
-		for (ctr = 0, long_ptr = ptr; ctr < qty; ++ctr)
+		for (ctr = (long *) (short) (long *) 0, long_ptr = ptr; ctr < qty; ++ctr)
 			pgPackNum(out_data, long_data, long_ptr[ctr]);
 	}
 }
@@ -1183,7 +1183,7 @@ PG_PASCAL (long) pgPackShape (pack_walk_ptr walker, shape_ref the_shape)
 	long			shape_size, result;
 	
 	shape_size = result = GetMemorySize(the_shape);
-	for (rects = UseMemory(the_shape); shape_size; ++rects, --shape_size)
+	for (rects = (rectangle_ptr) UseMemory(the_shape); shape_size; ++rects, --shape_size)
 		pgPackRect(walker, rects);
 
 	UnuseMemory(the_shape);
@@ -1439,7 +1439,7 @@ by extend_size.  */
 
 static void extend_buffer_size (pack_walk_ptr out_data, long extend_size)
 {
-	out_data->data = AppendMemory(out_data->data_ref, extend_size, FALSE);
+	out_data->data = (pg_bits8_ptr) AppendMemory(out_data->data_ref, extend_size, FALSE);
 	out_data->data -= out_data->remaining_ctr;
 	out_data->remaining_ctr += extend_size;
 }
@@ -1479,7 +1479,7 @@ static void optimize_packed_data (pack_walk_ptr walker)
 
 	new_size = walker->first_offset;
 
-	in_data = UseMemory(walker->data_ref);
+	in_data = (pg_bits8_ptr) UseMemory(walker->data_ref);
 	in_data += new_size;
 	out_data = in_data;
 
@@ -1616,7 +1616,7 @@ static long predict_byte_save (paige_rec_ptr pg, memory_ref handlers)
 	pg_short_t					qty, num_blocks;
 
 	pg_rec = pg;
-	handler = UseMemory(handlers);
+	handler = (pg_handler_ptr) UseMemory(handlers);
 	
 	for (qty = (pg_short_t)GetMemorySize(handlers), result = 0; qty; ++handler, --qty) {
 		
@@ -1637,7 +1637,7 @@ static long predict_byte_save (paige_rec_ptr pg, memory_ref handlers)
 				break;
 
 			case line_key:
-				for (block = UseMemory(pg_rec->t_blocks), num_blocks = (pg_short_t)GetMemorySize(pg_rec->t_blocks);
+				for (block = (text_block_ptr) UseMemory(pg_rec->t_blocks), num_blocks = (pg_short_t)GetMemorySize(pg_rec->t_blocks);
 						num_blocks; ++block, --num_blocks)
 					result += GetByteSize(block->lines);
 				
@@ -1895,7 +1895,7 @@ static void load_overlapping_blocks (paige_rec_ptr pg, long offset_to)
 	long					num_blocks;
 	
 	num_blocks = GetMemorySize(pg->t_blocks);
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	
 	while (num_blocks) {
 

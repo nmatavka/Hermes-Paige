@@ -65,7 +65,7 @@ PG_PASCAL (long) pgGetStyleInfo (pg_ref pg, const select_pair_ptr selection,
 		stuff_to_report.base = UseMemory(pg_rec->t_formats);
 	
 		num_selects = (pg_short_t)GetMemorySize(select_list);
-		select_run = UseMemory(select_list);
+		select_run = (select_pair_ptr) UseMemory(select_list);
 		first_select = select_run->begin;
 
 		while (num_selects) {
@@ -157,7 +157,7 @@ PG_PASCAL (void) pgSetStyleClassInfo (pg_ref pg, const select_pair_ptr range, lo
 		stuff_to_change.style_change = (style_info_ptr) - 1;
 
 		num_selects = (pg_short_t)GetMemorySize(select_list);
-		select_run = UseMemory(select_list);
+		select_run = (select_pair_ptr) UseMemory(select_list);
 		stuff_to_change.change_range = *select_run;
 
 		while (num_selects) {
@@ -283,7 +283,7 @@ PG_PASCAL (long) pgGetStyleClassInfo (pg_ref pg, long position, select_pair_ptr 
 	use_position = pgFixOffset(pg_rec, position);
 
 	run = pgFindStyleRun(pg_rec, use_position, NULL);
-	style = UseMemory(pg_rec->t_formats);
+	style = (style_info_ptr) UseMemory(pg_rec->t_formats);
 	result = style[run->style_item].class_bits;
 	
 	if (style_range) {
@@ -337,7 +337,7 @@ PG_PASCAL (void) pgSetStyleProcs (pg_ref pg, const pg_style_hooks PG_FAR *procs,
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	some_changed = FALSE;
 
-	for (styles = UseMemory(pg_rec->t_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->t_formats);
+	for (styles = (style_info_ptr) UseMemory(pg_rec->t_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->t_formats);
 			style_qty; ++styles, --style_qty)
 		if (pgStyleMatchesCriteria(styles, match_style, mask_style, AND_style,
 				SIGNIFICANT_STYLE_SIZE)) {
@@ -392,7 +392,7 @@ PG_PASCAL (void) pgChangeStyleInfo (paige_rec_ptr pg_rec, select_pair_ptr select
 		stuff_to_change.style_mask = mask;
 	
 		num_selects = (pg_short_t)GetMemorySize(select_list);
-		select_run = UseMemory(select_list);
+		select_run = (select_pair_ptr) UseMemory(select_list);
 		stuff_to_change.change_range = *select_run;
 
 		while (num_selects) {
@@ -436,7 +436,7 @@ PG_PASCAL (void) pgChangeStyleInfo (paige_rec_ptr pg_rec, select_pair_ptr select
 				
 				if (draw_mode && !pg_rec->num_selects) {
 					
-					select = UseMemory(pg_rec->select);
+					select = (t_select_ptr) UseMemory(pg_rec->select);
 					pgSetupGrafDevice(pg_rec, &pg_rec->port, MEM_NULL, clip_standard_verb);
 					pg_rec->procs.cursor_proc(pg_rec, select, hide_cursor);
 				}
@@ -455,7 +455,7 @@ PG_PASCAL (void) pgChangeStyleInfo (paige_rec_ptr pg_rec, select_pair_ptr select
 				UnuseMemory(pg_rec->t_style_run);
 				UnuseMemory(pg_rec->t_formats);
 				
-				block = UseMemory(pg_rec->t_blocks);
+				block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 				block->flags |= NEEDS_CALC;
 				pgPaginateBlock(pg_rec, block, NULL, TRUE);
 				UnuseMemory(pg_rec->t_blocks);

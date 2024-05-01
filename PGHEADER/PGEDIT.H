@@ -22,13 +22,13 @@ extern	"C" {
 #endif
 
 extern PG_PASCAL (long) pgUpdateText (paige_rec_ptr pg, graf_device_ptr draw_port,
-		long beginning_offset, long ending_offset, shape_ref vis_rgn,
+		size_t beginning_offset, size_t ending_offset, shape_ref vis_rgn,
 		co_ordinate_ptr offset_extra, short display_verb, short hilite_mode);
 extern PG_PASCAL (void) pgDoDisplay (pg_ref pg, select_pair_ptr range, const graf_device_ptr target_device,
 		shape_ref vis_target, shape_ref wrap_target, const co_ordinate_ptr offset_extra,
 		short draw_mode);
-extern PG_PASCAL (long) pgInsertRawData (paige_rec_ptr pg, pg_char_ptr data, long length,
-			long offset, smart_update_ptr update_info, short insert_mode);
+extern PG_PASCAL (long) pgInsertRawData (paige_rec_ptr pg, pg_char_ptr data, size_t length,
+			size_t offset, smart_update_ptr update_info, short insert_mode);
 extern PG_PASCAL (long) pgDeleteRawData (paige_rec_ptr pg, long delete_from, long PG_FAR *delete_to,
 		smart_update_ptr update_info);
 extern PG_PASCAL (graf_device_ptr) pgSetupGrafDevice (paige_rec_ptr pg, graf_device_ptr device,

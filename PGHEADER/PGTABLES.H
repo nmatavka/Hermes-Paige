@@ -81,8 +81,8 @@ extern PG_PASCAL (memory_ref) pgCellSelections (paige_rec_ptr pg_rec, select_pai
 
 extern PG_PASCAL (void) pgFixCellBackspace (paige_rec_ptr pg, long PG_FAR *delete_from, long PG_FAR *delete_to);
 
-extern PG_PASCAL (pg_boolean) pgPasteToCells (paige_rec_ptr pg_rec, long position,
-		pg_char_ptr text, long length);
+extern PG_PASCAL (pg_boolean) pgPasteToCells (paige_rec_ptr pg_rec, size_t position,
+		pg_char_ptr text, size_t length);
 		
 extern PG_PASCAL (void) pgGetTableBounds (paige_rec_ptr pg_rec, long position, rectangle_ptr bounds);
 
