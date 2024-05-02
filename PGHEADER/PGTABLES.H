@@ -65,8 +65,8 @@ extern PG_PASCAL (void) pgConvertTableText (pg_ref pg, select_pair_ptr selection
 
 /********************* Low level utilities (used by PAIGE internally) **********************/
 
-extern PG_PASCAL (void) pgRowOffsets (text_block_ptr block, long local_position, long PG_FAR *begin,
-				long PG_FAR *end);
+extern PG_PASCAL (void) pgRowOffsets (text_block_ptr block, size_t local_position, size_t PG_FAR *begin,
+				size_t PG_FAR *end);
 
 extern PG_PASCAL (pg_boolean) pgPositionInTable (paige_rec_ptr pg, long position, select_pair_ptr selection);
 
@@ -79,10 +79,10 @@ extern PG_PASCAL (void) pgTabToCell (paige_rec_ptr pg_rec);
 
 extern PG_PASCAL (memory_ref) pgCellSelections (paige_rec_ptr pg_rec, select_pair_ptr selection);
 
-extern PG_PASCAL (void) pgFixCellBackspace (paige_rec_ptr pg, long PG_FAR *delete_from, long PG_FAR *delete_to);
+extern PG_PASCAL (void) pgFixCellBackspace (paige_rec_ptr pg, size_t PG_FAR *delete_from, size_t PG_FAR *delete_to);
 
-extern PG_PASCAL (pg_boolean) pgPasteToCells (paige_rec_ptr pg_rec, long position,
-		pg_char_ptr text, long length);
+extern PG_PASCAL (pg_boolean) pgPasteToCells (paige_rec_ptr pg_rec, size_t position,
+		pg_char_ptr text, size_t length);
 		
 extern PG_PASCAL (void) pgGetTableBounds (paige_rec_ptr pg_rec, long position, rectangle_ptr bounds);
 

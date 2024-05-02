@@ -75,7 +75,7 @@ PG_PASCAL (void) pgSetHandler (pg_globals_ptr globals, pg_file_key key,
 
 	if (!(handlers = pgFindHandlerFromKey(globals->file_handlers, key, &insert_spot))) {
 	
-		handlers = InsertMemory(globals->file_handlers, insert_spot, 1);
+		handlers = (pg_handler_ptr) InsertMemory(globals->file_handlers, insert_spot, 1);
 		pgInitOneHandler(handlers, key);
 	}
 
@@ -207,7 +207,7 @@ PG_PASCAL (pg_handler_ptr) pgFindHandlerFromKey (memory_ref handlers_list,
 
 	if (handlers_list && (key_qty = (pg_short_t)GetMemorySize(handlers_list)))
 	{
-		result = UseMemoryRecord (handlers_list, key_location, USE_ALL_RECS, TRUE);
+		result = (pg_handler_ptr) UseMemoryRecord (handlers_list, key_location, USE_ALL_RECS, TRUE);
 	
 		for (;;) {
 			
@@ -217,7 +217,7 @@ PG_PASCAL (pg_handler_ptr) pgFindHandlerFromKey (memory_ref handlers_list,
 			if (++key_location >= key_qty)
 				break;
 			
-			result = UseMemoryRecord (handlers_list, key_location, USE_ALL_RECS, FALSE);
+			result = (pg_handler_ptr) UseMemoryRecord (handlers_list, key_location, USE_ALL_RECS, FALSE);
 		}
 	
 		if ((key_location == key_qty) || (result->key != key)) {
@@ -250,7 +250,7 @@ PG_PASCAL (memory_ref) pgBuildHandlerList (pg_globals_ptr globals, pg_file_key_p
 		pg_short_t			key_qty, keys_found;
 
 		result = MemoryAlloc(globals->mem_globals, sizeof(pg_handler), num_keys, 2);
-		handlers = UseMemory(result);
+		handlers = (pg_handler_ptr) UseMemory(result);
 		keys_to_use = keys;
 
 		for (key_qty = num_keys, keys_found = 0; key_qty; ++keys_to_use, --key_qty)
@@ -281,7 +281,7 @@ PG_PASCAL (void) pgSetupPacker (pack_walk_ptr walker, memory_ref ref, long first
 	walker->data_ref = ref;
 	walker->transfered = walker->first_offset = first_offset;
 	walker->remaining_ctr = GetMemorySize(ref) - first_offset;
-	walker->data = UseMemory(ref);
+	walker->data = (pg_bits8_ptr) UseMemory(ref);
 	walker->data += first_offset;
 }
 
@@ -296,7 +296,8 @@ PG_PASCAL (pg_error) pgDoExceptionKey (paige_rec_ptr pg, memory_ref handlers,
 	pg_handler_ptr		handler;
 	pg_handler_proc		proc_to_call;
 	memory_ref			handlers_to_use;
-	long				error_for_call, original_size;
+	size_t				original_size;
+	long				error_for_call;
 	pg_error			final_error;
 
 	pg->globals->mem_globals->last_error = error_code;

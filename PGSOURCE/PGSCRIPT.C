@@ -397,7 +397,7 @@ PG_PASCAL (void) pgInsertHiliteRect (paige_rec_ptr pg, text_block_ptr block,
 		}
 		else {
 		
-			sub_ptr = UseMemory(pg->active_subset);
+			sub_ptr = (paige_sub_ptr) UseMemory(pg->active_subset);
 			sub_ptr += sub_ptr->alt_index;
 			sub_rect = sub_ptr->subset_bounds;
 			UnuseMemory(pg->active_subset);
@@ -409,7 +409,7 @@ PG_PASCAL (void) pgInsertHiliteRect (paige_rec_ptr pg, text_block_ptr block,
 		wrap_rect = page_wrap_rect;
 
 	rect.top_left.v = top;
-	starts = secondary_starts = UseMemory(block->lines);
+	starts = secondary_starts = (point_start_ptr) UseMemory(block->lines);
 
 	if (first_select) {
 	
@@ -541,7 +541,7 @@ PG_PASCAL (void) pgInsertHiliteRect (paige_rec_ptr pg, text_block_ptr block,
 				long				next_start_end;
 				
 				pgPaginateBlock(pg, &block[1], NULL, FALSE);
-				next_block_starts = UseMemory(block[1].lines);
+				next_block_starts = (point_start_ptr) UseMemory(block[1].lines);
 				
 				while (!(next_block_starts->flags & LINE_BREAK_BIT))
 					++next_block_starts;
@@ -800,13 +800,13 @@ PG_PASCAL (pg_boolean) pgCheckDirectionChange(paige_rec_ptr pg)
 	
 	pg->text_direction = current_direction;
 	
-	for (block_qty = (pg_short_t)GetMemorySize(pg->t_blocks), block = UseMemory(pg->t_blocks);
+	for (block_qty = GetMemorySize(pg->t_blocks), block = (text_block_ptr)UseMemory(pg->t_blocks);
 			block_qty; ++block, --block_qty)
 		block->flags |= SWITCHED_DIRECTIONS;
 	
 	UnuseMemory(pg->t_blocks);
 	
-	for (block_qty = (pg_short_t)GetMemorySize(pg->select), selections = UseMemory(pg->select);
+	for (block_qty = GetMemorySize(pg->select), selections = (t_select_ptr)UseMemory(pg->select);
 			block_qty; ++selections, --block_qty)
 		selections->flags |= SELECTION_DIRTY;
 	
@@ -871,7 +871,7 @@ PG_PASCAL (void) pgSetSecondaryCaret (paige_rec_ptr pg, text_block_ptr block,
 	
 	UnuseMemory(pg->par_formats);
 
-	starts = UseMemoryRecord(block->lines, selection->line, USE_ALL_RECS, TRUE);
+	starts = (point_start_ptr) UseMemoryRecord(block->lines, selection->line, USE_ALL_RECS, TRUE);
 	start_direction = starts->flags & RIGHT_DIRECTION_BIT;
 	insert_bounds = starts->bounds;
 	begin_start = starts->offset;

@@ -495,7 +495,7 @@ typedef unsigned short pg_short_t;			/* 64K address range value */
 #define _UNICODE
 #endif
 
-typedef pg_word pg_char;					/* General purpose byte / char / whatever */
+typedef wchar_t pg_char;					/* General purpose byte / char / whatever */
 typedef pg_char *pg_char_ptr;				/* Pointer to pg_char */
 #else
 typedef unsigned char pg_char;				/* General purpose byte / char / whatever */
@@ -638,8 +638,8 @@ typedef unsigned short pg_short_t;			/* 64K address range value */
 #define PG_REVERSE_BOM	0xFEFF
 
 #ifdef UNICODE
-typedef unsigned short	pg_char;
-typedef unsigned short PG_FAR *pg_char_ptr;
+typedef wchar_t	pg_char;
+typedef wchar_t PG_FAR *pg_char_ptr;
 #ifndef _UNICODE
 #define _UNICODE
 #endif
@@ -675,7 +675,7 @@ typedef UINT pg_font_script;				/* Windows CodePage or CharSet value */
 /* All-purpose variable for pointers or memory ID's: */
 
 typedef void PG_FAR *	void_ptr;			/* Used for type void pointers */
-typedef unsigned long	generic_var;		/* Used for type 'HANDLE' */
+typedef size_t			generic_var;		/* Used for type 'HANDLE' */
 typedef HANDLE			pg_handle;			/* Used for type 'HANDLE' */
 typedef HRGN			pg_region;			/* Used as a region */
 

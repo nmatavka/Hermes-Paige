@@ -34,7 +34,7 @@ PG_PASCAL (long) pgSetHyperlinkSource (pg_ref pg, select_pair_ptr selection,
 	paige_rec_ptr		pg_rec;
 	pg_hyperlink		link;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgFillBlock(&link, sizeof(pg_hyperlink), 0);
 	
 	if ((link.callback = callback) == NULL)
@@ -72,7 +72,7 @@ PG_PASCAL (long) pgSetHyperlinkTarget (pg_ref pg, select_pair_ptr selection,
 	pg_hyperlink		link;
 	long				generated_id;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgFillBlock(&link, sizeof(pg_hyperlink), 0);
 	
 	if ((link.callback = callback) == NULL)
@@ -112,7 +112,7 @@ PG_PASCAL (void) pgChangeHyperlinkSource (pg_ref pg, long position,
 	pg_hyperlink_ptr	links;
 	long				index;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	links = pgFindHypertextRun(pg_rec->hyperlinks, position, &index);
 	new_link = *links;
 	UnuseMemory(pg_rec->hyperlinks);
@@ -170,7 +170,7 @@ PG_PASCAL (void) pgChangeHyperlinkTarget (pg_ref pg, long position,
 	pg_hyperlink_ptr	links;
 	long				index;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	links = pgFindHypertextRun(pg_rec->target_hyperlinks, position, &index);
 	new_link = *links;
 	UnuseMemory(pg_rec->target_hyperlinks);
@@ -267,7 +267,7 @@ PG_PASCAL (void) pgSetHyperlinkSourceInfo (pg_ref pg, long position, long id,
 	pg_hyperlink_ptr	links;
 	long				use_position;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (id)
 		use_position = find_link(pg, FALSE, 0, NULL, id, NULL, FALSE, FALSE, FALSE, NULL);
@@ -299,7 +299,7 @@ PG_PASCAL (void) pgSetHyperlinkTargetInfo (pg_ref pg, long position, long id,
 	pg_hyperlink_ptr	links;
 	long				use_position;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (id)
 		use_position = find_link(pg, TRUE, 0, NULL, id, NULL, FALSE, FALSE, FALSE, NULL);
@@ -349,7 +349,7 @@ PG_PASCAL (pg_boolean) pgIsHyperlinkSource (pg_ref pg, long position)
 	long				use_offset;
 	pg_boolean			result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	use_offset = pgFixOffset(pg_rec, position);
 	link = pgFindHypertextRun(pg_rec->hyperlinks, use_offset, NULL);
 	result = belongs_to_link(link, use_offset);
@@ -369,7 +369,7 @@ PG_PASCAL (pg_boolean) pgIsHyperlinkTarget (pg_ref pg, long position)
 	long				use_offset;
 	pg_boolean			result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	use_offset = pgFixOffset(pg_rec, position);
 	link = pgFindHypertextRun(pg_rec->target_hyperlinks, use_offset, NULL);
 	result = belongs_to_link(link, use_offset);
@@ -405,7 +405,7 @@ PG_PASCAL (pg_boolean) pgSetSourceURL (pg_ref pg, long position, pg_char_ptr URL
 	pg_hyperlink_ptr	links;
 	pg_boolean			result = FALSE;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	links = pgFindHypertextRun(pg_rec->hyperlinks, position, NULL);
 	
 	if (belongs_to_link(links, position)) {
@@ -430,7 +430,7 @@ PG_PASCAL (pg_boolean) pgSetTargetURL (pg_ref pg, long position, pg_char_ptr URL
 	pg_hyperlink_ptr	links;
 	pg_boolean			result = FALSE;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	links = pgFindHypertextRun(pg_rec->target_hyperlinks, position, NULL);
 	
 	if (belongs_to_link(links, position)) {
@@ -453,7 +453,7 @@ PG_PASCAL (long) pgGetSourceID (pg_ref pg, long position)
 	pg_hyperlink_ptr	links;
 	long				result = 0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	links = pgFindHypertextRun(pg_rec->hyperlinks, position, NULL);
 	
@@ -472,7 +472,7 @@ PG_PASCAL (long) pgGetTargetID (pg_ref pg, long position)
 	pg_hyperlink_ptr	links;
 	long				result = 0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	links = pgFindHypertextRun(pg_rec->target_hyperlinks, position, NULL);
 	
@@ -536,20 +536,20 @@ PG_PASCAL (void) pgSetHyperlinkCallback (pg_ref pg, ht_callback source_callback,
 	ht_callback			use_source, use_target;
 	long				num_links;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((use_source = source_callback) == NULL)
 		use_source = pgStandardSourceCallback;
 	if ((use_target = target_callback) == NULL)
 		use_target = pgStandardTargetCallback;
 
-	for (links = UseMemory(pg_rec->hyperlinks), num_links = GetMemorySize(pg_rec->hyperlinks);
+	for (links = (pg_hyperlink_ptr) UseMemory(pg_rec->hyperlinks), num_links = GetMemorySize(pg_rec->hyperlinks);
 				num_links; ++links, --num_links)
 		links->callback = use_source;
 	
 	UnuseMemory(pg_rec->hyperlinks);
 
-	for (links = UseMemory(pg_rec->target_hyperlinks), num_links = GetMemorySize(pg_rec->target_hyperlinks);
+	for (links = (pg_hyperlink_ptr) UseMemory(pg_rec->target_hyperlinks), num_links = GetMemorySize(pg_rec->target_hyperlinks);
 				num_links; ++links, --num_links)
 		links->callback = use_target;
 	
@@ -586,7 +586,7 @@ PG_PASCAL (pg_hyperlink_ptr) pgFindHypertextRun (memory_ref hyperlinks, long off
 	pg_hyperlink_ptr		ht_ptr;
 	long					record_num;
 	
-	ht_ptr = UseMemory(hyperlinks);
+	ht_ptr = (pg_hyperlink_ptr) UseMemory(hyperlinks);
 	record_num = 0;
 	
 	while (ht_ptr->applied_range.end <= offset) {
@@ -643,7 +643,7 @@ PG_PASCAL (void) pgAdvanceHyperlinks (paige_rec_ptr pg, memory_ref hyperlinks, l
 					
 					num_recs -= 1;
 					actual_recs -= 1;
-					ht_ptr = UseMemory(hyperlinks);
+					ht_ptr = (pg_hyperlink_ptr) UseMemory(hyperlinks);
 					ht_ptr += index;
 				}
 				else {
@@ -674,7 +674,7 @@ PG_PASCAL (void) pgAdvanceHyperlinks (paige_rec_ptr pg, memory_ref hyperlinks, l
 
 // debug:
 
-	ht_ptr = UseMemory(hyperlinks);
+	ht_ptr = (pg_hyperlink_ptr) UseMemory(hyperlinks);
 	num_recs = GetMemorySize(hyperlinks);
 	UnuseMemory(hyperlinks);
 }
@@ -688,7 +688,7 @@ PG_PASCAL (long) pgPackHyperlinks (pack_walk_ptr walker, memory_ref hyperlinks, 
 	long					qty, index, string_length;
 	
 	qty = GetMemorySize(hyperlinks);
-	links = UseMemory(hyperlinks);
+	links = (pg_hyperlink_ptr) UseMemory(hyperlinks);
 	
 	if (unpack_size)
 		*unpack_size = qty * sizeof(pg_hyperlink);
@@ -708,7 +708,7 @@ PG_PASCAL (long) pgPackHyperlinks (pack_walk_ptr walker, memory_ref hyperlinks, 
 		pgPackNum(walker, long_data, links->refcon);
 
 		if (links->alt_URL)
-			URL = UseMemory(links->alt_URL);
+			URL = (pg_char_ptr) UseMemory(links->alt_URL);
 		else
 			URL = links->URL;
 		
@@ -738,7 +738,7 @@ PG_PASCAL (void) pgUnpackHyperlinks (paige_rec_ptr pg, pack_walk_ptr walker, ht_
 	
 	SetMemorySize(hyperlinks, qty);
 	
-	links = UseMemory(hyperlinks);
+	links = (pg_hyperlink_ptr) UseMemory(hyperlinks);
 	pgFillBlock(links, qty * sizeof(pg_hyperlink), 0);
 
 	for (index = 0; index < qty; ++index, ++links) {
@@ -770,7 +770,7 @@ PG_PASCAL (void) pgUnpackHyperlinks (paige_rec_ptr pg, pack_walk_ptr walker, ht_
 				
 				links->alt_URL = MemoryAllocClearID(GetGlobalsFromRef(hyperlinks),
 									sizeof(pg_char), string_length + 1, 0, pg->mem_id);
-				URL = UseMemory(links->alt_URL);
+				URL = (pg_char_ptr) UseMemory(links->alt_URL);
 			}
 			else
 				URL = links->URL;
@@ -798,7 +798,7 @@ PG_PASCAL (short) pgNewHyperlinkStyle (pg_ref pg, pg_short_t red, pg_short_t gre
 	color_value_ptr		color;
 	short				style_id;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgFillBlock(&style, sizeof(style_info), 0);
 	style.procs = pg_rec->globals->def_style.procs;
 	UnuseMemory(pg);
@@ -832,7 +832,7 @@ PG_PASCAL (void) pgScrollToLink (pg_ref pg, long text_position)
 	rectangle			char_rect, vis_bounds;
 	short				retries;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	pgShapeBounds(pg_rec->vis_area, &vis_bounds);
 	vis_bounds.top_left.v += 8;
@@ -959,7 +959,7 @@ static void insert_hyperlink (paige_rec_ptr pg, memory_ref hyperlink_run, select
 	}
 	
 	pgFindHypertextRun(hyperlink_run, hyperlink->applied_range.begin, &insert_pos);
-	ht_ptr = InsertMemory(hyperlink_run, insert_pos, 1);
+	ht_ptr = (pg_hyperlink_ptr) InsertMemory(hyperlink_run, insert_pos, 1);
 	*ht_ptr = *hyperlink;
 	UnuseMemory(hyperlink_run);
 	
@@ -989,7 +989,7 @@ static pg_char_ptr get_URL_ptr (pg_hyperlink_ptr link)
 	if (link->alt_URL == MEM_NULL)
 		return	link->URL;
 	
-	return	UseMemory(link->alt_URL);
+	return (pg_char_ptr) UseMemory(link->alt_URL);
 }
 
 /* compare_URL compares two strings and returns TRUE if they match. */
@@ -1049,7 +1049,7 @@ static void set_link_state (pg_ref pg, pg_boolean for_target, long position, sho
 	pg_hyperlink_ptr	links;
 	memory_ref			hyperlinks;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (for_target)
 		hyperlinks = pg_rec->target_hyperlinks;
@@ -1061,7 +1061,7 @@ static void set_link_state (pg_ref pg, pg_boolean for_target, long position, sho
 		short			new_style;
 		pg_boolean		changed_some;
 
-		links = UseMemory(hyperlinks);
+		links = (pg_hyperlink_ptr) UseMemory(hyperlinks);
 		num_links = GetMemorySize(hyperlinks) - 1;
 		changed_some = FALSE;
 		first_update = last_update = links->applied_range.begin;
@@ -1144,7 +1144,7 @@ static void delete_link (pg_ref pg, pg_boolean for_target, long position, pg_boo
 	memory_ref			hyperlinks;
 	long				index;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (for_target)
 		hyperlinks = pg_rec->target_hyperlinks;
@@ -1179,7 +1179,7 @@ static pg_boolean get_link_info (pg_ref pg, pg_boolean for_target, long position
 	memory_ref			hyperlinks;
 	pg_boolean			result = FALSE;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (for_target)
 		hyperlinks = pg_rec->target_hyperlinks;
@@ -1214,7 +1214,7 @@ static long pt_in_link (pg_ref pg, pg_boolean for_target, co_ordinate_ptr point)
 	memory_ref			hyperlinks;
 	long				position, result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (for_target)
 		hyperlinks = pg_rec->target_hyperlinks;
@@ -1246,7 +1246,7 @@ PG_PASCAL (pg_boolean) pgGetLinkURL (pg_ref pg, pg_boolean for_target, long posi
 	pg_boolean			result;
 	short				string_size;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (for_target)
 		hyperlinks = pg_rec->target_hyperlinks;
@@ -1291,14 +1291,14 @@ static long find_link (pg_ref pg, pg_boolean for_target, long start_position, lo
 	pg_boolean			comparison;
 	long				result = -1;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (for_target)
 		hyperlinks = pg_rec->target_hyperlinks;
 	else
 		hyperlinks = pg_rec->hyperlinks;
 
-	links = UseMemory(hyperlinks);
+	links = (pg_hyperlink_ptr) UseMemory(hyperlinks);
    /* PDA:  fixed bug! */
 	while (links->applied_range.begin < start_position)
       ++links;
@@ -1355,7 +1355,7 @@ static long get_update_beginning (paige_rec_ptr pg, long position)
 	pg_short_t				local_position;
 	
 	block = pgFindTextBlock(pg, position, NULL, TRUE, TRUE);
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	local_position = (pg_short_t)(position - block->begin);
 	
 	while (starts[1].offset <= local_position) {
@@ -1390,7 +1390,7 @@ static long find_id (memory_ref links_ref, long id)
 	long				qty, index;
 	
 	qty = GetMemorySize(links_ref);
-	ht_ptr = UseMemory(links_ref);
+	ht_ptr = (pg_hyperlink_ptr) UseMemory(links_ref);
 	
 	for (index = 1; index <= qty; ++index, ++ht_ptr)
 		if (ht_ptr->unique_id == id) {
@@ -1414,7 +1414,7 @@ static void delete_overlapping_links (paige_rec_ptr pg, memory_ref links_ref, se
 	long				qty, index;
 
 	qty = GetMemorySize(links_ref) - 1;
-	ht_ptr = UseMemory(links_ref);
+	ht_ptr = (pg_hyperlink_ptr) UseMemory(links_ref);
 	index = 0;
 	
 	while (index < qty) {
@@ -1428,7 +1428,7 @@ static void delete_overlapping_links (paige_rec_ptr pg, memory_ref links_ref, se
 			
 			UnuseMemory(links_ref);
 			delete_link_from_ref(pg, links_ref, index);
-			ht_ptr = UseMemory(links_ref);
+			ht_ptr = (pg_hyperlink_ptr) UseMemory(links_ref);
 			ht_ptr += index;
 			
 			qty -= 1;

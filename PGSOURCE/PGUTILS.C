@@ -47,13 +47,13 @@ PG_PASCAL (paige_rec_ptr) pgUseSharedPg (pg_ref PG_FAR *pg)
 	paige_rec_ptr		pg_rec;
 	pg_ref				shared_pg;
 
-	pg_rec = UseMemory(*pg);
+	pg_rec = (paige_rec_ptr) UseMemory(*pg);
 	
 	while (shared_pg = pg_rec->shared_pg) {
 		
 		UnuseMemory(*pg);
 		*pg = shared_pg;
-		pg_rec = UseMemory(shared_pg);
+		pg_rec = (paige_rec_ptr) UseMemory(shared_pg);
 	}
 	
 	return		pg_rec;
@@ -68,7 +68,7 @@ PG_PASCAL (void) pgAreaBounds (pg_ref pg, rectangle_ptr page_bounds,
 {
 	paige_rec_ptr		pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (page_bounds)
 		pgShapeBounds(pg_rec->wrap_area, page_bounds);
@@ -88,7 +88,7 @@ PG_PASCAL (void) pgSetAreaBounds (pg_ref pg, const rectangle_ptr page_bounds,
 	paige_rec_ptr		pg_rec;
 	pg_boolean			requires_pagination;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	requires_pagination = FALSE;
 
 	if (page_bounds) {
@@ -145,7 +145,7 @@ PG_PASCAL (void) pgWindowOriginChanged (pg_ref pg, const co_ordinate_ptr origina
 	long					offset_h, offset_v;
 	pg_short_t				shape_qty;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (original_origin)
 		starting_origin = *original_origin;
@@ -159,7 +159,7 @@ PG_PASCAL (void) pgWindowOriginChanged (pg_ref pg, const co_ordinate_ptr origina
 
 	new_position.h = pg_rec->base_vis_origin.h + (use_origin.h - starting_origin.h);
 	new_position.v = pg_rec->base_vis_origin.v + (use_origin.v - starting_origin.v);
-	vis_ptr = UseMemory(pg_rec->vis_area);
+	vis_ptr = (rectangle_ptr) UseMemory(pg_rec->vis_area);
 	offset_h = new_position.h - vis_ptr->top_left.h;
 	offset_v = new_position.v - vis_ptr->top_left.v;
 
@@ -203,7 +203,7 @@ PG_PASCAL (void) pgResetDocBounds (paige_rec_ptr pg)
 {
 	register rectangle_ptr			wrap_stuff;
 	
-	wrap_stuff = UseMemory(pg->wrap_area);
+	wrap_stuff = (rectangle_ptr) UseMemory(pg->wrap_area);
 	pg->doc_bounds.top_left = wrap_stuff->top_left;
 	pg->doc_bounds.bot_right.h = wrap_stuff->bot_right.h;
 
@@ -214,7 +214,7 @@ PG_PASCAL (void) pgResetDocBounds (paige_rec_ptr pg)
 /* pgFixOffset is called internally by Paige and returns the "real" offset
 based on wanted_offset.  */
 
-PG_PASCAL (long) pgFixOffset (paige_rec_ptr pg, long wanted_offset)
+PG_PASCAL (size_t) pgFixOffset (paige_rec_ptr pg, size_t wanted_offset)
 {
 	if (wanted_offset == CURRENT_POSITION)
 		return	pgCurrentInsertion(pg);
@@ -600,13 +600,13 @@ PG_PASCAL (pg_boolean) pgCoversRect (rectangle_ptr r1, rectangle_ptr r2)
 /* pgEqualStruct compares one struct to another, returns TRUE if they match
 exactly.  Note that structs must be an even byte count for this to work! */
 
-PG_PASCAL (pg_boolean) pgEqualStruct (void PG_FAR *rec1, void PG_FAR *rec2, long length)
+PG_PASCAL (pg_boolean) pgEqualStruct (void PG_FAR *rec1, void PG_FAR *rec2, size_t length)
 {
 	register short PG_FAR		*ptr1;
 	register short PG_FAR		*ptr2;
-	register long				ctr;
+	register size_t				ctr;
 	
-	for (ptr1 = rec1, ptr2 = rec2, ctr = length / sizeof(short); ctr; --ctr)
+	for (ptr1 = (short *) rec1, ptr2 = (short *) rec2, ctr = length / sizeof(short); ctr; --ctr)
 		if (*ptr1++ != *ptr2++)
 			return	FALSE;
 		
@@ -624,9 +624,9 @@ PG_PASCAL (pg_boolean) pgEqualStructMasked (void PG_FAR *rec1, void PG_FAR *rec2
 	register short PG_FAR		*ptr3;
 	register long				ctr;
 	
-	ptr3 = mask;
+	ptr3 = (short *) mask;
 
-	for (ptr1 = rec1, ptr2 = rec2, ctr = length / sizeof(short); ctr; --ctr) {
+	for (ptr1 = (short *) rec1, ptr2 = (short *) rec2, ctr = length / sizeof(short); ctr; --ctr) {
 		
 		if (*ptr3++ != 0) {
 		
@@ -651,7 +651,7 @@ PG_PASCAL (pg_boolean) pgZeroStruct (void PG_FAR *rec, pg_short_t length)
 	register short PG_FAR		*ptr;
 	register short				ctr;
 	
-	for (ptr = rec, ctr = length / sizeof(short); ctr; --ctr)
+	for (ptr = (short *) rec, ctr = length / sizeof(short); ctr; --ctr)
 		if (*ptr++ != 0)
 			return	FALSE;
 
@@ -676,14 +676,14 @@ PG_PASCAL (void) pgEraseContainerArea (paige_rec_ptr pg, pg_scale_ptr scale_fact
 	rectangle					target, vis_bounds;
 	co_ordinate					repeat_offset;
 	register shape_ptr			rects;
-	long						r_ctr, repeat_ctr, start_rect, end_rect;
-	long						physical_rects, max_rects, container_proc_refcon;
+	size_t						r_ctr, repeat_ctr, start_rect, end_rect;
+	size_t						physical_rects, max_rects, container_proc_refcon;
 	pg_boolean					called_clip, use_vis_rect;
 
 	mem_globals = pg->globals->mem_globals;
 
 	physical_rects = GetMemorySize(pg->wrap_area) - 1;
-	rects = UseMemory(pg->wrap_area);
+	rects = (shape_ptr) UseMemory(pg->wrap_area);
 	++rects;
 
 	container_proc_refcon = 0;
@@ -773,7 +773,7 @@ PG_PASCAL (void) pgEraseContainerArea (paige_rec_ptr pg, pg_scale_ptr scale_fact
 		
 		if (repeat_ctr >= physical_rects) {
 		
-			rects = UseMemoryRecord(pg->wrap_area, 1, 0, FALSE);
+			rects = (shape_ptr) UseMemoryRecord(pg->wrap_area, 1, 0, FALSE);
 			repeat_ctr = 0;
 		}
 	}
@@ -938,17 +938,17 @@ PG_PASCAL (void) pgCallTextHook (paige_rec_ptr pg, paige_rec_ptr src_option,
 {
 	register style_run_ptr			run;
 	register style_info_ptr			style_base;
-	register long					text_size, caller_size, beginning_offset;
+	register size_t					text_size, caller_size, beginning_offset;
 	select_pair						active_range;
 	style_info_ptr					style_used;
 	pg_char_ptr						text;
 	text_block_ptr					block;
-	long							ending_offset, block_end_size;
-	long							offset_to_find;
+	size_t							ending_offset, block_end_size;
+	size_t							offset_to_find;
 	long							class_bits_check;
 
 	run = pgFindStyleRun(pg, starting_offset, NULL);
-	style_base = UseMemory(pg->t_formats);
+	style_base = (style_info_ptr) UseMemory(pg->t_formats);
 	beginning_offset = starting_offset;
 	ending_offset = beginning_offset + length;
 	
@@ -977,7 +977,7 @@ PG_PASCAL (void) pgCallTextHook (paige_rec_ptr pg, paige_rec_ptr src_option,
 			if ((caller_size = text_size) > block_end_size)
 				caller_size = block_end_size;
 	
-			text = UseMemory(block->text);
+			text = (pg_char_ptr) UseMemory(block->text);
 			text += (offset_to_find - block->begin);
 			
 			switch (verb) {
@@ -1039,7 +1039,7 @@ PG_PASCAL (void) pgCallContainerProc (paige_rec_ptr pg, pg_short_t container_num
 		pgAddPt(offset_extra, &repeat_offset);
 
 	pg->procs.container_proc(pg, (pg_short_t)(container_num + 1),
-			UseMemoryRecord(pg->wrap_area, real_container + 1, 0, TRUE), scale_factor,
+			(rectangle_ptr) UseMemoryRecord(pg->wrap_area, real_container + 1, 0, TRUE), scale_factor,
 				&repeat_offset, verb, extra_info);
 
 	UnuseMemory(pg->wrap_area);
@@ -1058,14 +1058,14 @@ PG_PASCAL (void) pgWillDeleteFormats (paige_rec_ptr pg, pg_globals_ptr globals,
 
 	if (qty = (pg_short_t)GetMemorySize(text_formats)) {
 	
-		for (styles = UseMemory(text_formats); qty; ++styles, --qty)
+		for (styles = (style_info_ptr) UseMemory(text_formats); qty; ++styles, --qty)
 			styles->procs.delete_style(pg, globals, reason_verb, text_formats, styles);
 		UnuseMemory(text_formats);
 	}
 
 	if (qty = (pg_short_t)GetMemorySize(par_formats)) {
 	
-		for (pars = UseMemory(par_formats); qty; ++pars, --qty)
+		for (pars = (par_info_ptr) UseMemory(par_formats); qty; ++pars, --qty)
 			pars->procs.delete_par(pg, reason_verb, par_formats, pars);
 		
 		UnuseMemory(par_formats);
@@ -1084,7 +1084,7 @@ PG_PASCAL (void) pgComputeDocHeight (paige_rec_ptr pg, pg_boolean paginate)
 	pg_short_t							dimension;
 	long								highest;
 
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	num_blocks = (pg_short_t)GetMemorySize(pg->t_blocks);
 	
 	if (paginate)
@@ -1122,7 +1122,7 @@ PG_PASCAL (void) pgComputeDocHeight (paige_rec_ptr pg, pg_boolean paginate)
 		rectangle_ptr		wrap_bounds;
 		long				previous_value;
 
-		wrap_bounds = UseMemoryRecord(pg->wrap_area, GetMemorySize(pg->wrap_area) - 1, 0, TRUE);
+		wrap_bounds = (rectangle_ptr) UseMemoryRecord(pg->wrap_area, GetMemorySize(pg->wrap_area) - 1, 0, TRUE);
 		previous_value = wrap_bounds->bot_right.v;
 
 		if ((wrap_bounds->bot_right.v = pg->doc_bottom) <=  wrap_bounds->top_left.v)
@@ -1162,21 +1162,21 @@ PG_PASCAL (void) pgScaleDocument (paige_rec_ptr pg, short old_resolution, short 
 
 	pgScaleShape(pg, pg->exclude_area, old_resolution, new_resolution);
 
-	styles = UseMemory(pg->t_formats);
+	styles = (style_info_ptr) UseMemory(pg->t_formats);
 	
 	for (qty = GetMemorySize(pg->t_formats); qty; ++styles, --qty)
 		pgScaleStyleInfo(pg, styles, old_resolution, new_resolution);
 	
 	UnuseMemory(pg->t_formats);
 
-	pars = UseMemory(pg->par_formats);
+	pars = (par_info_ptr) UseMemory(pg->par_formats);
 	
 	for (qty = GetMemorySize(pg->par_formats); qty; ++pars, --qty)
 		pgScaleParInfo(pg, pars, old_resolution, new_resolution);
 	
 	UnuseMemory(pg->par_formats);
 
-	blocks = UseMemory(pg->t_blocks);
+	blocks = (text_block_ptr) UseMemory(pg->t_blocks);
 	
 	for (qty = GetMemorySize(pg->t_blocks); qty; ++blocks, --qty)
 		blocks->flags |= NEEDS_CALC;
@@ -1293,7 +1293,7 @@ PG_PASCAL (long) pgGetType (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	long				result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->pg_type;
 	UnuseMemory(pg);
 	
@@ -1307,7 +1307,7 @@ PG_PASCAL (void) pgSetType (pg_ref pg, long new_type)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->pg_type = new_type;
 	UnuseMemory(pg);
 }

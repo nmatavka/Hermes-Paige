@@ -24,7 +24,7 @@ extern PG_PASCAL (memory_ref) pgGetSpecialLocs (paige_rec_ptr pg_rec, text_block
 		short scale_widths);
 extern PG_PASCAL (void) pgPartialTextMeasure (paige_rec_ptr pg_rec, text_block_ptr block,
 		pg_short_t measure_from, pg_short_t new_measure_length);
-extern PG_PASCAL (void) pgTextReMeasure (paige_rec_ptr pg_rec, text_block_ptr block, long measure_from);
+extern PG_PASCAL (void) pgTextReMeasure (paige_rec_ptr pg_rec, text_block_ptr block, size_t measure_from);
 extern PG_PASCAL (void) pgDeleteTextMeasure (paige_rec_ptr pg_rec, text_block_ptr block,
 		pg_short_t delete_from, pg_short_t delete_length);
 extern PG_PASCAL (long) pgInvalTextBlock (paige_rec_ptr pg, text_block_ptr block,

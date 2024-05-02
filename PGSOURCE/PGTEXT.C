@@ -300,10 +300,10 @@ PG_PASCAL (void) pgLineMeasureProc (paige_rec_ptr pg, pg_measure_ptr line_info)
 		max_offset = offset_begin + line_info->max_text_size;
 		
 		SetMemorySize(line_info->tab_info, 1);
-		original_tabs = tabs = UseMemory(line_info->tab_info);
+		original_tabs = tabs = (tab_width_ptr) UseMemory(line_info->tab_info);
 		tabs->offset = GOD_AWFUL_HUGE;
 
-		text = UseMemory(line_info->block->text);
+		text = (pg_char_ptr) UseMemory(line_info->block->text);
 	
 		width_base = *positions;			/* == base-zero for character widths */
 	
@@ -527,7 +527,7 @@ PG_PASCAL (void) pgLineMeasureProc (paige_rec_ptr pg, pg_measure_ptr line_info)
 			positions = line_info->char_locs;
 			char_types = line_info->char_types;
 			
-			tabs = UseMemoryRecord(line_info->tab_info, 0, USE_ALL_RECS, FALSE);
+			tabs = (tab_width_ptr) UseMemoryRecord(line_info->tab_info, 0, USE_ALL_RECS, FALSE);
 			
 			while (offset_begin < offset_end) {
 				pg_boolean		broke_on_exclusion;
@@ -793,7 +793,7 @@ PG_PASCAL (void) pgLineMeasureProc (paige_rec_ptr pg, pg_measure_ptr line_info)
 			long			actual_width;
 			
 			actual_width = line_info->actual_rect.bot_right.h - line_info->actual_rect.top_left.h;
-  			exclude_ptr = UseMemory(line_info->exclude_ref);
+  			exclude_ptr = (rectangle_ptr) UseMemory(line_info->exclude_ref);
   			
   			pgResetStartingLine(line_info);
   			line_info->block->flags |= JUMPED_4_EXCLUSIONS;
@@ -827,7 +827,7 @@ PG_PASCAL (void) pgLineMeasureProc (paige_rec_ptr pg, pg_measure_ptr line_info)
 		if (pgExcludeRectInShape(pg, &adjust_rect, pg->globals->minimum_line_width,
   				&lowest_exclude, original_offset + line_info->block->begin, line_info->exclude_ref)) {
   
-  			exclude_ptr = UseMemory(line_info->exclude_ref);
+  			exclude_ptr = (rectangle_ptr) UseMemory(line_info->exclude_ref);
   			
   			if ((exclude_ptr->top_left.h < adjust_rect.bot_right.h)
   				&& (adjust_rect.top_left.h < exclude_ptr->top_left.h))
@@ -904,7 +904,7 @@ PG_PASCAL (void) pgPaginateBlock (paige_rec_ptr pg, text_block_ptr block,
 	if (is_line_editor) {
 		style_info_ptr		first_style;
 		
-		first_style = UseMemory(pg->t_formats);
+		first_style = (style_info_ptr) UseMemory(pg->t_formats);
 		editor_lineheight = first_style->ascent + first_style->descent + first_style->leading;
 		UnuseMemory(pg->t_formats);
 	}
@@ -1000,7 +1000,7 @@ PG_PASCAL (void) pgPaginateBlock (paige_rec_ptr pg, text_block_ptr block,
 			if (pgActiveMatrix(pg)) {
 				paige_sub_ptr			sub_ptr;
 				
-				sub_ptr = UseMemory(pg->active_subset);
+				sub_ptr = (paige_sub_ptr) UseMemory(pg->active_subset);
 				
 				if ((sub_ptr->subref_flags & MATRIX_PHASE_FLAG) != 0) {
 					
@@ -1046,7 +1046,7 @@ PG_PASCAL (void) pgPaginateBlock (paige_rec_ptr pg, text_block_ptr block,
 		if (GetMemorySize(block[1].lines)) {
 		point_start_ptr		next_starts;
 
-		next_starts = UseMemory(block[1].lines);
+		next_starts = (point_start_ptr) UseMemory(block[1].lines);
 		next_starts->flags &= (~LINE_GOOD_BIT);
 		UnuseMemory(block[1].lines);
 		block[1].flags |= NEEDS_CALC | NEEDS_PARNUMS;
@@ -1077,7 +1077,7 @@ PG_PASCAL (void) pgPaginateStarts (paige_rec_ptr pg, text_block_ptr block, long 
 
 	pgFillBlock(&line_info, sizeof(pg_measure), 0);
 	line_info.block = block;
-	line_info.starts = starts = UseMemory(block->lines);
+	line_info.starts = starts = (point_start_ptr) UseMemory(block->lines);
 	starts->offset = 0;
 	shift_begin = shift_end = block->begin;
 	
@@ -1198,12 +1198,12 @@ PG_PASCAL (void) RebuildTextblock (paige_rec_ptr pg, text_block_ptr block,
 
 	line_info.styles = &walker;
 	line_info.block = block;
-	line_info.starts = starts = UseMemory(block->lines);
+	line_info.starts = starts = (point_start_ptr) UseMemory(block->lines);
 	line_info.starts->offset = 0;
 	line_info.starts_ctr = (pg_short_t)GetMemorySize(block->lines);
 
 	line_info.char_locs = line_info.positions = pgGetSubrefCharLocs(pg, block, &charloc_ref, &char_types);
-	line_info.char_types = line_info.types = UseMemory(char_types);
+	line_info.char_types = line_info.types = (short *) UseMemory(char_types);
 	line_info.starts_ref = block->lines;
 	line_info.tab_info = MemoryAlloc(pg->globals->mem_globals, sizeof(tab_width_info), 4, 16);
 	pgShapeBounds(pg->wrap_area, &line_info.wrap_bounds);
@@ -1405,7 +1405,7 @@ static void count_lines_and_pars (paige_rec_ptr pg, text_block_ptr the_block)
 		return;
 	}
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	
 	while (starts->flags != TERMINATOR_BITS) {
 		
@@ -1525,7 +1525,7 @@ static void init_starting_line_rect (paige_rec_ptr pg, pg_measure_ptr line_stuff
 	line_info = line_stuff;
 	line_info->wrap_dimension = pgShapeDimension(pg->wrap_area) & UNION_DIMENSION;
 	line_info->repeating = ((pg->doc_info.attributes & (V_REPEAT_BIT | H_REPEAT_BIT)) != 0);
-	line_info->wrap_r_begin = UseMemory(pg->wrap_area);
+	line_info->wrap_r_begin = (rectangle_ptr) UseMemory(pg->wrap_area);
 	line_info->end_r = line_info->subpage_qty = r_qty = GetMemorySize(pg->wrap_area);
 	line_info->subpage_qty -= 1;
 	line_info->end_r -= 2;
@@ -1587,7 +1587,7 @@ static void uninit_rects (paige_rec_ptr pg, pg_measure_ptr line_stuff)
 {
 	rectangle_ptr			end_of_wrap;
 	
-	end_of_wrap = UseMemoryRecord(pg->wrap_area, line_stuff->end_r + 1, 0, FALSE);
+	end_of_wrap = (rectangle_ptr) UseMemoryRecord(pg->wrap_area, line_stuff->end_r + 1, 0, FALSE);
 	end_of_wrap->bot_right.v = line_stuff->wrap_r_save;
 	
 	UnuseMemory(pg->wrap_area);
@@ -1766,7 +1766,7 @@ static void update_vertical_line (paige_rec_ptr pg, pg_measure_ptr line_info,
 	if (subref) {
 		paige_sub_ptr			sub_ptr;
 		
-		sub_ptr = UseMemory(subref);
+		sub_ptr = (paige_sub_ptr) UseMemory(subref);
 		sub_extra += sub_ptr->nested_shift_v;
 
 		if (sub_ptr->alignment_flags & SUBREF_SUBSCRIPT_ALIGN) {
@@ -1776,7 +1776,7 @@ static void update_vertical_line (paige_rec_ptr pg, pg_measure_ptr line_info,
 			if (sub_ptr->home_sub) {
 				paige_sub_ptr		home_ptr;
 				
-				home_ptr = UseMemory(sub_ptr->home_sub);
+				home_ptr = (paige_sub_ptr) UseMemory(sub_ptr->home_sub);
 				home_ptr->nested_shift_v = sub_extra;
 				UnuseMemory(sub_ptr->home_sub);
 			}
@@ -1936,7 +1936,7 @@ static point_start_ptr extend_starts (pg_measure_ptr line_info, point_start_ptr 
 
 	if (!(--line_info->starts_ctr)) {
 		
-		line_info->starts = AppendMemory(line_info->starts_ref, START_APPEND_SIZE, TRUE);
+		line_info->starts = (point_start_ptr) AppendMemory(line_info->starts_ref, START_APPEND_SIZE, TRUE);
 		line_info->starts_ctr = START_APPEND_SIZE;
 	}
 	
@@ -2867,7 +2867,7 @@ static tab_width_ptr insert_tab_record (memory_ref tab_recs, long current_offset
 	tab_width_ptr		tabs;
 	long				index;
 
-	tabs = UseMemoryRecord(tab_recs, 0, USE_ALL_RECS, FALSE);
+	tabs = (tab_width_ptr) UseMemoryRecord(tab_recs, 0, USE_ALL_RECS, FALSE);
 	index = 0;
 
 	while (tabs->offset < current_offset) {
@@ -2908,7 +2908,7 @@ static void attach_par_exclusion (paige_rec_ptr pg, pg_measure_ptr line_info)
 			if (run->offset == global_offset) {
 				// found one!
 				
-				exclusion = UseMemoryRecord(pg->exclude_area, (long)run->style_item, 0, TRUE);
+				exclusion = (rectangle_ptr) UseMemoryRecord(pg->exclude_area, (long)run->style_item, 0, TRUE);
 				
 				if (line_info->fit_rect.top_left.v != exclusion->top_left.v) {
 				

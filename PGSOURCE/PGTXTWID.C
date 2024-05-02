@@ -17,12 +17,12 @@
 #include "pgScript.h"
 
 static void measure_hidden_text (long PG_FAR *positions, short PG_FAR *chartypes,
-		long measure_size);
+		size_t measure_size);
 static pg_short_t maximum_measure_size (paige_rec_ptr pg_rec, style_walk_ptr walker);
 static long backup_to_valid_char (paige_rec_ptr pg, style_walk_ptr style_walker,
 		pg_char_ptr data, long block_offset, long offset_begin, long offset_end,
 		long PG_FAR *char_offset, long previous_c_info);
-static long next_subref_offset (pg_char_ptr text, long remaining_length);
+static size_t next_subref_offset (pg_char_ptr text, size_t remaining_length);
 static long measure_subref_char (paige_rec_ptr pg, text_block_ptr block, short subref_index);
 
 
@@ -53,7 +53,7 @@ PG_PASCAL (void) pgInitLineProc (paige_rec_ptr pg, pg_measure_ptr measure_info, 
 /* pgPageModify is the default modify-page function. This gets called for each repeating page.
 This default function does not do anything. */
 
-PG_PASCAL (void) pgPageModify  (paige_rec_ptr pg, long page_num, rectangle_ptr margins)
+PG_PASCAL (void) pgPageModify  (paige_rec_ptr pg, size_t page_num, rectangle_ptr margins)
 {
 }
 
@@ -376,7 +376,7 @@ PG_PASCAL (void) pgAcceptEmptyLine (paige_rec_ptr pg, point_start_ptr the_start,
 		exclusions = pgExcludeRectInShape(pg, &minimum_bounds,
 			minimum_width, &lowest_exclude, global_offset, line_info->exclude_ref);
 
-		exclude_ptr = UseMemory(line_info->exclude_ref);
+		exclude_ptr = (rectangle_ptr) UseMemory(line_info->exclude_ref);
 		
 		if (justify == justify_right) {
 			
@@ -481,7 +481,7 @@ PG_PASCAL (pg_short_t) pgLineBoundary (paige_rec_ptr pg, text_block_ptr block, p
 	long							abs_offset;
 	pg_short_t						first_offset, last_offset;
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	back_ctr = *from_start;
 	starts += back_ctr;
 	abs_offset = block->begin;
@@ -542,9 +542,9 @@ PG_PASCAL (long PG_FAR*) pgGetCharLocs (paige_rec_ptr pg_rec, text_block_ptr blo
 	memory_ref					long_pos_ref, types;
 	pg_char_ptr					text;
 	style_walk					walker;
-	long						text_length, max_chars, partial_length, next_style, next_link;
+	size_t						text_length, max_chars, partial_length, next_style, next_link;
 	short						call_order;
-	long						next_subref_pos;
+	size_t						next_subref_pos;
 	short						subref_ctr = 0;
 	short						subref_qty = 0;
 	
@@ -555,7 +555,7 @@ PG_PASCAL (long PG_FAR*) pgGetCharLocs (paige_rec_ptr pg_rec, text_block_ptr blo
 		if (types_ref)
 			*types_ref = types;
 
-		return	UseMemory(long_pos_ref);
+		return	(long PG_FAR*) UseMemory(long_pos_ref);
 	}
 	
 	*used_ref = long_pos_ref = pgFindCharLocs(pg_rec, block, NULL, &types, FALSE, TRUE);
@@ -572,12 +572,12 @@ PG_PASCAL (long PG_FAR*) pgGetCharLocs (paige_rec_ptr pg_rec, text_block_ptr blo
 	SetMemorySize(long_pos_ref, text_length + 1);
 	SetMemorySize(types, text_length + 1);
 
-	positions_result = positions = UseMemory(long_pos_ref);
+	positions_result = positions = (long *) UseMemory(long_pos_ref);
 	*positions = 0;
-	char_types = UseMemory(types);
+	char_types = (short *) UseMemory(types);
 
 	pgPrepareStyleWalk(pg_rec, block->begin, &walker, FALSE);
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 
 	pgSetMeasureDevice(pg_rec);
 	call_order = 0;
@@ -683,14 +683,14 @@ PG_PASCAL (memory_ref) pgGetSpecialLocs (paige_rec_ptr pg_rec, text_block_ptr bl
 
 	result_ref = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(long),
 			text_size + 1, 0);
-	positions = UseMemory(result_ref);
+	positions = (long *) UseMemory(result_ref);
 	*positions = 0;
 
 	starting_offset = block->begin + (long) related_start->offset;
 	ending_offset = block->end - block->begin;
 
 	pg_rec->procs.load_proc(pg_rec, block);
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 	text_offset = related_start->offset;
 
 	if (text_offset < (pg_short_t)(block->end - block->begin))
@@ -793,7 +793,7 @@ PG_PASCAL (void) pgPartialTextMeasure (paige_rec_ptr pg_rec, text_block_ptr bloc
 	register pg_char_ptr	text;
 	memory_ref				long_pos_ref, types;
 	style_walk				walker;
-	long					end_base, next_style, next_link, global_offset;
+	size_t					end_base, next_style, next_link, global_offset;
 	pg_short_t				partial_length, text_length, this_index, text_position, max_chars;
 	short					call_order;
 
@@ -803,7 +803,7 @@ PG_PASCAL (void) pgPartialTextMeasure (paige_rec_ptr pg_rec, text_block_ptr bloc
 	pg_rec->procs.load_proc(pg_rec, block);
 
 	pgPrepareStyleWalk(pg_rec, block->begin + measure_from, &walker, FALSE);
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 	global_offset = block->begin;
 
 	if (walker.cur_style->procs.char_info(pg_rec, &walker, text, global_offset, 0, block->end - block->begin,
@@ -816,9 +816,9 @@ PG_PASCAL (void) pgPartialTextMeasure (paige_rec_ptr pg_rec, text_block_ptr bloc
 		return;
 	}
 
-	positions = InsertMemory(long_pos_ref, measure_from, new_measure_length);
+	positions = (long *) InsertMemory(long_pos_ref, measure_from, new_measure_length);
 	pg_rec->globals->width_tables[this_index].end += new_measure_length;
-	char_types = InsertMemory(types, measure_from, new_measure_length);
+	char_types = (short *) InsertMemory(types, measure_from, new_measure_length);
 
 	original_positions = positions;
 	end_base = positions[new_measure_length];
@@ -917,7 +917,7 @@ PG_PASCAL (void) pgPartialTextMeasure (paige_rec_ptr pg_rec, text_block_ptr bloc
 only by subref code (reserved for DSI). */
 
 
-PG_PASCAL (void) pgTextReMeasure (paige_rec_ptr pg_rec, text_block_ptr block, long measure_from)
+PG_PASCAL (void) pgTextReMeasure (paige_rec_ptr pg_rec, text_block_ptr block, size_t measure_from)
 {
 	register long PG_FAR	*positions;
 	register pg_char_ptr	text;
@@ -930,7 +930,7 @@ PG_PASCAL (void) pgTextReMeasure (paige_rec_ptr pg_rec, text_block_ptr block, lo
 		return;
 	
 	pg_rec->procs.load_proc(pg_rec, block);
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 	measure_byte = text[measure_from];
 	UnuseMemory(block->text);
 	
@@ -947,7 +947,7 @@ PG_PASCAL (void) pgTextReMeasure (paige_rec_ptr pg_rec, text_block_ptr block, lo
 	}
 		
 	subref_index = pgFindSubrefPosition(block, (pg_short_t)measure_from);
-	positions = UseMemory(long_pos_ref);
+	positions = (long *) UseMemory(long_pos_ref);
 	positions += measure_from;
 	end_base = positions[1];
 	positions[1] = *positions + measure_subref_char(pg_rec, block, (short)subref_index);
@@ -996,7 +996,7 @@ PG_PASCAL (void) pgDeleteTextMeasure (paige_rec_ptr pg_rec, text_block_ptr block
 
 	remaining_length -= (delete_from + delete_length);
 
-	positions = UseMemoryRecord(long_pos_ref, delete_from, USE_ALL_RECS, TRUE);
+	positions = (long *) UseMemoryRecord(long_pos_ref, delete_from, USE_ALL_RECS, TRUE);
 	base_position = *positions - base_position;
 		
 	while (remaining_length) {
@@ -1165,7 +1165,7 @@ PG_PASCAL (long) pgInvalTextBlock (paige_rec_ptr pg, text_block_ptr block,
 
 	wanted_offset = (pg_short_t)begin_offset;
 
-	starts = first_start = UseMemory(block->lines);
+	starts = first_start = (point_start_ptr) UseMemory(block->lines);
 	block->flags |= (NEEDS_CALC | NEEDS_PARNUMS);
 	
 	while ((starts[1].offset < wanted_offset) && (starts[1].flags != TERMINATOR_BITS))
@@ -1301,7 +1301,7 @@ This function fills *positions with all the same value, and if chartypes is
 non-null it fills in with zeros. */
 
 static void measure_hidden_text (long PG_FAR *positions, short PG_FAR *chartypes,
-		long measure_size)
+		size_t measure_size)
 {
 	register long PG_FAR		*measure_ptr;
 	register long				measure_val;
@@ -1376,10 +1376,10 @@ static long backup_to_valid_char (paige_rec_ptr pg, style_walk_ptr style_walker,
 
 /* next_subref_offset returns the next subref embedded char, if any. */
 
-static long next_subref_offset (pg_char_ptr text, long remaining_length)
+static size_t next_subref_offset (pg_char_ptr text, size_t remaining_length)
 {
-	register pg_char_ptr			text_ptr;
-	register long					ctr;
+	register pg_char_ptr		text_ptr;
+	register size_t				ctr;
 	
 	ctr = 0;
 	text_ptr = text;
@@ -1410,17 +1410,17 @@ static long measure_subref_char (paige_rec_ptr pg, text_block_ptr block, short s
 	text_block_ptr				subref_block;
 	long						width;
 	
-	subref_list = UseMemoryRecord(block->subref_list, subref_index, 0, TRUE);
-	sub_ptr = UseMemory(*subref_list);
+	subref_list = (pg_subref_ptr) UseMemoryRecord(block->subref_list, subref_index, 0, TRUE);
+	sub_ptr = (paige_sub_ptr) UseMemory(*subref_list);
 	sub_ptr += sub_ptr->alt_index;
-	subref_block = UseMemory(sub_ptr->t_blocks);
+	subref_block = (text_block_ptr) UseMemory(sub_ptr->t_blocks);
 	
 	if (subref_block->flags & NEEDS_CALC) {
 		
 		globals = pg->globals;
 
 		pgUseSubRef(pg, *subref_list, 0, NULL, NULL);
-		pgPaginateBlock(pg, UseMemory(pg->t_blocks), NULL, FALSE);
+		pgPaginateBlock(pg, (text_block_ptr) UseMemory(pg->t_blocks), NULL, FALSE);
 		UnuseMemory(pg->t_blocks);
 
 		pgUnuseSubRef(pg);

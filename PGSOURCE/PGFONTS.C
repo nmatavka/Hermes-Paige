@@ -34,7 +34,7 @@ PG_PASCAL (long) pgGetFontInfo (pg_ref pg, const select_pair_ptr selection,
 	style_info					text_styles;
 	long						first_select;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (set_any_match)
 		pgFillBlock(mask, sizeof(font_info), 0);
@@ -57,7 +57,7 @@ PG_PASCAL (long) pgGetFontInfo (pg_ref pg, const select_pair_ptr selection,
 		stuff_to_report.base = UseMemory(pg_rec->t_formats);
 	
 		num_selects = (pg_short_t)GetMemorySize(select_list);
-		select_run = UseMemory(select_list);
+		select_run = (select_pair_ptr) UseMemory(select_list);
 		first_select = select_run->begin;
 
 		while (num_selects) {
@@ -109,7 +109,7 @@ PG_PASCAL (void) pgSetFontInfo (pg_ref pg, const select_pair_ptr selection,
 	font_info			new_font;
 	style_info			new_style, new_mask;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	if (GetAccessCtr(pg_rec->fonts))
@@ -158,7 +158,7 @@ PG_PASCAL (void) pgSetStyleAndFont (pg_ref pg, const select_pair_ptr selection,
 	font_info			new_font;
 	style_info			new_style, new_mask;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	if (GetAccessCtr(pg_rec->fonts))
@@ -194,7 +194,7 @@ PG_PASCAL (memory_ref) pgGetFontTable (pg_ref pg)
 	paige_rec_ptr	pg_rec;
 	memory_ref		font_table;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	font_table = pg_rec->fonts;
 	UnuseMemory(pg);
 	
@@ -212,7 +212,7 @@ PG_PASCAL (void) pgGetFontInfoRec (pg_ref pg, short font_index, font_info_ptr in
 	if ((use_font_index = font_index) == DEFAULT_FONT_INDEX)
 		use_font_index = 0;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	GetMemoryRecord(pg_rec->fonts, use_font_index, info);
 	UnuseMemory(pg);
 }
@@ -236,7 +236,7 @@ PG_PASCAL (short) pgCrossFont (pg_ref src_pg, pg_ref new_pg, short src_index)
 	
 	GetMemoryRecord(src_ref, src_index, &src_font);
 	
-	for (target_fonts = UseMemory(target_ref), ctr = 0; target_qty;
+	for (target_fonts = (font_info_ptr) UseMemory(target_ref), ctr = 0; target_qty;
 			++target_fonts, ++ctr, --target_qty)
 		if (pgEqualStruct(target_fonts->name, src_font.name, FONT_SIZE)) {
 			

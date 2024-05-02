@@ -105,10 +105,14 @@ file also #includes "pgMachineDefs."  */
 
 #define MEM_NULL	0L
 
+#ifdef _WINDOWS
+typedef size_t memory_ref;			/* Basic memory reference */
+#else
 typedef unsigned long memory_ref;	/* Basic memory reference */
+#endif
 typedef memory_ref PG_FAR *memory_ref_ptr;
 
-typedef long PG_FAR *available_ptr;		/* Used for virtual memory map */
+typedef size_t PG_FAR *available_ptr;		/* Used for virtual memory map */
 typedef pg_handle PG_FAR *master_list_ptr;
 
 /* Purge function verbs:  */
@@ -125,7 +129,7 @@ enum {
 
 typedef PG_FN_PASCAL (void, mem_debug_proc) (pg_error message, unsigned long what_ref);
 typedef PG_FN_PASCAL (pg_error, purge_proc) (memory_ref ref_to_purge, pgm_globals_ptr mem_globals, short verb);
-typedef PG_FN_PASCAL (long, free_memory_proc) (pgm_globals_ptr mem_globals, memory_ref dont_free, long desired_free);
+typedef PG_FN_PASCAL (size_t, free_memory_proc) (pgm_globals_ptr mem_globals, memory_ref dont_free, size_t desired_free);
 
 
 /* Memory Manager Global Vars (app keeps these) */
@@ -136,10 +140,10 @@ struct pgm_globals {
 	pg_handle				master_handle;		/* HANDLE for master list (Windows only) */
 	pg_handle				spare_tire;			/* Used to free up some memory in tight situations */
 	master_list_ptr			master_list;		/* Contains list of all active memory_refs */
-	long					next_master;		/* Next available space in master_list */
-	long					total_unpurged;		/* Total # of bytes allocated not purged */
-	long					max_memory;			/* Maximum memory (set by app) */
-	long					purge_threshold;	/* Amount extra to purge */
+	size_t					next_master;		/* Next available space in master_list */
+	size_t					total_unpurged;		/* Total # of bytes allocated not purged */
+	size_t					max_memory;			/* Maximum memory (set by app) */
+	size_t					purge_threshold;	/* Amount extra to purge */
 	void PG_FAR				*machine_var;		/* Machine-specific generic ptr */
 	mem_debug_proc			debug_proc;			/* Called when a bug is detected */
 	purge_proc				purge;				/* Called to purge/unpurge memory */
@@ -178,9 +182,9 @@ extern pgm_globals_ptr	debug_globals;
 struct mem_rec {
 	short				rec_size;		/* Record size */
 	short				extend_size;	/* Amount of extra slop to extend */
-	long				num_recs;		/* Current number of records */
-	long				real_num_recs;	/* Actual number of records */
-	long				master_index;	/* Where it is stored in master_list */
+	size_t				num_recs;		/* Current number of records */
+	size_t				real_num_recs;	/* Actual number of records */
+	size_t				master_index;	/* Where it is stored in master_list */
 	short				access;			/* Access counter */
 	pg_short_t			purge;			/* Purge priority and status */
 	long				mem_id;			/* Special ID assigned to memory_ref */
@@ -206,42 +210,42 @@ extern PG_PASCAL (memory_ref) DisposeMemory (memory_ref ref);
 extern PG_PASCAL (memory_ref) DisposeNonNilMemory (memory_ref ref);
 extern PG_PASCAL (void) DisposeUsedMemory (memory_ref ref);
 extern PG_PASCAL (memory_ref) MemoryAllocID (pgm_globals_ptr globals,
-		pg_short_t rec_size, long num_recs, short extend_size, long mem_id);
+		pg_short_t rec_size, size_t num_recs, short extend_size, long mem_id);
 extern PG_PASCAL (memory_ref) MemoryAllocClearID (pgm_globals_ptr globals,
-		pg_short_t rec_size, long num_recs, short extend_size, long mem_id);
+		pg_short_t rec_size, size_t num_recs, short extend_size, long mem_id);
 extern PG_PASCAL (memory_ref) MemoryDuplicate (memory_ref src_ref);
 extern PG_PASCAL (memory_ref) MemoryDuplicateID (memory_ref src_ref, long mem_id);
 extern PG_PASCAL (void) MemoryCopy (memory_ref src_ref, memory_ref target_ref); 
 extern PG_PASCAL (memory_ref) MemoryRecover (void PG_FAR *ptr); 
 extern PG_PASCAL (void PG_FAR*) UseMemory (memory_ref ref);
-extern PG_PASCAL (void PG_FAR*) UseMemoryRecord (memory_ref ref, long wanted_rec,
-			long seq_recs_used, pg_boolean first_use);
+extern PG_PASCAL (void PG_FAR*) UseMemoryRecord (memory_ref ref, size_t wanted_rec,
+			size_t seq_recs_used, pg_boolean first_use);
 extern PG_PASCAL (void) GetMemoryRecord (memory_ref ref, long wanted_rec,
 			void PG_FAR *record);
 extern PG_PASCAL (void PG_FAR*) UseForLongTime(memory_ref ref);
-extern PG_PASCAL (void) SetMemorySize (memory_ref ref_to_size, long wanted_size);
+extern PG_PASCAL (void) SetMemorySize (memory_ref ref_to_size, size_t wanted_size);
 extern PG_PASCAL (void) SetMemoryRecSize (memory_ref ref, pg_short_t new_rec_size, short extend_size);
 extern PG_PASCAL (void) SetMemoryExtendSize (memory_ref ref, short extend_size);
 extern PG_PASCAL (short) GetMemoryExtendSize (memory_ref ref);
 extern PG_PASCAL (void) DisposeAllMemory (pgm_globals_ptr mem_globals, long memory_id);
 extern PG_PASCAL (void) PurgeAllMemory (pgm_globals_ptr mem_globals, long memory_id);
 extern PG_PASCAL (void) UnuseAllMemory (pgm_globals_ptr mem_globals, long memory_id);
-extern PG_PASCAL (long) GetAllMemorySize (pgm_globals_ptr mem_globals, long memory_id,
+extern PG_PASCAL (size_t) GetAllMemorySize (pgm_globals_ptr mem_globals, long memory_id,
 			pg_boolean return_byte_size);
-extern PG_PASCAL (void PG_FAR*) InsertMemory (memory_ref ref, long offset, long insert_size);
-extern PG_PASCAL (void PG_FAR*) AppendMemory (memory_ref ref, long append_size, pg_boolean zero_fill);
-extern PG_PASCAL (void) DeleteMemory (memory_ref ref, long offset, long delete_size);
+extern PG_PASCAL (void PG_FAR*) InsertMemory (memory_ref ref, size_t offset, size_t insert_size);
+extern PG_PASCAL (void PG_FAR*) AppendMemory (memory_ref ref, size_t append_size, pg_boolean zero_fill);
+extern PG_PASCAL (void) DeleteMemory (memory_ref ref, size_t offset, size_t delete_size);
 extern PG_PASCAL (void) SetMemoryPurge (memory_ref ref, short purge_priority,
 		pg_boolean no_data_save);
 extern PG_PASCAL (memory_ref) InitMemoryRef (pgm_globals_ptr mem_globals, pg_handle base_ref);
 extern PG_PASCAL (memory_ref) ForceMinimumMemorySize (memory_ref ref_to_size);
-extern PG_PASCAL (pg_error) MemoryPurge (pgm_globals_ptr globals, long minimum_amount,
+extern PG_PASCAL (pg_error) MemoryPurge (pgm_globals_ptr globals, size_t minimum_amount,
 		memory_ref mask_ref);
 extern PG_PASCAL (void) InitVirtualMemory (pgm_globals_ptr globals, purge_proc purge_function,
 		long ref_con);
 extern PG_PASCAL (void) UnuseMemory (memory_ref ref);
-extern PG_PASCAL (long) GetMemorySize (memory_ref ref);
-extern PG_PASCAL (long) GetByteSize (memory_ref ref);
+extern PG_PASCAL (size_t) GetMemorySize (memory_ref ref);
+extern PG_PASCAL (size_t) GetByteSize (memory_ref ref);
 extern PG_PASCAL (short) GetMemoryRecSize (memory_ref ref);
 extern PG_PASCAL (pgm_globals_ptr) GetGlobalsFromRef (memory_ref ref);
 extern PG_PASCAL (void) UnuseAndDispose (memory_ref ref);
@@ -251,15 +255,15 @@ extern PG_PASCAL (short) GetAccessCtr (memory_ref ref);
 extern PG_PASCAL (long) pgUniqueMemoryID (pgm_globals_ptr globals);
 extern PG_PASCAL (long) GetMemoryRefID(memory_ref ref);
 extern PG_PASCAL (void) ChangeAllMemoryID(pgm_globals_ptr mem_globals, long orig_id, long new_id);
-extern PG_PASCAL (long) pgGetByteSize (pg_short_t rec_size, long num_recs);
+extern PG_PASCAL (size_t) pgGetByteSize (pg_short_t rec_size, size_t num_recs);
 extern PG_PASCAL (void) DisposeFailedMemory (memory_ref ref);
 extern PG_PASCAL (void) UnuseAllFailedMemory (pgm_globals_ptr mem_globals, long memory_id);
 extern PG_PASCAL (void) UnuseFailedMemory (memory_ref ref);
 extern PG_PASCAL (void) DisposeAllFailedMemory (pgm_globals_ptr mem_globals, long memory_id);
 extern PG_PASCAL (pg_handle) DetachMemory (memory_ref ref);
-extern PG_PASCAL (void) pgMemInsert (memory_ref ref, long offset, long byte_size, long block_size);
-extern PG_PASCAL (void) pgMemDelete (memory_ref ref, long offset, long byte_size, long block_size);
-extern PG_PASCAL (void) pgBlockMove (const void PG_FAR *src, void PG_FAR *dest, long block_size);
+extern PG_PASCAL (void) pgMemInsert (memory_ref ref, size_t offset, size_t byte_size, size_t block_size);
+extern PG_PASCAL (void) pgMemDelete (memory_ref ref, size_t offset, size_t byte_size, size_t block_size);
+extern PG_PASCAL (void) pgBlockMove (const void PG_FAR *src, void PG_FAR *dest, ptrdiff_t block_size);
 extern PG_PASCAL (short) pgCheckReference (memory_ref ref);
 extern PG_PASCAL (pg_error) pgStandardPurgeProc (memory_ref ref_to_purge, pgm_globals_ptr mem_globals, short verb);
 extern PG_PASCAL (long) pgStandardFreeProc (pgm_globals_ptr mem_globals, memory_ref dont_free ,long desired_free);
@@ -267,10 +271,10 @@ extern PG_PASCAL (pg_short_t) GetMemoryPurge (memory_ref ref);
 
 #ifdef PG_DEBUG
 extern PG_PASCAL (memory_ref) pgAllocateNewRef (pgm_globals_ptr mem_globals, pg_short_t rec_size,
-		long num_recs, short extend_size, short zero_fill,char *file, int line);
+		size_t num_recs, short extend_size, short zero_fill,char *file, int line);
 #else
 extern PG_PASCAL (memory_ref) pgAllocateNewRef (pgm_globals_ptr mem_globals, pg_short_t rec_size,
-		long num_recs, short extend_size, short zero_fill);
+		size_t num_recs, short extend_size, short zero_fill);
 #endif
 
 #ifdef C_LIBRARY
@@ -316,10 +320,10 @@ extern PG_PASCAL (pg_boolean) pgCheckAllMemoryRefs (void);
 
 /* TRS/OITC additions */
 
-extern PG_PASCAL (long) MemoryToCStr(memory_ref ref);
-extern PG_PASCAL (long) MemoryToPStr(memory_ref ref);
-extern PG_PASCAL (long) CStrToMemory(memory_ref ref);
-extern PG_PASCAL (long) PStrToMemory(memory_ref ref);
+extern PG_PASCAL (size_t) MemoryToCStr(memory_ref ref);
+extern PG_PASCAL (size_t) MemoryToPStr(memory_ref ref);
+extern PG_PASCAL (size_t) CStrToMemory(memory_ref ref);
+extern PG_PASCAL (size_t) PStrToMemory(memory_ref ref);
 extern PG_PASCAL (char PG_FAR *) UseMemoryToCStr(memory_ref ref);
 extern PG_PASCAL (pg_char_ptr) UseMemoryToPStr(memory_ref ref);
 extern PG_PASCAL (void) UnuseMemoryFromCStr(memory_ref ref);

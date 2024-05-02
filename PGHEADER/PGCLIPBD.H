@@ -21,7 +21,7 @@ extern PG_PASCAL (void) pgDisposeFailedUndo (undo_ref ref);
 #endif
 
 extern PG_PASCAL (pg_boolean) pgBytesMatchCriteria (paige_rec_ptr pg, style_walk_ptr walker,
-		pg_char_ptr text, short data_type, long global_offset, long offset, long length);
+		pg_char_ptr text, short data_type, size_t global_offset, size_t offset, size_t length);
 
 #ifdef __cplusplus
 	}

@@ -67,7 +67,7 @@ PG_PASCAL (void) pgSetScrollAlign (pg_ref pg, short align_h, short align_v)
 	paige_rec_ptr		pg_rec;
 	short				align_value;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((align_value = align_h - 1) > 0)
 		pg_rec->scroll_align_h = -1 << align_value;
@@ -85,7 +85,7 @@ PG_PASCAL (void) pgGetScrollAlign (pg_ref pg, short PG_FAR *align_h,
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (align_h)
 		*align_h = (short)get_scroll_align(pg_rec->scroll_align_h);
@@ -105,7 +105,7 @@ PG_PASCAL (void) pgSetScrollParams (pg_ref pg, short unit_h, short unit_v,
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	pg_rec->unit_h = unit_h;
 	pg_rec->unit_v = unit_v;
@@ -124,7 +124,7 @@ PG_PASCAL (void) pgGetScrollParams (pg_ref pg, short PG_FAR *unit_h, short PG_FA
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (unit_h)
 		*unit_h = pg_rec->unit_h;
@@ -154,7 +154,7 @@ PG_PASCAL (pg_boolean) pgGetScrollValues (pg_ref pg, short PG_FAR *h, short PG_F
 	short					max_h_result, max_v_result;
 	pg_boolean				result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	pgScrollParamValues(pg_rec, &h_max, &v_max, &scroll_factor_h, &scroll_factor_v,
 			&max_h_result, &max_v_result);
@@ -215,7 +215,7 @@ PG_PASCAL (void) pgSetScrollValues (pg_ref pg, short h, short v, short align_lin
 	short					max_h_result, max_v_result, updated_v, use_draw_mode;
 	pg_boolean				do_max_h, do_max_v;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->previous_scroll = pg_rec->logical_scroll_pos;
 	
 	if ((use_draw_mode = draw_mode) == best_way)
@@ -302,7 +302,7 @@ PG_PASCAL (void) pgScrollUnitsToPixels (pg_ref pg, short h_verb, short v_verb,
 	long					h, v, max_h, max_v, change_h, change_v;
 	long					h_pos, v_pos, old_flags;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_flags = pg_rec->flags;
 	original_logical_scroll = pg_rec->logical_scroll_pos;
 	original_scroll = pg_rec->scroll_pos;
@@ -355,7 +355,7 @@ PG_PASCAL (void) pgDrawScrolledArea (pg_ref pg, long pixels_h, long pixels_v,
 	rectangle				vis_bounds, affected_area;
 	short					use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (new_origin)
 		pgWindowOriginChanged(pg, original_origin, new_origin);
@@ -430,7 +430,7 @@ PG_PASCAL (void) pgScroll (pg_ref pg, short h_verb, short v_verb, short draw_mod
 	long					h_pos, v_pos;
 	short					use_draw_mode;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	pg_rec->previous_scroll = pg_rec->logical_scroll_pos;
 	maximum_pixel_scroll(pg_rec, &max_h, &max_v);
@@ -460,7 +460,7 @@ PG_PASCAL (pg_boolean) pgAdjustScrollMax (pg_ref pg, short draw_mode)
 	short					use_draw_mode;
 	pg_boolean				result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = FALSE;
 	pg_rec->previous_scroll = pg_rec->logical_scroll_pos;
 	
@@ -511,7 +511,7 @@ PG_PASCAL (void) pgLastScrollAmount (pg_ref pg, long *h_pixels, long *v_pixels)
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (h_pixels)
 		*h_pixels = pg_rec->previous_scroll.h - pg_rec->logical_scroll_pos.h;
@@ -538,7 +538,7 @@ extern PG_PASCAL (pg_boolean) pgScrollToView (pg_ref pg, long text_offset, short
 	short					use_v_extra, use_h_extra, use_draw_mode;
 	pg_boolean				use_align_line, result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_attributes = (pg_rec->doc_info.attributes & WINDOW_CURSOR_BIT);
 	pg_rec->doc_info.attributes &= (~WINDOW_CURSOR_BIT);
 	
@@ -660,7 +660,7 @@ PG_PASCAL (pg_region) pgScrollViewRect (pg_ref pg, long h_pixels, long v_pixels)
 	rectangle				vis_bounds;
 	pg_region				result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	pgSetupGrafDevice(pg_rec, &pg_rec->port, MEM_NULL, clip_with_none_verb);
 	pgShapeBounds(pg_rec->vis_area, &vis_bounds);
@@ -692,7 +692,7 @@ PG_PASCAL (void) pgScrollPosition (pg_ref pg, co_ordinate_ptr scroll_pos)
 {
 	paige_rec_ptr	pg_rec;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	*scroll_pos = pg_rec->logical_scroll_pos;
 	UnuseMemory(pg);
 }
@@ -708,7 +708,7 @@ PG_PASCAL (void) pgScrollPixels (pg_ref pg, long h, long v, short draw_mode)
 	long			pix_h, pix_v;
 	short			use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->previous_scroll = pg_rec->logical_scroll_pos;
 	
 	if ((use_draw_mode = draw_mode) == best_way)
@@ -1229,7 +1229,7 @@ static long closest_start_sect (paige_rec_ptr pg, rectangle_ptr vis, long side_t
 	scrolled_r.bot_right.v += pg->scroll_pos.v;
 
 	num_blocks = (pg_short_t)GetMemorySize(pg->t_blocks);
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	one_eighth = (vis->bot_right.v - vis->top_left.v) / 8;
 	
 	if (use_bottom = (vis->bot_right.v == side_to_use)) {
@@ -1256,7 +1256,7 @@ static long closest_start_sect (paige_rec_ptr pg, rectangle_ptr vis, long side_t
 		if (pgSectRect(&block->bounds, &scrolled_r, NULL)) {
 			
 			pgPaginateBlock(pg, block, NULL, TRUE);
-			starts = UseMemory(block->lines);
+			starts = (point_start_ptr) UseMemory(block->lines);
 			
 			while (starts->flags != TERMINATOR_BITS) {
 				
@@ -1366,7 +1366,7 @@ static short fix_paginated_scroll (paige_rec_ptr pg, short wanted_scroll,
 
 	current_scroll = wanted_scroll;
 
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	num_blocks = max_blocks = (pg_short_t)GetMemorySize(pg->t_blocks);
 	block_ctr = 1;
 	called_wait = FALSE;
@@ -1470,14 +1470,14 @@ static void hide_scrolling_caret (paige_rec_ptr pg)
 
 	pgSetupGrafDevice(pg, &pg->port, MEM_NULL, clip_standard_verb);
 
-	select = UseMemory(pg->select);
+	select = (t_select_ptr) UseMemory(pg->select);
 	
 	if (pg->doc_info.attributes & WINDOW_CURSOR_BIT) {
 		
 		if (!pg->stable_caret.h)
 			pg->procs.cursor_proc(pg, select, compute_cursor);
 		
-		vis_rect = UseMemory(pg->vis_area);
+		vis_rect = (rectangle_ptr) UseMemory(pg->vis_area);
 		pg->relative_caret.h = pg->stable_caret.h - vis_rect->top_left.h;
 		pg->relative_caret.v = pg->stable_caret.v - vis_rect->top_left.v;
 
@@ -1509,11 +1509,11 @@ static void restore_scrolling_caret (paige_rec_ptr pg)
 	if (pg->num_selects || (pg->flags & (DEACT_BIT | PERM_DEACT_BIT)))
 		return;
 	
-	select = UseMemory(pg->select);
+	select = (t_select_ptr) UseMemory(pg->select);
 
 	if (pg->doc_info.attributes & WINDOW_CURSOR_BIT) {
 
-		vis_rect = UseMemory(pg->vis_area);
+		vis_rect = (rectangle_ptr) UseMemory(pg->vis_area);
 
 		for (infinite_loop_protect = 3; infinite_loop_protect; infinite_loop_protect -= 1) {
 

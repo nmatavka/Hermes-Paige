@@ -105,12 +105,12 @@ extern	"C" {
 #endif
 
 
-extern PG_PASCAL (pg_error) pgReadKey (file_io_proc io_proc, long PG_FAR *position,
-	file_ref filemap, pg_file_key_ptr key, long PG_FAR *data_size,
+extern PG_PASCAL (pg_error) pgReadKey (file_io_proc io_proc, size_t PG_FAR *position,
+	file_ref filemap, pg_file_key_ptr key, size_t PG_FAR *data_size,
 	long PG_FAR *element_info);
 extern PG_PASCAL (pg_error) pgWriteKeyData (pg_ref pg, pg_file_key key,
 		void PG_FAR *data, long data_length, long element_info, file_io_proc io_proc,
-		file_io_proc data_io_proc, long PG_FAR *file_position, file_ref filemap);
+		file_io_proc data_io_proc, size_t PG_FAR *file_position, file_ref filemap);
 extern PG_PASCAL (void) pgPackData (memory_ref src_data, memory_ref target_data,
 		pg_short_t data_type);
 extern PG_PASCAL (void) pgUnpackData (memory_ref src_data, memory_ref target_data,

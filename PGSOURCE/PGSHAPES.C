@@ -54,7 +54,7 @@ static short subtract_rect (rectangle_ptr src, rectangle_ptr target, rectangle_p
 static void cleanup_shape (shape_walk_ptr shape_to_clean);
 static pg_short_t merge_two_rects (shape_walk_ptr merge_walk);
 static void dump_select_pair (select_pair_ptr the_pair, memory_ref selections);
-static long rect_will_nuke (rectangle_ptr src_rect, shape_ref the_shape);
+static size_t rect_will_nuke (rectangle_ptr src_rect, shape_ref the_shape);
 static rectangle_ptr overlapping_exclude (memory_ref exclude_rects,
 		rectangle_ptr sect_rect, long minimum_width);
 static rectangle_ptr rects_wrong_order (memory_ref rect_list, pg_short_t qty);
@@ -90,7 +90,7 @@ PG_PASCAL (void) pgSetShapeRect (shape_ref the_shape, const rectangle_ptr rect)
 	short				ctr;
 
 	SetMemorySize(the_shape, SIMPLE_SHAPE_QTY);
-	new_shape = UseMemory(the_shape);
+	new_shape = (rectangle_ptr) UseMemory(the_shape);
 
 	if (!rect)
 		pgFillBlock(new_shape, sizeof(rectangle) * 2, 0);
@@ -112,14 +112,14 @@ PG_PASCAL (void) pgResetBounds (shape_ref the_shape)
 	if ((qty = (pg_short_t)GetMemorySize(the_shape)) < SIMPLE_SHAPE_QTY) {
 		
 		SetMemorySize(the_shape, SIMPLE_SHAPE_QTY);
-		bounds = UseMemory(the_shape);
+		bounds = (rectangle_ptr) UseMemory(the_shape);
 		pgFillBlock(bounds, sizeof(rectangle) * SIMPLE_SHAPE_QTY, 0);
 	}
 	else {
 		
 		--qty;
 
-		bounds = the_parts = UseMemory(the_shape);
+		bounds = the_parts = (rectangle_ptr) UseMemory(the_shape);
 		pgFillBlock(bounds, sizeof(rectangle), 0);
 	
 		while (qty) {
@@ -166,7 +166,7 @@ have equal rectangles).  */
 PG_PASCAL (pg_boolean) pgEqualShapes (shape_ref shape1, shape_ref shape2)
 {
 	pg_boolean		result;
-	long			qty1, qty2;
+	size_t			qty1, qty2;
 	
 	qty1 = GetMemorySize(shape1);
 	qty2 = GetMemorySize(shape2);
@@ -244,7 +244,7 @@ PG_PASCAL (void) pgMergeRectToShape (shape_ref the_shape, const rectangle_ptr re
 		setup_shape(temp_shape, &output_shape);
 		sect_rect = *rect;
 
-		src_rects = UseMemory(the_shape);
+		src_rects = (rectangle_ptr) UseMemory(the_shape);
 		r_qty = (pg_short_t)GetMemorySize(the_shape) - 1;
 		
 		while (r_qty) {
@@ -419,7 +419,7 @@ PG_PASCAL (void) pgDiffShape (shape_ref shape1, shape_ref shape2,
 	register pg_short_t		qty;
 	rectangle				parts[4];
 	pg_short_t				pass_2_rec;
-	long					dead_rect_index;
+	size_t					dead_rect_index;
 	short					part_qty;
 	short					complex_result;
 
@@ -490,7 +490,7 @@ from shape2 that won't get completely elmininated by subtracting shape1:  */
 				
 				if (--part_qty) {
 					
-					r_list = InsertMemory(result_shape, pass_2_rec + 1, part_qty);
+					r_list = (rectangle_ptr) InsertMemory(result_shape, pass_2_rec + 1, part_qty);
 					pgBlockMove(&parts[1], r_list, part_qty * sizeof(rectangle));
 					
 					r_list = re_init_walk(&result_walk, FALSE);
@@ -518,7 +518,7 @@ PG_PASCAL (void) pgOffsetShape (shape_ref the_shape, long h, long v)
 	
 	if (h || v) {
 		
-		for (r_list = UseMemory(the_shape), qty = (pg_short_t)GetMemorySize(the_shape); qty;
+		for (r_list = (rectangle_ptr) UseMemory(the_shape), qty = (pg_short_t)GetMemorySize(the_shape); qty;
 				++r_list, --qty)
 			pgOffsetRect(r_list, h, v);
 		
@@ -570,7 +570,7 @@ PG_PASCAL (pg_boolean) pgRectInShape (shape_ref the_shape, const rectangle_ptr r
 	if (offset_extra)
 		pgOffsetRect(&test_rect, offset_extra->h, offset_extra->v);
 	
-	for (rect_ptr = UseMemory(the_shape), qty = (pg_short_t)GetMemorySize(the_shape) - 1;
+	for (rect_ptr = (rectangle_ptr) UseMemory(the_shape), qty = (pg_short_t)GetMemorySize(the_shape) - 1;
 			qty; --qty) {
 		
 		++rect_ptr;
@@ -749,7 +749,7 @@ PG_PASCAL (pg_short_t) pgExcludeRectInShape (paige_rec_ptr pg, rectangle_ptr rec
 	no_exclude_values.h = input->bot_right.h + 1;
 	no_exclude_values.v = BOTTOMLESS_VALUE - input->top_left.v;
 	
-	output_ptr = UseMemory(result_ref);
+	output_ptr = (rectangle_ptr) UseMemory(result_ref);
 	output_ptr->top_left = output_ptr->bot_right = no_exclude_values;
 	*lowest_exclude = no_exclude_values.v;
 
@@ -778,7 +778,7 @@ PG_PASCAL (pg_short_t) pgExcludeRectInShape (paige_rec_ptr pg, rectangle_ptr rec
 			
 				pgBlockMove(&sect_rect, output_ptr, sizeof(rectangle));
 				
-				output_ptr = AppendMemory(result_ref, 1, FALSE);
+				output_ptr = (rectangle_ptr) AppendMemory(result_ref, 1, FALSE);
 				output_ptr->top_left = output_ptr->bot_right = no_exclude_values;
 				
 				++output_qty;
@@ -869,11 +869,11 @@ PG_PASCAL (void) pgShapeToSelections (pg_ref pg, shape_ref the_shape, memory_ref
 	t_select			fake_select;
 	pg_short_t			num_blocks;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	SetMemorySize(selections, 0);
 	
-	block = UseMemory(pg_rec->t_blocks);
+	block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 	num_blocks = (pg_short_t)GetMemorySize(pg_rec->t_blocks);
 	
 	pgPaginateBlock(pg_rec, block, NULL, FALSE);
@@ -886,7 +886,7 @@ PG_PASCAL (void) pgShapeToSelections (pg_ref pg, shape_ref the_shape, memory_ref
 			
 			range.begin = range.end = block->begin;
 			
-			starts = UseMemory(block->lines);
+			starts = (point_start_ptr) UseMemory(block->lines);
 			
 			while (starts->flags != TERMINATOR_BITS) {
 				
@@ -938,7 +938,7 @@ is is rectangle index.  In this function, *offset_extra gets set to the amount
 of pixel offset to set the real rect and the function result is the actual
 rectangle number.  */
 
-PG_PASCAL (pg_short_t) pgGetWrapRect (paige_rec_ptr pg, long r_num, co_ordinate_ptr offset_extra)
+PG_PASCAL (pg_short_t) pgGetWrapRect (paige_rec_ptr pg, size_t r_num, co_ordinate_ptr offset_extra)
 {
 	register co_ordinate_ptr		offset;
 	register long					repeat_flags;
@@ -1034,8 +1034,8 @@ PG_PASCAL (void) pgEraseShape (pg_ref pg, shape_ref the_shape, const pg_scale_pt
 	if (pgEmptyShape(the_shape))
 		return;
 
-	pg_rec = UseMemory(pg);
-	r_ptr = UseMemory(the_shape);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
+	r_ptr = (rectangle_ptr) UseMemory(the_shape);
 
 	if (!(sect_ptr = vis_bounds))
 		sect_ptr = r_ptr;
@@ -1074,7 +1074,7 @@ PG_PASCAL (void) pgScaleShape (paige_rec_ptr pg, shape_ref shape, short numerato
 {
 	register rectangle_ptr	rects;
 	pg_scale_factor			scale;
-	long					num_rects;
+	size_t					num_rects;
 	
 	scale.scale = numerator;
 	scale.scale <<= 16;
@@ -1083,7 +1083,7 @@ PG_PASCAL (void) pgScaleShape (paige_rec_ptr pg, shape_ref shape, short numerato
 
 	num_rects = GetMemorySize(shape);
 	
-	for (rects = UseMemory(shape); num_rects; ++rects, --num_rects)
+	for (rects = (rectangle_ptr) UseMemory(shape); num_rects; ++rects, --num_rects)
 		pgScaleRect(&scale, NULL, rects);
 	
 	UnuseMemory(shape);
@@ -1107,7 +1107,7 @@ static void setup_shape (shape_ref the_shape, shape_walk_ptr shape_stuff)
 
 	shape_walker->mem_ref = the_shape;
 	shape_walker->num_rects = (pg_short_t)(GetMemorySize(the_shape) - 1);
-	shape_walker->rects = shape_walker->bounds = UseMemory(the_shape);
+	shape_walker->rects = shape_walker->bounds = (rectangle_ptr) UseMemory(the_shape);
 	++shape_walker->rects;
 }
 
@@ -1339,7 +1339,7 @@ static rectangle_ptr re_init_walk (shape_walk_ptr walker, short re_use)
 	
 	walk = walker;
 	
-	walk->bounds = UseMemoryRecord(walk->mem_ref, 0, USE_ALL_RECS, re_use);
+	walk->bounds = (rectangle_ptr) UseMemoryRecord(walk->mem_ref, 0, USE_ALL_RECS, re_use);
 	walk->rects = (walk->bounds + 1);
 	walk->num_rects = (pg_short_t)(GetMemorySize(walk->mem_ref) - 1);
 	
@@ -1557,12 +1557,12 @@ static void dump_select_pair (select_pair_ptr the_pair, memory_ref selections)
 		
 		if (the_pair->begin != last_select.end) {
 			
-			append_select = AppendMemory(selections, 1, FALSE);
+			append_select = (select_pair_ptr) AppendMemory(selections, 1, FALSE);
 			*append_select = *the_pair;
 		}
 		else {
 			
-			append_select = UseMemory(selections);
+			append_select = (select_pair_ptr) UseMemory(selections);
 			append_select->end = the_pair->end;
 		}
 		
@@ -1575,14 +1575,14 @@ static void dump_select_pair (select_pair_ptr the_pair, memory_ref selections)
 will get completely removed if src_rect is subtracted.  If so, the index
 (beginning with 1) is returned.  */
 
-static long rect_will_nuke (rectangle_ptr src_rect, shape_ref the_shape)
+static size_t rect_will_nuke (rectangle_ptr src_rect, shape_ref the_shape)
 {
 	register rectangle_ptr		r_ptr, r_list;
-	register long				index, qty;
+	register size_t				index, qty;
 
 	if ((qty = GetMemorySize(the_shape)) >= SIMPLE_SHAPE_QTY) {
 		
-		r_list = UseMemory(the_shape);
+		r_list = (rectangle_ptr) UseMemory(the_shape);
 		r_ptr = src_rect;
 
 		index = 1;
@@ -1621,10 +1621,10 @@ static rectangle_ptr overlapping_exclude (memory_ref exclude_rects,
 		rectangle_ptr sect_rect, long minimum_width)
 {
 	register rectangle_ptr			exclude_ptr, sect_ptr;
-	register long					exclude_qty;
+	register size_t					exclude_qty;
 	
 	exclude_qty = GetMemorySize(exclude_rects) - 1;
-	exclude_ptr = UseMemoryRecord(exclude_rects, 0, USE_ALL_RECS, FALSE);
+	exclude_ptr = (rectangle_ptr) UseMemoryRecord(exclude_rects, 0, USE_ALL_RECS, FALSE);
 	sect_ptr = sect_rect;
 	
 	while (exclude_qty) {
@@ -1659,7 +1659,7 @@ static rectangle_ptr rects_wrong_order (memory_ref rect_list, pg_short_t qty)
 	if (qty < 2)
 		return	NULL;
 	
-	compare_r = UseMemory(rect_list);
+	compare_r = (rectangle_ptr) UseMemory(rect_list);
 
 	for (ctr = qty - 1; ctr; ++compare_r, --ctr)
 		if (compare_r->top_left.h > compare_r[1].top_left.h)

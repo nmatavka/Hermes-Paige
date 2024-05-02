@@ -114,8 +114,8 @@ extern PG_C (pg_error) pgCloseFile(pg_file_unit ref_num);
 extern PG_C (pg_error) pgDeleteFile(pg_file_desc_ref ref);
 extern PG_C (pg_error) pgRenameFile(pg_file_desc_ref ref, const pg_file_name_ptr new_file_name);
 extern PG_C (pg_file_desc_ref) pgOpenTempFile(const pgm_globals_ptr mem_globals, pg_file_unit_ptr temp_ref_num);
-extern PG_C (pg_error) pgReadFileData(pg_file_unit ref_num, long byte_size, void PG_FAR *buffer);
-extern PG_C (pg_error) pgWriteFileData(pg_file_unit ref_num, long byte_size, const void PG_FAR *buffer);
+extern PG_C (pg_error) pgReadFileData(pg_file_unit ref_num, size_t byte_size, void PG_FAR *buffer);
+extern PG_C (pg_error) pgWriteFileData(pg_file_unit ref_num, size_t byte_size, const void PG_FAR *buffer);
 extern PG_C (void) pgSetTypeCreator(const pgm_globals_ptr mem_globals, long creator, long fileType);
 
 
@@ -138,12 +138,12 @@ extern	"C" {
 #endif
 
 extern PG_C (void) pgDisposeFileDescriptor(pg_file_desc_ref ref);
-extern PG_C (pg_error) pgGetFileEOF(pg_file_unit ref_num, long PG_FAR *offset_result);
-extern PG_C (pg_error) pgSetFileEOF(pg_file_unit ref_num, long offset);
-extern PG_C (pg_error) pgGetFilePos(pg_file_unit ref_num, long PG_FAR *offset_result);
-extern PG_C (pg_error) pgSetFilePos(pg_file_unit ref_num, long offset);
-extern PG_C (pg_error) pgReadFileBytes(pg_file_unit ref_num, long PG_FAR *byte_size, void PG_FAR *buffer);
-extern PG_C (pg_error) pgWriteFileBytes(pg_file_unit ref_num, long PG_FAR *byte_size,const void PG_FAR *buffer);
+extern PG_C (pg_error) pgGetFileEOF(pg_file_unit ref_num, size_t PG_FAR *offset_result);
+extern PG_C (pg_error) pgSetFileEOF(pg_file_unit ref_num, size_t offset);
+extern PG_C (pg_error) pgGetFilePos(pg_file_unit ref_num, size_t PG_FAR *offset_result);
+extern PG_C (pg_error) pgSetFilePos(pg_file_unit ref_num, size_t offset);
+extern PG_C (pg_error) pgReadFileBytes(pg_file_unit ref_num, size_t PG_FAR *byte_size, void PG_FAR *buffer);
+extern PG_C (pg_error) pgWriteFileBytes(pg_file_unit ref_num, size_t PG_FAR *byte_size,const void PG_FAR *buffer);
 
 #ifdef __cplusplus
 	}
@@ -171,9 +171,9 @@ extern PG_C (pg_error) pgWriteFileBytes(pg_file_unit ref_num, long PG_FAR *byte_
 extern	"C" {
 #endif
 
-extern PG_C (pg_error) pgReadFileBytes(pg_file_unit ref_num, long PG_FAR *byte_size, void PG_FAR *buffer);
-extern PG_C (pg_error) pgWriteFileBytes(pg_file_unit ref_num, long PG_FAR *byte_size, void PG_FAR *buffer);
-extern PG_C (pg_error) pgSetFileEOF(pg_file_unit ref_num, long offset);
+extern PG_C (pg_error) pgReadFileBytes(pg_file_unit ref_num, size_t PG_FAR *byte_size, void PG_FAR *buffer);
+extern PG_C (pg_error) pgWriteFileBytes(pg_file_unit ref_num, size_t PG_FAR *byte_size, void PG_FAR *buffer);
+extern PG_C (pg_error) pgSetFileEOF(pg_file_unit ref_num, size_t offset);
 
 #ifdef __cplusplus
 	}
@@ -186,9 +186,9 @@ extern	"C" {
 #endif
 
 extern PG_C (void) pgDisposeFileDescriptor(pg_file_desc_ref ref);
-extern PG_C (pg_error) pgGetFileEOF(pg_file_unit ref_num, long PG_FAR *offset_result);
-extern PG_C (pg_error) pgGetFilePos(pg_file_unit ref_num, long PG_FAR *offset_result);
-extern PG_C (pg_error) pgSetFilePos(pg_file_unit ref_num, long offset);
+extern PG_C (pg_error) pgGetFileEOF(pg_file_unit ref_num, size_t PG_FAR *offset_result);
+extern PG_C (pg_error) pgGetFilePos(pg_file_unit ref_num, size_t PG_FAR *offset_result);
+extern PG_C (pg_error) pgSetFilePos(pg_file_unit ref_num, size_t offset);
 
 #ifdef __cplusplus
 	}
@@ -199,7 +199,7 @@ extern PG_C (pg_error) pgSetFilePos(pg_file_unit ref_num, long offset);
 #define pgDisposeFileDescriptor(ref)					DisposeNonNilFailedMemory(ref)
 #define pgGetFileEOF(ref_num, offset_result)			((*offset_result = _llseek(ref_num, 0L, SEEK_END)) == EOF) ? (pg_error)HFILE_ERROR : (pg_error)NO_ERROR
 #define pgGetFilePos(ref_num, offset_result)			((*offset_result = _llseek(ref_num, 0L, SEEK_CUR)) == EOF) ? (pg_error)HFILE_ERROR : (pg_error)NO_ERROR
-#define pgSetFilePos(ref_num, offset)					(_llseek(ref_num, offset, SEEK_SET) == EOF) ? (pg_error)HFILE_ERROR : (pg_error)NO_ERROR
+#define pgSetFilePos(ref_num, offset)					(_llseek(ref_num, (LONG)offset, SEEK_SET) == EOF) ? (pg_error)HFILE_ERROR : (pg_error)NO_ERROR
 
 #endif
 

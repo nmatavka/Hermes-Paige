@@ -457,7 +457,7 @@ PG_C (pg_error) pgSetFileEOF(pg_file_unit ref_num, long offset)
 
 	err = pgSetFilePos(ref_num, offset);
 	if (err == NO_ERROR)
-		err = _lwrite(ref_num, (void PG_FAR *)&err, 0);
+		err = _lwrite(ref_num, (LPCCH)&err, 0);
 
     return err;
 }
@@ -468,7 +468,7 @@ PG_C (pg_error) pgWriteFileBytes(pg_file_unit ref_num, long PG_FAR *byte_size, v
 	long		byte_count = *byte_size;
 	pg_error	err = NO_ERROR;
 	
-	byte_count = _hwrite(ref_num, buffer, byte_count);
+	byte_count = _hwrite(ref_num, (LPCCH) buffer, byte_count);
 	if (*byte_size != byte_count)
 	{
 		return (pg_error)HFILE_ERROR;
@@ -499,17 +499,17 @@ PG_C (pg_error) pgReadFileBytes(pg_file_unit ref_num, long PG_FAR *byte_size, vo
 #endif
 
 
-PG_C (pg_error) pgReadFileData(pg_file_unit ref_num, long byte_size, void PG_FAR *buffer)
+PG_C (pg_error) pgReadFileData(pg_file_unit ref_num, size_t byte_size, void PG_FAR *buffer)
 {
-	long	byte_count = byte_size;
+	size_t	byte_count = byte_size;
 	
 	return pgReadFileBytes(ref_num, &byte_count, buffer);
 }
 
 
-PG_C (pg_error) pgWriteFileData(pg_file_unit ref_num, long byte_size, const void PG_FAR *buffer)
+PG_C (pg_error) pgWriteFileData(pg_file_unit ref_num, size_t byte_size, const void PG_FAR *buffer)
 {
-	long	byte_count = byte_size;
+	size_t	byte_count = byte_size;
 	
 	return pgWriteFileBytes(ref_num, &byte_count, (void PG_FAR *)buffer);
 }
@@ -530,7 +530,7 @@ PG_PASCAL (pg_error) pgScrapMemoryWrite (void PG_FAR *data, short verb, long PG_
 		long PG_FAR *data_size, file_ref filemap)
 {
 	pg_bits8_ptr		new_data, source_data;
-	long				ref_size;
+	size_t				ref_size;
 
 	if (verb == io_set_fpos)
 		return	NO_ERROR;
@@ -542,7 +542,7 @@ PG_PASCAL (pg_error) pgScrapMemoryWrite (void PG_FAR *data, short verb, long PG_
 	}
 
 	if (verb == io_data_indirect)
-		source_data = UseMemory((memory_ref) data);
+		source_data = (pg_bits8_ptr) UseMemory((memory_ref) data);
 	else
 		source_data = (pg_bits8_ptr) data;
 	
@@ -553,10 +553,10 @@ PG_PASCAL (pg_error) pgScrapMemoryWrite (void PG_FAR *data, short verb, long PG_
 		if ((*position + *data_size) > ref_size)
 			SetMemorySize(filemap, *position + *data_size);
 
-		new_data = UseMemoryRecord(filemap, *position, USE_ALL_RECS, TRUE);
+		new_data = (pg_bits8_ptr) UseMemoryRecord(filemap, *position, USE_ALL_RECS, TRUE);
 	}
 	else
-		new_data = AppendMemory(filemap, *data_size, FALSE);
+		new_data = (pg_bits8_ptr) AppendMemory(filemap, *data_size, FALSE);
 
 	pgBlockMove(source_data, new_data, *data_size);
 	UnuseMemory(filemap);
@@ -574,18 +574,18 @@ PG_PASCAL (pg_error) pgScrapMemoryWrite (void PG_FAR *data, short verb, long PG_
 /* pgScrapMemoryRead is a "fake" file I/O proc that reads the data into a memory_ref instead of
 a file.  */
 
-PG_PASCAL (pg_error) pgScrapMemoryRead (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap)
+PG_PASCAL (pg_error) pgScrapMemoryRead (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap)
 {
-	long PG_FAR		*ptr_to_long;
+	size_t PG_FAR		*ptr_to_long;
 
 	if (verb == io_set_fpos)
 		return	NO_ERROR;
 	
 	if (verb == io_file_unit) {
 		
-		ptr_to_long = (long PG_FAR *)data;
-		*ptr_to_long = (long)filemap;
+		ptr_to_long = (size_t PG_FAR *)data;
+		*ptr_to_long = (size_t)filemap;
 		
 		*((pg_file_unit PG_FAR *)data) = (pg_file_unit)filemap;
 		return	NO_ERROR;
@@ -593,22 +593,22 @@ PG_PASCAL (pg_error) pgScrapMemoryRead (void PG_FAR *data, short verb, long PG_F
 	else
 	if (verb == io_get_eof) {
 		
-		ptr_to_long = (long PG_FAR *)data;
+		ptr_to_long = (size_t PG_FAR *)data;
 		*ptr_to_long = GetMemorySize(filemap);
 	}
 	else {
 		pg_bits8_ptr	the_data, target_data;
 		
-		the_data = UseMemory(filemap);
+		the_data = (pg_bits8_ptr) UseMemory(filemap);
 		the_data += *position;
 		
 		if (verb == io_data_indirect) {
 			
 			SetMemorySize((memory_ref) data, *data_size);
-			target_data = UseMemory((memory_ref) data);
+			target_data = (pg_bits8_ptr) UseMemory((memory_ref) data);
 		}
 		else
-			target_data = data;
+			target_data = (pg_bits8_ptr) data;
 
 		pgBlockMove(the_data, target_data, *data_size);
 		UnuseMemory(filemap);

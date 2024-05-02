@@ -53,7 +53,7 @@ PG_PASCAL (void) pgInsertTable (pg_ref pg, long position, pg_table_ptr table,
 	pg_char				insertion[2];
 	long				num_rows, row_ctr, num_columns, text_size, pensize, update_begin;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	table_range.begin = pgFixOffset(pg_rec, position);
 	
 	if (table_range.begin) {
@@ -121,7 +121,7 @@ PG_PASCAL (void) pgInsertTable (pg_ref pg, long position, pg_table_ptr table,
 
 	row_data = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(pg_char), text_size, 0);
 
-	row = setup = UseMemory(row_data);
+	row = setup = (pg_char_ptr) UseMemory(row_data);
 	
 	for (row_ctr = 0; row_ctr < num_rows; ++row_ctr) {
 
@@ -158,7 +158,7 @@ PG_PASCAL (pg_boolean) pgIsTable (pg_ref pg, long position)
 	paige_rec_ptr	pg_rec;
 	pg_boolean		result = FALSE;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pgPositionInTable(pg_rec, position, NULL);
 	UnuseMemory(pg);
 	
@@ -176,7 +176,7 @@ PG_PASCAL (short) pgPtInTable (pg_ref pg, co_ordinate_ptr point, rectangle_ptr c
 	co_ordinate				the_point;
 	short					result = 0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	the_point = *point;	
 	pg_rec->port.scale.scale = -pg_rec->port.scale.scale;
@@ -200,7 +200,7 @@ PG_PASCAL (memory_ref) pgTableColumnWidths (pg_ref pg, long position)
 	par_info_ptr		par;
 	memory_ref			result = MEM_NULL;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		
@@ -220,7 +220,7 @@ PG_PASCAL (void) pgCellOffsets (pg_ref pg, long position, select_pair_ptr offset
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgPositionInTable(pg_rec, pgFixOffset(pg_rec, position), offsets);
 	UnuseMemory(pg);
 }
@@ -235,7 +235,7 @@ PG_PASCAL (void) pgSetColumnBorders (pg_ref pg, long position, short column_num,
 	par_info				par, mask;
 	select_pair				table_range;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	table_range.begin = table_range.end = pgFixOffset(pg_rec, position);
 	pgGetParInfo(pg, &table_range, FALSE, &par, &mask);
 	
@@ -260,7 +260,7 @@ PG_PASCAL (void) pgSetColumnShading (pg_ref pg, long position, short column_num,
 	par_info				par, mask;
 	select_pair				table_range;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	table_range.begin = table_range.end = pgFixOffset(pg_rec, position);
 	pgGetParInfo(pg, &table_range, FALSE, &par, &mask);
 	
@@ -286,7 +286,7 @@ PG_PASCAL (void) pgSetColumnAlignment (pg_ref pg, long position, short column_nu
 	select_pair				table_range;
 	long					align_value = 0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	table_range.begin = table_range.end = pgFixOffset(pg_rec, position);
 	pgGetParInfo(pg, &table_range, FALSE, &par, &mask);
 	
@@ -328,7 +328,7 @@ PG_PASCAL (void) pgSetColumnWidth (pg_ref pg, long position, short column_num,
 	par_info				par, mask;
 	select_pair				table_range;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	table_range.begin = table_range.end = pgFixOffset(pg_rec, position);
 	pgGetParInfo(pg, &table_range, FALSE, &par, &mask);
 	
@@ -359,10 +359,10 @@ PG_PASCAL (void) pgTableOffsets (pg_ref pg, long position, select_pair_ptr offse
 	pg_short_t			style_item;
 	long				table_id;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	par_run = pgFindRunFromRef(pg_rec->par_style_run, pgFixOffset(pg_rec, position), NULL);
-	par_base = UseMemory(pg_rec->par_formats);
+	par_base = (par_info_ptr) UseMemory(pg_rec->par_formats);
 	offsets->begin = offsets->end = 0;
 	
 	style_item = par_run->style_item;
@@ -417,7 +417,7 @@ PG_PASCAL (short) pgPositionToColumn (pg_ref pg, long position)
 	paige_rec_ptr			pg_rec;
 	short					column = -1;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (get_table_format(pg_rec, position)) {
 		text_block_ptr			block;
@@ -429,7 +429,7 @@ PG_PASCAL (short) pgPositionToColumn (pg_ref pg, long position)
 		global_offset = pgFixOffset(pg_rec, position);
 		block = pgFindTextBlock(pg_rec, global_offset, NULL, FALSE, TRUE);
 		local_offset = cell_offset = global_offset - block->begin;
-		text = UseMemoryRecord(block->text, local_offset, 0, TRUE);
+		text = (pg_char_ptr) UseMemoryRecord(block->text, local_offset, 0, TRUE);
 		
 		while (local_offset) {
 			
@@ -472,7 +472,7 @@ PG_PASCAL (long) pgPositionToRow (pg_ref pg, long position, select_pair_ptr offs
 	paige_rec_ptr			pg_rec;
 	long					row = -1;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (get_table_format(pg_rec, position)) {
 		text_block_ptr			block;
@@ -487,7 +487,7 @@ PG_PASCAL (long) pgPositionToRow (pg_ref pg, long position, select_pair_ptr offs
 		block = pgFindTextBlock(pg_rec, global_offset, NULL, FALSE, TRUE);
 		local_offset = global_offset - block->begin;
 		end_offset = block->end - block->begin;
-		text = UseMemoryRecord(block->text, local_offset, 0, TRUE);
+		text = (pg_char_ptr) UseMemoryRecord(block->text, local_offset, 0, TRUE);
 
 		row = 0;
 		
@@ -518,7 +518,7 @@ PG_PASCAL (long) pgPositionToRow (pg_ref pg, long position, select_pair_ptr offs
 				UnuseMemory(block->text);
 				++block;
 				pg_rec->procs.load_proc(pg_rec, block);
-				text = UseMemory(block->text);
+				text = (pg_char_ptr) UseMemory(block->text);
 				end_offset = block->end - block->begin;
 				local_offset = 0;
 			}
@@ -542,7 +542,7 @@ PG_PASCAL (pg_boolean) pgGetColumnInfo (pg_ref pg, long position, short column_n
 	par_info_ptr			par;
 	pg_boolean				is_table = FALSE;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		
@@ -586,7 +586,7 @@ PG_PASCAL (short) pgNumColumns (pg_ref pg, long position)
 	par_info_ptr		par;
 	short				result = 0;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		
@@ -608,7 +608,7 @@ PG_PASCAL (long) pgNumRows (pg_ref pg, long position)
 	par_info_ptr		par;
 	long				result = 0;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		select_pair			table_range;
@@ -620,7 +620,7 @@ PG_PASCAL (long) pgNumRows (pg_ref pg, long position)
 		pgTableOffsets(pg, position, &table_range);
 		block = pgFindTextBlock(pg_rec, table_range.begin, NULL, FALSE, TRUE);
 		local_offset = table_range.begin - block->begin;
-		text = UseMemoryRecord(block->text, local_offset, 0, TRUE);
+		text = (pg_char_ptr) UseMemoryRecord(block->text, local_offset, 0, TRUE);
 		end_offset = block->end - block->begin;
 		
 		while (table_range.begin < table_range.end) {
@@ -641,7 +641,7 @@ PG_PASCAL (long) pgNumRows (pg_ref pg, long position)
 				UnuseMemory(block->text);
 				++block;
 				pg_rec->procs.load_proc(pg_rec, block);
-				text = UseMemory(block->text);
+				text = (pg_char_ptr) UseMemory(block->text);
 				local_offset = 0;
 				end_offset = block->end - block->begin;
 			}
@@ -669,7 +669,7 @@ PG_PASCAL (void) pgInsertColumn (pg_ref pg, long position, short column_num,
 	pg_char					tab_char = (pg_char)9;
 	short					column_insert;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 
@@ -738,7 +738,7 @@ PG_PASCAL (void) pgInsertRow (pg_ref pg, long position, long row_num, short draw
 	par_info_ptr			par;
 	long					row_size;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		select_pair		row_range;
@@ -751,7 +751,7 @@ PG_PASCAL (void) pgInsertRow (pg_ref pg, long position, long row_num, short draw
 		row_size = par->table.table_columns;
 		UnuseMemory(pg_rec->par_formats);
 		row_ref = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(pg_char), row_size, 0);
-		row_data = UseMemory(row_ref);
+		row_data = (pg_char_ptr) UseMemory(row_ref);
 		pgFillBlock(row_data, row_size, 9);
 		
 		if (row_range.begin < row_range.end)
@@ -779,7 +779,7 @@ PG_PASCAL (void) pgDeleteColumn (pg_ref pg, long position, short column_num, sho
 	par_info_ptr			par;
 	par_info				new_par, mask;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		select_pair				table_range, delete_range;
@@ -849,7 +849,7 @@ PG_PASCAL (void) pgDeleteRow (pg_ref pg, long position, long row_num, short draw
 	par_info_ptr			par;
 	short					use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((par = get_table_format(pg_rec, position)) != NULL) {
 		select_pair				table_range, delete_range;
@@ -889,7 +889,7 @@ PG_PASCAL (void) pgConvertTableText (pg_ref pg, select_pair_ptr selection,
 	register select_pair_ptr	select_run;
 	change_info					stuff_to_change;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	if (GetAccessCtr(pg_rec->par_style_run))
@@ -912,7 +912,7 @@ PG_PASCAL (void) pgConvertTableText (pg_ref pg, select_pair_ptr selection,
 		pg_short_t		index;
 		
 		stuff_to_change.class_OR = pgUniqueID(pg);
-		select_run = UseMemory(select_list);
+		select_run = (select_pair_ptr) UseMemory(select_list);
 		
 		for (index = 0; index < num_selects; ++index, ++select_run) {
 			select_pair		range;
@@ -942,7 +942,7 @@ PG_PASCAL (void) pgConvertTableText (pg_ref pg, select_pair_ptr selection,
 		UnuseMemory(select_list);
 	}
 	
-	select_run = UseMemory(select_list);
+	select_run = (select_pair_ptr) UseMemory(select_list);
 	
 	stuff_to_change.change_range = *select_run;
 	
@@ -1030,7 +1030,7 @@ PG_PASCAL (short) pgPtToTableOffset (paige_rec_ptr pg_rec, co_ordinate_ptr the_p
 			*actual_selection = selection;
 
 		block = pgFindTextBlock(pg_rec, selection.offset, NULL, TRUE, TRUE);
-		starts = UseMemoryRecord(block->lines, (long)selection.line, 0, TRUE);
+		starts = (point_start_ptr) UseMemoryRecord(block->lines, (long)selection.line, 0, TRUE);
 		result = (short)(starts->cell_num & CELL_NUM_MASK);
 
 		if (offsets || column_sides) {
@@ -1074,7 +1074,7 @@ PG_PASCAL (short) pgPtToTableOffset (paige_rec_ptr pg_rec, co_ordinate_ptr the_p
 			
 				pgTableOffsets(pg_rec->myself, selection.offset, &table_offsets);
 				block = pgFindTextBlock(pg_rec, table_offsets.begin, NULL, TRUE, TRUE);
-				starts = UseMemory(block->lines);
+				starts = (point_start_ptr) UseMemory(block->lines);
 				local_offset = (pg_short_t)(table_offsets.begin - block->begin);
 				
 				while (starts[1].offset <= local_offset)
@@ -1085,7 +1085,7 @@ PG_PASCAL (short) pgPtToTableOffset (paige_rec_ptr pg_rec, co_ordinate_ptr the_p
 				UnuseMemory(pg_rec->t_blocks);
 
 				block = pgFindTextBlock(pg_rec, table_offsets.end, NULL, TRUE, TRUE);
-				starts = UseMemory(block->lines);
+				starts = (point_start_ptr) UseMemory(block->lines);
 				local_offset = (pg_short_t)(table_offsets.end - block->begin);
 				
 				if (local_offset > 0)
@@ -1126,7 +1126,7 @@ PG_PASCAL (void) pgTabToCell (paige_rec_ptr pg_rec)
 	local_offset = current_insertion - block->begin;
 	local_end = block->end - block->begin;
 
-	text = UseMemoryRecord(block->text, local_offset, 0, TRUE);
+	text = (pg_char_ptr) UseMemoryRecord(block->text, local_offset, 0, TRUE);
 	
 	for (;;) {
 		
@@ -1136,7 +1136,7 @@ PG_PASCAL (void) pgTabToCell (paige_rec_ptr pg_rec)
 
 			++block;
 			pg_rec->procs.load_proc(pg_rec, block);
-			text = UseMemory(block->text);
+			text = (pg_char_ptr) UseMemory(block->text);
 			local_offset = 0;
 			local_end = block->end - block->begin;
 		}
@@ -1176,7 +1176,7 @@ PG_PASCAL (pg_boolean) pgPositionInTable (paige_rec_ptr pg, long position, selec
 
 			block = pgFindTextBlock(pg, position, NULL, FALSE, TRUE);
 			local_offset = offset = (position - block->begin);
-			text = UseMemory(block->text);
+			text = (pg_char_ptr) UseMemory(block->text);
 			
 			while (local_offset) {
 				
@@ -1258,7 +1258,7 @@ PG_PASCAL (memory_ref) pgCellSelections (paige_rec_ptr pg_rec, select_pair_ptr s
 		
 		if (wanted_select.begin < (table_select.begin - 1)) {
 			
-			cell_select_ptr = AppendMemory(result, 1, FALSE);
+			cell_select_ptr = (select_pair_ptr) AppendMemory(result, 1, FALSE);
 			cell_select_ptr->begin = wanted_select.begin;
 			cell_select_ptr->end = table_select.begin - 1;
 			UnuseMemory(result);
@@ -1278,7 +1278,7 @@ PG_PASCAL (memory_ref) pgCellSelections (paige_rec_ptr pg_rec, select_pair_ptr s
 
 			if (begin_cell_select.begin < begin_cell_select.end) {
 			
-				cell_select_ptr = AppendMemory(result, 1, FALSE);
+				cell_select_ptr = (select_pair_ptr) AppendMemory(result, 1, FALSE);
 				*cell_select_ptr = begin_cell_select;
 				UnuseMemory(result);
 			}
@@ -1288,7 +1288,7 @@ PG_PASCAL (memory_ref) pgCellSelections (paige_rec_ptr pg_rec, select_pair_ptr s
 		
 		if (wanted_select.begin < wanted_select.end) {
 
-			cell_select_ptr = AppendMemory(result, 1, FALSE);
+			cell_select_ptr = (select_pair_ptr) AppendMemory(result, 1, FALSE);
 			*cell_select_ptr = wanted_select;
 			UnuseMemory(result);
 		}
@@ -1309,7 +1309,7 @@ PG_PASCAL (memory_ref) pgCellSelections (paige_rec_ptr pg_rec, select_pair_ptr s
 /* pgFixCellBackspace handles the situation where a tab or CR can be deleted. This gets called
 only if we are deleting a single char. */
 
-PG_PASCAL (void) pgFixCellBackspace (paige_rec_ptr pg, long PG_FAR *delete_from, long PG_FAR *delete_to)
+PG_PASCAL (void) pgFixCellBackspace (paige_rec_ptr pg, size_t PG_FAR *delete_from, size_t PG_FAR *delete_to)
 {
 	select_pair			cell_bounds;
 
@@ -1329,8 +1329,8 @@ PG_PASCAL (void) pgFixCellBackspace (paige_rec_ptr pg, long PG_FAR *delete_from,
 /* pgPasteToCells inserts text into pg_rec if the target position is a table. If this occurs
 then TRUE is returned, otherwise nothing occurs and FALSE is returned. */
 
-PG_PASCAL (pg_boolean) pgPasteToCells (paige_rec_ptr pg_rec, long position,
-		pg_char_ptr text, long length)
+PG_PASCAL (pg_boolean) pgPasteToCells (paige_rec_ptr pg_rec, size_t position,
+		pg_char_ptr text, size_t length)
 {
 	pg_boolean			result = FALSE;
 	pg_char				next_char;
@@ -1443,7 +1443,7 @@ PG_PASCAL (void) pgMeasureMaxColumns (paige_rec_ptr pg, select_pair_ptr offsets)
 			par = walker.cur_par_style;
 			block = pgFindTextBlock(pg, offsets->begin, NULL, FALSE, TRUE);
 			locs = pgGetCharLocs(pg, block, &locs_ref, NULL);
-			text = UseMemory(block->text);
+			text = (pg_char_ptr) UseMemory(block->text);
 			global_offset = offsets->begin;
 			local_offset = global_offset - block->begin;
 			text += local_offset;
@@ -1499,7 +1499,7 @@ PG_PASCAL (void) pgMeasureMaxColumns (paige_rec_ptr pg, select_pair_ptr offsets)
 					
 					++block;
 					locs = pgGetCharLocs(pg, block, &locs_ref, NULL);
-					text = UseMemory(block->text);
+					text = (pg_char_ptr) UseMemory(block->text);
 					local_offset = 0;
 				}
 			}
@@ -1554,7 +1554,7 @@ PG_PASCAL (void) pgGetTableBounds (paige_rec_ptr pg_rec, long position, rectangl
 	pg_short_t				local_offset;
 
 	block = pgFindTextBlock(pg_rec, position, NULL, TRUE, FALSE);
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	local_offset = (pg_short_t) (position - block->begin);
 	
 	while (starts->offset < local_offset)
@@ -1927,14 +1927,14 @@ PG_PASCAL (long) pgTableJustifyOffset (par_info_ptr par, long max_width)
 /* pgRowOffsets returns the bounding text offsets for the row that contains position.
 The local_position param is the LOCAL position of the text relative to block->begin. */
 
-PG_PASCAL (void) pgRowOffsets (text_block_ptr block, long local_position, long PG_FAR *begin,
-				long PG_FAR *end)
+PG_PASCAL (void) pgRowOffsets (text_block_ptr block, size_t local_position, size_t PG_FAR *begin,
+				size_t PG_FAR *end)
 {
 	register pg_char_ptr		text;
-	register long				position;
-	long						text_size;
+	register size_t				position;
+	size_t						text_size;
 	
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 	
 	if (begin) {
 		
@@ -2108,7 +2108,7 @@ static memory_ref build_column_widths (paige_rec_ptr pg, par_info_ptr par)
 	long			index;
 
 	result = MemoryAlloc(pg->globals->mem_globals, sizeof(long), par->table.table_columns, 0);
-	positions = UseMemory(result);
+	positions = (long *) UseMemory(result);
 	
 	if (par->table.table_column_width > 0) {
 		long			max_columns;
@@ -2148,7 +2148,7 @@ static long tab_to_cell (paige_rec_ptr pg_rec, long current_cell, pg_boolean adv
 		local_offset = current_insertion - block->begin;
 		local_end = block->end - block->begin;
 
-		text = UseMemoryRecord(block->text, local_offset, 0, TRUE);
+		text = (pg_char_ptr) UseMemoryRecord(block->text, local_offset, 0, TRUE);
 		
 		for (;;) {
 			
@@ -2158,7 +2158,7 @@ static long tab_to_cell (paige_rec_ptr pg_rec, long current_cell, pg_boolean adv
 
 				++block;
 				pg_rec->procs.load_proc(pg_rec, block);
-				text = UseMemory(block->text);
+				text = (pg_char_ptr) UseMemory(block->text);
 				local_offset = 0;
 				local_end = block->end - block->begin;
 			}
@@ -2204,7 +2204,7 @@ static void column_insert_position (paige_rec_ptr pg_rec, short column_num, sele
 	block = pgFindTextBlock(pg_rec, range->begin, NULL, FALSE, TRUE);
 	insert_position = range->begin;
 	local_position = range->begin - block->begin;
-	text = UseMemoryRecord(block->text, local_position, 0, TRUE);
+	text = (pg_char_ptr) UseMemoryRecord(block->text, local_position, 0, TRUE);
 	last_char = 0;
 
 	for (index = 0; index < column_num; ++index) {
@@ -2276,7 +2276,7 @@ static void row_insert_position (paige_rec_ptr pg_rec, long row_num, select_pair
 	block = pgFindTextBlock(pg_rec, table_range.begin, NULL, FALSE, TRUE);
 	local_position = table_range.begin - block->begin;
 	end_position = block->end - block->begin;
-	text = UseMemoryRecord(block->text, local_position, 0, TRUE);
+	text = (pg_char_ptr) UseMemoryRecord(block->text, local_position, 0, TRUE);
 	index = 0;
 	
 	while (table_range.begin < table_range.end) {
@@ -2311,7 +2311,7 @@ static void row_insert_position (paige_rec_ptr pg_rec, long row_num, select_pair
 			UnuseMemory(block->text);
 			++block;
 			pg_rec->procs.load_proc(pg_rec, block);
-			text = UseMemory(block->text);
+			text = (pg_char_ptr) UseMemory(block->text);
 			local_position = 0;
 			end_position = block->end - block->begin;
 		}
@@ -2333,7 +2333,7 @@ static void clear_selections (paige_rec_ptr pg_rec, long new_position, short dra
 		pgRemoveAllHilites(pg_rec, draw_mode);
 
 	SetMemorySize(pg_rec->select, MINIMUM_SELECT_MEMSIZE);
-	new_selection = UseMemory(pg_rec->select);
+	new_selection = (t_select_ptr) UseMemory(pg_rec->select);
 	new_selection->flags |= SELECTION_DIRTY;
 	new_selection->offset = new_position;
 	new_selection[1] = new_selection[0];
@@ -2553,7 +2553,7 @@ static pg_short_t count_tabs (paige_rec_ptr pg_rec, select_pair_ptr selection)
 	local_offset = selection->begin - block->begin;
 	local_end = block->end - block->begin;
 
-	text = UseMemoryRecord(block->text, local_offset, 0, TRUE);
+	text = (pg_char_ptr) UseMemoryRecord(block->text, local_offset, 0, TRUE);
 	count = 0;
 
 	while (local_offset < local_end) {

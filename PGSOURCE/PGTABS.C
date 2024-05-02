@@ -29,7 +29,7 @@ PG_PASCAL (void) pgSetTabBase (pg_ref pg, long tab_base)
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pg_rec->tab_base = tab_base;
 	
 	UnuseMemory(pg);
@@ -43,7 +43,7 @@ PG_PASCAL (long) pgGetTabBase (pg_ref pg)
 	long			result;
 	
 	paige_rec_ptr		pg_rec;
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->tab_base;
 	UnuseMemory(pg);
 	
@@ -89,11 +89,11 @@ PG_PASCAL (void) pgGetTabList (pg_ref pg, const select_pair_ptr selection, tab_r
 
 	target_qty = 0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	selections = pgSetupOffsetRun(pg_rec, selection, TRUE, FALSE);
 	select_qty = GetMemorySize(selections);
-	select_ptr = UseMemory(selections);
+	select_ptr = (select_pair_ptr) UseMemory(selections);
 
 	if (screen_offset) {
 		rectangle			bounds;
@@ -102,12 +102,12 @@ PG_PASCAL (void) pgGetTabList (pg_ref pg, const select_pair_ptr selection, tab_r
 		*screen_offset = bounds.top_left.h;
 	}
 
-	par_base = UseMemory(pg_rec->par_formats);
+	par_base = (par_info_ptr) UseMemory(pg_rec->par_formats);
 
-	target_tab_list = UseMemory(tabs);
+	target_tab_list = (tab_stop_ptr) UseMemory(tabs);
 	
 	if (tab_mask)
-		target_mask = UseMemory(tab_mask);
+		target_mask = (long *) UseMemory(tab_mask);
 
 	added_pars = 0;
 
@@ -141,14 +141,14 @@ PG_PASCAL (void) pgGetTabList (pg_ref pg, const select_pair_ptr selection, tab_r
 					
 					UnuseMemory(tabs);
 					SetMemorySize(tabs, target_qty);
-					target_tab_list = UseMemory(tabs);
+					target_tab_list = (tab_stop_ptr) UseMemory(tabs);
 					target_tab_list[element] = *source_tab_list;
 
 					if (tab_mask) {
 
 						UnuseMemory(tab_mask);
 						SetMemorySize(tab_mask, target_qty);
-						target_mask = UseMemory(tab_mask);
+						target_mask = (long *) UseMemory(tab_mask);
 						target_mask[element] = 1;
 					}
 				}
@@ -220,10 +220,10 @@ PG_PASCAL (void) pgSetTabList (pg_ref pg, const select_pair_ptr selection, tab_r
 	long PG_FAR				*mask_list;
 	pg_short_t				qty;
 	
-	tab_list = UseMemory(tabs);
+	tab_list = (tab_stop_ptr) UseMemory(tabs);
 	
 	if (tab_mask)
-		mask_list = UseMemory(tab_mask);
+		mask_list = (long *) UseMemory(tab_mask);
 	else
 		mask_list = NULL;
 
@@ -260,7 +260,7 @@ static void set_or_change_tabs (pg_ref pg, select_pair_ptr selection, tab_stop_p
 	if (!tab_qty)
 		return;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	pgFillBlock(&temp_par, sizeof(par_info), 0);
 	pgBlockMove(tab_ptr, temp_par.tabs, sizeof(tab_stop) * tab_qty);
 	temp_par.num_tabs = tab_qty;
@@ -284,7 +284,7 @@ static void set_or_change_tabs (pg_ref pg, select_pair_ptr selection, tab_stop_p
 	stuff_to_change.num_tabs = tab_qty;
 
 	num_selects = (pg_short_t)GetMemorySize(select_list);
-	select_run = UseMemory(select_list);
+	select_run = (select_pair_ptr) UseMemory(select_list);
 	
 	stuff_to_change.change_range = *select_run;
 

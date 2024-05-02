@@ -28,7 +28,7 @@ PG_PASCAL (pg_boolean) pgSetPrintDevice (pg_ref pg, generic_var device)
 	paige_rec_ptr		pg_rec;
 	pg_boolean			result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	result = (device != pg_rec->port.print_port);
 	pg_rec->port.print_port = device;
@@ -52,7 +52,7 @@ PG_PASCAL (generic_var) pgGetPrintDevice (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	generic_var			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = pg_rec->port.print_port;
 	UnuseMemory(pg);
 	
@@ -75,7 +75,7 @@ PG_PASCAL (long) pgPrintToPage (pg_ref pg, const graf_device_ptr target, long st
 	long					next_position;
 	short					use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (!(print_dev = target))
 		print_dev = &pg_rec->port;
@@ -85,7 +85,7 @@ PG_PASCAL (long) pgPrintToPage (pg_ref pg, const graf_device_ptr target, long st
 	if ((use_draw_mode = draw_mode) == best_way)
 		use_draw_mode = direct_or;
 
-	wrap_bounds = UseMemory(pg_rec->wrap_area);
+	wrap_bounds = (rectangle_ptr) UseMemory(pg_rec->wrap_area);
 	offset_extra = wrap_bounds->top_left;
 	UnuseMemory(pg_rec->wrap_area);
 	
@@ -181,7 +181,7 @@ static long offset_to_line_top (paige_rec_ptr pg, long offset)
 
 	block = pgFindTextBlock(pg, offset, NULL, TRUE, TRUE);
 
-	starts = UseMemory(block->lines);
+	starts = (point_start_ptr) UseMemory(block->lines);
 	first_starts = starts;
 
 	local_offset = offset - block->begin;
@@ -195,7 +195,7 @@ static long offset_to_line_top (paige_rec_ptr pg, long offset)
 	while (!(starts->flags & NEW_LINE_BIT))
 		--starts;
 
-	wrap_rects = UseMemory(pg->wrap_area);
+	wrap_rects = (rectangle_ptr) UseMemory(pg->wrap_area);
 	r_num = starts->r_num;
 	wrap_rects += (pgGetWrapRect(pg, r_num, &repeat_offset) + 1);
 	previous_bottom = wrap_rects->top_left.v + repeat_offset.v;  // The default (if first line, for instance).
