@@ -1,0 +1,2466 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>PaigeManual</title>
+
+
+
+</head>
+
+<body>
+
+<h1 id="toc_0">1 Introduction</h1>
+
+<h2 id="toc_1">1.1 Purpose of this document</h2>
+
+<p>The purpose of this document is to provide initial programming information for the OpenPaige developers. Comments are welcome, as are useful example code submissions. Questions and answers from OpenPaige developers may be used in subsequent editions of the manual.</p>
+
+<p>This function sets a new tab that applies to the specified selection.</p>
+
+<h2 id="toc_2">1.2 How to use this manual</h2>
+
+<p>The OpenPaige technology is quite extensive, so we recommend that you do not simply dive into the middle of this manual and start implementing complex features.</p>
+
+<p>Our advice is to implement this software by following these gradient steps:</p>
+
+<ol>
+<li>Follow the information in chapter 2, &quot;Up &amp; Running&quot;. During this phase, ignore all other information in the manual.</li>
+<li>Follow chapter 3, &quot;Beyond the Defaults&quot;, which discusses implementation of additional, common features above and beyond the bare minimum covered in #1 above.</li>
+<li>If you need to implement virtual memory, do that by following chapter 4, &quot;Virtual Memory&quot;.</li>
+<li>Implement all remaining simple functionality not covered in #1 or #2 above, such as text formatting (fonts and styles), paragraph formatting (indents and justification) and possibly tab settings and color. See chapter 8, &quot;Style Basics&quot;.</li>
+<li>Depending on what you wish to accomplish with OpenPaige, find section(s) that deal with your particular requirements — we have tried to break down this manual into the most likely application requirements.</li>
+</ol>
+
+<p>You should also consult the index to locate the topic(s) of interest quickly.</p>
+
+<p>Generally, we have placed the parts of OpenPaige that most users will want and that are the most straight forward in the front. As you move to the back of the manual, the functionality will become more complex.</p>
+
+<h4 id="toc_3">CAUTION</h4>
+
+<p>It is important to remember that no user will need the entire functionality. If you are contemplating a complex feature, or one in which you will need detailed knowledge of OpenPaige or working in the chapters toward the rear of the manual, please contact OpenPaige Tech Support via electronic mail for an evaluation and suggestions on how you can easily accomplish your goal. We can often suggest the easiest way to do something if we are consulted before you are buried in buggy code. Also knowing what you are doing and why you are doing it &quot;that way&quot; helps us to build better features.</p>
+
+<h2 id="toc_4">1.3 Implementation Tips &amp; Hints</h2>
+
+<!-- very out of date -->
+
+<ul>
+<li>If you are a Word Solution Engine customer: the OpenPaige technology is very different than DataPak&#39;s Word Solution Engine. We therefore recommend strongly to &quot;forget&quot; all you know about Word Solution in order to understand the implementation of OpenPaige.</li>
+<li>Use the index to find small items, and Summary of Functions for quick-reference to function syntax.</li>
+<li>Consult the demo program. The OpenPaige package you received includes all the source files for the &quot;demo&quot; which contains a wealth of information and examples. If you think something does not work correctly, before reporting a bug or otherwise reach an impasse, consult that area of the demo against the way you have implemented the code. One of the first questions we will ask when you contact our Technical Support is, &quot;Does it work correctly in the demo?&quot;</li>
+</ul>
+
+<h4 id="toc_5">NOTE (WINDOWS USERS)</h4>
+
+<p>If you are using the OpenPaige API directly, consult the source files in the Control directory (the &quot;demo&quot; simply uses the OpenPaige Custom Control; the Custom Control source files show how to access the API).</p>
+
+<h4 id="toc_6">NOTE</h4>
+
+<p>You may contact our Technical Support service if the above suggestions fail to help. However, we do not accept any telephone support questions whatsoever. All questions must be submitted by email; we will always attempt to handle your questions as quickly and as thoroughly as possible. You can email your support questions to <!--support@OpenPaige.com-->.</p>
+
+<h2 id="toc_7">1.4 Certain Conventions</h2>
+
+<p>Since OpenPaige is designed to be a multi-platform, multi-application processing editing library, we have had to make certain conventions in how the functions are described.</p>
+
+<h3 id="toc_8">&quot;FAR&quot; Pointers</h3>
+
+<p>Certain platforms require pointers which are outside the current segment to be designated as <code>far</code> pointers, such as Windows. Other platforms, such as the Macintosh do not require this. For the Macintosh, <code>PG_FAR</code> has been declared as nothing and these differences can be ignored.</p>
+
+<h3 id="toc_9"><code>pascal</code> keyword</h3>
+
+<p>The <code>pascal</code> keyword has been left out of the function definitions in this document; the actual header file(s) will contain that keyword. All external OpenPaige functions are declared using the Pascal calling conventions.</p>
+
+<h3 id="toc_10">Redefinition of types</h3>
+
+<p>To maintain compatibility across all platforms, certain new types have been declared as follows:</p>
+
+<h4 id="toc_11">Unicode Version</h4>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: left">OpenPaige Type</th>
+<th style="text-align: left">Typedef&#39;d From</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: left"><code>pg_short_t</code></td>
+<td style="text-align: left">unsigned short</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_char</code></td>
+<td style="text-align: left">unsigned short</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_char_ptr</code></td>
+<td style="text-align: left">pointer to <code>pg_char</code></td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_bits8</code></td>
+<td style="text-align: left">unsigned char</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_bits8_ptr</code></td>
+<td style="text-align: left">pointer to <code>pg_bits8</code></td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_boolean</code></td>
+<td style="text-align: left">short</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_error</code></td>
+<td style="text-align: left">short (for error codes)</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>memory_ref</code></td>
+<td style="text-align: left">unsigned long</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>PGSTR</code></td>
+<td style="text-align: left"><code>pg_char_ptr</code></td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="toc_12">Non-Unicode Version</h4>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: left">OpenPaige Type</th>
+<th style="text-align: left">Typedef&#39;d From</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: left"><code>pg_short_t</code></td>
+<td style="text-align: left">unsigned short</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_char</code></td>
+<td style="text-align: left">unsigned char</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_char_ptr</code></td>
+<td style="text-align: left">pointer to <code>pg_char</code></td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_bits8</code></td>
+<td style="text-align: left">(same as <code>pg_char</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_bits8_ptr</code></td>
+<td style="text-align: left">(same as <code>pg_char_ptr</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_boolean</code></td>
+<td style="text-align: left">short</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>pg_error</code></td>
+<td style="text-align: left">short (for error codes)</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>memory_ref</code></td>
+<td style="text-align: left">unsigned long</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>PGSTR</code></td>
+<td style="text-align: left"><code>pg_char_ptr</code></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="toc_13">NULL Reference</h3>
+
+<p>Frequent use of the term <code>M_NULL</code> exists throughout this manual. This is an OpenPaige macro that simply expands to (value of) zero. It is used for indicating a &quot;null&quot; for an OpenPaige memory reference.</p>
+
+<h3 id="toc_14">Machine Definitions</h3>
+
+<p>A single header file, <code>cpudefs.h</code> controls basic definitions for the platform in which the source files are intended.</p>
+
+<h2 id="toc_15">1.5 Debug Mode</h2>
+
+<p>Windows users can ignore the &quot;debug mode&quot; libraries described below. This method of debugging applies only to Macintosh versions.</p>
+
+<p>OpenPaige is compiled in both &quot;debug&quot; and &quot;non debug&quot; modes. Two sets of libraries are provided for this purpose.</p>
+
+<p>When you use the &quot;debug&quot; libraries, you must also include <code>pgdebug.c</code> in your project. This lets you break into a source-level debugger to learn why OpenPaige is raising an exception. To use the OpenPaige debugger, open <code>pgdebug.c</code> and place a break point at the suggested spot (source comments indicate the spot).</p>
+
+<p>If you break into the debugger, the message parameter is a <code>pascal</code> string.</p>
+
+<p>Source code users: Debug mode is controlled by a single <code>#define</code> in <code>CPUDefs.h</code>, <code>#define PG_DEBUG</code>.</p>
+
+<p>Debug mode slows the performance down substantially. It is recommended to use OpenPaige in debug mode during your development, but to turn it off for your final release, if for no other reason than increased performance.</p>
+
+<h1 id="toc_16">2 Up &amp; running</h1>
+
+<h2 id="toc_17">2.1 OpenPaige Custom Control</h2>
+
+<!-- these documents are missing so this section is invalid -->
+
+<p>If you are using OpenPaige for a new application, or integrating OpenPaige for the first time, it would be wise to consider implementing the OpenPaige Custom Control. Documentation for this subset of OpenPaige is contained in a separate, smaller manual.</p>
+
+<p>The Custom Control can potentially save you substantial amounts of development time, particularly to get &quot;up and running&quot; quickly. To make this decision, consider the following:</p>
+
+<ul>
+<li>Using the Control immediately eliminates the need to know very little — or any — of the detailed information in this Programmer&#39;s Guide.</li>
+<li>Most of the samples we provide use the Control (not the direct API).</li>
+<li>You can still call the OpenPaige API directly, when and if you need to.</li>
+</ul>
+
+<p>If you decide to use the OpenPaige Custom Control, you do not need to read this manual any further! Immediately proceed to the OpenPaige Control manual; use this (larger) Programmer&#39;s Guide only when/if you need to call the API directly.</p>
+
+<h2 id="toc_18">2.2 Bare necessities</h2>
+
+<p>This section provides the bare minimum code to get up and running with OpenPaige. This minimum functionality assumes one single default font and style, a single rectangle for display and word wrapping, no scrolling, nothing fancy.</p>
+
+<h4 id="toc_19">CAUTION</h4>
+
+<p>Be sure to consult the release note and individual installation instructions included in each release. OpenPaige installation will change with versions and even interim releases. This makes checking the latest notes on the disk critical.</p>
+
+<h2 id="toc_20">2.3 Libraries &amp; Headers</h2>
+
+<p>Regardless of whether you are a source code user or an object-code-only user, all source files in your application that call OpenPaige functions must include, at a minimum:</p>
+
+<div><pre><code class="language-none">#include &quot;Paige.h&quot;</code></pre></div>
+
+<p>As for the OpenPaige software itself, the minimum configuration is given below.</p>
+
+<h3 id="toc_21">Windows</h3>
+
+<p>The Windows version provides several library options; choose the appropriate libraries based upon the information provided below.</p>
+
+<h4 id="toc_22">NOTE</h4>
+
+<p>Most libraries include the option between DLL(s) and static libraries.</p>
+
+<h4 id="toc_23">Windows 3.1</h4>
+
+<p>Multilingual (will handle double-byte codes such as Kanji)</p>
+
+<div><pre><code class="language-none">(DLL Version Only)
+
+PGML16.DLL (Main OpenPaige)
+PGMLCT16.DLL (Custom control)</code></pre></div>
+
+<p>Non-Multilingual (no requirements for double-byte codes)</p>
+
+<div><pre><code class="language-none">DLL Libraries
+^^^^^^^^^^^^^
+PAIGE.DLL (Main OpenPaige)
+PGCNTL.DLL (Custom control)
+
+Static Libraries
+^^^^^^^^^^^^^^^^
+PG16LIB.LIB (Main OpenPaige)
+PGCTL16.LIB (Custom control)</code></pre></div>
+
+<h4 id="toc_24">Windows NT (XP, 10, 11)</h4>
+
+<h5 id="toc_25">Unicode</h5>
+
+<div><pre><code class="language-none">DLL Libraries
+^^^^^^^^^^^^^
+PGUNICOD.DLL (Main OpenPaige)
+PGUNICTL.DLL (Custom control)
+
+Static Libraries
+^^^^^^^^^^^^^^^^
+PGUNILIB.LIB (Main OpenPaige)
+PGUNCTLB.LIB (Custom control)</code></pre></div>
+
+<h5 id="toc_26">Non-Unicode</h5>
+
+<div><pre><code class="language-none">DLL Libraries
+^^^^^^^^^^^^^
+Paige32.DLL (Dynamic Linked Library for main (OpenPaige)
+Pgentl32.DLL (Dynamic Linked Library for custom control)
+
+Static Libraries
+^^^^^^^^^^^^^^^^
+PGLIB32.LIB (Main OpenPaige)
+PGCTLLIB.LIB (Custom control)</code></pre></div>
+
+<h5 id="toc_27">Multilingual</h5>
+
+<p>All versions for Windows 95 and NT are multilingual-compatible.</p>
+
+<h5 id="toc_28">Borland Libraries (DLL libraries only)</h5>
+
+<div><pre><code class="language-none">Single Thread
+^^^^^^^^^^^^^
+PAIGE32B.DLL (Main OpenPaige)
+PGCTL32B.DLL (Custom Control)
+
+Multithread
+^^^^^^^^^^^
+PG32BMT.DLL (Main OpenPaige)
+PGC32BMT.DLL (Custom control)</code></pre></div>
+
+<h3 id="toc_29">Program Linking with DLL Libraries</h3>
+
+<p>When using any of the DLL libraries, add the file with the same name plus the &quot;.LIB&quot; extension. For example, if using <code>PAIGE.DLL</code> for the runtime library, add <code>PAIGE.LIB</code> to your project.</p>
+
+<h3 id="toc_30">Macintosh</h3>
+
+<h3 id="toc_31">Macintosh Object Code Users</h3>
+
+<p>If you are using Think C or Metrowerks CodeWarrior, add all libraries to your project from the &quot;Debug Libraries&quot; OR &quot;Runtime Libraries&quot; folder (not both). Running in debug mode is suggested for general development, while non-debug is suggested for performance testing (for speed) and/or for final release of your product. Debug mode will reduce the program&#39;s performance substantially.</p>
+
+<p>If you are using Metrowerks CodeWarrior, you must be sure to remove all previous versions of header files. Compiler complaints may be the result of CodeWarrior finding the incorrect header or object file.</p>
+
+<p>The source code package includes &quot;make&quot; files for building OpenPaige libraries with MSVC++. If you need to create your own project file to build an OpenPaige library, the following information may prove useful:</p>
+
+<ol>
+<li>Include <code>.C</code> files from the <code>pgsource</code> directory. None of them should be excluded.</li>
+<li>Include <code>pgdebug</code> from the <code>pgdebug</code> directory. (<strong>NOTE:</strong> This file compiles to zero bytes of code unless <code>#define PG_DEBUG</code> is present in <code>CPUDEFS.H</code> [see “Compiler Options&quot; below].)</li>
+<li>Include the following <code>.C</code> files from <code>pgplatfo</code> regardless of the target platform: <code>pgio.c</code>, <code>pgmemmgr.c</code>, <code>pgosutl.c</code>, <code>pgscrap.c</code>.</li>
+<li>Depending upon your target platform, include the following files from <code>pgplatfo</code>: <code>pgwin.c</code> and <code>pgdll.c</code> (the latter if compiling as a DLL) for Windows, and <code>pgmac.c</code> and <code>pgmacput.c</code> for Macintosh.</li>
+<li>For <strong>Windows 3.1</strong> you may be asked to include a <code>.DEF</code> file. With MSVC 1.5x you can ask to generate a default <code>.DEF</code>, in which case you should choose to do so and rebuild.</li>
+<li>The OpenPaige source code is not always friendly to certain C++ compilers due to <code>void*</code> type casting (or lack thereof). In most cases, you can work around this problem by compiling your project as straight C with an output for static or dynamically-linked library, then include that library in your main project. For Metrowerks CodeWarrior (Macintosh) you can work around this problem by turning OFF the option, &quot;Invoke C++ Compiler&quot;.</li>
+<li>To compile for Unicode, define <code>UNICODE</code> and <code>_UNICODE</code> in the preprocessor option(s). Do not define these constants in the header file(s) or you won&#39;t necessary achieve an accurate Unicode library.</li>
+<li>If you compile for <strong>Windows 3.1-Multilingual</strong>, you must also include the following Windows library (for National Language Support): <code>OLENLS.LIB</code>.</li>
+</ol>
+
+<h3 id="toc_32">Compiler Options</h3>
+
+<p>All options for different target platforms and library types are controlled in <code>CPUDEFS.H</code>. Generally, only the first several lines in <code>CPUDEFS.H</code> need to be changed to compile for different platforms. The following guidelines should be followed:</p>
+
+<h4 id="toc_33">Compiling for Windows 3.1</h4>
+
+<div><pre><code class="language-none">#define WIN16_COMPILE (should be ON)
+#define WIN32_COMPILE (should be OFF)</code></pre></div>
+
+<h4 id="toc_34">Compiling for Windows 3.1-Multilingual (double-byte)</h4>
+
+<p>In addition to above:</p>
+
+<div><pre><code class="language-none">#define WIN_MULTILINGUAL (should be added to the file or preprocessor)</code></pre></div>
+
+<h4 id="toc_35">Compiling for Windows NT (7, 8, 10, 11)</h4>
+
+<div><pre><code class="language-none">#define WIN16_COMPILE (should be OFF)
+#define WIN32_COMPILE (should be ON)</code></pre></div>
+
+<h5 id="toc_36">NOTE</h5>
+
+<p>There are other miscellaneous options that may imply a requirement to be enabled (by their names) such as <code>WIN95_COMPILE</code>. Do not turn these on, regardless of platform! Enable only <code>WIN32_COMPILE</code> for all 32-bit versions.</p>
+
+<p>You do not need to define anything other than WIN32_COMPILE to support doublebyte multilingual editing for Windows NT and Windows 95; that support is generated automatically.</p>
+
+<p>For Unicode, you must define <code>UNICODE</code> and <code>_UNICODE</code> in your preprocessor options of the compiler. (If no preprocessor option, <code>#define UNICODE</code> somewhere in your sources or headers to allow all system header files to recognize the Unicode option).</p>
+
+<h4 id="toc_37">DLL versus Static Library (all platforms)</h4>
+
+<p>To compile as a DLL:</p>
+
+<div><pre><code class="language-none">#define CREATE_MS_DLL (should be ON)</code></pre></div>
+
+<p>If compiling as a static library or non-DLL:</p>
+
+<div><pre><code class="language-none">#define CREATE_MS_DLL (should be OFF)</code></pre></div>
+
+<h4 id="toc_38">Debug versus Runtime</h4>
+
+<p>OpenPaige has a built-in debugger which can be enabled by compiling with the following:</p>
+
+<div><pre><code class="language-none">#define PG_DEBUG (OpenPaige debugger compiles if ON)</code></pre></div>
+
+<p>When this is defined, all OpenPaige exceptions or debugging errors jump into the code in <code>pgdebug.c</code>.</p>
+
+<h5 id="toc_39">NOTE</h5>
+
+<p>Compiling with <code>PG_DEBUG</code> will dramatically reduce the performance!</p>
+
+<h4 id="toc_40">Special Resource (Macintosh only)</h4>
+
+<p>A special resource has been provided on your OpenPaige disc which the Macintosh-specific code within OpenPaige uses to initialize default character values (such as arrow keys, backspace characters, invisible symbols, etc.). You may copy and paste this resource into your application&#39;s resource and you may modify its contents if you want different defaults.</p>
+
+<p>This resource is not required to use OpenPaige successfully. If it is missing, initialization simply sets a hard-coded set of defaults.</p>
+
+<p>See also <a href="#3.8-changing-globals">Changing Globals</a>.</p>
+
+<h3 id="toc_41">2.4 Software Startup</h3>
+
+<p>Some place early in your application you need to initialize the OpenPaige software; the recommended place to do so is after all other initializations have been performed for the main menu, Mac Toolbox, etc. To initialize, you need to reserve a couple blocks of memory that OpenPaige can use to store certain global variables (OpenPaige does not use any <code>globals</code> and therefore requires you to provide areas it can use to store required global structures).</p>
+
+<p>To initialize OpenPaige you must call two functions in the order given:</p>
+
+<div><pre><code class="language-none">#include &quot;Paige.h&quot;
+(void) pgMemStartup (pgm_globals_ptr mem_globals, long max_memory);
+(void) pgInit (pg_globals_ptr globals, pgm_globals_ptr mem_globals);</code></pre></div>
+
+<p>Calling <code>pgMemStartup</code> initializes OpenPaige&#39;s allocation manager. This call must be made first before <code>pgInit</code>. The <code>mem_globals</code> parameter must be a pointer to an area of memory which you provide. The usual (and easiest) method of doing this is to define a
+global variable that will not relocate or unload during the execution of your program, such as the following:</p>
+
+<div><pre><code class="language-none">pgm_globals     memrsrv; // &lt;--somewhere that will NOT unload</code></pre></div>
+
+<p>You do not need to initialize this structure to anything—<code>pgMemStartup</code> initializes this structure appropriately.</p>
+
+<p><code>max_memory</code> should contain the maximum amount of memory OpenPaige is allowed to use before purging memory allocations. If you want OpenPaige to have access to all available memory, pass 0 (RECOMMENDED) for <code>max_memory</code>.</p>
+
+<p>For example, suppose you only wanted to use 200 kB of memory for all OpenPaige documents, combined. In this case, you would pass 200000 to pgInit. If you don&#39;t care, or want it to use all memory available, you would pass 0.</p>
+
+<p>After <code>pgMemStartup</code>, call <code>pgInit</code>, which initializes every other part of OpenPaige.</p>
+
+<p><code>globals</code> is a pointer to an area of memory which you provide. The usual (and easiest) method of doing this is to define a global variable that will not relocate or unload during the execution of your program, such as the following:</p>
+
+<div><pre><code class="language-none">pg_globals  paigersrv; // &lt;-- somewhere that will NOT unload</code></pre></div>
+
+<p>The structure <code>pg_globals</code> is defined in <code>paige.h</code> (and shown in <a href="#3.8-changing-globals">Changing Globals</a>). You do not need to initialize this structure to anything—OpenPaige will initialize the globals structure as required. It is only necessary that you provide the space for this structure and pass a pointer to it in <code>pgInit</code>.</p>
+
+<p><code>mem_globals</code> parameter in <code>pgInit</code> must be a pointer to the same structure passed to <code>pgMemStartup</code>.</p>
+
+<h5 id="toc_42">MFC NOTE</h5>
+
+<p>The best place to initialize OpenPaige in the constructor of the <code>CWinApp</code> derived class. Also the best place to put the OpenPaige globals and memory globals is in the CWinApp derived class.</p>
+
+<h5 id="toc_43">EXAMPLE</h5>
+
+<div><pre><code class="language-none">(.H)
+
+class MyWinApp : public CWinApp
+{
+    ...
+    public:
+    pgm_globals m_MemoryGlobals;
+    pg_globals m_Globals;
+    ...
+}
+
+(.CPP)
+
+MyWinApp::MyWinApp()
+{
+    pgMemStartup(&amp;m_MemoryGlobals, 0);
+    pgInit(&amp;m_Globals, &amp;m_MemoryGlobals);
+    ...
+}</code></pre></div>
+
+<h4 id="toc_44">TECH NOTE</h4>
+
+<blockquote>
+<p><code>pgInit</code> crashes</p>
+</blockquote>
+
+<p>It is possible to crash in <code>pgInit</code>. This is very rare however. Here are the main possibilities:</p>
+
+<ul>
+<li>A wrong library is linked in, i.e. version mismatch. (This includes all &quot;updates&quot; from compiler vendors who have changed the format of their object code libraries).</li>
+<li>It is called without calling <code>MemStartup</code>.</li>
+<li>You are out of memory. OpenPaige can require up to 60 kB to build itself and get ready to accept text.</li>
+<li><strong>Windows 3.1 platform only</strong>: you are building a DLL with a memory model mismatch. The PAIGE DLL was built for large modal; try building your DLL the same.</li>
+</ul>
+
+<h3 id="toc_45">2.5 OpenPaige Shutdown</h3>
+
+<p>For applications that require a <code>shutdown</code> of all allocations it has created, call the following functions, in the order shown, before terminating your application:</p>
+
+<div><pre><code class="language-none">(void) pgShutdown (pg_globals_ptr globals);
+(void) pgMemShutdown (pgm_globals_ptr mem_globals);</code></pre></div>
+
+<p><code>globals</code> and <code>mem_globals</code> parameters must be pointers to the same structures given to <code>pgInit</code> and <code>pgMemStartup</code>, respectively. After <code>pgShutdown</code>, you must not call any OpenPaige functions (except for <code>pgInit</code>). After <code>pgMemShutdown</code>, all allocations placed in globals are de-allocated.</p>
+
+<h5 id="toc_46">CAUTION</h5>
+
+<p>All <code>pg_ref</code>s and all memory references allocated anywhere by OpenPaige become invalid after <code>pgShutdown</code>, so make sure this is the very last OpenPaige function you call.</p>
+
+<h5 id="toc_47">CAUTION (WINDOWS USERS)</h5>
+
+<p>Be sure to call both <code>pgShutdown</code> and <code>pgMemShutdown</code>, in that order, before <code>EXIT</code>, or you will have memory leaks and resources that are never released.</p>
+
+<h5 id="toc_48">NOTE</h5>
+
+<p><code>pgShutdown</code> and <code>pgMemShutdown</code> actually dispose every memory allocation made by OpenPaige since <code>pgMemStartup</code>; you therefore don&#39;t really need to dispose any <code>pg_ref</code>s, <code>shape_ref</code>s or other OpenPaige allocations.</p>
+
+<h5 id="toc_49">NOTE (Macintosh)</h5>
+
+<p>The shutdown procedure is completely unnecessary if you will be doing an <code>ExitToShell</code> using the app version. Mac developers working with code resource libraries will still need to call <code>pgShutdown</code> and <code>pgMemShutdown</code>.</p>
+
+<h5 id="toc_50">NOTE (MFC)</h5>
+
+<p>The best place to shutdown OpenPaige is in the destructor of the <code>CWinApp</code> derived class. Example:</p>
+
+<div><pre><code class="language-none">(.CPP)
+MyWinApp::~MyWinApp()
+{
+    ...
+    pgShutdown(&amp;m_Globals);
+    pgMemShutdown(m_MemoryGlobals);
+}</code></pre></div>
+
+<h5 id="toc_51">NOTE (MFC)</h5>
+
+<p>For Microsoft Foundation Class applications, the appropriate method to shut down OpenPaige is to override <code>CxxAppxExitInstance()</code> and call <code>::pgShutdown</code> and <code>::pgMemShutdown</code>.</p>
+
+<h5 id="toc_52">NOTE</h5>
+
+<p>You must not call either shutdown function if you are using the OpenPaige Control.</p>
+
+<h3 id="toc_53">2.6 Creating an OpenPaige Object</h3>
+
+<p>By &quot;OpenPaige object&quot; is meant a single item that can edit, display and otherwise manipulate a block of text, large or small.</p>
+
+<p>Calling <code>pgNew</code>, below, returns a reference of type <code>pg_ref</code>. This <code>pg_ref</code> can then be passed to all the other functions given in this manual.</p>
+
+<div><pre><code class="language-none">(pg_ref) pgNew (pg_globals_ptr globals, generic_var def_device, shape_ref vis_area, shape_ref page_area, shape_ref exclude_area, long attributes);</code></pre></div>
+
+<p>The above function returns a new <code>pg_ref</code>; the <code>pg_ref</code> can then be passed to other functions to insert text and edit text.</p>
+
+<p><code>globals</code> parameter must be a pointer to the same <code>pg_globals</code> structure you passed to <code>pgInit</code> at startup time.</p>
+
+<p>Attributes are described in <a href="#2.8-Attribute-Settings">Attribute Settings</a> and <a href="#3.1-Changing-Attributes">Changing Attributes</a>, but can be set here as well.</p>
+
+<p><code>def_device</code> parameter defines what graphics port this OpenPaige object should draw to by default; what is actually passed to <code>def_device</code> can slightly vary between platforms as follows:</p>
+
+<h4 id="toc_54">Macintosh &amp; PowerPC</h4>
+
+<p>If <code>def_device</code> is <code>NULL</code> then current <code>GrafPort</code> is used as the default device; if <code>def_device</code> is non-<code>NULL</code> and not &quot;-1&quot; it is assumed to be a <code>GrafPtr</code> and that port is used for subsequent drawing.</p>
+
+<h4 id="toc_55">Windows (PC)</h4>
+
+<p>If <code>def_device</code> is <code>0L</code> then the current window of focus is used as the default window where drawing will occur (e.g., <code>GetFocus</code> is used to determine the window); if <code>def_device</code> is non-<code>NULL</code> and not <code>-1</code> it is assumed to be type <code>HWND</code> and that window is used for subsequent drawing.</p>
+
+<p>This <code>HWND</code> in the def_device is NOT a Device Context.</p>
+
+<p>Essentially, the <code>dev_device</code> should be the window (or child window) that is receiving the message to create the OpenPaige object, e.g. <code>WM_CREATE</code>.</p>
+
+<h5 id="toc_56">CAUTION</h5>
+
+<p>If you pass <code>MEM_NULL</code> to <code>def_device</code>, OpenPaige will obtain the window of current focus. You should only use this method if your document window is known to be the window of focus, otherwise passing <code>MEM_NULL</code> can result in a crash.</p>
+
+<h4 id="toc_57">Microsoft Foundation Classes (MFC)</h4>
+
+<p>The best place to put <code>pgNew()</code> is in the <code>OnCreate()</code> member of the <code>CView</code> derived class. It is important to call the <code>CView::OnCreate()</code> <strong>before</strong> calling <code>pgNew()</code>. Examples follow:</p>
+
+<div><pre><code class="language-none">(.H)
+class MyView : public CView
+{
+...
+public:
+    pg_ref m_Paige;
+...
+}
+
+(.CPP)
+int MyView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+    pgm_globals_ptr memory_globals = ((MyWinApp*)AfxGetApp())-&gt;m_MemoryGlobals;
+    int return_value = 0;
+    CRect client_rect;
+    rectangle client_paige_rect;
+    if(CView::OnCreate(lpCreateStruct == -1)
+        return -1;
+    ASSERT(m_hWnd);
+    ASSERT(isWindow(m_hWind));
+
+    // Non-OpenPaige initialization here!
+
+GetClientRect(&amp;client_rect);
+RectToRectangle(&amp;client_rect, &amp;client_paige_rect);
+
+shape_ref window = pgRectToShape(AfxGetMemoryGlobals(), &amp;rect);
+
+PG_TRY(AfxGetApp()-&gt;m_MemoryGlobals // See Chapter 19 of the OpenPaige manual.
+{
+    m_Paige = pgNew(AfxGetApp()-&gt;m_Globals,(generic_var)(LPVOID)m_hWnd, window, window, MEM_NULL, 0);
+};
+
+PG_CATCH
+{
+    return_value = -1;
+};
+
+    PG_ENDTRY;
+
+    pgDisposeShape(window);
+
+    return return_value;
+}</code></pre></div>
+
+<h4 id="toc_58">All Platforms</h4>
+
+<p>If <code>def_device</code> is <code>-1</code> then no device is assumed (which implies you will not be drawing anything and/or will specify a drawing port later). If you need to pass <code>-1</code> for the <code>def_device</code> parameter, you can use the following predefined macro:</p>
+
+<div><pre><code class="language-none">#define USE_NO_DEVICE (generic_var) -1 // pgnew is with no device</code></pre></div>
+
+<p>If <code>def_device</code> is neither <code>-1</code> nor a null pointer it is assumed to be an OpenPaige drawing port to be used for the default (see <code>graf_device</code>, <code>pgSetDefaultDevice</code>).</p>
+
+<p>For &quot;Up &amp; Running&quot;, pass a null pointer for <code>def_device</code> (for Macintosh and PowerPC) or the <code>HWND</code> associated with the current message for Windows-PC.</p>
+
+<p>Parameters <code>vis_area</code>, <code>page_area</code> and <code>exclude_area</code> define the literal shapes for which text will display, wrap and jump over, respectively. Each of these define how the text will appear within the OpenPaige object as follows:</p>
+
+<p><code>vis_area</code> defines the visible area that shows text, or the &quot;hole&quot; in which it displays. This area may be physically smaller than the document containing the text; any physical area of the screen that is outside the boundary of <code>vis_area</code> will <em>clip</em> (mask) the text from view.</p>
+
+<p><code>page_area</code> defines the container in which text will wrap and flow. It is referred to as the <code>page</code> area since it literally defines the <code>page</code> size of your document. The width of <code>page_area</code> also defines the boundaries for which text must wrap. The <code>page_area</code> can be any size, larger or smaller than <code>vis_area</code>.</p>
+
+<p><code>exclude_area</code> is an optional shape which defines an area or areas in which text must avoid. In other words, if a line of text were to intersect any part of the <code>exclude_area</code>, it must jump over that area in some way to avoid it.</p>
+
+<p>For <code>pgNew</code>, you can pass <code>MEM_NULL</code> for <code>exclude_area</code>, but you must pass a valid <code>shape_ref</code> for <code>vis_area</code> and <code>page_area</code>.</p>
+
+<p>See &quot;Up &amp; Running Shapes&quot; on page 2-26 to create a <code>shape_ref</code>.</p>
+
+<p><code>attribute</code>s can contain different bit settings which define specific characteristics for the OpenPaige object. For the purpose of getting &quot;Up &amp; Running&quot; quickly, pass 0 for this parameter (or see “Changing Attributes” on page 3-1).</p>
+
+<p>The initial font and text format used by the <code>pg_ref</code> returned from <code>pgNew</code> will be taken from <code>pg_globals</code>. To change what font, style or paragraph format that a new <code>pg_ref</code> assumes, set the appropriate information in <code>pg_globals</code> after calling <code>pgNew</code>.</p>
+
+<p><img src="https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-027.jpg?height=571&amp;width=653&amp;top_left_y=494&amp;top_left_x=439" alt=""></p>
+
+<p>vis_area is where text &quot;shows through&quot;. Text may wrap or flow beyond this area but it is clipped during display</p>
+
+<p>page_area defines where text flows and wraps. At any time, text outside</p>
+
+<p>vis_area is clipped</p>
+
+<p>exclude_area is optional. If used, text avoids the shape, hopping across the area</p>
+
+<h4 id="toc_59">MEM_NULL Definition</h4>
+
+<p>The value <code>MEM_NULL</code> is a defined value in OpenPaige header files that you should use to imply a &quot;null&quot; <code>shape_ref</code> or <code>memory_ref</code>—see &quot;The Allocation Mgr&quot; on page 25-1.</p>
+
+<h5 id="toc_60">Error checking <code>pgNew</code></h5>
+
+<p>OpenPaige provides excellent error checking for <code>pgNew</code>. See &quot;Exception Handling&quot; on page 26-1.</p>
+
+<h3 id="toc_61">2.7 Up &amp; Running Shapes</h3>
+
+<p>To avoid a lengthy discussion at this time regarding OpenPaige shapes, we will assume at this time you wish to display text within a simple rectangle (as opposed to some other non-rectangular shape or multiple &quot;container&quot; rectangles).</p>
+
+<h4 id="toc_62">Creating a shape using rectangle</h4>
+
+<p>The easiest way to create a new shape is to use the following function:</p>
+
+<div><pre><code class="language-none">(shape_ref) pgRectToShape (pgm_globals_ptr mem_globals, rectangle_ptr rect);</code></pre></div>
+
+<p>This returns a new <code>shape_ref</code> (which can be passed to one of the <code>area</code> parameters in <code>pgNew</code>). The globals parameter must be a pointer to the same structure given in <code>pgInit</code> and <code>pgNew</code>.</p>
+
+<p>The <em>rect</em> parameter is a pointer to a structure consisting of a top-left and bottom-right coordinate that encloses a rectangle. The coordinate and rectangle definitions are as follows:</p>
+
+<div><pre><code class="language-none">typedef struct
+{
+    long    v;  // vertical position
+    long    h;  // horizontal position
+}
+co_ordinate;
+
+typedef struct
+{
+    co_ordinate top_left;   // Top-left of rect
+    co_ordinate bot_right;  // Bottom-right of rect
+}
+rectangle, *rectangle_ptr;</code></pre></div>
+
+<p>Hence, if you set a rectangle to the desired dimensions and pass a pointer to that rectangle in <code>pgRectToShape</code>, a new memory reference is returned which contains a shape of that rectangle.</p>
+
+<h5 id="toc_63">NOTE</h5>
+
+<p>The reason <code>pgNew</code> requires a <code>shape_ref</code> instead of rectangles is that an OpenPaige object can have non-rectangular shapes for any of its three areas.</p>
+
+<p>For further information regarding shapes, particularly non-rectangular shapes, see &quot;All About Shapes&quot; on page 12-1.</p>
+
+<h4 id="toc_64">Disposing a Shape</h4>
+
+<p>The <code>pgNew</code> function makes a copy of the shape you pass to its parameters. Once you have received a new <code>pg_ref</code> you can dispose the shape. To do so, call:</p>
+
+<div><pre><code class="language-none">void pgDisposeShape (shape_ref the_shape);</code></pre></div>
+
+<h4 id="toc_65">Rect to Rectangle</h4>
+
+<p>Two utilities exist that make it easier to create OpenPaige rectangles:</p>
+
+<div><pre><code class="language-none">\#include &quot;pgTraps.h&quot;
+(void) RectToRectangle (Rect PG_FAR *r, rectangle_ptr pg_rect);
+(void) RectantleToRect (rectangle_ptr pg_rect, co_ordinate_ptr offset, Rect PG_FAR *r);</code></pre></div>
+
+<p><code>RectToRectangle</code> converts <code>Rect r</code> to rectangle <code>pg_rect</code>. The <code>pg_rect</code> parameter must be a pointer to a rectangle variable you have declared in your code.</p>
+
+<p><code>RectangleToRect</code> converts <code>pg_rect</code> to <code>r</code>. Also, if offset is non-null, the resulting <code>Rect</code> is offset by the amounts of the <code>co_ordinate</code> (for example, if <code>offset.h</code> and <code>offset.v</code> were 10, -5 the resulting <code>Mac Rect</code> would be the values in <code>pg_rect</code> with left and right amounts offset by 10 and top and bottom amounts offset by -5.</p>
+
+<h5 id="toc_66">NOTE (Windows)</h5>
+
+<p>Type <code>Rect</code> is identical to type <code>RECT</code>, and both can be used interchangeably.</p>
+
+<h5 id="toc_67">NOTE (Macintosh)</h5>
+
+<p>Since a Mac Rect has a ±32K limit for all four sides, OpenPaige rectangle sides larger than 32K will be intentionally truncated to about 30K.</p>
+
+<h4 id="toc_68">About Windows, Graphic Ports and Origins</h4>
+
+<p>Although OpenPaige is designed to be platform-independent, is does assume a target graphics device that all drawing is transferred to.</p>
+
+<p><strong>When a <code>pg_ref</code> is created, the default target device is set to whatever is appropriate for the running platform.</strong> For Macintosh, the default device is the current <code>GrafPort</code> set when <code>pgNew</code> is called.</p>
+
+<h5 id="toc_69">NOTE (Word Solution Engine for Macintosh)</h5>
+
+<p>Unlike WSE, OpenPaige &quot;remembers&quot; what port it should draw to and all subsequent drawing will occur in that port unless you specifically override it.</p>
+
+<p>For the purpose of getting &quot;Up &amp; Running&quot;, just make sure you create your window first and have it set as the current port before calling <code>pgNew</code>. In subsequent sections, we will provide different ways to change the target port.</p>
+
+<h4 id="toc_70">Origins</h4>
+
+<p>OpenPaige does not care what a window&#39;s origin is set to (top-left <code>co_ordinate</code> values). OpenPaige only cares about the <code>area</code> parameters you provide for <code>pgNew</code>; remember, OpenPaige doesn&#39;t really know what a window is and doesn&#39;t know anything about origins. OpenPaige simply and only follows the coördinates you have set for <code>vis_area</code>, <code>page_area</code> and <code>exclude_area</code>. If your <code>page_area</code> shape passed to <code>pgNew</code>, for instance, had a top-left of -10000,-9999, the first character of the first line will be drawn at that coördinate location regardless of where the top-left of your window might physically exist. In other words, OpenPaige coordinates are always relative to the associated window&#39;s coördinates.</p>
+
+<h3 id="toc_71">2.8 Attribute Settings</h3>
+
+<p>As mentioned earlier, <code>pgNew</code> will accept certain characteristics defined in the &quot;attributes&quot; parameter. The current version supports the following:</p>
+
+<div><pre><code class="language-none">#define NO_WRAP_BIT         0x00000001  // Wraps only on &lt;CR&gt; or &lt;LF&gt;
+#define NO_LF_BIT           0x00000002  // Do not add font
+#define NO_DEFAULT_LEADING  0x00000004  // Do not add font leading
+#define NO_EDIT_BIT         0x00000008  // No editing (display only)
+#define EXTERNAL_SCROLL_BIT 0x00000010  // App controls scrolling
+#define COUNT_LINES_BIT     0x00000020  // Keep track of line/para count
+#define NO_HIDDEN_TEXT_BIT  0x00000040  // Do not display hidden text
+#define SHOW_INVIS_CHAR_BIT 0x00000080  // Show control characters
+#define SMART_QUOTES_BIT    0x00000800  // Do &quot;smart quotes&quot;
+#define NO_SMART_CUT_BIT    0x00001000  // Do not do &quot;rt cut/paste&quot;
+#define NO_SOFT_HYPHEN_BIT  0x00002000  // Ignore soft hyphens
+#define NO_DUAL_CARET_BIT   0x00004000  // Do not show dual carets
+#define SCALE_VIS_BIT       0x00008000  // Scale vis_area when scaling
+#define BITMAP_ERASE_BIT    0x00010000  // Erase page(s) with bitmap drawing
+#define TABS_ARE_WIDTHS_BIT 0x10000000  // Fixed-width tab characters
+#define LINE_EDITOR_BIT     0x40000000  // Document is line editor mode</code></pre></div>
+
+<p><code>NO_WRAP_BIT</code> turns off word wrapping (which means a line of text will continue horizontally until a carriage-return or line-feed character is encountered).</p>
+
+<p><code>NO_LF_BIT</code> causes OpenPaige to ignore line-feed characters. The usual purpose of this setting is for imported text that contains both CR and LF at the end of every line; setting the <code>NO_LF_BIT</code> attribute will cause LF characters to be invisible and have no effect of any kind.</p>
+
+<p><code>NO_DEFAULT_LEADING</code> prevents any extra leading reported by the system for font attributes. In Windows, <em>extra leading</em> is the external leading value reported by <code>GetTextMetrics</code>; in Macintosh, it is the leading value reported by <code>GetFontInfo</code>. By default, OpenPaige adds the extra leading to every line unless this attribute is set.</p>
+
+<p><code>NO_EDIT_BIT</code> disables editing. In effect, if <code>NO_EDIT_BIT</code> is set, the &quot;caret&quot; will not blink and the user can&#39;t insert characters.</p>
+
+<p><code>EXTERNAL_SCROLL_BIT</code> tells OpenPaige that your application will control all scrolling. (This fairly complex subject is discussed elsewhere.)</p>
+
+<p><code>COUNT_LINES_BIT</code> tells OpenPaige to keep track of line and paragraph numbers, in which case you can use the line and paragraph numbering features in OpenPaige (see &quot;Line and Paragraph Numbering&quot;<!--on page 24-16-->). Please note that constantly counting lines and paragraphs, particularly if the document is large and contains wordwrapping with style changes, can consume considerable processing time. Hence, COUNT<em>LINES</em>BIT has been provided to enable/disable this feature.</p>
+
+<p><code>NO_HIDDEN_TEXT_BIT</code> suppresses the display of all text that is &quot;hidden&quot; (OpenPaige will accept a hidden text attribute as a style). If this bit is not set, hidden text is displayed with a grey strike-through line; if it is set, the text is completely invisible and ignored for line width computations.</p>
+
+<p><code>SHOW_INVIS_CHAR_BIT</code> causes all invisible characters (control codes such as CR and LF) to be displayed using special character symbols. These symbols are defined in <code>pg_globals</code> (see “Changing Globals”<!--on page 3-21-->).</p>
+
+<p><code>EX_DIMENSION_BIT</code> tells OpenPaige to include the exclusion area as part of the &quot;document height&quot;.</p>
+
+<p><code>NO_WINDOW_VIS_BIT</code> – Do not respect window&#39;s clipped area.</p>
+
+<p><code>SMART_QUOTES_BIT</code> – Do &quot;smart quotes&quot; (curly quotation marks).</p>
+
+<p><code>NO_SMART_CUT_BIT</code> – Do not do &quot;smart cut/paste&quot;</p>
+
+<p><code>NO_SOFT_HYPHEN_BIT</code> – Ignore soft hyphens</p>
+
+<p><code>NO_DUAL_CARET_BIT</code> – Do not show dual carets</p>
+
+<p><code>SCALE_VIS_BIT</code> tells OpenPaige to scale the <code>vis_area</code> along with the text when scaling has been enabled. By default, the <code>vis_area</code> is left alone when an OpenPaige document is scaled, leaving the text &quot;behind&quot; the visual boundaries reduced or enlarged. In certain cases—particularly when employing multiple <code>pg_ref</code>s into the same document as &quot;edit boxes&quot;—you need this attribute set; for single <code>pg_ref</code> documents that fill all or most of the window, you generally do not want this attribute set.</p>
+
+<p><code>BITMAP_ERASE_BIT</code> tells OpenPaige to erase area(s) on the page using offsetting bitmap drawing, otherwise the same portions of the screen are erased directly. The purpose of this attribute is to draw &quot;background&quot; graphics in the window when/if OpenPaige needs to erase the screen.</p>
+
+<p><code>TABS_ARE_WIDTHS_BIT</code> causes all <TAB> characters to display as no more or less than &quot;wide&quot; blanks. For example, if this attribute is not set, a <TAB> character aligns the character(s) that follow to the next logical tab stop; if this attribute is set, the a tab character is simply a fixed-width space (the default tab spacing per OpenPaige globals).</p>
+
+<p><code>LINE_EDITOR_BIT</code> tells OpenPaige that you intend to maintain the document as a &quot;line editor&quot;, defined as one where words will not wrap and all lines remain the same height. If OpenPaige knows this in advance, it can bypass the usual &quot;pagination&quot; functions and you can achieve substantially increased performance for line editors.</p>
+
+<h5 id="toc_72">NOTE</h5>
+
+<p>If you set <code>LINE_EDITOR_BIT</code> you must not set any attributes to wrap the text, nor should you vary the point size(s) or attempt any irregular page shapes or page breaks. You can still produce multi-styled text as long as the text height(s) are consistently the same.</p>
+
+<p>Any (or all) of the above settings can exist at once.</p>
+
+<h5 id="toc_73">NOTE</h5>
+
+<p>You can always change these attributes after an OpenPaige object is created (see section 3.1, &quot;Changing Attributes&quot;).</p>
+
+<h4 id="toc_74">Example – <code>pgNew</code></h4>
+
+<div><pre><code class="language-none">/* This creates a new OpenPaige object */
+#include &lt;Paige.h&gt;
+#include &quot;pgTraps.h&quot;
+extern pg_globals paige_rsrv;
+
+/* Routine: Open_Window */
+/* Purpose: Open our window */
+/* Note: the window has already been made and will be shown and 
+    selected immediately after this function */
+
+void Open_Window(WindowPtr win_ptr)
+{
+    if (win_ptr!=nil) /* See if opened OK */
+    {
+    pg_ref result;
+    shape_ref vis, wrap;
+    rectangle rect;
+
+    /* this sets vis_area and wrap_area to the shape of the window 
+    itself */
+
+    RectToRectangle(win_ptr-&gt;portRect, &amp;rect);
+    vis = pgRectToShape(&amp;paige_rsrv, &amp;rect);
+    wrap = pgRectToShape(&amp;paige_rsrv, &amp;rect);
+    result = pgNew(&amp;paige_rsrv, NULL, vis, wrap, NULL, EX_DIMENSION_BIT);
+    }       /* End of IF */
+}</code></pre></div>
+
+<h3 id="toc_75">2.9 Disposing an OpenPaige Object</h3>
+
+<p>Once you are completely through with a <code>pg_ref</code> (e.g., user closes the window), dispose it with:</p>
+
+<div><pre><code class="language-none">(void) pgDispose (pg_ref pg);</code></pre></div>
+
+<p>This function disposes all data structures within <code>pg</code>; the <code>pg_ref</code> will no longer be valid.</p>
+
+<p>Be certain you have not shut down the OpenPaige library before disposing a <code>pg_ref</code>, or you will crash.</p>
+
+<h5 id="toc_76">NOTE (Microsoft Foundation Classes)</h5>
+
+<p>The best place to destroy the OpenPaige object is in the OnDestroy() member of your <code>CView</code> derived class. Example:</p>
+
+<div><pre><code class="language-none">(.CPP)
+
+void PGView::OnDestroy()
+{
+    pgDispose(m_Paige);
+    CView::OnDestroy();
+}</code></pre></div>
+
+<h3 id="toc_77">2.10 Getting the &quot;Globals&quot; Pointer</h3>
+
+<p>If you need to obtain the pointer to <code>pg_globals</code> (originally given to <code>pgInit</code> and to <code>pgNew</code>), you can get it from a <code>pg_ref</code> using the following:</p>
+
+<div><pre><code class="language-none">(pg_globals_ptr) pgGetGlobals (pg_ref pg);</code></pre></div>
+
+<p>The typical use for <code>pgGetGlobals</code> is to obtain a pointer to <code>pgGlobals</code> in places where the original global structure, given to <code>pg_init</code>, is not easily accessible.</p>
+
+<p><strong>FUNCTION RESULT:</strong> This function returns the globals pointer as saved in pg.</p>
+
+<p>To change globals, see section 3.8, &quot;Changing Globals&quot;.</p>
+
+<h2 id="toc_78">2.11 Displaying</h2>
+
+<p>To draw the text in a <code>pg_ref</code> to a window, use the following function:</p>
+
+<div><pre><code class="language-none">(void) pgDisplay (pg_ref pg, graf_device_ptr target_device, shape_ref vis_target, shape_ref wrap_target, co_ordinate_ptr offset_extra, short draw_mode);</code></pre></div>
+
+<p>The <code>pg_ref</code>&#39;s contents are drawn to the <code>target_device</code>. If, however, you pass a null pointer to <code>target_device</code> the text will be drawn to the default device set during <code>pgNew</code>. (For the purposes of getting &quot;Up &amp; Running&quot;, we will assume you want to draw to the default device, which will typically be a window that was created prior to <code>pgNew</code>, so pass a null pointer).</p>
+
+<p><code>vis_target</code> and <code>wrap_target</code> parameters are optional shapes which will temporarily redefine the OpenPaige object&#39;s <code>vis_area</code> and <code>wrap_area</code>, respectively. Using these two parameters, you can temporarily control and/or change the way an OpenPaige object will display. Text gets clipped to <code>vis_target</code>, or, if <code>vis_target</code> is a null pointer, to the original <code>vis_area</code>, and text will wrap within <code>wrap_target</code>, or, if <code>wrap_target</code> is <code>MEM_NULL</code>, within the original <code>wrap_area</code>. (For the purposes of getting &quot;Up &amp; Running&quot;, pass MEM_NULL for these two parameters.)</p>
+
+<p>If <code>offset_extra</code> is <code>non-null</code>, all drawing is offset by the amounts in that coördinate (all text is offset horizontally by <code>offset_extra-&gt;h</code> and vertically by <code>offset_extra-&gt;v</code>. If <code>offset_extra</code> is a null pointer, no extra offset is added to the text.</p>
+
+<p>The <code>draw_mode</code> parameter defines the way text should be transferred to the target device. The <code>draw_mode</code> selections are shown below.</p>
+
+<p>See &quot;Display Proc&quot;<!-- on page 16-16--> about how to add ornaments to the text display.</p>
+
+<h5 id="toc_79">NOTE</h5>
+
+<p>You do not need to specify any drawing device for <code>pgDisplay</code> if you intend to display in the window given to <code>pgNew</code>. In this case, just pass NULL to the <code>target_device</code> parameter.</p>
+
+<p>If for some reason you need to redirect the display to some other window or device (such as a bitmap), you can create a <code>graf_device</code> record for that purpose and pass a pointer to that structure for the <code>target_device</code>.</p>
+
+<p>Creating a <code>graf_device</code> for this purpose is the same as the <code>graf_device</code> record used for <code>pgPrintToPage</code>. See &quot;Printing in Windows&quot;<!-- on page 16-9-->.</p>
+
+<h4 id="toc_80">Draw Modes</h4>
+
+<div><pre><code class="language-none">typedef enum
+{
+    draw_none,          // Do not draw at all
+    best_way,           // Use most efficient method(s)
+    direct_copy,        // Directly to screen, overwrite
+    direct_or,          // Directly to screen, &quot;OR&quot;
+    direct_xor,         // Directly to screen, &quot;XOR&quot;
+    bits_copy,          // Copy offscreen
+    bits_or,            // Copy offscreen in &quot;OR&quot; mode
+    bits_xor,           // Copy offscreen in &quot;XOR&quot; mode
+    bits_emulate_copy   // Copy &quot;fake&quot; offscreen
+    bits_emulate_or // &quot;Fake&quot; offscreen in &quot;OR&quot; mode
+    bits_emulate_xor    // &quot;Fake&quot; offscreen in &quot;XOR&quot; mode
+};</code></pre></div>
+
+<h4 id="toc_81">&quot;Bits-emulate&quot; Mode</h4>
+
+<p>The drawing modes <code>bits_emulate_copy</code>, <code>bits_emulate_or</code>, and <code>bits_emulate_xor</code> are identical to <code>bits_copy</code>, <code>bits_or</code> and <code>bits_xor</code> save that no bitmaps are used and the drawing is directly to the screen. Unlike the non-bitmap drawing modes, however, OpenPaige&#39;s standard callback hooks are called to allow modification to its &quot;bitmap&quot;, which in this case is the direct screen. Bitmap modification is typically used to render background images, patterns, and other forms of graphics.</p>
+
+<h5 id="toc_82">NOTE</h5>
+
+<p>Unless you need to create a special or unusual effect, always pass <code>direct_or</code> or <code>bits_emulate_or</code> when responding to <code>WM_PAINT</code> (Windows) or an update
+event (Macintosh), and <code>best_way</code> for all other functions requiring a <code>draw_mode</code>.</p>
+
+<p><img src="https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-039.jpg?height=679&amp;width=1309&amp;top_left_y=242&amp;top_left_x=417" alt=""></p>
+
+<p>Additional draw modes require the developer to use the custom draw hook and draw his own. See &quot;<code>text_draw_proc</code>&quot;<!-- on page 27-17--> for information on how to do custom drawing.</p>
+
+<p>A value of <code>draw_none</code> will disable all drawing and visual scrolling. In other words, if the OpenPaige document changes in some way, nothing would change on the screen until the application re-displayed the OpenPaige text contents. The &quot;draw nothing&quot; feature is used only for special cases where an application wants to change without drawing anything yet.</p>
+
+<h5 id="toc_83">Responding to <code>WM_PAINT</code> Event (Windows)</h5>
+
+<div><pre><code class="language-none">{
+PAINTSTRUCT ps;
+BeginPaint(hWnd, &amp;ps);
+pgDisplay(pg, NULL, MEM_NULL, MEM_NULL, NULL, direct_or);
+}
+EndPaint(hWnd, &amp;ps);</code></pre></div>
+
+<p>To display the OpenPaige object in MFC, use <code>OnPaint()</code>. Do not try to use <code>OnDraw()</code> or it will not draw correctly.</p>
+
+<h2 id="toc_84">EXAMPLE:</h2>
+
+<div><pre><code class="language-none">(.CPP)
+
+void PGView::OnPaint()
+{
+CWnd::OnPaint();
+
+// If you don&#39;t use the OnEraseBkgnd() member of the MFC class, 
+// you must erase the background of the window first.
+
+pgDisplay(m_Paige, NULL, MEM_NULL, MEM_NULL, NULL, bits_emulate_or);
+}</code></pre></div>
+
+<h3 id="toc_85">2.12 Key Insertion</h3>
+
+<p>OpenPaige actually makes very little distinction between keyboard entry and any other text insertion, and in both cases the following function is used:</p>
+
+<div><pre><code class="language-none">(pg_boolean) pgInsert (pg_ref pg, pg_char_ptr data, long length, long position, short insert_mode, short modifiers, short draw_mode);</code></pre></div>
+
+<p>This function will insert length bytes pointed to by data. The insertion will occur at byte offset position if it is positive or zero; if position is <code>CURRENT_POSITION</code> (a <code>#define</code>d constant of -1), the insertion occurs at the current insertion point.</p>
+
+<p>The <code>insert_mode</code> parameter defines the type of data being inserted, which can be any of the following:</p>
+
+<div><pre><code class="language-none">typedef enum
+{
+    key_insert_mode,        // Typing insertion
+    key_buffer_mode,        // Typing-buffer insertion
+    data_insert_mode,       // Raw data insertion
+}</code></pre></div>
+
+<p>For keyboard entry, pass <code>key_insert_mode</code> or <code>key_buffer_mode</code>; for any other data insertion, pass <code>data_insert_mode</code>.</p>
+
+<p>The difference between the two &quot;key&quot; insert modes and <code>data_insert_mode</code> is that a key insertion can contain special controls such as arrow keys and backspace (delete). For <code>data_insert_mode</code>, the bytes will be inserted as is.</p>
+
+<p>If <code>key_insert_mode</code> is used, the new character(s) will draw immediately if <code>draw_mode</code> is nonzero.</p>
+
+<p>If <code>key_buffer_mode</code> is used, character(s) will be buffered (temporarily saved) and drawn later by OpenPaige; the purpose of this mode is to avoid &quot;getting ahead&quot; of keyboard entry on complex document entry. It is also useful for Macintosh double-byte script entry, in which the text is entered all at once from a floating palette window.</p>
+
+<h5 id="toc_86">NOTE (Windows)</h5>
+
+<p>The <code>key_buffer_mode</code> is usually meaningless in the Windows environment; instead, you should always use <code>key_insert_mode</code> when processing keyboard characters. Using <code>key_buffer_mode</code> (where chars are stored and inserted later) requires a call to <code>pgIdle</code> which, under the Windows messaging system, would require you to set up a &quot;timer&quot; message that occurs every few milliseconds, which is probably not implemented in most applications.</p>
+
+<p>If keys are buffered, OpenPaige will display the new text during the first <code>pgIdle</code> function call (see “Blinking Carets &amp; Mouse Selections”<!-- on page 2-48-->).</p>
+
+<h5 id="toc_87">NOTE</h5>
+
+<p>&quot;Arrows&quot; and other control codes are defined (and changeable) in the <code>pg_globals</code> record (see &quot;Changing Globals&quot;<!-- on page 3-21-->); these special controls will be processed correctly for <code>key_insert_mode</code> and <code>key_buffer_mode</code> only.</p>
+
+<p>The <code>modifiers</code> parameter can change the way the <code>pg_ref</code> will respond to special control characters for <code>key_insert_mode</code> (<code>modifiers</code> is ignored for the other insertion modes). In the current version, the following value is supported:</p>
+
+<div><pre><code class="language-none">#define EXTEND_MOD_BIT 0x0001   // Extend the selection</code></pre></div>
+
+<p>If <code>modifiers</code> is <code>EXTEND_MOD_BIT</code>, the selection range is extended if an arrow key is &quot;inserted.&quot; Other selection modifier bits are explained in &quot;Modifiers&quot;<!-- on page 2-51-->.</p>
+
+<p>The <code>draw_mode</code> for <code>pgInsert</code> performs identically to <code>pgDisplay</code> and can be any of the verbs defined for drawing. If you just want to insert but not display, pass <code>draw_none</code> for <code>draw_mode</code>. If <code>key_buffer_mode</code> is used for insertion, the <code>draw_mode</code> is saved and used later when the text is displayed.</p>
+
+<p>For keyboard insertions, the recommended <code>draw_mode</code> is <code>best_way</code>.</p>
+
+<h5 id="toc_88">CAUTION (Macintosh)</h5>
+
+<blockquote>
+<p>Mac developers should not confuse these modifier bits with the modifiers given in the event record. There is no similarity. The modifiers shown here are the ones OpenPaige supports.</p>
+</blockquote>
+
+<h5 id="toc_89">NOTE</h5>
+
+<p>The insertion will assume either the text format of the current insertion point OR the format of the last style/font/format change, whichever is more recent. This is true even if you specify an insert position other than the current point. If you want to force the insertion to be a particular font or style, simply call the appropriate function to change the text format prior to your insertion.</p>
+
+<h5 id="toc_90">FUNCTION RESULT</h5>
+
+<p>The function returns TRUE if the text and/or highlighting in <code>pg</code> changed in any way. Note that no change occurs only if <code>key_buffer_mode</code> is passed as the insert mode, in which case the characters are stored and not drawn until the next call to <code>pgIdle</code>. Another situation that will not change anything visually is passing <code>draw_none</code> as the <code>draw_mode</code>. In both cases, <code>pgInsert</code> would return FALSE. The purpose of this function result is for the application to know whether or not it should update scrollbar values or scroll to the insertion point, etc. (i.e., it is a waste of processing time to check or change scroll positions if nothing changed on the screen).</p>
+
+<h4 id="toc_91">Running Unicode</h4>
+
+<p>If you are using the Unicode-enabled OpenPaige library, the &quot;data&quot; to be inserted is expected to be one or more 16-bit characters. The data size in this case is assumed to be a character count (not a byte count). This is due to the fact that if UNICODE is defined in your preprocessor or header files (which it should be for a true Unicode-enabled application), a <code>pg_char_ptr</code> changes from a byte pointer to a 16-bit character pointer.</p>
+
+<p>For example, to insert the Unicode value 0x0041 (letter &quot;A&quot;) you would pass the value of 1 in the <code>length</code> parameter even though the character size is technically 2 bytes long.</p>
+
+<h4 id="toc_92">TECH NOTE: Insert Positions</h4>
+
+<p>The specified insertion position is a zero-relative byte offset. Note that this is a byte—not a &quot;character&quot; offset (characters in OpenPaige can be more than one byte), rather a byte offset from the beginning of all text in <code>pg</code>, starting at zero.</p>
+
+<p><strong>EXCEPTION:</strong> The pure Unicode version measures everything as 16 bit characters. Hence, the insertion point in this case is a character position.</p>
+
+<p>If one or more characters are currently selected (selection range ≥ one character), those characters are deleted before the insertion occurs. Note that if the specified insertion position were <code>CURRENT_POSITION</code>, the insertion will occur to the immediate left of the previously selected text (which will have been deleted).</p>
+
+<p>After the insertion, the new insertion position in <code>pg</code> is advanced to length <code>bytes</code> from the original specified position. Example: If 100 bytes were inserted at text position 500 when <code>pgInsert</code> returns the current insertion position will be 600.</p>
+
+<h5 id="toc_93">APPLIED STYLE(S) AND INSERTION</h5>
+
+<p>If <code>pgInsert</code> occurs at the current insertion point, whatever the last style and/or font that was applied to that insertion point will be applied to the next insertion.</p>
+
+<p>For example, suppose all text in <code>pg</code> is currently &quot;Helvetica&quot; font, and <code>pg</code> has a single insertion point (not a selected range of characters). Before inserting new text, a call is made to <code>pgSetFontInfo</code> with &quot;Times Roman&quot; font; the very next subsequent <code>pgInsert</code> would apply Times Roman—not Helvetica—to the new text.</p>
+
+<p>However, if the insertion occurs somewhere other than the current insertion, the font/style that is applied will be whatever font/style applies to that position in text.</p>
+
+<p>Hence, to implement the insertion of specific, multi-stylized text, the logic to perform should be as follows:</p>
+
+<div><pre><code class="language-none">pgSetStyleInfo(...) - and/or - pgSetFontInfo(...); 
+pgInsert(..., CURRENT_POSITION,...); 
+pgSetStyleInfo(...) - and/or - pgSetFontInfo(...); 
+pgInsert(..., CURRENT_POSITION,...); etc.</code></pre></div>
+
+<p><strong>NOTE:</strong> For repetitive insertions, the insertion point will automatically advance the number of bytes you insert, so normally you should not need to set a new position if you are doing repetitive, sequential insertions.</p>
+
+<p><strong>WARNING:</strong> If you need to apply a specific font or style to a text insertion (such as in the logic above), do not set the insertion point after you set the style/font or that style/font attribute may be lost. If you must set position, do so BEFORE calling pgSetFont/nfo or pgSetStyleInfo.</p>
+
+<h5 id="toc_94">EXAMPLE</h5>
+
+<p>WRONG WAY:</p>
+
+<div><pre><code class="language-none">pgSetStyleInfo(...);
+pgSetSelection(pg, 0, 0); //&lt;-- previous style setting is lost!
+pgInsert(...);</code></pre></div>
+
+<p>RIGHT WAY:</p>
+
+<div><pre><code class="language-none">pgSetSelection(pg, 0, 0);
+pgSetStyleInfo(...); // &lt;-- Style gets applied to next insertion 
+pgInsert(...);</code></pre></div>
+
+<h4 id="toc_95">TECH NOTE: Nothing happens</h4>
+
+<blockquote>
+<p>Nothing seems to happen when I insert text.</p>
+</blockquote>
+
+<p>If you are doing inserts with <code>key_insert_mode</code>, OpenPaige won&#39;t do anything if the <code>pg_ref</code> is deactivated. That might be the problem. If so, you need to use <code>data_insert_mode</code>, not <code>key_insert_mode</code>, and it will then work; <code>pgInsert</code> does nothing.</p>
+
+<h3 id="toc_96">2.13 Keyboard Editing with MFC (Windows)</h3>
+
+<p>To get Up and Running with basic keyboard editing you must add the following code to your MFC view class:</p>
+
+<div><pre><code class="language-none">(.H) 
+// Declare the following private variables. 
+short m_KeyModifiers;
+
+(.CPP)
+
+// Respond to the windows message WM_KEYDOWN... 
+void PGView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+pg_globals globals = ((MyWinApp*)AfxGetApp())-&gt;m_Globals;
+pg_short_t verb;
+
+    switch(nChar)
+    {
+        case VK_SHIFT:
+            m_KeyModifiers != EXTEND_MOD_BIT;
+            break;
+        case VK_CONTROL:
+            m_KeyModifiers != CONTROL_MOD_BIT;
+            break;
+        case VK_LEFT:
+            SendMessage(WM_CHAR, globals-&gt;left_arrow_char);
+            break;
+        case VK_UP:
+            SendMessage(WM_CHAR, globals-&gt;up_arrow_char);
+            break;
+        case VK_RIGHT:
+            SendMessage(WM_CHAR, globals-&gt;right_arrow_char);
+            break;
+        case VK_DOWN:
+            SendMessage(WM_CHAR, globals-&gt;down_arrow_char);
+            break;
+        case VK_HOME:
+            verb = begin_line_caret;
+            if(m_KeyModifiers &amp; CONTROL_MOD_BIT)
+                verb = home_caret;
+            if(m_KeyModifiers &amp; EXTEND_MOD_BIT)
+                verb != EXTEND_CARET_FLAG;
+            pgSetCaretPosition(mPaige, verb, TRUE);
+            pgScrollToView(m_Paige, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or;
+            break;
+        case VK_END:
+            verb = end_line_caret;
+            if(m_KeyModifiers &amp; CONTROL_MOD_BIT)
+                verb = doc_bottom_caret;
+            if(m_KeyModifiers &amp; EXTEND_MOD_BIT)
+                verb != EXTEND_CARET_FLAG;
+            pgSetCaretPosition(m_Paige, verb, TRUE);
+            pgScrollToView(m_Paige, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or;
+            break;
+        case VK_PRIOR:
+            SendMessage(WM_VSCROLL, SB_PAGEUP);
+            break;
+        case VK_DELETE:
+            if(m_KeyModifiers &amp; EXTEND_MOD_BIT)
+            {
+                long start, end;
+                pg_ref scrap;
+                pgGetSelection(m_Paige, &amp;start, &amp;end);
+                if(start == end)
+                    return;
+                scrap = pgCut(m_Paige, &amp;start, &amp;end);
+                assert(scrap);
+                OpenClipboard();
+                pgPutScrap(scrap, 0, pg_void_scrap);
+                CloseClipboard();
+                pgDispose(scrap);
+                scrap = MEM_NULL;
+                SetChanged();
+            }
+            else
+            {
+                SendMessage(WM_CHAR, globals-&gt;fwd_delete_char);
+            }
+        case VK_NEXT:
+            SendMessage(WM_VSCROLL, SB_PAGEDOWN);
+            break;
+            pgScrollToView(m_Paige, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or);
+            break;
+    }
+}
+            break;
+        case VK_INSERT:
+        {
+        if(m_Key_Modifiers &amp; CONTROL_MOD_BIT
+            {
+                long start, end;
+                pg_ref scrap;
+                pgGetSelection(m_Paige, &amp;start, &amp;end);
+                if(start == end)
+                    return;
+                scrap = pgCopy(m_Paige, NULL);
+                assert(scrap);
+                OpenClipboard();
+                pgPutScrap(scrap, 0, pg_void_scrap);
+                CloseClipboard();
+                pgDispose(scrap);
+            }
+        else if(m_KeyModifiers &amp; EXTEND_MOD_BIT)
+            {
+                pg_ref scrap = MEM_NULL;
+                OpenClipboard();
+                scrap = pgGetScrap(globals, 0, HookEmbedProc);
+                CloseClipboard();
+                if scrap
+                {
+                    pgPaste(m_Paige, scrap, CURRENT_POSITION, false, best_way);
+                    pgDispose(scrap)
+                }
+            }
+        }
+        pgScrollToView(m_Paige, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or);
+        break;
+    }
+}
+
+// Respond to the Windows message WM_KEYUP...
+void MyView::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+    switch(nChar)
+    {
+        case VK_SHIFT:
+            m_KeyModifiers &amp;= (~EXTEND_MOD_BIT);
+            break;
+        case VK_CONTROL:
+            m_KeyModifiers &amp;= (~CONTROL_MOD_BIT);
+            break;
+    }
+}
+
+// Respond to the Windows message WM_CHAR...
+void MyView::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+    pg_char the_char = (pg_char)nChar;
+    pgInsert(mPaige, &amp;the_char, 1, CURRENT_POSITION, key_insert_mode, m_KeyModifiers, best_way);
+    pgScrollToView(m_Paige, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or);
+}</code></pre></div>
+
+<h3 id="toc_97">2.14 Pending Buffer Insertions</h3>
+
+<p>As mentioned in <code>pgInsert</code>, if <code>key_buffer</code> mode is used, the characters get stored in an internal buffer and get inserted during the next <code>pgIdle</code>.</p>
+
+<p>There might be an occassion, however, that requires immediate insertion of anything pending in this buffer. To do so, call the following:</p>
+
+<div><pre><code class="language-none">(pg_boolean) pgInsertPendingKeys (pg_ref pg);</code></pre></div>
+
+<p>Calling this function will immediately &quot;empty&quot; any pending characters, inserting and displaying them as appropriate. If there aren&#39;t any pending characters, <code>pgInsertPendingKeys</code> does nothing. The function returns TRUE if one or more characters were inserted.</p>
+
+<h5 id="toc_98">NOTE</h5>
+
+<p>The display mode used when OpenPaige displays the pending buffer will be the original display mode passed to <code>pgInsert</code>.</p>
+
+<h3 id="toc_99">2.15 Blinking Carets &amp; Mouse Selections</h3>
+
+<h4 id="toc_100">Caret blinking (Macintosh only)</h4>
+
+<p>To cause the &quot;caret&quot; to blink in a <code>pg_ref</code>, call the following as often as possible:</p>
+
+<div><pre><code class="language-none">(pg_boolean) pgIdle (pg_ref pg);</code></pre></div>
+
+<h5 id="toc_101">NOTE (Macintosh):</h5>
+
+<p><code>pgIdle</code> should be called repeatedly while you are waiting for an event.</p>
+
+<p>The <code>pg</code> parameter must be a valid <code>pg_ref</code> (can not be a null pointer).</p>
+
+<p><strong>FUNCTION RESULT:</strong> The function returns TRUE if character(s) were inserted and displayed that were stored previously from <code>pgInsert</code> calls with <code>key_buffer_mode</code>. This will only happen if you had called <code>pgInsert</code>, passing <code>key_buffer_mode</code> as the data transfer parameter. A result of TRUE or FALSE from <code>pgIdle</code> can help your application know whether or not it should update scrollbar values (since new text has been inserted). For Windows <code>key_buffer_mode</code> is not usually necessary, see “Key Insertion”<!-- on page 2-39-->.</p>
+
+<h5 id="toc_102">NOTE (Windows)</h5>
+
+<p>You do not need to call <code>pgIdle()</code> since the blinking caret is maintained by the OS. Calling <code>pgIdle</code> by &quot;accident&quot; however is harmless.</p>
+
+<h2 id="toc_103">Clicking &amp; Dragging</h2>
+
+<p>Clicking and dragging is accomplished by using the following function:</p>
+
+<div><pre><code class="language-none">(long) pgDragSelect (pg_ref pg, co_ordinate_ptr location, short verb, short modifiers, long track_refcon, short auto_scroll);</code></pre></div>
+
+<p>To change the insertion point in a <code>pg_ref</code> (i.e., in response to a mouse click), call <code>pgDragSelect</code> with the <code>location</code> parameter set to the location of the &quot;click.&quot; The coördinate values must be local to the window&#39;s coördinate system (relative to the top-left window origin).</p>
+
+<p>For <strong>Macintosh</strong>, location should be the same as the &quot;where&quot; member of the <code>EventRecord</code>, converted to local coördinates.</p>
+
+<p>For <strong>Windows</strong>, location is usually the coördinates given to you in <code>IParam</code> when responding to <code>WM_LBUTTONDOWN</code>, <code>WM_LBUTTONDBLCLK</code>, or <code>WM_MOUSEMOVE</code>.</p>
+
+<p>The <code>verb</code> parameter defines what action should occur, which must be one of the following:</p>
+
+<div><pre><code class="language-none">enum
+{
+    mouse_down, // First-time click
+    mouse_moved,    // Mouse moved
+    mouse_up,       // Mouse button released
+}</code></pre></div>
+
+<p>NOTE: <code>pgDragSelect()</code> does not retain control at any time—it always returns control immediately regardless of what <code>verb</code> is passed.</p>
+
+<p>For the first click, pass <code>mouse_down</code> in verb.</p>
+
+<p>In a <code>Macintosh-specific</code> application, while the user is holding down the mouse button, wait for the mouse location to change and, if it does, call <code>pgDragSelect</code> with the new location but with <code>verb</code> as <code>mouse_moved</code>.</p>
+
+<p>In a <code>Windows-specific</code> application, call <code>pgDragSelect(mouse_moved)</code> in response to a <code>WM_MOUSEMOVE</code> if the mouse button is still down.</p>
+
+<p>When the mouse button is released, pass the final location and <code>mouse_up</code> for <code>verb</code>.</p>
+
+<h5 id="toc_104">NOTE</h5>
+
+<p>It is important to call <code>pgDragSelect</code> with <code>mouse_up</code> after the user releases the mouse button <em>even if the mouse never moved from its original location</em>. This is because OpenPaige performs certain housekeeping chores when <code>mouse_up</code> is given.</p>
+
+<p>The <code>modifiers</code> parameter controls the way text is selected. For &quot;normal&quot; click/drag, pass zero for this parameter; for added effects (such as responding to double-clicks, shift-clicks, etc.), see “Modifiers&quot;<!-- on page 2-51-->.</p>
+
+<p>If <code>auto_scroll</code> is &quot;TRUE&quot;, OpenPaige will automatically scroll the document if <code>pgDragSelect</code> (with <code>verb</code> as <code>mouse_moved</code>) has gone beyond the <code>vis_area</code>. See &quot;All About Scrolling&quot;<!--on page 11-1-->. For getting &quot;Up &amp; Running&quot;, you can pass TRUE for this parameter.</p>
+
+<p><code>track_refcon</code> is used when and if OpenPaige makes a call to the track-control-callback function. If a style is a &quot;control&quot; (the control bit set for the style class bits field), OpenPaige calls the tracking control function hook and passes the <code>track_refcon</code> to the app. In other words, this value is application-defined and OpenPaige does nothing with it. For getting &quot;Up &amp; Running&quot;, you can pass 0 for this parameter.</p>
+
+<h5 id="toc_105">FUNCTION RESULT</h5>
+
+<p>For &quot;normal&quot; mouse tracking, ignore the function result of <code>pgDragSelect</code>. The only time the function result is significant is when you have customized a style to be a &quot;control&quot; (information is available on &quot;control&quot; styles under &quot;Customizing OpenPaige”). If you have not customized OpenPaige in any way, <code>pgDragSelect</code> will always return zero.</p>
+
+<h2 id="toc_106">Modifiers</h2>
+
+<p>The following bit settings are supported for the modifiers parameter in this release:</p>
+
+<div><pre><code class="language-none">#define EXTEND_MOD_BIT      0x0001  // Extend the selection
+#define WORD_MOD_BIT        0x0002  // Select whole words only
+#define PAR_MOD_BIT         0x0004  // Select whole paragraphs only
+#define LINE_MOD_BIT        0x0008  // Highlight whole lines
+#define VERTICAL_MOD_BIT    0x0010  // Allow vertical selection
+#define DIS_MOD_BIT         0x0020  // Enable discontinuous selection
+#define STYLE_MOD_BIT       0x0040  // Select whole style range
+#define WORD_CTL_MOD_BIT    0x0080  // Select &quot;words&quot; delimited by ctrl chars
+#define NO_HALF_CHARS_BIT   0x0100  // Do not go left/right on half chars
+#define CONTROL_MOD_BIT     0x0200  // Word advance for arrows</code></pre></div>
+
+<p>Various combinations of these bits can generally be set to create the desired effect such as word selections, paragraphs selections, etc., save that vertical selection does not work with the other modifiers. If misused regardless, it will produce unpredictable results.</p>
+
+<p>The following is a description of how text is highlighted in response to each of these bits:</p>
+
+<p><code>EXTEND_MOD_BIT</code> will extend the selection for <code>verb</code> of <code>mouse_down</code> (otherwise the previous selection is removed). For Macintosh, this is the same as &quot;shift-click&quot; (but you need to determine that from your application and set this bit).</p>
+
+<p><code>WORD_MOD_BIT</code> will select whole words, otherwise only single characters are selected.</p>
+
+<p><code>PAR_MOD_BIT</code> will select whole paragraphs.</p>
+
+<p>This is different than <code>LINE_MOD_BIT</code> (below) since a paragraph could contain several lines if word wrapping exists.</p>
+
+<p><code>LINE_MOD_BIT</code> will select whole lines. This differs from <code>PAR_MOD_BIT</code> since a paragraph might consist of many lines.</p>
+
+<p><code>VERTICAL_MOD_BIT</code> allows vertical selection. This bit really causes a rectangular region that selects all characters intersecting that region and will not follow any particular character. <code>VERTICAL_MOD_BIT</code> is mainly useful for tables and tabular columns.</p>
+
+<p><code>DIS_MOD_BIT</code> allows discontinuous selections. If this bit is set, the previous selection remains and a new selection range is started (OpenPaige can have multiple selection ranges).</p>
+
+<p><code>STYLE_MOD_BIT</code> causes whole style ranges to become selected. This is similar to word/paragraph/line highlighting except style changes are considered the delimiters (which also means the whole document could be selected in one click if only one style exists).</p>
+
+<p><code>WORD_CTL_MOD_BIT</code> causes text between control characters to be selected. This is similar to word/paragraph/line highlighting except control codes are considered the delimiters.</p>
+
+<blockquote>
+<p><strong>NOTE:</strong> In OpenPaige &quot;control codes&quot; or &quot;control characters&quot; are not necessarily limited to standard ASCII symbols. Control characters in the OpenPaige context are defined in <code>pg_globals</code> (see &quot;Changing Globals”<!--on page 3-21-->).</p>
+</blockquote>
+
+<p><code>NO_HALF_CHARS_BIT</code> controls whether or not dragging can change the selection point half way into a character. Normally, if this bit is not set, once the mouse moves half way into a character, that character is considered to be &quot;selected&quot; (or unselected if moving in the opposite direction). Setting this bit, however, instructs <code>pgDragSelect</code> not to select the character until it has completely crossed over its area.</p>
+
+<p><code>CONTROL_MOD_BIT</code> is used mainly with arrow keys. This causes the selection to advance to the next word (right arrow) or to the previous word (left arrow).</p>
+
+<p>For additional information about highlighting and selection range(s), see &quot;All About Selection”<!-- on page 10-1-->.</p>
+
+<h3 id="toc_107">2.16 Click &amp; Drag using Microsoft Foundation Classes (Windows)</h3>
+
+<p>To get Up and Running with simple mouse drag select in MFC, use the following code as a starting point:</p>
+
+<div><pre><code class="language-none">(.H)
+/* Declare the following private variables. Make sure to set m_Dragging to FALSE in the construct to avoid the unintialized variable bug!! *
+
+short m_MouseModifiers;
+BOOL m_Dragging;
+
+(.CPP)
+// Respond to the Windows message WM_LBUTTONDOWN...
+void MyView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    CView::OnLButtonDown(nFlags, point);
+    co_ordinate mouse { point.y, point.x };
+    SetCapture();
+    m_Dragging $=$ TRUE;
+    if(nFlags &amp; MK_SHIFT)
+        m_MouseModifiers != EXTEND_MOD_BIT;
+    if(nFlags &amp; MK_CONTROL)
+        m_MouseModifiers != PAR_MOD_BIT;
+        pgDragSelect(m_Paige, &amp;mouse, mouse_down, m_MouseModifiers, 0, TRUE);
+}
+
+// Respond to the Windows WM_MOUSEMOVE message...
+void MyView::OnMouseMove(UINT nFlags, CPoint point)
+{
+    CView::OnMouseMove(nFlags, point);
+    co_ordinate pg_mouse = {point.y, point.x};
+    if(m_Dragging)
+    {
+        pgDragSelect(m_Paige, &amp;mouse, mouse_up, m_MouseModifiers, 0, FALSE);
+        m_MouseModifiers = 0;
+        ReleaseCapture();
+        m_Dragging = FALSE;
+    }
+}</code></pre></div>
+
+<h4 id="toc_108">Responding to Windows mouse events</h4>
+
+<div><pre><code class="language-none">case WM_LBUTTONDBLCLK:
+pg_modifiers = pg_modifiers = WORD_MOD_BIT;
+
+// fall through to WM_LBUTTONDOWN
+
+case WM_LBUTTONDOWN:
+if(pgRef)
+{
+        co_ordinate pg_mouse;
+        mouse_contact = TRUE;
+        SetCapture(hWnd);
+        pg_mouse.h = IParam &amp; OxFFFF;
+        pg_mouse.v = ((IParam &amp; OxFFFF0000) &gt;&gt; 16);
+
+    if (wParam &amp; MK_SHIFT)
+    pg_modifiers != EXTEND_MOD_BIT;
+
+    if (wParam &amp; MK_CONTROL)
+    pg_modifiers != DIS_MOD_BIT;
+    pgDragSelect(pgRef, &amp;pg_mouse, mouse_down, pg_modifiers, 0, TRUE);
+}
+return 0 ;
+
+case WM_LBUTTONUP:
+    if(pgRef)
+    {
+        co_ordinate pg_mouse;
+        pg_mouse.h = lParam &amp; OxFFFF;
+        pg_mouse.v = ((lParam &amp; OxFFFF0000) &gt;&gt; 16);
+        mouse_contact = FALSE;
+        pgDragSelect(pgRef, &amp;pg_mouse, mouse_up, pg_modifiers, 0, FALSE);
+        pg_modifiers = 0;
+        ReleaseCapture();
+    }
+return 0;
+
+case WM_MOUSEMOVE:
+    if(mouse_contact)
+        pgDragSelect(pgRef, &amp;pg_mouse, mouse_moved, pg_modifiers, 0, TRUE);
+    else
+    {
+        pg_view = pgPtInView(pgRef, &amp;pg_mouse, NULL);
+
+        if (pg_view &amp; WITHIN_TEXT)
+            SetCursor(LoadCursor(NULL, IDC_IBEAM));
+        else
+            SetCursor(LoadCursor(MULL, IDC_ARROW));
+    }
+}
+return 0;</code></pre></div>
+
+<h3 id="toc_109">TECH NOTE</h3>
+
+<h4 id="toc_110">Turn automatic scroll off</h4>
+
+<p>To prevent selecting/scrolling you would simply pass FALSE for <code>pgDragSelect</code> so it doesn&#39;t try to auto-scroll. As far as not letting the user select text outside the visual area, I would simply check to see if the coordinate that will get passed to <code>pgDragSelect</code> is outside of the view area and if it is, just force it to some other point that is within the view area.</p>
+
+<p>In fact, you wouldn&#39;t even need to turn off auto-scroll if you forced the coördinate to always be within the visual area. Remember, you have complete control over <code>pgDragSelect</code> (control always comes back to you unlike, say, <code>TrackControl</code> on Macintosh) so there is no reason you can&#39;t adjust the &quot;mouse&quot; point for each pass.</p>
+
+<h4 id="toc_111">(Mac-specific) Problems with mouse clicks -1</h4>
+
+<blockquote>
+<p>I have big troubles handling mouse clicks in the openPaige object within my class library. If I get a click (with <code>GetMouse(&amp;hitPt)</code>) and do the following (testing a response to a simple click)...</p>
+</blockquote>
+
+<p>Your test code sample should work. Therefore, I have to conclude there is something wrong with the mouse point you obtain with <code>GetMouse()</code>.</p>
+
+<p>I would guess that you are doing a <code>GetMouse()</code> without regards to the current <code>GrafPort</code>. Since <code>GetMouse()</code> returns a <code>LOCAL</code> point (based on current port&#39;s coördinates), if you don&#39;t have the correct <code>GrafPort</code> set you will get some other coördinate system. Worst case, you are getting &quot;global&quot; coordinates which will be completely different than what you expect.</p>
+
+<p>Or, another possibility might have to do with the window&#39;s &quot;origin.&quot; I know that some class libraries muck with this to create scrolling effects.</p>
+
+<p>What you need to do is, check what the actual values of <code>point.h</code> and <code>point.v</code> really are. I know that pgDragSelect works, in fact you should see the caret immediately appear at the point you give for <code>mouse_down</code> verb.</p>
+
+<p>BTW, the usual (best) way for dragging the mouse in a <code>pg_ref</code> is to get the click right out of the <code>EventRecord.where</code> field (first doing a <code>GlobalToLocal</code> on it). That is by far the most accurate -- but I do not know if that <code>EventRecord</code> is easily available in your class library.</p>
+
+<h2 id="toc_112">2.17 Activate/Deactivate</h2>
+
+<p>To deactivate a <code>pg_ref</code> (to cause highlighting or the &quot;caret&quot; to disappear), call the following function:</p>
+
+<div><pre><code class="language-none">(void) pgSetHiliteStates (pg_ref pg, short front_back_state, short perm_state, pg_boolean show_hilite);</code></pre></div>
+
+<p>In a &quot;window&quot; environment, where different windows can overlap, it is usually desirable to disable any OpenPaige objects that are not contained in the front most window. To do so, <code>pgSetHiliteState</code> can be called to turn off the highlighting or the &quot;caret.&quot;</p>
+
+<p>An OpenPaige object, however, contains two highlight states, one for &quot;front/back&quot; activate and deactivate and one to disable a <code>pg_ref</code> in both states. For &quot;normal&quot; applications, you will only be changing the front/back highlight state (activate or deactivate a <code>pg_ref</code> according to its window position). The purpose of the alternate highlight state is to provide a way to disable a <code>pg_ref</code> completely regardless of its window position.</p>
+
+<p>The <code>front_back_state</code> should be one of the following values:</p>
+
+<div><pre><code class="language-none">typedef enum
+{
+    no_change_verb, // State stays the same
+    activate_verb,  // Set to activate mode
+    deactivate_verb,    // Set to deactivate mode
+}</code></pre></div>
+
+<p>The <code>perm_state</code> parameter provides an alternate highlight state setting; this parameter can also be any of the above. For getting &quot;Up &amp; Running,&quot; however, pass <code>no_change_verb</code> for this parameter.</p>
+
+<p>If <code>show_hilite</code> is &quot;TRUE&quot;, the highlighting (or caret) will redraw according to <code>pg</code>&#39;s new state. A &quot;FALSE&quot; value will activate or deactivate <code>pg</code> internally (by setting special flags within the <code>pg_ref</code>) but the highlighting or caret will remain unchanged. For getting &quot;Up &amp; Running&quot;, always pass TRUE for <code>should_draw</code>.</p>
+
+<p>See also &quot;Additional Selection Support&quot; <!--on page 10-4--> and &quot;Activate/Deactivate with shape of selection still showing&quot;<!--on page 10-13-->.</p>
+
+<h3 id="toc_113">Responding to <code>WM_SETFOCUS</code> and <code>WM_KILLFOCUS</code> messages</h3>
+
+<div><pre><code class="language-none">{
+case WM_KILLFOCUS:
+    pgSetHiliteStates(pgRef, deactivate_verb, no_change_verb, TRUE);
+
+case WM SETFOCUS:
+    pgSetHiliteStates(pgRef, activate_verb, no_change_verb, TRUE);
+}</code></pre></div>
+
+<h3 id="toc_114">Getting the Highlight State</h3>
+
+<p>If you want to know what state a <code>pg_ref</code> is in, call the following:</p>
+
+<div><pre><code class="language-none">(void) pgGetHiliteStates (pg_ref pg, short PG_FAR *front_back_state, short PG_FAR *perm_state);</code></pre></div>
+
+<p>The front/back highlight state will be returned in <code>front_back_state</code> and the alternate state in <code>perm_state</code>. Both parameters will be set to either <code>activate_verb</code> or <code>deactivate_verb</code>.</p>
+
+<h5 id="toc_115">NOTES</h5>
+
+<ol>
+<li>If the highlight status is already set to what is specified in your parameters (e.g., if you are deactivating a <code>pg_ref</code> that is already deactivated or vice versa), this function does nothing.</li>
+<li>A <code>pg_ref</code> returned from <code>pgNew</code> is set to an active state.</li>
+<li>If a <code>pg_ref</code> is in a deactivate state, the caret will not blink even if you call pgIdle and highlighting will not draw.</li>
+</ol>
+
+<h3 id="toc_116">TECH NOTE</h3>
+
+<blockquote>
+<p>Why two activate states?</p>
+</blockquote>
+
+<p>One is for regular activate/deactivate for a window; the other is to FORCE deactivation regardless of the window&#39;s front/behind state. Haven&#39;t you ever been in a situation where you want to deactivate selections but the window is still in front? Using two possible states, it becomes easier to do that. The two states are logically &quot;AND&#39;d&quot; logic for activation: both must be true or the document is deactivated.</p>
+
+<h4 id="toc_117">MFC NOTE</h4>
+
+<p><strong>IMPORTANT:</strong> You must activate and deactivate the OpenPaige object in the MFC OnSetFocus() and OnKillFocus() before any of the functions in this chapter will work.</p>
+
+<h4 id="toc_118">Example:</h4>
+
+<div><pre><code class="language-none">(.CPP)
+
+// Respond to Windows message WM_SETFOCUS...
+void MyView::OnSetFocus(CWnd* pOldWnd)
+{
+    CView::OnSetFocus(pOldWnd);
+    pgSetHiliteStates(m_Paige, activate_verb, no_change_verb, TRUE);
+}
+
+// Respond to Windows message WM_KILLFOCUS...
+void MyView::OnKillFocus(CWnd* pNewWnd)
+{
+    pgSetHiliteStates(m_Paige, deactivate_verb, no_change_verb, TRUE);
+    CView::OnKillFocus(pNewWnd);
+}</code></pre></div>
+
+<h1 id="toc_119">3 BEYOND THE DEFAULTS</h1>
+
+<p>The purpose of this section is to explain some of the more common additions and/or changes to the &quot;bare minimum&quot; implementation discussed in the previous section, &quot;Up &amp; Running.&quot;</p>
+
+<h2 id="toc_120">3.1 Changing Attributes</h2>
+
+<p>There will be situations where you want to change the attributes of an OpenPaige object after it is created (these are the bits initially passed to <code>pgNew</code> for the &quot;attributes&quot; parameter). There are also situations where you want to examine the current attributes (to check mark a menu item, for instance). To do so, use the following:</p>
+
+<div><pre><code class="language-none">(long) pgGetAttributes (pg_ref pg);
+(pg_boolean) pgSetAttributes (pg_ref pg, long attributes);</code></pre></div>
+
+<p>To obtain the current attribute bits, call <code>pgGetAttributes</code>.</p>
+
+<p><strong>FUNCTION RESULT:</strong> The function result will be the current setting(s) of pg.</p>
+
+<p>To change the attributes, call <code>pgSetAttributes</code> with attributes set to the new bit value(s).</p>
+
+<p>OpenPaige &quot;attributes&quot; are defined as bit settings which can be a combination of any bit values shown below:</p>
+
+<div><pre><code class="language-none">#define NO_WRAP_BIT         0x00000001  // Wraps only on CR or LF
+#define NO_LF_BIT           0x00000002  // &lt;LF&gt; char ignored
+#define NO_DEFAULT_LEADING  0x00000004  // Do not add font leading
+#define NO_EDIT_BIT         0x00000008  // No editing (display only)
+#define EXTERNAL_SCROLL_BIT 0x00000010  // App controls scrolling
+#define COUNT_LINES_BIT     0x00000020  // Track line/para count
+#define NO_HIDDEN_TEXT_BIT  0x00000040  // Do not display hidden text
+#define SHOW_INVIS_CHAR_BIT 0x00000080  // Show invisible character(s)
+#define EX_DIMENSION_BIT    0x00000100  // Exclude width/height
+#define NO_WINDOW_VIS_BIT   0x00000200  // Do not respect clipped area
+#define SMART_QUOTES_BIT    0x00000800  // Do &quot;smart&quot; quotes
+#define NO_SMART_CUT_BIT    0x00001000  // Do not do &quot;smart&quot; cut/paste
+#define NO_SOFT_HYPHEN_BIT  0x00002000  // Ignore soft hyphens
+#define NO_DUAL_CARET_BIT   0x00004000  // Do not show dual carets
+#define SCALE_VIS_BIT       0x00008000  // Scale vis_area when scaling
+#define BITMAP_ERASE_BIT    0x00010000  // Erase page(s) with bitmap drwg
+#define TABS_ARE_WIDTHS_BIT 0x10000000  // Tab chars are merely wides
+#define LINE_EDITOR_BIT     0x40000000  // Doc is line editor mode</code></pre></div>
+
+<p>These are described under &quot;Attribute Settings&quot;<!-- on page 2-23-->.</p>
+
+<p><strong>FUNCTION RESULT:</strong> After calling <code>pgSetAttributes</code>, the function result will be &quot;TRUE&quot; if <code>pg</code> should be redrawn. The only time &quot;TRUE&quot; is returned is when one or more attributes have been set that will affect the way text is drawn or the way word wrap is computed.</p>
+
+<p><strong>WARNING:</strong> Before setting attributes, first get the current settings from the function <code>pgGetAttributes</code> and change the bits you require and pass that whole long value to <code>pgSetAttributes</code>. Otherwise, the <code>view only</code> bits will get changed erroneously.</p>
+
+<p>Additional attributes can be set for more advanced features using the following <code>set</code> and <code>get</code> functions:</p>
+
+<div><pre><code class="language-none">(pg_boolean) pgSetAttributes2 (pg_ref pg, long attributes); (long) pgGetAttributes2 (pg_ref pg);</code></pre></div>
+
+<p>To obtain the current, extended attribute bits, call <code>pgGetAttributes2</code>.</p>
+
+<p><strong>FUNCTION RESULT:</strong> The function result will be the current setting(s) of the extended attributes of <code>pg</code>.</p>
+
+<p>To change the extended attributes, call <code>pgSetAttributes2</code> with attributes set to the new bit value(s).</p>
+
+<p>OpenPaige &quot;extended attributes&quot; are defined as bit settings which can be a combination of any of the following.</p>
+
+<div><pre><code class="language-none">#define KEEP_READ_STYLES    0x00000200  // Keep existing style_infos for pgReadDoc()
+#define KEEP_READ_PARS      0x00000400  // Keep existing par_infos for pgReadDoc()
+#define KEEP_READ_FONTS     0x00000800  // Keep existing font_infos for pgReadDoc()
+#define CHECK_PAGE_OVERFLOW 0x00002000  // Constantly check page overflow
+#define NO_HAUTOSCROLL      0x00080000  // Do not autoscroll horizontally
+#define NO_VAUTOSCROLL      0x00100000  // Do not autoscroll vertically</code></pre></div>
+
+<p><code>KEEP_READ_STYLES</code> tells OpenPaige to not remove existing <code>style_info</code> records from the <code>pg_ref</code> when a file is read. Normally, all existing style records are replaced with the styles read from an OpenPaige file. This attribute is used to retain the existing styles.</p>
+
+<p><code>KEEP_READ_PARS</code> tells OpenPaige to not remove existing <code>par_info</code> records from the <code>pg_ref</code> when a file is read. Normally, all existing paragraph records are replaced with the paragraph records read from an OpenPaige file. This attribute is used to retain the existing paragraph records.</p>
+
+<p><code>KEEP_READ_FONTS</code> tells OpenPaige to not remove existing <code>font_info</code> records from the <code>pg_ref</code> when a file is read. Normally, all existing font records are replaced with the fonts read from an OpenPaige file. This attribute is used to retain the existing fonts.</p>
+
+<p><code>CHECK_PAGE_OVERFLOW</code> tells OpenPaige to constantly test the position of the last character in the document and, if it overflows the bottom of the <code>page_area</code>, sets an internal field to the number of characters that have overflowed. The purpose of this attribute is to allow an application to implement features that require &quot;page overflow checking&quot;, but since this requirement requires constant pagination and extra processing, set this attribute only when absolutely necessary.</p>
+
+<p><code>NO_HAUTOSCROLL</code>, <code>NO_VAUTOSCROLL</code> tells OpenPaige not to automatically scroll horizontally or vertically, respectively, when <code>pgDragSelect()</code> is called.</p>
+
+<h2 id="toc_121">&quot;Auto-checking&quot; page overflow</h2>
+
+<p>Setting <code>CHECK_PAGE_OVERFLOW</code> with <code>pgSetAttribute2()</code> causes OpenPaige to continuously check the situation where character(s) flow below the boundaries of the page area. If this attribute is set, the <code>overflow_size</code> member within the <code>pg_ref</code> get set to the number of characters that overflow the page.</p>
+
+<p>Or, if <code>overflow_size</code> is set to -1, a single carriage return is causing the overflow (i.e., the text overflows but the overflow is a &quot;blank&quot; line).</p>
+
+<p><strong>NOTE:</strong> The auto-checking for page overflow is meaningless if your <code>pg_ref</code> is set for repeating pages, or if your <code>pg_ref</code> is set to a variable page size. The only time overflow checking will work (or make any sense) is for fixed-size, nonrepeating page shapes.</p>
+
+<h2 id="toc_122">Checking page overflow</h2>
+
+<p><strong>NOTE:</strong> You should not implement this code if your <code>pg_ref</code> is set for repeating pages, or if your <code>pg_ref</code> is set for a variable document height.</p>
+
+<div><pre><code class="language-none">/* Call the function below after doing anything that can change the size of the document. This included insertions, deletions, style and font changes (which can cause new word wrapping) and page size changes. This function returns the number of characters that are overflowing the page area of pg. */
+
+/* Note: CHECK_PAGE_OVERFLOW must be set with pgSetAttributes2(pg). */
+
+long CheckPageOverflow (pg_ref pg)
+{
+    paige_rec_ptr pg_rec;
+    long_overflow_amount;
+
+    pg_rec = UseMemory(pg);
+    overflow_amount = pg_rec-&gt;overflow_size;
+    UnuseMemory(pg);
+
+    return overflow_amount;
+    }</code></pre></div>
+
+<h3 id="toc_123">TECH NOTE: Carriage return/line feeds causing problems</h3>
+
+<p>Regarding LF/CR characters, OpenPaige handles both of them as a &quot;new line&quot; except a CR. It also starts a new paragraph, but for LF it just does a line feed.</p>
+
+<p>Note that lines that terminate both in LF and CR will cause &quot;two&quot; lines on the screen -- at least in OpenPaige default mode.</p>
+
+<p>You can turn that off, however, if you want LF/CR to be treated as only one líne feed.&#39; To do so, just set <code>NO_LF_BIT</code> in the OpenPaige attribute flags during <code>pgNew</code>. When this attribute is set, OpenPaige ignores all LFs embedded in the text (they become invisible).</p>
+
+<p>Note that I haven&#39;t mentioned what the values are for LF and CR, because those are whatever values sit in OpenPaige globals. Also as he mentioned, MPW will compile <code>\r</code> etc. differently than Symantec so watch out for that. See &quot;Changing Globals&quot;<!-- on page 3-81--> and &quot;CR/LF Conversion&quot;<!-- on page 3-88-->.</p>
+
+<h2 id="toc_124">3.3 A Different Default Font, Style, Paragraph</h2>
+
+<p>Any time a new <code>pg_ref</code> is created, OpenPaige sets the initial <code>style_info</code>, <code>font_info</code> and <code>par_info</code> (style, font and paragraph format) to whatever exists in the corresponding field from <code>pg_globals</code>.</p>
+
+<p>Hence, to set default style, font or paragraph format, simply change the respective information in <code>pg_globals</code> (see example below).</p>
+
+<p>To change the default style information, change field(s) in <code>pg_globals.def_style</code>; to change the default font, change field(s) in <code>pg_globals.def_font</code>; to change the default paragraph format, change field(s) in <code>pg_globals.def_par</code>.</p>
+
+<p>You can also set the default low-level callback &quot;hook&quot; functions for style or paragraph records, and even the general OpenPaige functions by placing a pointer to the new function in the respective <code>pg_globals</code> field. See &quot;Customizing OpenPaige&quot;<!-- on page 271-->.</p>
+
+<p>For example, if you wanted to override the draw-text callback function always for all styles, you would change the default draw-text function in the default style found in <code>pg_globals</code> before your first call to <code>pgNew</code> (but after <code>pgInit</code>:</p>
+
+<div><pre><code class="language-none">pg_globals.def_style.procs.draw = myTextDrawProc;</code></pre></div>
+
+<p>... where <code>myTextDrawProc</code> is a low-level callback to draw text (see &quot;Setting Style Functions”<!-- on page 27-4-->). If you did this, every new <code>style_info</code> record created by OpenPaige will contain your callback function.</p>
+
+<p>The default hooks for general callbacks not related to styles or paragraph formats are in <code>pg_globals.def_hooks</code>.</p>
+
+<p>See a complete description of <code>style_info</code>, <code>font_info</code> and <code>par_info</code> records under &quot;Style Basics”<!-- on page 8-1-->.</p>
+
+<h3 id="toc_125">Change defaults after they are created using <code>pgInit</code>.</h3>
+
+<p>These changes will apply to all <code>pgNew</code>s that are called later.</p>
+
+<div><pre><code class="language-none">void ApplInit() // Initialisation of the App
+{
+    pgMemStartup(&amp;mem_globals, 0);
+    pgInit(&amp;paige_rsrv, &amp;mem_globals);
+
+    /* change to make the default for all pg_refs created herein after 
+    9 point instead of 12 point is a fraction with hi word being a 
+    point is a fraction with hi word being the whole point value /*
+
+    paige_rsrv.def_style.point = 0x00090000;
+}</code></pre></div>
+
+<h3 id="toc_126">Default tab spacing</h3>
+
+<p>You can also change the default spacing for tabs (the distance to the next tab if no specific tab stops have been defined in the paragraph format). To do so, change <code>globals.def_par.def_tab_space</code>.</p>
+
+<div><pre><code class="language-none">/* The following code changes the default tab spacing (for all subsequent pg_refs) to $32. */
+
+pgMemStartup(&amp;mem_globals, 0);
+pgInit(&amp;paige_rsrc, &amp;mem_globals);
+paige_rsrv.def_par.def_tab_space $=32$;</code></pre></div>
+
+<h2 id="toc_127">3.4 Graphic Devices</h2>
+
+<p>As mentioned earlier, a newly created OpenPaige object will always draw to a default device; in a Macintosh environment, for instance, the default device will be the current port that is set before calling <code>pgNew</code>. In a Windows environment, the default device will be an HDC derived from <code>GetDC(hWnd)</code>, where <code>hWnd</code> is the window given to <code>pgNew</code>.</p>
+
+<h3 id="toc_128">Setting a device</h3>
+
+<p>It is possible that you will want to change that default device once an OpenPaige object has been created. To do so, call the following function:</p>
+
+<div><pre><code class="language-none">(void) pgSetDefaultDevice (pg_ref pg, graf_device_ptr device);</code></pre></div>
+
+<p>The device parameter is a pointer to a structure which is maintained internally (and understood) by OpenPaige. (Generally, you won&#39;t be altering its structure directly but the record layout is provided at the end of this section for your reference).</p>
+
+<p>The contents and significance of each field in a <code>graf_device</code> depends on the platform in which OpenPaige is running. However, a function is provided for you to initialize a <code>graf_device</code> regardless of your platform:</p>
+
+<div><pre><code class="language-none">(void) pglnitDevice (pg_globals_ptr globals, generic_var the_port, long machine_ref, graf_device_ptr device);</code></pre></div>
+
+<p>The above function sets up an OpenPaige graphics port which you can then pass to <code>pgSetDefaultDevice</code> (you can also use <code>pgInitDevice</code> to set up an alternate port that can be passed to <code>pgDisplay</code>).</p>
+
+<p>The <code>globals</code> parameter is a pointer to the same structure you passed to <code>pgInit</code>.</p>
+
+<p>The actual (but machine-dependent) graphics port is passed in <code>the_port</code>; what should be put in this parameter depends on the platform you are working with, as follows:</p>
+
+<ul>
+<li><p><strong>Macintosh</strong> (and PowerMac) — <code>the_port</code> should be a <code>GrafPtr</code> or <code>CGrafPtr</code>; <code>machine_ref</code> should be zero.</p></li>
+<li><p>Windows (all OS versions) — <code>the_port</code> should be an <code>HWND</code> and <code>machine_ref</code> should be <code>MEM_NULL</code>. Or, if you only have a device context (but no window), <code>the_port</code> should be <code>MEM_NULL</code> and <code>machine_ref</code> the device context. See sample below.</p></li>
+</ul>
+
+<p>The <code>device</code> parameter must be a pointer to an uninitialised <code>graf_device</code> record. The function will initialise every field in the <code>graf_device</code>; you can then pass a pointer to that structure to <code>pgSetDefaultDevice</code>.</p>
+
+<h4 id="toc_129">NOTES</h4>
+
+<ol>
+<li><p>If you specified a window during <code>pgNew()</code> and want the <code>pg_ref</code> to continue displaying in that window, the &quot;default device&quot; is already set, so you do not need to use these functions. The only reason you would/should ever set a default device is if you want to literally change the window or device context the <code>pg_ref</code> is associated with.</p></li>
+<li><p>OpenPaige makes a copy of your <code>graf_device</code> record when you call <code>pgSetDefaultDevice</code>, so the structure does not need to remain static. But the graphics port itself (<code>HWND</code> or <code>HDC</code> for Windows, or <code>GrafPtr</code> for Mac) must remain “open” and valid until it will no longer be used by OpenPaige.</p></li>
+<li><p>If you need to temporarily change the <code>GrafPtr</code> (Macintosh) or device context (Windows), see &quot;Quick &amp; easy <code>set-window</code>&quot;<!-- on page 3-72 in this chapter-->.</p></li>
+</ol>
+
+<p><strong>CAUTION:</strong> Do not set the same <code>graf_device</code> as the &quot;default device&quot; to more than one <code>pg_ref</code>. If you need to set the same window or device context to more than one <code>pg_ref</code>, create a new <code>graf_device</code> for each one.</p>
+
+<h3 id="toc_130">Setting up a <code>graf_device</code> for Windows</h3>
+
+<h4 id="toc_131">EXAMPLE 1: Setting up a <code>graf_device</code> from a Window handle (HWND)</h4>
+
+<div><pre><code class="language-none">graf_device device;
+
+pgInitDevice(&amp;paige_rsrv, (generic_var)hWnd, MEM_NULL, &amp;device);
+pgSetDefaultDevice(pg, &amp;device);
+
+//... other code, draw, paint, whatever.
+
+pgCloseDevice(&amp;paige_rsrv, &amp;device);</code></pre></div>
+
+<h4 id="toc_132">EXAMPLE 2: Setting up a <code>graf_device</code> from a device context only (HDC):</h4>
+
+<div><pre><code class="language-none">graf_device device;
+
+pgInitDevice(&amp;paige_rsrv, MEM_NULL, (generic_var)hDC, &amp;device);
+pgSetDefaultDevice(pg, &amp;device);
+
+//... other code, draw, paint, whatever.</code></pre></div>
+
+<h3 id="toc_133">Setting default device on the Macintosh</h3>
+
+<div><pre><code class="language-none">/* This function accepts a pg_ref (already created) and a Window pointer. The Window is set to pg&#39;s default drawing port, so after a call to this function, all drawing will occur in a new window. */
+
+void set_new_paige_port (pg_ref pg, WindowPtr new_port)
+{
+    graf_device paige_port;
+    pgInitDevice(&amp;paige_rsrv, new_port, 0, &amp;paige_point);
+    pgSetDefaultDevice(pg, &amp;paige_port);
+}
+
+/* Done. OpenPaige makes a copy of paige_port so it does not need to be static */</code></pre></div>
+
+<p>If you want to obtain the current default device for some reason, you can call the following:</p>
+
+<div><pre><code class="language-none">(void) pgGetDefaultDevice (pg_ref pg, graf_device_ptr device);</code></pre></div>
+
+<p>The device is copied to the structure pointed to by <code>device</code>.</p>
+
+<h3 id="toc_134">Disposing a device</h3>
+
+<p>If you have initialized a <code>graf_device</code>, followed immediately by <code>pgSetDefaultDevice()</code>, you do not need to uninitialize or dispose the <code>graf_device</code>.</p>
+
+<p>But if you have initialized a <code>graf_device</code> that you are keeping around for other purposes, you must eventually dispose its memory structures. To so call the following:</p>
+
+<div><pre><code class="language-none">(void) pgCloseDevice (pg_globals_ptr globals, graf_device_ptr device);</code></pre></div>
+
+<p>This function disposes all memory structure created in device when you called <code>pgInitDevice</code>. The <code>globals</code> parameter should be a pointer to the same structure given to <code>pgInit</code>.</p>
+
+<h4 id="toc_135">NOTES:</h4>
+
+<ol>
+<li><p><code>pgCloseDevice</code> does not close or dispose the <code>GrafPort</code> (Macintosh) or the HWND/HDC (Windows) — you need to do that yourself.</p></li>
+<li><p>You should never dispose a device you have set as the default device because <code>pgDispose</code> will call <code>pgCloseDevice</code>. The only time you would use <code>pgCloseDevice</code> is either when you have set up a <code>graf_device</code> to pass as a temporary pointer to <code>pgDisplay</code> (or a similar function that accepts a temporary port) in which OpenPaige does not keep around, OR when you have changed the default device (see note below).</p></li>
+<li><p>Additionally: OpenPaige does not dispose the previous default device if you change it with <code>pgSetDefaultDevice</code>. Thus, if you change the default you should get the current device (using <code>pgGetDefaultDevice</code>), set the new device then pass the older device to <code>pgCloseDevice</code>.</p></li>
+</ol>
+
+<h3 id="toc_136">Quick &amp; easy <code>set-window</code></h3>
+
+<p>In certain situations you might want to temporarily change the window or device context a <code>pg_ref</code> will render its text drawing. While this can be done by initializing a <code>graf_device</code> and giving that structure to <code>pgSetDefaultDevice()</code>, a simpler and faster approach might be to use the following functions:</p>
+
+<div><pre><code class="language-none">generic_var pgSetDrawingDevice (pg_ref pg, const generic_var draw_device);
+void pgReleaseDrawingDevice (pg_ref pg, const generic_var previous_device);</code></pre></div>
+
+<p>The purpose of <code>pgSetDrawingDevice</code> is to temporarily change the drawing device for a <code>pg_ref</code>. The <code>draw_device</code> parameter must be a <code>WindowPtr</code> (Macintosh) or a device context (Windows).</p>
+
+<p>The function returns the current device (the one used before <code>pgSetDrawingDevice</code>).</p>
+
+<p><strong>NOTE:</strong> &quot;device&quot; in this case refers to a machine-specific device, not a <code>graf_device</code> structure.</p>
+
+<p>You should call <code>pgReleaseDrawingDevice</code> to restore the <code>pg_ref</code> to its previous state. The <code>previous_device</code> parameter should be the value returned from <code>pgSetDrawingDevice</code>.</p>
+
+<h3 id="toc_137">Temporarily changing the HDC (Windows)</h3>
+
+<div><pre><code class="language-none">/* This function forces a pg_ref to display inside a specific HDC instead of the default. */
+
+void DrawToSomeHDC (pg_ref pg, HDC hDC)
+{
+    generic_var old_dc;
+    old_dc = pgSetDrawingDevice(pg, (generic_var)hDC);
+    pgDisplay(pg, NULL, MEM_NULL, MEM_NULL, NULL, best_way); 
+    pgReleaseDrawingDevice(pg, old_dc);
+}</code></pre></div>
+
+<h3 id="toc_138">Setting a Scaled Device Context (Windows only)</h3>
+
+<p>On a Windows platform, in certain cases you will want to preset a device context that needs to scale all drawing. However, using the standard function to set a device into an OpenPaige object (<code>pgSetDrawingDevice</code>) will not work in this case because OpenPaige will want to clear your mapping mode(s) and scaling factor(s).</p>
+
+<p>The solution is to inform OpenPaige that you wish to set your own device context, but to include a scaling factor:</p>
+
+<div><pre><code class="language-none">generic_var pgSetScaledDrawingDevice (pg_ref pg, const generic_var draw_device, pg_scale_ptr scale);</code></pre></div>
+
+<p>This is identical to <code>pgSetDrawingDDevice()</code> except that it contains the additional parameter <code>scale</code> which specifies the scaling factor. For more information on OpenPaige scaling, see the appropriate section(s).</p>
+
+<h3 id="toc_139">3.5 Color Palettes (Windows-specific)</h3>
+
+<div><pre><code class="language-none">void pgSetDevicePalette (pg_ref pg, const generic_var palette); generic_var pgGetDevicePalette (pg_ref pg);</code></pre></div>
+
+<p>These Windows-specific functions are used to select a custom palette into the device context of a <code>pg_ref</code>. To set a palette, call <code>pgSetDevicePalette()</code> and pass the <code>HPALETTE</code> in <code>palette</code>. If you want to clear a previous palette, pass <code>(generic_var)O</code>.</p>
+
+<p>Setting a palette causes OpenPaige to select that palette every time it draws to its device context.</p>
+
+<p>To obtain the existing palette (if any), call <code>pgGetDevicePalette()</code></p>
+
+<p><strong>CAUTION:</strong> Do not delete the palette unless you first clear it from the <code>pg_ref</code> by calling <code>pgSetDevicePalette(pg, (generic_var)0)</code>.</p>
+
+<p><strong>CAUTION:</strong> If you change the default device (<code>pgSetDefaultDevice</code>), you need to set the custom palette again.</p>
+
+<p><strong>NOTE:</strong> OpenPaige does not delete the <code>HPALETTE</code>, even during <code>pgDispose()</code>. It is your responsibility to delete the palette.</p>
+
+<h3 id="toc_140">3.6 Changing Shapes</h3>
+
+<p>You can change the <code>vis_area</code>, the <code>page_area</code> and/or the <code>exclude_area</code> of an OpenPaige object at any time (see &quot;Creating an OpenPaige Object&quot;<!-- on page 2-14 about pgNew<--> for a description of each of these parameters):</p>
+
+<div><pre><code class="language-none">(void) pgSetAreas (pg_ref pg, shape_ref vis_area, shape_ref page_area, shape_ref exclude_area);</code></pre></div>
+
+<p>The <code>vis_area</code>, <code>page_area</code>, and <code>exclude_area</code> are functionally identical to the same parameters passed in <code>pgNew</code>. Of course, you could have passed any of these shapes in <code>pgNew</code>, but the purpose of <code>pgSetAreas</code> is to provide a way to change the visual area and/or wrap area and/or exclusion areas some time after an OpenPaige object has been created.</p>
+
+<p>Any of the three &quot;<code>_area</code>&quot; parameters can be <code>MEM_NULL</code>, in which case that shape remains unchanged.</p>
+
+<p>Subsequent drawing of <code>pg</code>&#39;s text will reflect the changes, if any, produced by the changed shape(s).</p>
+
+<p>A typical reason for changing shapes would be, for example, to implement a &quot;set columns&quot; feature. The initial OpenPaige object might have been a simple rectangle (&quot;normal&quot; document), but let us suppose that the user later wishes to change the document to three columns. To do so, you could set up a <code>page_area</code> shape for three columns and pass that new shape to <code>page_area</code> and null pointers for the other two areas. The OpenPaige object, on a subsequent <code>pgDisplay</code>, would rewrap the text and flow within these &quot;columns.&quot;</p>
+
+<h4 id="toc_141">NOTES</h4>
+
+<ol>
+<li><p>If your area(s) are simple rectangles, it may prove more efficient to use <code>pgSetAreaBounds()</code> in this chapter.</p></li>
+<li><p>If you simply want to &quot;grow&quot; the <code>vis_area</code> (such as responding to a user changing the window’s size), see “&#39;Growing&#39; The Visual Area”<!-- on page 3-76--> for information on <code>pgGrowVisArea</code>.</p></li>
+<li><p>OpenPaige makes a copy of the new shape(s) you pass to <code>pgSetAreas</code>. You can therefore dispose these shapes any time afterwards.</p></li>
+</ol>
+
+<p>For information on constructing various shapes, see &quot;All About Shapes&quot;<!-- on page 12-1-->.</p>
+
+<p>If you are implementing containers, see “Containers Support”<!-- on page 14-1-->.</p>
+
+<h2 id="toc_142">&quot;Growing&quot; The Visual Area</h2>
+
+<p>If you want to change the <code>vis_area</code> (area in which text displays) in response to a user enlarging the window&#39;s width and height, call the following:</p>
+
+<div><pre><code class="language-none">(void) pgGrowVisArea (pg_ref pg, co_ordinate_ptr top_left, co_ordinate_ptr bot_right);</code></pre></div>
+
+<p>The size of <code>vis_area</code> shape in <code>pg</code> is changed by adding <code>top_left</code> and <code>bot_right</code> values to <code>vis_area</code>&#39;s top-left and bottom-right corners, respectively.</p>
+
+<p>By &quot;adding&quot; is meant the following: <code>top_left.v</code> is added to <code>vis_area</code>&#39;s top and <code>top_left.h</code> is added to <code>vis_area</code>&#39;s left; <code>bot_right.v</code> is added to <code>vis_area</code>&#39;s bottom and <code>bot_right.h</code> is added to <code>vis_area</code>&#39;s right.</p>
+
+<p><strong>NOTE:</strong> This function adds to (or &quot;subtracts&quot; from, if coordinate parameters are negative) the visual area rather than setting or replacing the visual area to the given coördinates.</p>
+
+<p>Either <code>top_left</code> or <code>bot_right</code> can be null pointers, in which case they are ignored.</p>
+
+<p><strong>NOTE:</strong> This function only works correctly if <code>vis_area</code> is rectangular; if you have set a non-rectangular shape, you need to reconstruct your <code>vis_area</code> shape and change it with <code>pgSetAreas</code>.</p>
+
+<h4 id="toc_143">Responding to WM SIZE message (Windows)</h4>
+
+<div><pre><code class="language-none">case WM_SIZE:
+    if (pgRef)
+    {
+        rectangle vis_bounds;
+        co_ordinate amount_to_grow;
+        long old_width, new_width, old_height, new_height;
+        pgAreaBounds(pgRef, NULL, &amp;vis_bounds);
+        new_width = (long) LOWORD(lParam);
+        new_height = (long) HIWORD(lParam);
+        old_width = vis_bounds.bot_right.h - vis_bounds.top_left.h;
+        old_height = vis_bounds.bot_right.v - vis_bounds.top_left.v;
+        amount_to_grow.h = new_width - old_width;
+        amount_to-grow.v = new_height - old_height;
+        pgGrowVisArea(pgRef, NULL, (co_ordinate_ptr) &amp;amount_to_grow);
+    }
+break;</code></pre></div>
+
+<h2 id="toc_144">3.7 Getting information about shapes</h2>
+
+<h3 id="toc_145">Getting Current Shapes</h3>
+
+<p>To obtain any of the three shapes in an OpenPaige object, call the following:</p>
+
+<div><pre><code class="language-none">(void) pgGetAreas (pg_ref pg, shape_ref vis_area, shape_ref page_area, shape_ref exclude_area);</code></pre></div>
+
+<p>The <code>vis_area</code>, <code>page_area</code>, <code>exclude_area</code> must be pre-created <code>shape_ref</code>s (see below). Any of them, however, can be <code>MEM_NULL</code> (in which case that parameter is ignored).</p>
+
+<p>This function will copy the contents of <code>pg</code>&#39;s visual area, wrap area, and exclude area into <code>vis_area</code>, <code>page_area</code> and exclude_area, respectively, if that parameter is non-null.</p>
+
+<p>Helpful hint: The easiest way to create a <code>shape_ref</code> is to call <code>pgRectToShape</code> passing a null pointer to the <code>rect</code> parameter, as follows:</p>
+
+<div><pre><code class="language-none">shape_refnew_shape;
+new_shape = pgRectToShape(&amp;paige_rsrv, NULL);</code></pre></div>
+
+<p>The <code>paige_rsrv</code> parameter in the above example is a pointer to the same <code>pg_globals</code> passed to <code>pgInit</code>. By providing a null pointer as the second parameter, a new <code>shape_ref</code> is returned with an empty shape (all sides zero).</p>
+
+<h3 id="toc_146">&#39;Get/Set Areas&#39; Trick</h3>
+
+<p>If you are using simple rectangles for the visual area or wrap (page) area in an OpenPaige object, and/or if you simply want to know the bounding rectangular area of either shape, use the following instead of <code>pgGetAreas</code>:</p>
+
+<div><pre><code class="language-none">(void) pgAreaBounds (pg_ref pg, rectangle_ptr page_bounds, rectangle_ptr vis_bounds);</code></pre></div>
+
+<p>When <code>pgAreaBounds</code> is called, <code>page_bounds</code> gets set to a rectangle that encloses the entire <code>page_area</code> and <code>vis_bounds</code> gets set to a rectangle that encloses the entire <code>vis_area</code> of <code>pg</code>.</p>
+
+<p>If you don&#39;t want one or the other, either <code>page_bounds</code> or <code>vis_bounds</code> can be a null pointer.</p>
+
+<p>This function is useful when you simply want the enclosing bounds of either shape because you do not need to create a <code>shape_ref</code>.</p>
+
+<p>You can also set the page area and/or vis area by calling <code>pgSetAreaBounds</code>, which accepts a pointer to a rectangle in <code>page_bounds</code> and <code>vis_bounds</code> (of which either can be a null pointer). Note that this is faster and simpler than <code>pgSetAreas</code>, except that it only works provided that the shape(s) are single rectangles.</p>
+
+<h3 id="toc_147">Direct Shape Access</h3>
+
+<p>You can also access the <code>shape_ref</code>s in an OpenPaige object directly using any of the following:</p>
+
+<div><pre><code class="language-none">(shape_ref) pgGetPageArea (pg_ref pg);
+(shape_ref) pgGetVisArea (pg_ref pg);
+(shape_ref) pgGetExcludeArea (pg_ref pg);</code></pre></div>
+
+<p>These three functions will return the <code>shape_ref</code> for <code>page_area</code>, <code>vis_area</code> and <code>exclude_area</code>, respectively. Neither will ever return <code>MEM_NULL</code> (even if you provided <code>MEM_NULL</code> for <code>exclude_area</code> in <code>pgNew</code>, for instance, OpenPaige will still maintain a <code>shape_ref</code> for the exclusion, albeit an empty shape).</p>
+
+<p>The purpose of these functions is for special applications that need to look inside of OpenPaige shape as quickly and as easily as possible.</p>
+
+<p><strong>CAUTION:</strong> These functions return the actual memory_ref&#39;s for each shape. You must therefore never dispose of them, nor should you alter their contents (or else OpenPaige won&#39;t know you have changed anything and word wrapping and display will fail). If you want to alter the contents of OpenPaige shapes, see &quot;Containers Support&quot;<!-- on page 14-1--> and &quot;Exclusion Areas&quot;<!-- on page 15-1-->.</p>
+
+<h3 id="toc_148">Getting Shape Rectangle Quantity</h3>
+
+<p>You can find out how many rectangles comprise any shape by calling the following:</p>
+
+<div><pre><code class="language-none">(pg_short_t) pgNumRectsInShape (shape_ref the_shape);</code></pre></div>
+
+<p>The function will return the number of rectangles in <code>the_shape</code>.</p>
+
+<p><strong>NOTE:</strong> The result will always be at least 1, even for an empty shape. Any &quot;empty&quot; shape is still one rectangle whose boundaries are $0,0,0,0$. If you need to detect whether or not a shape is empty, call:</p>
+
+<div><pre><code class="language-none">(pg_boolean)pgEmptyShape(the_shape); /* Returns TRUE if empty */</code></pre></div>
+
+<h2 id="toc_149">3.8 Changing Globals</h2>
+
+<p>As mentioned several times, your application provides a pointer to <code>pgInit</code> (and other places) to be used by OpenPaige to store certain global variables. This structure is initially set to certain default values, but you can make certain changes that apply to your particular application.</p>
+
+<p>For example, OpenPaige globals contain the values for special control codes such as CR, LF, and arrow keys, but there are instances when you need to change some of these &quot;characters&quot; to a different value.</p>
+
+<p>Another (more common) reason to change OpenPaige globals is to force a default text or paragraph format for all subsequent <code>pgNew()</code> calls.</p>
+
+<p>Since your application maintains the globals record, there are no functions provided to change its contents; rather, you alter the structure&#39;s contents directly some time after <code>pgInit</code>.</p>
+
+<p><strong>NOTE:</strong> The entire OpenPaige globals structure can be viewed in <code>paige.h</code>. Only the members of this structure that you are allowed to alter are shown unless noted otherwise.</p>
+
+<div><pre><code class="language-none">/* Paige &quot;globals&quot; (address space provided by app): */
+
+struct pg_globals
+{
+    pgm_globals_ptr mem_globals;            // Globals for pgMemManager
+    long            max_offscreen;          // Maximum memory for offscreen
+    long            max_block_size;         // Maximum size of text block
+    long            minimum_line_width;     // Minimum size line width
+    long            def_tab_space;          // Default tab spacing for pgNew
+    pg_short_t      line_wrap_char;         // &lt;CR&gt; character
+    pg_short_t      soft_line_char;         // Soft &lt;CR&gt; character
+    pg_short_t      tab_char;               // Tab character
+    pg_short_t      soft_hyphen_char;       // Soft hyphen character
+    pg_short_t      bs_char;                // Backspace character
+    pg_short_t      ff_char;                // Form feed chr (for page breaks)
+    pg_short_t      container_brk_char;     // Container break character
+    pg_short_t      left_arrow_char;        // Left arrow
+    pg_short_t      right_arrow_char;       // Right arrow
+    pg_short_t      up_arrow_char;          // Up arrow
+    pg_short_t      down_arrow_char;        // Down arrow
+    pg_short_t      fwd_delete_char;        // Forward delete character
+    pg_char         hyphen_char[4];         // Hard hyphen character
+    pg_char         decimal_char[4];        // &quot;.&quot; char (for decimal tabs)
+                                            /* Visible surrogate for:
+                                            -------------------------/*
+    pg_char         cr_invis_symbol[4];     // carriage return
+    pg_char         lf_invis_symbol[4];     // line feed
+    pg_char         tab_invis_symbol[4];    // horizontal tab
+    pg_char         end_invis_symbol[4];    // end-of-document
+    pg_char         pbrk_invis_symbol[4];   // break-of-page
+    pg_char         cont_invis_symbol[4];   // container break
+    pg_char         space_invis_symbol[4];  // space
+                                            //------------------------
+    pg_char         flat_single_quote[4];   // Single &quot;typewriter&quot; quote
+    pg_char         flat_double_quote[4];   // Double &quot;typewriter&quot; quote
+    pg_char         left_single_quote[4];   // Single left smart quote
+    pg_char         right_single_quote[4];  // Single right smart quote
+    pg_char         left_double_quote[4];   // Double left smart quote
+    pg_char         right_double_quote[4];  // Double right smart quote
+    pg_char         elipse_symbol[4];       // Char to draw for ellipse
+    long            invis_font;             // Machine-specific invisible char font
+    pg_char         unknown_char[4];        // Used for unsupported characters
+    long            embed_callback_proc;    // Used internally by embed_refs
+    font_info       def_font;               // Default font for all pgNew&#39;s
+    style_info      def_style;              // Default style for all pgNew&#39;s
+    par_info        def_par;                // Default para for all pgNew&#39;s
+    color_value     def_bk_color;           // Default background colour
+    color_value     trans_color;            // Transparent colour (default is white)
+    pg_hooks        def_hooks;              // Default general hooks
+    // miscellaneous fields not to be altered by app.
+};</code></pre></div>
+
+<p>The following is a description for each field that you can change directly:</p>
+
+<p><code>max_offscreen</code> — defines the maximum amount of memory, in bytes, that can be used for offscreen bit map drawing. The purpose of this field is to avoid excessive, unreasonable offscreen bit maps for huge text on high-density monitors.</p>
+
+<p><code>max_block_size</code> — defines the largest size for contiguous text (OpenPaige breaks down text into blocks of <code>max_block_size</code> as the OpenPaige object grows).</p>
+
+<p><code>minimum_line_width</code> — pdefines the smallest width allowed, in pixels, for a line of text. The purpose of this field is for OpenPaige to decide when a portion of a wrap area is too small to even consider placing text.</p>
+
+<p><code>def_tab_space</code> — not used in version 1.3 and beyond. (To change default tab spacing, change <code>globals.def_par.def_tab_space</code>).</p>
+
+<p><code>line_wrap_char</code> through <code>down_arrow_char</code> — defines all the special characters recognized by OpenPaige. Any of these can be changed to something else if you don&#39;t want the default values. See <strong>Warning</strong> below. See also &quot;Double Byte Defaults&quot;<!-- on page 388-->.</p>
+
+<p><code>text_brk_char</code> — defines an alternate character to delineate text blocks (OpenPaige partitions large blocks of text into smaller blocks; by default, a block will break on a &lt;CR&gt; or &lt;LF&gt;, but if neither of those are found in the text, the <code>text_brk_char</code> will be searched for). For additional information, see &quot;Anatomy of Text Blocks&quot;<!-- on page 36-1--> in the Appendix.</p>
+
+<p><code>null_char</code> — defines a special character that, if inserted, merely causes word-wrap to recalculate and the <code>null_char</code> itself is not inserted.</p>
+
+<p><code>cr_invis_symbol</code> through <code>space_invis_symbol</code> — define all the character values to draw when OpenPaige is in &quot;show invisibles&quot; mode. Each character is represented by a null-terminated Pascal string (first byte is the length, followed by the byte(s) for the character, followed by a zero). Note that these characters can be zero, one or two bytes in length. See also “Double Byte Defaults”<!-- on page 3-88-->.</p>
+
+<p><code>flat_single_quote</code> through <code>right_double_quote</code> - define single and double quotation characters for &quot;smart quotes&quot; implementation. The &quot;flat<em>&quot; quote characters should be the standard ASCII characters for single and double quotes, while the &quot;left</em>&quot; and &quot;right_&quot; quote characters are to be substituted for &quot;smart quotes&quot; if that feature has been enabled.</p>
+
+<p><code>elipse_symbol</code> — contains the character to draw an ellipsis “…&quot; symbol. However, this character definition has been provided only for future enhancement: the current version of OpenPaige does not use this character for any built-in feature.</p>
+
+<p><code>invis_font</code> — defines the font to be used for drawing invisibles. This is machine dependent. For Macintosh, this is the QuickDraw font ID that gets set for invisible characters. For Windows, this is a font <code>HANDLE</code> (which you can alter by replacing it with you own font <code>HANDLE</code>)</p>
+
+<p><code>unknown_char</code> — Contains the symbol to be used when importing unsupported characters. For example, importing a file with OpenPaige&#39;s import extension may include characters that to not cross over to any available character set, in which case unknown_char will be substituted.</p>
+
+<p><strong>WARNINGS</strong></p>
+
+<ul>
+<li><em>(Windows only)</em> If you replace the <code>invis_font</code> member with your own font object, do not delete the object that was there before, if any. Moreover, OpenPaige will not delete your <code>invis_font</code> object either, so you are responsible for deleting your own object before your application quits.</li>
+<li>The default machine-specific functions within OpenPaige are assuming ASCII control codes for the special character values in <code>pg_globals</code> (ASCII chars &lt; 20).</li>
+</ul>
+
+<p><code>def_font</code>, <code>def_style</code>, <code>def_par</code> — define the default font, text and paragraph formatting, respectively. Whenever you call <code>pgNew()</code>, these three structures are literally copied into the new <code>pg_ref</code>. Hence, to change the default(s) for text formatting, you simply change the members of these three structures prior to calling <code>pgNew()</code>.</p>
+
+<p><code>def_bk_color</code>, <code>trans_color</code> — define the default background colour to be used for drawing all text and the colour that is considered &quot;transparent&quot;, respectively. The background colour is not necessarily the same as the window&#39;s background colour (OpenPaige will make the necessary adjustment if window colour does not equal the <code>pg_ref</code>&#39;s background colour). By &quot;transparent&quot; color is meant which colour is considered the normal screen background colour (default is white).</p>
+
+<p>The purpose of defining the transparent colour is to inform OpenPaige when and if the background of its drawing needs to be &quot;erased&quot; with a different colour other than the regular background of the window. If the background colour for an OpenPaige object is set to the same value as <code>trans_color</code> in <code>pg_globals</code>, OpenPaige won&#39;t do any special color filling of background since it assumes normal erasing of the window will take care of it (for instance, responding to WM_PAINT). If OpenPaige&#39;s background color is not the same as <code>trans_color</code>, then the <code>pg_ref</code>&#39;s background shape will be pre-filled with a different color other than the window&#39;s default.</p>
+
+<p><code>def_hooks</code> — define the default function pointers to be used for a <code>pg_ref</code>&#39;s general hooks. Essentially, <code>pgNew</code> copies these pointers. (DSI and other developers can change these defaults for special extensions).</p>
+
+<h3 id="toc_150">Default Values</h3>
+
+<p>After you have called $p g I n i t$, the following defaults are set for all the fields mentioned above:</p>
+
+<table>
+<thead>
+<tr>
+<th>Global Field</th>
+<th>About the field</th>
+<th>Windows</th>
+<th>Macintosh</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>max_offscreen</code></td>
+<td>bit map size (bytes)</td>
+<td>48,000</td>
+<td>48,000</td>
+</tr>
+<tr>
+<td><code>max_block_size</code></td>
+<td>max paragraph size in number of <code>&lt;br&gt;</code> characters</td>
+<td>4096</td>
+<td>4096</td>
+</tr>
+<tr>
+<td><code>minimum_line_width</code></td>
+<td>in pixels</td>
+<td>16</td>
+<td>16</td>
+</tr>
+<tr>
+<td><code>line_wrap_char</code></td>
+<td>carriage return character</td>
+<td>0x0D</td>
+<td>0x0D</td>
+</tr>
+<tr>
+<td><code>soft_line_char</code></td>
+<td>soft carriage return char</td>
+<td>0x0A</td>
+<td>0x0A</td>
+</tr>
+<tr>
+<td><code>tab_char</code></td>
+<td>tab char</td>
+<td>0x09</td>
+<td>0x09</td>
+</tr>
+<tr>
+<td><code>hyphen_char</code></td>
+<td>hard hyphen char</td>
+<td>0x2D</td>
+<td>0x2D</td>
+</tr>
+<tr>
+<td><code>soft_hyphen_char</code></td>
+<td>soft hyphen char</td>
+<td>0x1F</td>
+<td>0x1F</td>
+</tr>
+<tr>
+<td><code>decimal_char</code></td>
+<td>decimal point char</td>
+<td>0x2E</td>
+<td>0x2E</td>
+</tr>
+<tr>
+<td><code>bs_char</code></td>
+<td>back space (delete) char</td>
+<td>0x08</td>
+<td>0x08</td>
+</tr>
+<tr>
+<td><code>lf_char</code></td>
+<td>line feed char</td>
+<td>0x0C</td>
+<td>0x0C</td>
+</tr>
+<tr>
+<td><code>container_brk_char</code></td>
+<td>container break char</td>
+<td>0x0E</td>
+<td>0x0E</td>
+</tr>
+<tr>
+<td><code>left_arrow_char</code></td>
+<td>left arrow key</td>
+<td>0x1C</td>
+<td>0x1C</td>
+</tr>
+<tr>
+<td><code>right_arrow_char</code></td>
+<td>right arrow key</td>
+<td>0x1D</td>
+<td>0x1D</td>
+</tr>
+<tr>
+<td><code>up_arrow_char</code></td>
+<td>up arrow key</td>
+<td>0x1E</td>
+<td>0x1E</td>
+</tr>
+<tr>
+<td><code>down_arrow_char</code></td>
+<td>down arrow key</td>
+<td>0x1F</td>
+<td>0x1F</td>
+</tr>
+<tr>
+<td><code>text_brk_char</code></td>
+<td>alternative carriage return char <code>&lt;br&gt;</code> (form feed)</td>
+<td>0x1B</td>
+<td>0x1B</td>
+</tr>
+<tr>
+<td><code>fwd_delete_char</code></td>
+<td>forward delete key</td>
+<td>0x7F</td>
+<td>0x7F</td>
+</tr>
+<tr>
+<td><code>elipse_symbol</code></td>
+<td>displayed when OpenPaige encounters an unknown symbol</td>
+<td>&#39;.&#39;</td>
+<td>0x85</td>
+</tr>
+<tr>
+<td><code>flat_single_quote</code></td>
+<td>straight apostrophe – &#39;</td>
+<td>0x27</td>
+<td>0x27</td>
+</tr>
+<tr>
+<td><code>flat_double_quote</code></td>
+<td>straight double quote – &quot;</td>
+<td>0x22</td>
+<td>0x22</td>
+</tr>
+<tr>
+<td><code>left_single_quote</code></td>
+<td>curly left quote – &#39;</td>
+<td>0x91</td>
+<td>0xD4</td>
+</tr>
+<tr>
+<td><code>right_single_quote</code></td>
+<td>curly right quote – &#39;</td>
+<td>0x92</td>
+<td>0xD5</td>
+</tr>
+<tr>
+<td><code>left_double_quote</code></td>
+<td>curly left quotes – “</td>
+<td>0x93</td>
+<td>0xD2</td>
+</tr>
+<tr>
+<td><code>right_double_quote</code></td>
+<td>curly right quotes – &quot;</td>
+<td>0x94</td>
+<td>0xD3</td>
+</tr>
+<tr>
+<td><code>cr_invis_symbol</code></td>
+<td>carriage return when invisibles <br> are displayed</td>
+<td>¶ (0xB6)</td>
+<td>¶ (0xA6)</td>
+</tr>
+<tr>
+<td><code>lf_invis_symbol</code></td>
+<td>line feed when invisibles are displayed</td>
+<td>¼ (0xB5)</td>
+<td>¼ (0xB9)</td>
+</tr>
+<tr>
+<td><code>tab_invis_symbol</code></td>
+<td>tab when invisibles are displayed</td>
+<td>0x95</td>
+<td>0x13</td>
+</tr>
+<tr>
+<td><code>end_invis_symbol</code></td>
+<td>end of document when invisibles <br> are displayed</td>
+<td>× (0xB5)</td>
+<td>× (0xB0)</td>
+</tr>
+<tr>
+<td><code>cont_invis_symbol</code></td>
+<td>container break when invisibles <br> are displayed</td>
+<td><code>|</code> (0xA5)</td>
+<td><code>|</code> (0xAD)</td>
+</tr>
+<tr>
+<td><code>space_invis_symbol</code></td>
+<td>space symbol when invisibles are <br> displayed</td>
+<td>. (0x2E)</td>
+<td>. (0x2E)</td>
+</tr>
+<tr>
+<td><code>invis_font</code></td>
+<td>font in which invisibles are dis- <br> played</td>
+<td>default font*</td>
+<td>0 (Chicago)</td>
+</tr>
+<tr>
+<td><code>def_font</code></td>
+<td>font (name) used for <code>pgNew()</code></td>
+<td>“System”</td>
+<td>Application font</td>
+</tr>
+<tr>
+<td><code>def_style</code></td>
+<td>text format used for <code>pgNew()</code></td>
+<td>Plain, 12 point</td>
+<td>Plain, 12 point</td>
+</tr>
+<tr>
+<td><code>def_par</code></td>
+<td>paragraph format used for <br> pgNew ()</td>
+<td>Indents all zero, tab spacing 24 pixels</td>
+<td>Indents all zero, tab spacing 24 pixels</td>
+</tr>
+<tr>
+<td>def<em>bk</em>color</td>
+<td>background color used to fill page <br> area for all pg_refs</td>
+<td>white</td>
+<td>white</td>
+</tr>
+<tr>
+<td>trans_color</td>
+<td>color assumed also to be window’s background</td>
+<td>white</td>
+<td>white</td>
+</tr>
+</tbody>
+</table>
+
+<p>If the default font is zero, then OpenPaige creates a font object using the default found in <code>pg_globals</code> record that was created with <code>pgNew</code>. If you want to change this you can change the default font in the <code>pg_globals</code>.</p>
+
+<p><strong>NOTE (Macintosh):</strong> The <code>pgdf</code> Resource: During initialization, the machine-specific code for Macintosh searches for a special resource to determine the character defaults (above). If it does not find this resource, the values given above are used. Hence, you can change the defaults by changing the contents of this resource:</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">TABLE #2</th>
+<th style="text-align: center">MACINIOSH RESOURCE TYPE &amp; ID</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center">Resource Type</td>
+<td style="text-align: center">Resource ID</td>
+</tr>
+<tr>
+<td style="text-align: center">&quot;pgdf&#39;</td>
+<td style="text-align: center">128</td>
+</tr>
+</tbody>
+</table>
+
+<p>The OpenPaige package we provide should contain this resource as well as a ResEdit template to change its contents.</p>
+
+<h3 id="toc_151">Double Byte Defaults</h3>
+
+<p>Each character default in <code>pgGlobals</code> can be &quot;double byte&quot; such as Kanji, if necessary. Although this manual references these defaults as &quot;characters,&quot; in truth these global values are ALL double-byte, that is they are unsigned integers. An ASCII CR, for instance, is considered to be 0x000D and not 0x0D, etc. To set a double byte default, such as a Kanji decimal for instance, simply place the whole 16-bit value into the appropriate global field.</p>
+
+<h3 id="toc_152">TECH NOTE (CR/LF Conversion)</h3>
+
+<blockquote>
+<p>I have read all the stuff so far about carriage return line feeds. What exactly do I have to do to make sure my documents are portable between the PC which uses <code>&lt;CR&gt;&lt;LF&gt;</code>, and the Mac which uses only a <code>&lt;CR&gt;</code>?</p>
+</blockquote>
+
+<p>OpenPaige normally formats text using only CR for paragraph endings (NOT CR/LF), hence for documents created from scratch on any of the platforms, where all text has been entered by the user via the keyboard, documents between platforms are generally portable with respect to CR/LF or just CR.</p>
+
+<p>The only time this can become even remotely an issue is when raw text is inserted which contains both CR and LF, which if left &quot;as is&quot; would cause OpenPaige to draw two line feeds for each paragraph ending (one for CR and one for LF).</p>
+
+<p>To avoid this situation, the <code>NO_LF_BIT</code> should be set as one of the &quot;flag&quot; bits in <code>pgNew</code> (or, if the <code>pg_ref</code> has already been created, NO LF BIT can be set by calling pgGetAttributes, ORing <code>NO_LF_BIT</code> to the result and setting that value with <code>pgSetAttributes</code>. By setting this bit, OpenPaige will essentially ignore all LF characters and they will become virtually invisible.</p>
+
+<p>See also &quot;Carriage return/line feeds causing problems&quot;<!-- on page 3-65-->.</p>
+
+<h2 id="toc_153">3.9 Cloning an OpenPaige Object</h2>
+
+<p>To create a new OpenPaige object based on an existing <code>pg_ref</code>&#39;s <code>vis_area</code>, <code>page_area</code>, <code>exclude_area</code> and attributes, use the following:</p>
+
+<div><pre><code class="language-none">(pg_ref) pgDuplicate (pg_ref pg);</code></pre></div>
+
+<p><strong>FUNCTION RESULT:</strong> This function returns a new <code>pg_ref</code>, completely independent of, but using the same shapes and attributes as, <code>pg</code>. No text is copied and the default text formatting is used.</p>
+
+<h2 id="toc_154">3.10 Storing Arbitrary References and Structures</h2>
+
+<p>You can store any arbitrary long value or pointer into a <code>pg_ref</code> any time you want, and with as many different values as you want by using the following:</p>
+
+<div><pre><code class="language-none">(void) pgSetExtraStruct (pg_ref pg, void PG_FAR *extra_struct, long ref_id);
+(void PG_FAR *) pgGetExtraStruct (pg_ref pg, long ref_id);</code></pre></div>
+
+<p>By &quot;storing&quot; an arbitrary value within a <code>pg_ref</code> is meant that OpenPaige will save longs or pointers — which only have significance to your application — which can be retrieved later at any time.</p>
+
+<p>To store such items, call <code>pgSetExtraStruct</code>, passing your long (or pointer) in <code>extra_struct</code> and a unique ID number in <code>ref_id</code>. The purpose of the unique id is to reference that item later in <code>pgGetExtraStruct</code>.</p>
+
+<p>However, if the value in <code>ref_id</code> is already being used by an &quot;extra struct&quot; item within <code>pg</code>, the old value is overwritten with <code>extra_struct</code>. (Hence, that is how you can &quot;change&quot; a value that had previously been stored).</p>
+
+<p>To retrieve an item stored with <code>pgSetExtraStruct</code>, call <code>pgGetExtraStruct</code> passing the wanted ID in <code>ref_id</code> (which must be the same number given to <code>unique_id</code> for that item originally given to <code>pgSetExtraStruct</code>).</p>
+
+<p>See &quot;OpenPaige &quot;Handler” Functions”<!-- on page 34-3-->.</p>
+
+<h3 id="toc_155">TECH NOTE (Removing ExtraStruct)</h3>
+
+<blockquote>
+<p>Why is there no <code>pgRemoveExtraStruct()</code>?</p>
+</blockquote>
+
+<p>Probably because of the way it was implemented and what it is/was intended for doesn&#39;t make sense to do a &quot;remove.&quot;</p>
+
+<p>An &quot;extra <code>struct</code>&quot;, as far as OpenPaige is concerned, is a single element of an array of <code>long</code>s. Each of these <code>long</code>s are treated as <code>refcon</code> values that an application can use for whatever.</p>
+
+<p>Literally, the list of extra <code>struct</code>s are maintained internally as <code>long[n]</code> where <code>n</code> is the number of extra <code>struct</code>s added.</p>
+
+<p>The array number itself, e.g. 0, 1, 2, etc., is the &quot;ID number&quot; of the extra <code>struct</code>. That is what makes each one unique, really. Hence you can see why we could not really &quot;delete&quot; one of these elements since that would cause all subsequent extra <code>struct</code> elements to be a different &quot;ID&quot; number.</p>
+
+<p>For example, if a <code>pg_ref</code> holds elements 0, 1, 2, 3, and 4 (all with same corresponding ID numbers), deleting 2 would make 3 become 2 and 4 become 3.</p>
+
+<p>We realise a more elaborate system could have been implemented that contained indirect pointers, or some other scheme that is closer to what (I think) you are suggesting, so extra <code>struct</code>s could be deleted.</p>
+
+<p>But, the original purpose of this feature was simply to add extra <code>refCon</code> possibilities. It might make more sense if we called the function something like <code>pgReserveAnotherLongRefCon</code>.</p>
+
+<h3 id="toc_156">Finding a Unique ID</h3>
+
+<p>If you aren&#39;t sure whether or not an ID number is unique for a <code>pg_ref</code>, or if you simply want to get an ID number that you know is unique, call the following:</p>
+
+<div><pre><code class="language-none">(long) pgExtraUniquelD (pg_ref pg);</code></pre></div>
+
+<p>The number this function returns will always be positive and is guaranteed to have not yet been used for <code>pgSetExtraStruct</code> with this <code>pg_ref</code>.</p>
+
+<p><strong>CAUTION:</strong> OpenPaige has no idea what you are storing with <code>pgSetExtraStruct</code>, and therefore will not dispose any memory allocations that you might have attached to &quot;extra <code>struct</code>&quot; storage. Be sure to dispose any such allocations before disposing the <code>pg_ref</code> or you will end up with a memory leak.</p>
+
+<p>NOTE: Once you have stored something with <code>pgExtraStruct</code>, that item (and unique reference) stays in the <code>pg_ref</code> and never gets &quot;removed&quot; unless you
+explicitly do another <code>pgSetExtraStruct</code> using the same ID (in which case the previous item associated with that ID will get overwritten).</p>
+
+<h3 id="toc_157">EXAMPLE (How to use and extra struct)</h3>
+
+<div><pre><code class="language-none">/* This function adds a WindowPtr to the OpenPaige object using 
+   the extra struct feature and returns the ID of that struct */
+
+short add_window_to_pg (pg_ref pg, WindowPtr w_ptr)
+{
+    short unique_id;
+    unique_id = pgExtraUniqueID(pg);
+    pgSetExtraStruct(pg, w_ptr, unique_id);
+    return unique_id;
+}
+
+/* Later, the extra struct can be accessed using the ID returned above. */
+
+WindowPtr window_with_pg;
+window_with_pg = pgGetExtraStruct(pg, unique_id);</code></pre></div>
+
+<h2 id="toc_158">3.11 Cursor Utilities</h2>
+
+<p>If you want to know if a point (<code>co_ordinate</code>) sits on top of editable text (to change the mouse symbol to something else, for instance), call the following:</p>
+
+<div><pre><code class="language-none">(short) pgPtInView (pg_ref pg, co_ordinate_ptr point, co_ordinate_ptr offset_extra);</code></pre></div>
+
+<p>Given an arbitrary window coordinate (relative to that window&#39;s coordinate system) in point, <code>pgPtInView</code> returns information about what part of <code>pg</code>, if any, includes that point.</p>
+
+<p>The <code>offset_extra</code> parameter is an optional pointer to a coördinate that holds values to temporarily offset everything in <code>pg</code> before checking intersections of the point. In other words, if <code>offset_extra</code> is non-null, this visual area in <code>pg</code> will first be offset by <code>offset_extra.h</code> and <code>offset_extra.v</code> amounts before checking the containment of point in <code>vis_area</code>; the wrap area will also be offset by this amount before checking if the wrap area contains the point, and so on.</p>
+
+<p>If <code>offset_extra</code> is a null pointer, everything is checked as-is.</p>
+
+<p><strong>FUNCTION RESULT:</strong> The function result will be a word containing different bits set (or not) indicating what intersects the point as follows:</p>
+
+<div><pre><code class="language-none">#define WITHIN_VIS_AREA     0x0001  // Point within vis_area
+#define WITHIN_WRAP_AREA    0x0002  // Point within page_area
+#define WITHIN_EXCLUDE_AREA 0x0004  // Point within exclude_area
+#define WITHIN_TEXT         0x0008  // Point within actual text
+#define WITHIN_REPEAT_AREA  0x0010  // Point is in repeating gap of page
+#define WITHIN_LEFT_AREA    0x0020  // Point is left of document
+#define WITHIN_RIGHT_AREA   0x0040  // Point is right of document
+#define WITHIN_TOP_AREA     0x0080  // Point is above top of document
+#define WITHIN_BOTTOM_AREA  0x0100 // Point is below bottom of document</code></pre></div>
+
+<p><code>WITHIN_VIS_AREA</code> means the point is within the bounding area of <code>vis_area</code>.</p>
+
+<p><code>WITHIN_WRAP_AREA</code> means the point is somewhere within the <code>page_area</code> shape.</p>
+
+<p><code>WITHIN_EXCLUDE_AREA</code> means the point is somewhere within the <code>exclude_area</code>.</p>
+
+<p><code>WITHIN_TEXT</code> means the point is somewhere within &quot;real&quot; text. This differs from <code>WITHIN_WRAP_AREA</code> since it is possible to have a large <code>page_area</code> shape with very little text (in which case, <code>WITHIN_TEXT</code> will only be set if the point is over the portion that displays text).</p>
+
+<p>Each bit gets set notwithstanding the other settings. For example, <code>WITHIN_EXCLUDE_AREA</code> and <code>WITHIN_WRAP_AREA</code> can both be set, even though text cannot flow into the <code>exclude_area</code>.</p>
+
+<p>Another setting that can be returned is <code>WITHIN_TEXT</code> set but <code>WITHIN_VIS_AREA</code> not set, which really means the point is over text that falls outside of <code>vis_area</code>. The function result is simply the setting for each case individually, so it is your responsibility to examine the combination of bits to determine what action you should take, if any.</p>
+
+<p><strong>NOTE:</strong> The best time to turn the cursor to an &quot;i-beam&quot; is when <code>pgPtInView</code> returns <code>WITHIN_VIS_AREA</code> and <code>WITHIN_TEXT</code> at the same time and <code>pg</code> is in an active state.</p>
+
+<h2 id="toc_159">3.12 Getting Text Size and Height</h2>
+
+<p>To obtain the total size of text in an OpenPaige object (in bytes), call the following:</p>
+
+<div><pre><code class="language-none">(long) pgTextSize (pg_ref pg);</code></pre></div>
+
+<p><strong>FUNCTION RESULT:</strong> This function returns the total size of text (byte size) in <code>pg</code>.</p>
+
+<p>To find out how &quot;tall&quot; the text is, call the following:</p>
+
+<div><pre><code class="language-none">(long) pgTotalTextHeight (pg_ref pg, pg_boolean paginate)</code></pre></div>
+
+<p><strong>FUNCTION RESULT:</strong> This function returns the distance between the top of the first line of text to the bottom of the lowest line, in pixels.</p>
+
+<p><strong>NOTE:</strong> The lowest line is not necessarily the last line in the document: had <code>pg</code> had a non-rectangular shape, such as parallel columns, the last (ending) line could have been vertically above some of the lines in other areas of the shape. Hence, <code>pgTotalTextHeight</code> really returns the bounding height between the highest and lowest points.</p>
+
+<p>If paginate is &quot;TRUE,&quot; all the text from top to bottom is recalculated (word wrap recomputed), if necessary. If paginate is &quot;FALSE,&quot; the total text height returned is computed with the latest information available within pg. In essence, this would be OpenPaige&#39;s &quot;best guess.&quot;</p>
+
+<p>For example, suppose a large document changed from 12 point text to 18 point text and you wanted to know how tall the document had become. To get the exact height, to the nearest pixel, you should pass TRUE for paginate, otherwise OpenPaige might not have computed all the text to return an exact answer. However, computing large amounts of text can consume a great deal of time, which is why the choice to &quot;paginate&quot; or not has been provided.</p>
+
+<h5 id="toc_160">NOTES:</h5>
+
+<ol>
+<li>If you will be using the built-in scrolling support in OpenPaige, you probably never need to get the height of an OpenPaige object — see &quot;All About Scrolling&quot;<!-- on page 11-1-->. If you do need an exact height for other reasons, see &quot;Getting the Max Text Bounds”<!-- on page 24-24-->.</li>
+<li>The &quot;height&quot; returned from this function does not consider any extra structures that aren&#39;t embedded in the text stream. For example, if you have implemented headers, footers, footnotes, or any other page &quot;ornaments&quot; their placement will not be considered in the text height computation.</li>
+</ol>
+
+
+
+
+</body>
+
+</html>
