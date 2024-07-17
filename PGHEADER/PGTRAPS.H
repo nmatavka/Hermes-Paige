@@ -340,13 +340,13 @@ been built): */
 
 #ifdef UNICODE
 struct font_object_rec {
-	long				the_font;			// The font object
+	size_t				the_font;			// The font object
 	long				style_ptsize;		// Original point size from style_info
 	LOGFONT				log;				// Style info stuff that made the font
 };
 #else
 struct font_object_rec {
-	long				the_font;			// The font object
+	size_t				the_font;			// The font object
 	long				style_ptsize;		// Original point size from style_info
 	LOGFONT				log;				// Style info stuff that made the font
 	pg_short_t			valid_widths;		// Widths are all valid

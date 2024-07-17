@@ -32,7 +32,7 @@ typedef struct {
 	long				empty_width;		/* Width when empty */
 	long				minimum_width;		/* Smallest width allowed */
 	long				generated_extra;	/* (Used in matrix or table cells only) */
-	long				home_position;		/* Place the source character bounds is inserted */
+	size_t				home_position;		/* Place the source character bounds is inserted */
 	long				subref_flags;		/* Flags (similar to embed_ref flags) */
 	short				descent;			/* Descent for the text line */
 	short				ascent;				/* Ascent for the text line */
@@ -114,8 +114,8 @@ extern PG_PASCAL (pg_subref) pgUnuseSubRef (paige_rec_ptr pg);
 extern PG_PASCAL (memory_ref) pgGetSubrefState (paige_rec_ptr pg, pg_boolean clear_hilites, pg_boolean clear_refs);
 extern PG_PASCAL (void) pgRestoreSubRefs (paige_rec_ptr pg, memory_ref old_subrefs);
 extern PG_PASCAL (pg_boolean) pgClickSelectSubRef (pg_ref pg, co_ordinate_ptr mouse_point);
-extern PG_PASCAL (pg_boolean) pgInsertIntoSubRef (paige_rec_ptr pg, pg_char_ptr data, long length,
-		long position, short insert_mode, short modifiers, short draw_mode);
+extern PG_PASCAL (pg_boolean) pgInsertIntoSubRef (paige_rec_ptr pg, pg_char_ptr data, size_t length,
+		size_t position, short insert_mode, short modifiers, short draw_mode);
 extern PG_PASCAL (void) pgUpdateSubRefBounds (paige_rec_ptr pg, text_block_ptr block);
 extern PG_PASCAL (void) pgDecrementSubsetStyles (paige_rec_ptr pg, pg_short_t bad_index,
 		pg_short_t max_styles, pg_boolean do_par);

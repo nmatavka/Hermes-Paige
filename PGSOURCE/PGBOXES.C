@@ -33,7 +33,7 @@ PG_PASCAL (pg_short_t) pgNumContainers (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	pg_short_t			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = (pg_short_t)GetMemorySize(pg_rec->wrap_area) - 1;
 	UnuseMemory(pg);
 	
@@ -50,7 +50,7 @@ PG_PASCAL (void) pgGetContainer (pg_ref pg, pg_short_t position,
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	GetMemoryRecord(pg_rec->wrap_area, position, container);
 	
@@ -83,7 +83,7 @@ PG_PASCAL (pg_short_t) pgPtInContainer (pg_ref pg, const co_ordinate_ptr point,
 	co_ordinate			scaled_pt;
 	pg_short_t			result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	scaled_pt = *point;
 	pgScaleLong(-pg_rec->scale_factor.scale, pg_rec->scale_factor.origin.h,
@@ -110,15 +110,15 @@ PG_PASCAL (void) pgInsertContainer (pg_ref pg, const rectangle_ptr container,
 	long PG_FAR			*ref_longs;
 	long				first_display;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	validate_container_refcons(pg_rec);
 
-	wrap_r = InsertMemory(pg_rec->wrap_area, position + 1, 1);
+	wrap_r = (rectangle_ptr) InsertMemory(pg_rec->wrap_area, position + 1, 1);
 	pgBlockMove(container, wrap_r, sizeof(rectangle));
 	UnuseMemory(pg_rec->wrap_area);
 	
-	ref_longs = InsertMemory(pg_rec->containers, position, 1);
+	ref_longs = (long PG_FAR	*) InsertMemory(pg_rec->containers, position, 1);
 	*ref_longs = ref_con;
 	UnuseMemory(pg_rec->containers);
 	
@@ -144,7 +144,7 @@ PG_PASCAL (void) pgRemoveContainer (pg_ref pg, pg_short_t position,
 	paige_rec_ptr		pg_rec;
 	long				first_display;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	check_position_range(pg_rec, position);
@@ -177,10 +177,10 @@ PG_PASCAL (void) pgReplaceContainer (pg_ref pg, const rectangle_ptr container,
 	rectangle_ptr		wrap_r;
 	long				first_display, second_display;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	first_display = inval_container_change(pg_rec, position);
-	wrap_r = UseMemoryRecord(pg_rec->wrap_area, position, 0, TRUE);
+	wrap_r = (rectangle_ptr) UseMemoryRecord(pg_rec->wrap_area, position, 0, TRUE);
 	pgBlockMove(container, wrap_r, sizeof(rectangle));
 	
 	UnuseMemory(pg_rec->wrap_area);
@@ -212,7 +212,7 @@ PG_PASCAL (void) pgSwapContainers (pg_ref pg, pg_short_t container1,
 	long PG_FAR			*ref_longs;
 	long				hold, first_display, second_display;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	check_position_range(pg_rec, container1);
@@ -221,8 +221,8 @@ PG_PASCAL (void) pgSwapContainers (pg_ref pg, pg_short_t container1,
 
 	validate_container_refcons(pg_rec);
 
-	wrap_r = UseMemory(pg_rec->wrap_area);
-	ref_longs = UseMemory(pg_rec->containers);
+	wrap_r = (rectangle_ptr)UseMemory(pg_rec->wrap_area);
+	ref_longs = (long PG_FAR*) UseMemory(pg_rec->containers);
 	
 	pgBlockMove(&wrap_r[container1], &hold_r, sizeof(rectangle));
 	pgBlockMove(&wrap_r[container2], &wrap_r[container1], sizeof(rectangle));
@@ -260,7 +260,7 @@ PG_PASCAL (long) pgGetContainerRefCon (pg_ref pg, pg_short_t position)
 	paige_rec_ptr		pg_rec;
 	long				result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	check_position_range(pg_rec, position);
@@ -282,7 +282,7 @@ PG_PASCAL (void) pgSetContainerRefCon (pg_ref pg, pg_short_t position, long ref_
 	paige_rec_ptr		pg_rec;
 	long PG_FAR			*ref_longs;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	check_position_range(pg_rec, position);
@@ -290,7 +290,7 @@ PG_PASCAL (void) pgSetContainerRefCon (pg_ref pg, pg_short_t position, long ref_
 
 	validate_container_refcons(pg_rec);
 	
-	ref_longs = UseMemoryRecord(pg_rec->containers, position - 1, 0, TRUE);
+	ref_longs = (long PG_FAR*) UseMemoryRecord(pg_rec->containers, position - 1, 0, TRUE);
 	*ref_longs = ref_con;
 	UnuseMemory(pg_rec->containers);
 
@@ -310,7 +310,7 @@ PG_PASCAL (pg_short_t) pgCharToContainer (pg_ref pg, long offset)
 	pg_short_t			result;
 	
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (offset == CURRENT_POSITION)
 		GetMemoryRecord(pg_rec->select, 0, &selection);
@@ -325,7 +325,7 @@ PG_PASCAL (pg_short_t) pgCharToContainer (pg_ref pg, long offset)
 		pgCalcSelect(pg_rec, &selection);
 	
 	block = pgFindTextBlock(pg_rec, selection.offset, NULL, FALSE, TRUE);
-	starts = UseMemoryRecord(block->lines, selection.line, 0, TRUE);
+	starts = (point_start_ptr) UseMemoryRecord(block->lines, selection.line, 0, TRUE);
 	result = (pg_short_t)(starts->r_num + 1);
 	UnuseMemory(block->lines);
 	UnuseMemory(pg_rec->t_blocks);
@@ -339,16 +339,16 @@ PG_PASCAL (pg_short_t) pgCharToContainer (pg_ref pg, long offset)
 /* pgContainerToChar returns the first character in container position.
 If -1 returns, container has no chars.  */
 
-PG_PASCAL (long) pgContainerToChar (pg_ref pg, pg_short_t position)
+PG_PASCAL (size_t) pgContainerToChar (pg_ref pg, pg_short_t position)
 {
 	paige_rec_ptr				pg_rec;
 	register text_block_ptr		block;
 	register point_start_ptr	starts;
-	long						result, qty, r_num;
+	size_t						result, qty, r_num;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
-	block = UseMemory(pg_rec->t_blocks);
+	block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 	r_num = (long)position - 1;
 	result = -1;
 	
@@ -363,7 +363,7 @@ PG_PASCAL (long) pgContainerToChar (pg_ref pg, pg_short_t position)
 	
 	if (qty) {
 		
-		starts = UseMemory(block->lines);
+		starts = (point_start_ptr) UseMemory(block->lines);
 		
 		while (starts->flags != TERMINATOR_BITS) {
 
@@ -396,7 +396,7 @@ of containers and, if not, fixes it. (This could happen by app starting with
 
 static void validate_container_refcons (paige_rec_ptr pg)
 {
-	long		refcon_size, container_size;
+	size_t		refcon_size, container_size;
 	
 	refcon_size = GetMemorySize(pg->containers);
 	container_size = GetMemorySize(pg->wrap_area) - 1;
@@ -421,11 +421,11 @@ returned. It also stops (and returns) first block that needs re-calc. */
 static text_block_ptr find_first_block (paige_rec_ptr pg, pg_short_t position)
 {
 	register text_block_ptr		block;
-	register long				num_blocks;
+	register size_t				num_blocks;
 	short						r_num;
 	
 	num_blocks = GetMemorySize(pg->t_blocks);
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	r_num = position - 1;
 	
 	while (num_blocks) {

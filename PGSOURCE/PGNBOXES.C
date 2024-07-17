@@ -35,7 +35,7 @@ PG_PASCAL (pg_short_t) pgNumExclusions (pg_ref pg)
 	paige_rec_ptr		pg_rec;
 	pg_short_t			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (pgEmptyShape(pg_rec->exclude_area))
 		result = 0;
@@ -57,7 +57,7 @@ PG_PASCAL (void) pgGetExclusion (pg_ref pg, pg_short_t position,
 {
 	paige_rec_ptr		pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	GetMemoryRecord(pg_rec->exclude_area, position, exclusion);
 	
@@ -92,7 +92,7 @@ PG_PASCAL (pg_short_t) pgPtInExclusion (pg_ref pg, const co_ordinate_ptr point,
 	if (!pgNumExclusions(pg))
 		return	0;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	scaled_pt = *point;
 	pgScaleLong(-pg_rec->scale_factor.scale, pg_rec->scale_factor.origin.h,
@@ -119,21 +119,21 @@ PG_PASCAL (void) pgInsertExclusion (pg_ref pg, const rectangle_ptr exclusion,
 	long PG_FAR			*ref_longs;
 	long				first_display, num_par_exclusions;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	validate_exclusion_refcons(pg_rec);
 
 	if (pgEmptyShape(pg_rec->exclude_area))
 		pgAddRectToShape(pg_rec->exclude_area, exclusion);
 	else {
-		wrap_r = InsertMemory(pg_rec->exclude_area, position + 1, 1);
+		wrap_r = (rectangle_ptr) InsertMemory(pg_rec->exclude_area, position + 1, 1);
 		pgBlockMove(exclusion, wrap_r, sizeof(rectangle));
 		UnuseMemory(pg_rec->exclude_area);
 		
 		if ((num_par_exclusions = GetMemorySize(pg_rec->par_exclusions)) > 0) {
 			style_run_ptr			run;
 			
-			run = UseMemory(pg_rec->par_exclusions);
+			run = (style_run_ptr) UseMemory(pg_rec->par_exclusions);
 			
 			while (num_par_exclusions) {
 				
@@ -148,7 +148,7 @@ PG_PASCAL (void) pgInsertExclusion (pg_ref pg, const rectangle_ptr exclusion,
 		}
 	}
 
-	ref_longs = InsertMemory(pg_rec->exclusions, position, 1);
+	ref_longs = (long *) InsertMemory(pg_rec->exclusions, position, 1);
 	*ref_longs = ref_con;
 	UnuseMemory(pg_rec->exclusions);
 	
@@ -182,7 +182,7 @@ PG_PASCAL (void) pgRemoveExclusion (pg_ref pg, pg_short_t position,
 	rectangle			deleted_r;
 	long				first_display, num_par_exclusions;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	check_position_range(pg_rec, position);
@@ -206,7 +206,7 @@ PG_PASCAL (void) pgRemoveExclusion (pg_ref pg, pg_short_t position,
 			pg_frame_ptr	frame;
 			
 			GetMemoryRecord(pg_rec->exclusions, position - 1, &frame_ref);
-			frame = UseMemory(frame_ref);
+			frame = (pg_frame_ptr) UseMemory(frame_ref);
 			scroll = pg_rec->scroll_pos;
 			pgNegatePt(&scroll);
 			callback = (frame_callback)frame->callback;
@@ -225,7 +225,7 @@ PG_PASCAL (void) pgRemoveExclusion (pg_ref pg, pg_short_t position,
 			long					run_index;
 			pg_short_t				deleted_rec;
 
-			run = UseMemory(pg_rec->par_exclusions);
+			run = (style_run_ptr) UseMemory(pg_rec->par_exclusions);
 			deleted_rec = position - 1;
 			
 			for (run_index = 0; run_index < num_par_exclusions; ++run_index, ++run) {
@@ -238,7 +238,7 @@ PG_PASCAL (void) pgRemoveExclusion (pg_ref pg, pg_short_t position,
 					UnuseMemory(pg_rec->par_exclusions);
 					DeleteMemory(pg_rec->par_exclusions, run_index, 1);
 					--num_par_exclusions;
-					run = UseMemory(pg_rec->par_exclusions);
+					run = (style_run_ptr) UseMemory(pg_rec->par_exclusions);
 					run += run_index;
 				}
 			}
@@ -268,8 +268,8 @@ PG_PASCAL (void) pgReplaceExclusion (pg_ref pg, const rectangle_ptr exclusion,
 	rectangle_ptr		wrap_r;
 	long				first_display, second_display, exclusion_display;
 
-	pg_rec = UseMemory(pg);
-	wrap_r = UseMemoryRecord(pg_rec->exclude_area, position, 0, TRUE);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
+	wrap_r = (rectangle_ptr) UseMemoryRecord(pg_rec->exclude_area, position, 0, TRUE);
 	
 	exclusion_display = pgGetAttachedPar(pg, position);
 	first_display = inval_exclusion_change(pg_rec, wrap_r);
@@ -319,7 +319,7 @@ PG_PASCAL (void) pgSwapExclusions (pg_ref pg, pg_short_t exclusion1,
 	long PG_FAR			*ref_longs;
 	long				hold, first_display, second_display;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	check_position_range(pg_rec, exclusion1);
@@ -328,8 +328,8 @@ PG_PASCAL (void) pgSwapExclusions (pg_ref pg, pg_short_t exclusion1,
 
 	validate_exclusion_refcons(pg_rec);
 
-	wrap_r = UseMemory(pg_rec->exclude_area);
-	ref_longs = UseMemory(pg_rec->exclusions);
+	wrap_r = (rectangle_ptr) UseMemory(pg_rec->exclude_area);
+	ref_longs = (long *) UseMemory(pg_rec->exclusions);
 	
 	pgBlockMove(&wrap_r[exclusion1], &hold_r, sizeof(rectangle));
 	pgBlockMove(&wrap_r[exclusion2], &wrap_r[exclusion1], sizeof(rectangle));
@@ -367,7 +367,7 @@ PG_PASCAL (long) pgGetExclusionRefCon (pg_ref pg, pg_short_t position)
 	paige_rec_ptr		pg_rec;
 	long				result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 
 #ifdef PG_DEBUG
@@ -390,7 +390,7 @@ PG_PASCAL (void) pgSetExclusionRefCon (pg_ref pg, pg_short_t position, long ref_
 	paige_rec_ptr		pg_rec;
 	long PG_FAR			*ref_longs;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef PG_DEBUG
 	check_position_range(pg_rec, position);
@@ -398,7 +398,7 @@ PG_PASCAL (void) pgSetExclusionRefCon (pg_ref pg, pg_short_t position, long ref_
 
 	validate_exclusion_refcons(pg_rec);
 	
-	ref_longs = UseMemoryRecord(pg_rec->exclusions, position - 1, 0, TRUE);
+	ref_longs = (long *) UseMemoryRecord(pg_rec->exclusions, position - 1, 0, TRUE);
 	*ref_longs = ref_con;
 	UnuseMemory(pg_rec->exclusions);
 
@@ -419,7 +419,7 @@ PG_PASCAL (void) pgInsertExclusionShape (pg_ref pg, pg_short_t position,
 	long PG_FAR			*ref_longs;
 	pg_short_t			num_new_rects, first_display;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	validate_exclusion_refcons(pg_rec);
 	num_new_rects = (pg_short_t)GetMemorySize(exclude_shape) - 1;
@@ -427,8 +427,8 @@ PG_PASCAL (void) pgInsertExclusionShape (pg_ref pg, pg_short_t position,
 	if (pgEmptyShape(pg_rec->exclude_area))
 		pgSetAreas(pg, MEM_NULL, MEM_NULL, exclude_shape);
 	else {
-		wrap_r = InsertMemory(pg_rec->exclude_area, position + 1, num_new_rects);
-		new_rects = UseMemoryRecord(exclude_shape, 1, USE_ALL_RECS, TRUE);
+		wrap_r = (rectangle_ptr) InsertMemory(pg_rec->exclude_area, position + 1, num_new_rects);
+		new_rects = (rectangle_ptr) UseMemoryRecord(exclude_shape, 1, USE_ALL_RECS, TRUE);
 		pgBlockMove(new_rects, wrap_r, sizeof(rectangle) * num_new_rects);
 		UnuseMemory(exclude_shape);
 		UnuseMemory(pg_rec->exclude_area);
@@ -436,7 +436,7 @@ PG_PASCAL (void) pgInsertExclusionShape (pg_ref pg, pg_short_t position,
 		if ((num_par_exclusions = GetMemorySize(pg_rec->par_exclusions)) > 0) {
 			style_run_ptr			run;
 			
-			run = UseMemory(pg_rec->par_exclusions);
+			run = (style_run_ptr) UseMemory(pg_rec->par_exclusions);
 			
 			while (num_par_exclusions) {
 				
@@ -451,7 +451,7 @@ PG_PASCAL (void) pgInsertExclusionShape (pg_ref pg, pg_short_t position,
 		}
 	}
 
-	ref_longs = InsertMemory(pg_rec->exclusions, position, num_new_rects);
+	ref_longs = (long *) InsertMemory(pg_rec->exclusions, position, num_new_rects);
 	pgFillBlock(ref_longs, sizeof(long) * num_new_rects, 0);
 	UnuseMemory(pg_rec->exclusions);
 
@@ -479,10 +479,10 @@ PG_PASCAL (long) pgAttachParExclusion (pg_ref pg, long position, pg_short_t inde
 {
 	paige_rec_ptr			pg_rec;
 	style_run_ptr			run;
-	long					par_position, num_runs, run_index;
+	size_t					par_position, num_runs, run_index;
 	short					use_draw_mode;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if ((use_draw_mode = draw_mode) == best_way)
 		use_draw_mode = bits_copy;
@@ -490,7 +490,7 @@ PG_PASCAL (long) pgAttachParExclusion (pg_ref pg, long position, pg_short_t inde
 	pgFindPar(pg, pgFixOffset(pg_rec, position), &par_position, NULL);
 	
 	num_runs = GetMemorySize(pg_rec->par_exclusions);
-	run = UseMemory(pg_rec->par_exclusions);
+	run = (style_run_ptr) UseMemory(pg_rec->par_exclusions);
 	
 	for (run_index = 0; run_index < num_runs; ++run_index, ++run)
 		if (run->offset >= par_position) {
@@ -509,7 +509,7 @@ PG_PASCAL (long) pgAttachParExclusion (pg_ref pg, long position, pg_short_t inde
 
 	if (index) {
 	
-		run = InsertMemory(pg_rec->par_exclusions, run_index, 1);
+		run = (style_run_ptr) InsertMemory(pg_rec->par_exclusions, run_index, 1);
 		run->offset = par_position;
 		run->style_item = index;
 		UnuseMemory(pg_rec->par_exclusions);
@@ -535,12 +535,12 @@ PG_PASCAL (long) pgGetAttachedPar (pg_ref pg, pg_short_t exclusion)
 	style_run_ptr		run;
 	long				result, num_runs;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = -1;
 	
 	if ((num_runs = GetMemorySize(pg_rec->par_exclusions)) > 0) {
 		
-		for (run = UseMemory(pg_rec->par_exclusions); num_runs; ++run, --num_runs)
+		for (run = (style_run_ptr) UseMemory(pg_rec->par_exclusions); num_runs; ++run, --num_runs)
 			if (run->style_item == exclusion) {
 				
 				result = run->offset;
@@ -603,7 +603,7 @@ static text_block_ptr find_first_block (paige_rec_ptr pg, rectangle_ptr exclusio
 	rectangle					combined_r, inset_exclude;
 	
 	num_blocks = GetMemorySize(pg->t_blocks);
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	pgBlockMove(&block->bounds, &combined_r, sizeof(rectangle));
 	pgBlockMove(exclusion, &inset_exclude, sizeof(rectangle));
 	

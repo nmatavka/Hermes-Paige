@@ -70,15 +70,15 @@ style_item number.   */
 extern	"C" {
 #endif
 
-extern PG_PASCAL (style_info_ptr) pgFindTextStyle (paige_rec_ptr pg_rec, long offset);
+extern PG_PASCAL (style_info_ptr) pgFindTextStyle (paige_rec_ptr pg_rec, size_t offset);
 extern PG_PASCAL (style_info_ptr) pgLocateStyleSheet (paige_rec_ptr pg, short style_id,
 		pg_short_t PG_FAR *style_index);
 extern PG_PASCAL (par_info_ptr) pgLocateParStyleSheet (paige_rec_ptr pg, short style_id);
-extern PG_PASCAL (style_run_ptr) pgFindStyleRun (paige_rec_ptr pg_rec, long offset,
-		long PG_FAR *rec_num);
-extern PG_PASCAL (par_info_ptr) pgFindParStyle (paige_rec_ptr pg_rec, long offset);
-extern PG_PASCAL (style_run_ptr) pgFindParStyleRun (paige_rec_ptr pg_rec, long offset,
-		long PG_FAR *rec_num);
+extern PG_PASCAL (style_run_ptr) pgFindStyleRun (paige_rec_ptr pg_rec, size_t offset,
+		size_t PG_FAR *rec_num);
+extern PG_PASCAL (par_info_ptr) pgFindParStyle (paige_rec_ptr pg_rec, size_t offset);
+extern PG_PASCAL (style_run_ptr) pgFindParStyleRun (paige_rec_ptr pg_rec, size_t offset,
+		size_t PG_FAR *rec_num);
 extern PG_PASCAL (void) pgSetInsertionStyles (pg_ref pg, const style_info_ptr style, const font_info_ptr font);
 extern PG_PASCAL (void) pgSetNextInsertIndex (paige_rec_ptr pg_rec);
 extern PG_PASCAL (pg_short_t) pgGetInsertionStyle (paige_rec_ptr pg_rec);
@@ -112,7 +112,7 @@ extern PG_PASCAL (pg_boolean) pgStyleMatchesCriteria (void PG_FAR *target_style,
 extern PG_PASCAL (void) pgFinishStyleUpdate (paige_rec_ptr pg, change_info_ptr change_stuff,
 		memory_ref ref_to_dispose, pg_boolean inval_text, short draw_mode);
 extern PG_PASCAL (pg_boolean) pgIsPlatformFont (long platform);
-extern PG_PASCAL (style_run_ptr) pgFindRunFromRef (style_ref ref, long offset, long PG_FAR *rec_num);
+extern PG_PASCAL (style_run_ptr) pgFindRunFromRef (style_ref ref, size_t offset, size_t PG_FAR *rec_num);
 extern PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change);
 extern PG_PASCAL (void) pgStyleSuperImpose (paige_rec_ptr pg, style_info_ptr style,
 		style_info_ptr new_style, font_info_ptr new_font, short use_stylesheet);

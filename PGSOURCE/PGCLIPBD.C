@@ -51,7 +51,7 @@ static undo_ref prepare_delete_or_paste_redo (paige_rec_ptr pg, pg_undo_ptr undo
 static void do_pg_undo_delete_proc (pg_undo_ptr undo_stuff);
 static void do_delete_from_ptr (style_info_ptr style, pg_char_ptr text,
 		pg_short_t length);
-static memory_ref copy_applied_range (paige_rec_ptr from_pg, long added_offset, pg_boolean force_select);
+static memory_ref copy_applied_range (paige_rec_ptr from_pg, size_t added_offset, pg_boolean force_select);
 static long total_text_to_copy(select_pair_ptr selections, long num_selects);
 static pg_boolean par_changed (paige_rec_ptr pg, par_info_ptr par);
 static long insert_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr);
@@ -129,15 +129,15 @@ PG_PASCAL (pg_ref) pgCopy (pg_ref pg, const select_pair_ptr selection)
 	select_pair					target_apply;
 	text_block_ptr				block;
 	pg_char_ptr					text;
-	long						begin_sel, end_sel, local_begin, copy_size;
-	long						copy_base, progress, completion;
+	size_t						begin_sel, end_sel, local_begin, copy_size;
+	size_t						copy_base, progress, completion;
 	pg_short_t					num_selects, old_insert;
 	short						should_call_wait;
 	volatile memory_ref			apply_ref = MEM_NULL;
 	volatile pg_ref				copy_result = MEM_NULL;
 
-	pg_rec = UseMemory(pg);
-	select_ptr = UseMemory(pg_rec->select);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
+	select_ptr = (t_select_ptr) UseMemory(pg_rec->select);
 	UnuseMemory(pg_rec->select);
 
 	globals = pg_rec->globals;
@@ -147,14 +147,14 @@ PG_PASCAL (pg_ref) pgCopy (pg_ref pg, const select_pair_ptr selection)
 		if (apply_ref = pgSetupOffsetRun(pg_rec, selection, FALSE, FALSE)) {
 			
 			num_selects = (pg_short_t)GetMemorySize(apply_ref);
-			selections = UseMemory(apply_ref);
+			selections = (select_pair_ptr) UseMemory(apply_ref);
 			completion = total_text_to_copy(selections, num_selects);
 			should_call_wait = (completion > LARGE_COPY_SIZE);
 	
 			copy_base = selections->begin;
 	
 			copy_result = pgNewShell(globals);
-			pg_copy = UseMemory(copy_result);
+			pg_copy = (paige_rec_ptr) UseMemory(copy_result);
 			pg_copy->flags2 |= (pg_rec->flags2 & APPLY_ALL_PAR_INFOS);
 			progress = 0;
 			pg_copy->insert_style = NULL_RUN;
@@ -185,7 +185,7 @@ PG_PASCAL (pg_ref) pgCopy (pg_ref pg, const select_pair_ptr selection)
 					local_begin = begin_sel - block->begin;
 					copy_size = end_sel - begin_sel;
 					
-					text = UseMemory(block->text);
+					text = (pg_char_ptr) UseMemory(block->text);
 					text += local_begin;
 	
 					pgInsert(copy_result, text, copy_size, CURRENT_POSITION,
@@ -275,12 +275,12 @@ PG_PASCAL (text_ref) pgCopyText (pg_ref pg, const select_pair_ptr selection, sho
 	text_block_ptr		block;
 	pg_char_ptr			text, append;
 	select_pair_ptr		selections;
-	long				begin_sel, end_sel, local_begin, local_size;
+	size_t				begin_sel, end_sel, local_begin, local_size;
 	pg_short_t			num_selects;
 	volatile memory_ref	select_list = MEM_NULL;
 	volatile text_ref	copy_result = MEM_NULL;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	globals = pg_rec->globals;
 
@@ -290,7 +290,7 @@ PG_PASCAL (text_ref) pgCopyText (pg_ref pg, const select_pair_ptr selection, sho
 		
 			copy_result = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(pg_char), 0, 512);
 			num_selects = (pg_short_t)GetMemorySize(select_list);
-			selections = UseMemory(select_list);
+			selections = (select_pair_ptr) UseMemory(select_list);
 			
 			pgPrepareStyleWalk(pg_rec, 0, &walker, FALSE);
 
@@ -315,12 +315,12 @@ PG_PASCAL (text_ref) pgCopyText (pg_ref pg, const select_pair_ptr selection, sho
 					local_begin = begin_sel - block->begin;
 					local_size = end_sel - begin_sel;
 					
-					text = UseMemory(block->text);
+					text = (pg_char_ptr) UseMemory(block->text);
 					
 					if (pgBytesMatchCriteria(pg_rec, &walker, text, data_type,
 							block->begin, local_begin, local_size)) {
 						
-						append = AppendMemory(copy_result, local_size, FALSE);
+						append = (pg_char_ptr) AppendMemory(copy_result, local_size, FALSE);
 						pgBlockMove(&text[local_begin], append, local_size * sizeof(pg_char));
 						UnuseMemory(copy_result);
 					}
@@ -392,7 +392,7 @@ PG_PASCAL (undo_ref) pgPrepareUndo (pg_ref pg, short verb, void PG_FAR *insert_r
 	pg_short_t		num_selects;
 	/*QUALCOMM End Hack*/
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	flags_save = (pg_rec->flags2 & APPLY_ALL_PAR_INFOS);
 	pg_rec->flags2 |= APPLY_ALL_PAR_INFOS;
 
@@ -405,12 +405,12 @@ PG_PASCAL (undo_ref) pgPrepareUndo (pg_ref pg, short verb, void PG_FAR *insert_r
 		if ((verb == undo_typing) || (verb == undo_backspace) || (verb == undo_fwd_delete)) {
 		
 			if (result = prepare_keyboard_undo(pg_rec, verb, (undo_ref) insert_ref))
-				undo_ptr = UseMemory(result);
+				undo_ptr = (pg_undo_ptr) UseMemory(result);
 		}
 		else {
 		
 			result = MemoryAllocClear(globals->mem_globals, sizeof(pg_undo), 1, 0);
-			undo_ptr = UseMemory(result);
+			undo_ptr = (pg_undo_ptr) UseMemory(result);
 			undo_ptr->globals = globals;
 			undo_ptr->verb = undo_ptr->real_verb = verb;
 			undo_ptr->applied_range = pgSetupOffsetRun(pg_rec, NULL, FALSE, FALSE);
@@ -431,7 +431,7 @@ PG_PASCAL (undo_ref) pgPrepareUndo (pg_ref pg, short verb, void PG_FAR *insert_r
 
 					undo_ptr->applied_range = MEM_NULL;
 		
-					original_undo = UseMemory((memory_ref) insert_ref);
+					original_undo = (pg_undo_ptr) UseMemory((memory_ref) insert_ref);
 					
 					if (original_undo->keyboard_ref) {  /* original is undo backspace */
 						
@@ -497,7 +497,7 @@ PG_PASCAL (undo_ref) pgPrepareUndo (pg_ref pg, short verb, void PG_FAR *insert_r
 						if (original_undo->data) {
 							paige_rec_ptr		original_copy;
 							
-							original_copy = UseMemory(original_undo->data);
+							original_copy = (paige_rec_ptr) UseMemory(original_undo->data);
 							undo_ptr->applied_range = copy_applied_range(original_copy, undo_ptr->alt_range.begin, FALSE);
 							UnuseMemory(original_undo->data);
 							
@@ -568,7 +568,7 @@ PG_PASCAL (undo_ref) pgPrepareUndo (pg_ref pg, short verb, void PG_FAR *insert_r
 						if (pg_rec->num_selects)
 							undo_ptr->data = pgCopy(pg, NULL);
 		
-						eventual_paste = UseMemory((memory_ref) insert_ref);
+						eventual_paste = (paige_rec_ptr) UseMemory((memory_ref) insert_ref);
 						undo_ptr->alt_range.begin = pgCurrentInsertion(pg_rec);
 						undo_ptr->alt_range.end = eventual_paste->t_length
 								+ undo_ptr->alt_range.begin;
@@ -606,7 +606,7 @@ PG_PASCAL (undo_ref) pgPrepareUndo (pg_ref pg, short verb, void PG_FAR *insert_r
 							undo_ptr->real_verb = undo_insert;
 						}
 						else
-							long_ptr = insert_ref;
+							long_ptr = (long *) insert_ref;
 						
 						if (pg_rec->num_selects && (verb != undo_app_insert))
 							undo_ptr->data = pgCopy(pg, NULL);
@@ -622,7 +622,7 @@ PG_PASCAL (undo_ref) pgPrepareUndo (pg_ref pg, short verb, void PG_FAR *insert_r
 							DisposeMemory(undo_ptr->applied_range);
 	
 						undo_ptr->applied_range = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(select_pair), 1, 0);
-						applied_insert = UseMemory(undo_ptr->applied_range);
+						applied_insert = (select_pair_ptr) UseMemory(undo_ptr->applied_range);
 						
 						*applied_insert = undo_ptr->alt_range;
 						UnuseMemory(undo_ptr->applied_range);
@@ -702,7 +702,7 @@ PG_PASCAL (undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo,
 	undo_ptr = NULL;
 #endif
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	globals = pg_rec->globals;
 	
 	if ((use_draw_mode = draw_mode) == best_way)
@@ -710,7 +710,7 @@ PG_PASCAL (undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo,
 
 	PG_TRY(globals->mem_globals) {
 
-		undo_ptr = UseMemory(ref);
+		undo_ptr = (pg_undo_ptr) UseMemory(ref);
 		restore_subref_state(pg_rec, undo_ptr);
 		if (use_draw_mode && (!(pg_rec->flags & DEACT_BITS)))
 			pgTurnOffHighlight(pg_rec, TRUE);
@@ -727,7 +727,7 @@ PG_PASCAL (undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo,
 			case -undo_doc_info:
 				if (requires_redo)
 					result = pgPrepareUndo(pg, undo_doc_info, NULL);
-				pgSetDocInfo(pg_rec->myself, UseMemory(undo_ptr->doc_data), TRUE, draw_none);
+				pgSetDocInfo(pg_rec->myself, (const pg_doc_ptr) UseMemory(undo_ptr->doc_data), TRUE, draw_none);
 				UnuseMemory(undo_ptr->doc_data);
 				
 				do_shape_undo(pg_rec, pg_rec->wrap_area, &pg_rec->containers,
@@ -818,7 +818,7 @@ PG_PASCAL (undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo,
 					pg_undo_ptr			redo_ptr;
 					
 					result = pgPrepareUndo(pg, -undo_typing, (void PG_FAR *) ref);
-					redo_ptr = UseMemory(result);
+					redo_ptr = (pg_undo_ptr) UseMemory(result);
 					redo_ptr->verb = -undo_ptr->real_verb;
 					UnuseMemory(result);
 				}
@@ -858,7 +858,7 @@ PG_PASCAL (undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo,
 					
 					current_insert = pgCurrentInsertion(pg_rec);
 					execute_paste(pg, undo_ptr->data, CURRENT_POSITION, FALSE, draw_none, TRUE);
-					src_data = UseMemory(undo_ptr->data);
+					src_data = (paige_rec_ptr) UseMemory(undo_ptr->data);
 					
 					pgSetSelectionList(pg, src_data->applied_range, current_insert, FALSE);
 
@@ -868,7 +868,7 @@ PG_PASCAL (undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo,
 				if (result) {
 					pg_undo_ptr		redo_ptr;
 					
-					redo_ptr = UseMemory(result);
+					redo_ptr = (pg_undo_ptr) UseMemory(result);
 					if (redo_ptr->applied_range)
 						DisposeMemory(redo_ptr->applied_range);
 					redo_ptr->applied_range = pgSetupOffsetRun(pg_rec, NULL, FALSE, FALSE);
@@ -902,7 +902,7 @@ PG_PASCAL (undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo,
 					
 					current_insert = pgCurrentInsertion(pg_rec);
 					execute_paste(pg, undo_ptr->data, CURRENT_POSITION, FALSE, draw_none, TRUE);
-					src_data = UseMemory(undo_ptr->data);
+					src_data = (paige_rec_ptr) UseMemory(undo_ptr->data);
 					pgSetSelectionList(pg, src_data->applied_range, current_insert, FALSE);
 					UnuseMemory(undo_ptr->data);
 				}
@@ -910,7 +910,7 @@ PG_PASCAL (undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo,
 				if (result) {
 					pg_undo_ptr		redo_ptr;
 					
-					redo_ptr = UseMemory(result);
+					redo_ptr = (pg_undo_ptr) UseMemory(result);
 					if (redo_ptr->applied_range)
 						DisposeMemory(redo_ptr->applied_range);
 					redo_ptr->applied_range = pgSetupOffsetRun(pg_rec, NULL, FALSE, FALSE);
@@ -946,7 +946,7 @@ PG_PASCAL (undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo,
 			case undo_doc_info:
 				if (requires_redo)
 					result = pgPrepareUndo(pg, -undo_doc_info, NULL);
-				pgSetDocInfo(pg_rec->myself, UseMemory(undo_ptr->doc_data), TRUE, draw_none);
+				pgSetDocInfo(pg_rec->myself, (const pg_doc_ptr) UseMemory(undo_ptr->doc_data), TRUE, draw_none);
 				UnuseMemory(undo_ptr->doc_data);
 
 				do_shape_undo(pg_rec, pg_rec->wrap_area, &pg_rec->containers,
@@ -994,7 +994,7 @@ PG_PASCAL (short) pgUndoType (undo_ref ref)
 	if (!ref)
 		the_verb = undo_none;
 	else {
-		undo_ptr = UseMemory(ref);
+		undo_ptr = (pg_undo_ptr) UseMemory(ref);
 		the_verb = undo_ptr->verb;
 		UnuseMemory(ref);
 	}
@@ -1009,7 +1009,7 @@ PG_PASCAL (void) pgSetUndoRefCon (undo_ref ref, long refCon)
 {
 	pg_undo_ptr	undo_ptr;
 	
-	undo_ptr = UseMemory(ref);
+	undo_ptr = (pg_undo_ptr) UseMemory(ref);
 	undo_ptr->ref_con = refCon;
 	UnuseMemory(ref);
 }
@@ -1025,7 +1025,7 @@ PG_PASCAL (long) pgGetUndoRefCon (undo_ref ref)
 	if (!ref)
 		return	0;
 
-	undo_ptr = UseMemory(ref);
+	undo_ptr = (pg_undo_ptr) UseMemory(ref);
 	ref_con = undo_ptr->ref_con;
 	UnuseMemory(ref);
 	
@@ -1042,7 +1042,7 @@ PG_PASCAL (void) pgDisposeUndo (undo_ref ref)
 	
 	if (ref) {
 
-		undo_ptr = UseMemory(ref);
+		undo_ptr = (pg_undo_ptr) UseMemory(ref);
 		dispose_undo_structs(undo_ptr);
 		UnuseAndDispose(ref);
 	}
@@ -1091,10 +1091,10 @@ the specified data type. Added 1/21/94, "global_offset" is the absolute offset
 for the block in which text begins.  */
 
 PG_PASCAL (pg_boolean) pgBytesMatchCriteria (paige_rec_ptr pg, style_walk_ptr walker,
-		pg_char_ptr text, short data_type, long global_offset, long offset, long length)
+		pg_char_ptr text, short data_type, size_t global_offset, size_t offset, size_t length)
 {
 	register style_info_ptr		style;
-	register long				offset_ctr;
+	register size_t				offset_ctr;
 	register pg_boolean			not_vis_flag;
 	
 	style = walker->cur_style;
@@ -1152,14 +1152,14 @@ static void execute_paste (pg_ref pg, pg_ref paste_ref, long position,
 	style_run_ptr				target_run;
 	style_info_ptr				termination;
 	style_info					terminating_style;
-	long						old_change_ctr, insert_base, insert_position;
-	long						src_begin, src_end, src_size, local_begin;
-	long						apply_to;
-	long						completion, progress;
+	size_t						old_change_ctr, insert_base, insert_position;
+	size_t						src_begin, src_end, src_size, local_begin;
+	size_t						apply_to;
+	size_t						completion, progress;
 	pg_short_t					old_insertion;
 	short						should_call_wait, use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_change_ctr = pg_rec->change_ctr;
 	globals = pg_rec->globals;
 	
@@ -1177,7 +1177,7 @@ static void execute_paste (pg_ref pg, pg_ref paste_ref, long position,
 		insert_base = pgFixOffset(pg_rec, position);
 		pgSetNextInsertIndex(pg_rec);
 		
-		pg_paste = UseMemory(paste_ref);
+		pg_paste = (paige_rec_ptr) UseMemory(paste_ref);
 		completion = pg_paste->t_length;
 		should_call_wait = (completion > LARGE_COPY_SIZE);
 		progress = 0;
@@ -1188,7 +1188,7 @@ static void execute_paste (pg_ref pg, pg_ref paste_ref, long position,
 		if (pg_paste->applied_range)
 			if (GetMemorySize(pg_paste->applied_range)) {
 			
-				applied_base = UseMemory(pg_paste->applied_range);
+				applied_base = (select_pair_ptr) UseMemory(pg_paste->applied_range);
 				
 				if (applied_base->end > pg_paste->t_length)
 					applied_base->end = pg_paste->t_length;
@@ -1224,7 +1224,7 @@ static void execute_paste (pg_ref pg, pg_ref paste_ref, long position,
 			if (!text_only) {
 
 				target_run = pgFindStyleRun(pg_rec, insert_position, NULL);
-				termination = UseMemoryRecord(pg_rec->t_formats, (long)target_run->style_item, 0, TRUE);
+				termination = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long)target_run->style_item, 0, TRUE);
 				termination->used_ctr += 1;
 				terminating_style = *termination;
 				UnuseMemory(pg_rec->t_formats);
@@ -1249,7 +1249,7 @@ static void execute_paste (pg_ref pg, pg_ref paste_ref, long position,
 				src_size = src_end - src_begin;
 				local_begin = src_begin - block->begin;
 				
-				text = UseMemory(block->text);
+				text = (pg_char_ptr) UseMemory(block->text);
 				text += local_begin;
 
 				if (!pgPasteToCells(pg_rec, insert_position, text, src_size))
@@ -1279,7 +1279,7 @@ static void execute_paste (pg_ref pg, pg_ref paste_ref, long position,
 			if (terminator_match = pgFindMatchingStyle((memory_ref) pg_rec->t_formats, &terminating_style,
 					0, SIGNIFICANT_STYLE_SIZE)) {
 					
-					termination = UseMemoryRecord(pg_rec->t_formats, (long)(terminator_match - 1), 0, TRUE);
+					termination = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long)(terminator_match - 1), 0, TRUE);
 					termination->used_ctr -= 1;
 					UnuseMemory(pg_rec->t_formats);
 				}
@@ -1353,11 +1353,11 @@ static void apply_text_styles (const paige_rec_ptr src_pg, paige_rec_ptr target_
 		select_pair_ptr src_range, select_pair_ptr target_range)
 {
 	register style_info_ptr	new_styles_base;
-	register style_run_ptr  start_target;
+	register style_run_ptr  start_target = 0;
 	register pg_short_t		new_style_index;
 	style_run_ptr			src_run, target_run, start_src;
 	style_run				ending_run;
-	long					base_run_offset, run_rec_num;
+	size_t					base_run_offset, run_rec_num;
 	pg_short_t				num_runs, num_resolved;
 
 	pgCopySubRefs(src_pg, target_pg, src_range, target_range->begin);
@@ -1381,7 +1381,7 @@ static void apply_text_styles (const paige_rec_ptr src_pg, paige_rec_ptr target_
 	else
 		++run_rec_num;
 	
-	target_run = start_target = InsertMemory(target_pg->t_style_run, run_rec_num, num_runs + 1);
+	target_run = (style_run_ptr) InsertMemory(target_pg->t_style_run, run_rec_num, num_runs + 1);
 	base_run_offset = src_run->offset;
 	num_resolved = 0;
 
@@ -1403,7 +1403,7 @@ static void apply_text_styles (const paige_rec_ptr src_pg, paige_rec_ptr target_
 	target_run->style_item = ending_run.style_item;
 	++num_resolved;
 	
-	new_styles_base = UseMemory(target_pg->t_formats);
+	new_styles_base = (style_info_ptr) UseMemory(target_pg->t_formats);
 	
 	while (num_resolved) {
 		
@@ -1426,7 +1426,7 @@ static void apply_text_styles (const paige_rec_ptr src_pg, paige_rec_ptr target_
 			
 			style_for_copy = new_styles_base + new_style_index;
 			block = pgFindTextBlock(target_pg, start_target->offset, NULL, FALSE, TRUE);
-			text = UseMemory(block->text);
+			text = (pg_char_ptr) UseMemory(block->text);
 			text += (start_target->offset - block->begin);
 			
 			copy_length = start_target[1].offset;
@@ -1466,7 +1466,7 @@ static void apply_hyperlinks (const memory_ref source_links, memory_ref target_l
 	pg_hyperlink_ptr		first_source, source, target;
 	long					index, source_qty;
 	pg_char_ptr				string, URL;
-	short					string_length;
+	size_t					string_length;
 
 	
 	source = pgFindHypertextRun(source_links, src_range->begin, NULL);
@@ -1486,7 +1486,7 @@ static void apply_hyperlinks (const memory_ref source_links, memory_ref target_l
 	if (source_qty > 0) {
 		
 		pgFindHypertextRun(target_links, target_range->begin, &index);
-		target = InsertMemory(target_links, index, source_qty);
+		target = (pg_hyperlink_ptr) InsertMemory(target_links, index, source_qty);
 		
 		while (source_qty) {
 			
@@ -1496,14 +1496,18 @@ static void apply_hyperlinks (const memory_ref source_links, memory_ref target_l
 			//target links [copy_ref] is deleted, it renders the source link invalid
 			if (first_source->alt_URL)
 			{
-				string = UseMemory(first_source->alt_URL);
+				string = (pg_char_ptr) UseMemory(first_source->alt_URL);
+				#ifdef _WINDOWS
+				string_length = wcslen(string);
+				#else
 				string_length = strlen(string);
+				#endif
 	
 				if (string_length) 
 				{
 					target->alt_URL = MemoryAllocClearID(GetGlobalsFromRef(source_links),
 												sizeof(pg_char), string_length + 1, 0, target_pg_ptr->mem_id);
-					URL = UseMemory(target->alt_URL);
+					URL = (pg_char_ptr) UseMemory(target->alt_URL);
 					pgBlockMove(string, URL, string_length);
 					URL[string_length] = 0;
 					UnuseMemory(target->alt_URL);
@@ -1609,8 +1613,8 @@ static void apply_paragraph_styles (paige_rec_ptr src_pg, paige_rec_ptr target_p
 	style_walk		walker;
 	par_info		new_par, mask;
 	select_pair		target_apply;
-	long			target_begin, target_end, first_par_end, unwanted_offset;
-	long			applied_size, source_end_par_begin;
+	size_t			target_begin, target_end, first_par_end, unwanted_offset;
+	size_t			applied_size, source_end_par_begin;
 
 	pgFillBlock(&mask, sizeof(par_info), -1);
 
@@ -1673,7 +1677,7 @@ static void prepare_style_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 	paige_rec_ptr		copy_stuff;
 
 	undo_ptr->data = pgNewShell(pg->globals);
-	copy_stuff = UseMemory(undo_ptr->data);
+	copy_stuff = (paige_rec_ptr) UseMemory(undo_ptr->data);
 	
 	MemoryCopy(pg->t_style_run, copy_stuff->t_style_run);
 	MemoryCopy(pg->par_style_run, copy_stuff->par_style_run);
@@ -1695,7 +1699,7 @@ static void do_style_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 {
 	paige_rec_ptr		copy_stuff;
 
-	copy_stuff = UseMemory(undo_ptr->data);
+	copy_stuff = (paige_rec_ptr) UseMemory(undo_ptr->data);
 
 	pgWillDeleteFormats(pg, undo_ptr->globals, undo_style_reason, pg->t_formats, pg->par_formats);
 
@@ -1726,12 +1730,12 @@ static void make_duplicate_formats (paige_rec_ptr src_pg, paige_rec_ptr target_p
 	register par_info_ptr		pars;
 	register pg_short_t			qty;
 
-	for (qty = (pg_short_t)GetMemorySize(text_formats), styles = UseMemory(text_formats);
+	for (qty = (pg_short_t)GetMemorySize(text_formats), styles = (style_info_ptr) UseMemory(text_formats);
 			qty; ++styles, --qty)
 		styles->procs.duplicate(src_pg, target_pg, reason_verb, text_formats, styles);
 	UnuseMemory(text_formats);
 
-	for (qty = (pg_short_t)GetMemorySize(par_formats), pars = UseMemory(par_formats);
+	for (qty = (pg_short_t)GetMemorySize(par_formats), pars = (par_info_ptr) UseMemory(par_formats);
 			qty; ++pars, --qty)
 		pars->procs.duplicate(src_pg, target_pg, reason_verb, par_formats, pars);
 
@@ -1750,7 +1754,7 @@ static void perform_undo_delete (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 	
 	GetMemoryRecord(undo_ptr->applied_range, 0, &first_select);
 	pgSetInsertSelect(pg, first_select.begin);
-	src_pg = UseMemory(undo_ptr->data);
+	src_pg = (paige_rec_ptr) UseMemory(undo_ptr->data);
 	old_flags2 = src_pg->flags2 & APPLY_ALL_PAR_INFOS;
 	src_pg->flags2 |= APPLY_ALL_PAR_INFOS;
 
@@ -1777,7 +1781,7 @@ static void perform_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 	par_info_ptr			par_to_insert;
 	pg_boolean				not_fwd_delete;
 	pg_subref PG_FAR		*sublist;
-	long					insert_position;
+	size_t					insert_position;
 	short					action_verb, char_size, char_qty, increment;
 	
 	if (undo_ptr->keyboard_delete.end > undo_ptr->keyboard_delete.begin)
@@ -1786,7 +1790,7 @@ static void perform_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 	pgSetInsertSelect(pg, undo_ptr->alt_range.begin);
 	temp_ref = MemoryAlloc(pg->globals->mem_globals, sizeof(pg_char), 0, 4);
 
-	kb_ptr = UseMemory(undo_ptr->keyboard_ref);
+	kb_ptr = (pg_kb_ptr) UseMemory(undo_ptr->keyboard_ref);
 	key_qty = (short)GetMemorySize(undo_ptr->keyboard_ref);
 	
 	action_verb = undo_ptr->verb;
@@ -1797,7 +1801,7 @@ static void perform_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 	undo_ptr->alt_range.end = undo_ptr->alt_range.begin;
 
 	if (undo_ptr->subset_data)
-		sublist = UseMemory(undo_ptr->subset_data);
+		sublist = (pg_subref *) UseMemory(undo_ptr->subset_data);
 	else
 		sublist = NULL;
 
@@ -1806,7 +1810,7 @@ static void perform_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 		if (action_verb != undo_fwd_delete)
 			--kb_ptr;
 
-		style_to_insert = UseMemoryRecord(undo_ptr->keyboard_styles, kb_ptr->style_item, 0, TRUE);
+		style_to_insert = (style_info_ptr) UseMemoryRecord(undo_ptr->keyboard_styles, kb_ptr->style_item, 0, TRUE);
 		pgSetInsertionStyles(pg->myself, style_to_insert, NULL);
 		char_size = style_to_insert->char_bytes + 1;
 		UnuseMemory(undo_ptr->keyboard_styles);
@@ -1815,7 +1819,7 @@ static void perform_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 			char_size = key_qty;
 
 		SetMemorySize(temp_ref, char_size);
-		bytes_to_insert = UseMemory(temp_ref);
+		bytes_to_insert = (pg_char_ptr) UseMemory(temp_ref);
 		
 		if (not_fwd_delete) {
 		
@@ -1855,7 +1859,7 @@ static void perform_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 		undo_ptr->alt_range.end += char_size;
 		key_qty-= char_size;
 		
-		par_to_insert = UseMemoryRecord(undo_ptr->keyboard_pars, kb_ptr->par_item, 0, TRUE);
+		par_to_insert = (par_info_ptr) UseMemoryRecord(undo_ptr->keyboard_pars, kb_ptr->par_item, 0, TRUE);
 
 		if (par_changed(pg, par_to_insert)) {
 			par_info			mask;
@@ -1927,7 +1931,7 @@ static undo_ref prepare_delete_or_paste_redo (paige_rec_ptr pg, pg_undo_ptr undo
 	if (undo_ptr->verb != undo_ptr->real_verb) {
 		pg_undo_ptr		new_undo_ptr;
 		
-		new_undo_ptr = UseMemory(result);
+		new_undo_ptr = (pg_undo_ptr) UseMemory(result);
 		new_undo_ptr->verb = -undo_ptr->verb;
 		UnuseMemory(result);
 	}
@@ -1950,12 +1954,12 @@ static void do_pg_undo_delete_proc (pg_undo_ptr undo_stuff)
 	text_ref					temp_ref;
 	
 	kb_qty = (pg_short_t)GetMemorySize(undo_stuff->keyboard_ref);
-	kb_ptr = UseMemory(undo_stuff->keyboard_ref);
+	kb_ptr = (pg_kb_ptr) UseMemory(undo_stuff->keyboard_ref);
 	kb_ptr += kb_qty;
 
 	temp_ref = MemoryAlloc(GetGlobalsFromRef(undo_stuff->keyboard_ref), sizeof(pg_char), kb_qty, 0);
-	backspace_chars = UseMemory(temp_ref);
-	style_base = UseMemory(undo_stuff->keyboard_styles);
+	backspace_chars = (pg_char_ptr) UseMemory(temp_ref);
+	style_base = (style_info_ptr) UseMemory(undo_stuff->keyboard_styles);
 	
 	char_index = last_style = 0;
 
@@ -2003,7 +2007,7 @@ static void do_delete_from_ptr (style_info_ptr style, pg_char_ptr text,
 /* This function returns a duplicate of a select_pair list (src_range) with
 each entry offset by added_offset.  */
 
-static memory_ref copy_applied_range (paige_rec_ptr from_pg, long added_offset, pg_boolean force_select)
+static memory_ref copy_applied_range (paige_rec_ptr from_pg, size_t added_offset, pg_boolean force_select)
 {
 	memory_ref			src_range;
 	memory_ref			result = MEM_NULL;
@@ -2024,7 +2028,7 @@ static memory_ref copy_applied_range (paige_rec_ptr from_pg, long added_offset, 
 		result = MemoryDuplicate(src_range);
 
 	num_selects = (pg_short_t)GetMemorySize(result);
-	selections = UseMemory(result);
+	selections = (select_pair_ptr) UseMemory(result);
 	
 	while (num_selects) {
 		
@@ -2081,7 +2085,7 @@ static long insert_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 		local_offset = insertion - block->begin;
 		begin_offset = local_offset;
 		end_offset = block->end - block->begin;
-		text = UseMemory(block->text);
+		text = (pg_char_ptr) UseMemory(block->text);
 		
 		for (;;) {
 			
@@ -2122,7 +2126,7 @@ static long insert_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 
 	local_offset = insertion - block->begin;
 	end_offset = block->end - block->begin;
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 
 	while (walker.cur_style->procs.char_info(pg, &walker, text, block->begin,
 			0, end_offset, local_offset, LAST_HALF_BIT | MIDDLE_CHAR_BIT)) {
@@ -2143,7 +2147,7 @@ static long insert_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 			if (!undo_ptr->subset_data)
 				undo_ptr->subset_data = MemoryAlloc(pg->globals->mem_globals, sizeof(pg_subref), 0, 2);
 			
-			sublist = InsertMemory(undo_ptr->subset_data, 0, 1);
+			sublist = (pg_subref *) InsertMemory(undo_ptr->subset_data, 0, 1);
 			*sublist = pgDuplicateRef(pg, NULL, subref, pg->active_subset);
 			UnuseMemory(undo_ptr->subset_data);
 		}
@@ -2157,7 +2161,7 @@ static long insert_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 
 		copy_of_text = MemoryAlloc(pg->globals->mem_globals, sizeof(pg_char), bytes_inserted, 0);
 		pgBlockMove(&text[local_offset], UseMemory(copy_of_text), bytes_inserted * sizeof(pg_char));
-		text = UseMemoryRecord(copy_of_text, 0, USE_ALL_RECS, FALSE);
+		text = (pg_char_ptr) UseMemoryRecord(copy_of_text, 0, USE_ALL_RECS, FALSE);
 		
 		walker.cur_style->procs.copy_text(pg, NULL, prepare_undo_typing_reason,
 				walker.cur_style, 0, 0, text, bytes_inserted);
@@ -2170,7 +2174,7 @@ static long insert_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 			
 			text -= char_bytes;
 
-			kb_ptr = AppendMemory(undo_ptr->keyboard_ref, char_bytes, FALSE);
+			kb_ptr = (pg_kb_ptr) AppendMemory(undo_ptr->keyboard_ref, char_bytes, FALSE);
 			
 			for (copy_ctr = 0; copy_ctr < char_bytes; ++copy_ctr) {
 			
@@ -2204,7 +2208,7 @@ static pg_short_t add_keyboard_style (paige_rec_ptr pg, pg_undo_ptr undo_ptr, st
 	register style_info_ptr		src_styles;
 	register pg_short_t			src_qty, rec_ctr;
 	
-	src_styles = UseMemory(undo_ptr->keyboard_styles);
+	src_styles = (style_info_ptr) UseMemory(undo_ptr->keyboard_styles);
 	src_qty = (pg_short_t)GetMemorySize(undo_ptr->keyboard_styles);
 	rec_ctr = 0;
 	
@@ -2222,7 +2226,7 @@ static pg_short_t add_keyboard_style (paige_rec_ptr pg, pg_undo_ptr undo_ptr, st
 		--src_qty;
 	}
 	
-	src_styles = AppendMemory(undo_ptr->keyboard_styles, 1, FALSE);
+	src_styles = (style_info_ptr) AppendMemory(undo_ptr->keyboard_styles, 1, FALSE);
 	pgBlockMove(style, src_styles, sizeof(style_info));
 	src_styles->procs.duplicate(pg, NULL, prepare_undo_typing_reason, undo_ptr->keyboard_styles, src_styles);
 
@@ -2240,7 +2244,7 @@ static pg_short_t add_keyboard_par (paige_rec_ptr pg, pg_undo_ptr undo_ptr, par_
 	register par_info_ptr		src_styles;
 	register pg_short_t			src_qty, rec_ctr;
 	
-	src_styles = UseMemory(undo_ptr->keyboard_pars);
+	src_styles = (par_info_ptr) UseMemory(undo_ptr->keyboard_pars);
 	src_qty = (pg_short_t)GetMemorySize(undo_ptr->keyboard_pars);
 	rec_ctr = 0;
 	
@@ -2258,7 +2262,7 @@ static pg_short_t add_keyboard_par (paige_rec_ptr pg, pg_undo_ptr undo_ptr, par_
 		--src_qty;
 	}
 	
-	src_styles = AppendMemory(undo_ptr->keyboard_pars, 1, FALSE);
+	src_styles = (par_info_ptr) AppendMemory(undo_ptr->keyboard_pars, 1, FALSE);
 	pgBlockMove(par_style, src_styles, sizeof(par_info));
 	src_styles->procs.duplicate(pg, NULL, prepare_undo_typing_reason, undo_ptr->keyboard_pars, src_styles);
 
@@ -2339,7 +2343,7 @@ static void dispose_undo_structs (pg_undo_ptr undo_ptr)
 		pg_subref		PG_FAR *sublist;
 		
 		num_subs = GetMemorySize(undo_ptr->subset_data);
-		sublist = UseMemory(undo_ptr->subset_data);
+		sublist = (pg_subref *) UseMemory(undo_ptr->subset_data);
 		
 		while (num_subs) {
 			
@@ -2393,7 +2397,7 @@ static undo_ref prepare_keyboard_undo (paige_rec_ptr pg, short verb,
 
 	if (result_undo = previous_undo) {
 		
-		undo_ptr = UseMemory(result_undo);
+		undo_ptr = (pg_undo_ptr) UseMemory(result_undo);
 		if ((undo_ptr->real_verb != verb) || (undo_ptr->alt_range.end != insertion)
 				|| (pg->num_selects)) {
 			
@@ -2405,7 +2409,7 @@ static undo_ref prepare_keyboard_undo (paige_rec_ptr pg, short verb,
 	else {
 		
 		result_undo = MemoryAllocClear(pg->globals->mem_globals, sizeof(pg_undo), 1, 0);
-		undo_ptr = UseMemory(result_undo);
+		undo_ptr = (pg_undo_ptr) UseMemory(result_undo);
 		undo_ptr->globals = pg->globals;
 	}
 	
@@ -2536,14 +2540,14 @@ static void insert_undo_subref (paige_rec_ptr pg, pg_subref subref)
 {
 	text_block_ptr		block;
 	pg_subref PG_FAR	*target_list;
-	long				current, subref_index;
+	size_t				current, subref_index;
 	
 	pgGetSelection(pg->myself, &current, NULL);
 
 	block = pgFindTextBlock(pg, current, NULL, FALSE, FALSE);
 	subref_index = pgFindSubrefPosition(block, (pg_short_t)(current - block->begin));
 
-	target_list = InsertMemory(block->subref_list, subref_index, 1);
+	target_list = (pg_subref *) InsertMemory(block->subref_list, subref_index, 1);
 	*target_list = pgDuplicateRef(pg, NULL, subref, pg->active_subset);
 
 	UnuseMemory(block->subref_list);

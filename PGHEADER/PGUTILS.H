@@ -50,14 +50,14 @@ extern PG_PASCAL (pg_boolean) pgPtInRectInset (co_ordinate_ptr point, rectangle_
 extern PG_PASCAL (void) pgLineBounds (point_start_ptr first_start, rectangle_ptr bounds);
 extern PG_PASCAL (void) pgDistanceToRect (co_ordinate_ptr point, rectangle_ptr rect,
 			co_ordinate_ptr distance);
-extern PG_PASCAL (pg_boolean) pgEqualStruct (void PG_FAR *rec1, void PG_FAR *rec2, long length);
+extern PG_PASCAL (pg_boolean) pgEqualStruct (void PG_FAR *rec1, void PG_FAR *rec2, size_t length);
 extern PG_PASCAL (pg_boolean) pgEqualStructMasked (void PG_FAR *rec1, void PG_FAR *rec2,
 			void PG_FAR *mask, long length);
 extern PG_PASCAL (pg_boolean) pgZeroStruct (void PG_FAR *rec, pg_short_t length);
 extern PG_PASCAL (pg_boolean) pgCoversRect (rectangle_ptr r1, rectangle_ptr r2);
 extern PG_PASCAL (void) pgInsetRect (rectangle_ptr rect, long h, long v);
 extern PG_PASCAL (void) pgSwapLongs (long PG_FAR *lessor_val, long PG_FAR *greater_val);
-extern PG_PASCAL (long) pgFixOffset (paige_rec_ptr pg, long wanted_offset);
+extern PG_PASCAL (size_t) pgFixOffset (paige_rec_ptr pg, size_t wanted_offset);
 extern PG_PASCAL (void) pgResetDocBounds (paige_rec_ptr pg);
 extern PG_PASCAL (void) pgCallTextHook (paige_rec_ptr pg, paige_rec_ptr src_option,
 		short reason_verb, long starting_offset, long length, short verb,

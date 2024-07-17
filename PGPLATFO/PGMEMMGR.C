@@ -56,12 +56,12 @@ static memory_ref suggest_purge (pgm_globals_ptr globals, short purge_priority,
 static void purge_excess_memory (pgm_globals_ptr globals, memory_ref mask_ref);
 static void reload_ref (memory_ref ref);
 static short get_access_ctr (memory_ref ref);
-static long find_available_space (pgm_globals_ptr globals, memory_ref avail_ref,
-		long wanted_space);
+static size_t find_available_space (pgm_globals_ptr globals, memory_ref avail_ref,
+		size_t wanted_space);
 static memory_ref free_available_space (pgm_globals_ptr globals, memory_ref the_avail_ref,
-		long saved_position, long end_position);
+		size_t saved_position, size_t end_position);
 static memory_ref cleanup_available_list (pgm_globals_ptr globals, memory_ref the_avail_ref);
-static short two_available_pairs_alike (memory_ref avail_ref, long PG_FAR *offset);
+static short two_available_pairs_alike (memory_ref avail_ref, size_t PG_FAR *offset);
 static pg_boolean quick_ref_check (memory_ref ref);
 static void extend_master_list (pgm_globals_ptr mem_globals);
 static void unuse_all_memory (pgm_globals_ptr mem_globals, long memory_id, pg_boolean failed_unuse);
@@ -251,7 +251,7 @@ PG_PASCAL (memory_ref) MemoryDuplicate (memory_ref src_ref)
 	memory_ref		dup_result;
 	void PG_FAR		*target_data, *src_data;
 	mem_rec			src_rec;
-	long			byte_size;
+	size_t			byte_size;
 
 	#ifdef PG_DEBUG
 	if (check_bad_ref(src_ref, access_dont_care))
@@ -311,7 +311,7 @@ PG_PASCAL (void) MemoryCopy (memory_ref src_ref, memory_ref target_ref)
 {
 	mem_rec				src_rec;
 	mem_rec_ptr			target_ptr;
-	long				src_size;
+	size_t				src_size;
 	
 	#ifdef PG_DEBUG
 	if (check_bad_ref(src_ref, access_positive))
@@ -407,8 +407,8 @@ is guaranteed, otherwise only wanted_rec through wanted_rec + seq_recs_used
 are guaranteed. If seq_recs_used is -1, all records are guaranteed. (The purpose
 if this is to allow partial loads from purged refs).  */
 
-PG_PASCAL (void PG_FAR*) UseMemoryRecord (memory_ref ref, long wanted_rec,
-			long seq_recs_used, pg_boolean first_use)
+PG_PASCAL (void PG_FAR*) UseMemoryRecord (memory_ref ref, size_t wanted_rec,
+			size_t seq_recs_used, pg_boolean first_use)
 {
 	register mem_rec_ptr	data;
 	register pg_bits8_ptr	result;
@@ -478,12 +478,12 @@ PG_PASCAL (void) GetMemoryRecord (memory_ref ref, long wanted_rec,
 
 /* SetMemorySize changes the size of a memory_ref. */
 
-PG_PASCAL (void) SetMemorySize (memory_ref ref_to_size, long wanted_size)
+PG_PASCAL (void) SetMemorySize (memory_ref ref_to_size, size_t wanted_size)
 {
 	register mem_rec_ptr		data;
 	volatile pgm_globals_ptr	globals;
 	volatile memory_ref			ref;
-	long						added_size, extra_size, required_purge;
+	size_t						added_size, extra_size, required_purge;
 	pg_error					err;
 	
 	ref = ref_to_size;
@@ -619,7 +619,7 @@ PG_PASCAL (pg_handle) DetachMemory (memory_ref ref)
 {
 	register master_list_ptr		ref_storage;
 	register pgm_globals_ptr		globals;
-	register long					storage_index;
+	register size_t					storage_index;
 	mem_rec_ptr						data;
 	short							access;
 	pg_handle						result;
@@ -655,7 +655,7 @@ PG_PASCAL (pg_handle) DetachMemory (memory_ref ref)
 #endif
 
 #ifdef WINDOWS_PLATFORM
-	ref_storage = (master_list_ptr)storage_index;	
+	ref_storage = (master_list_ptr)storage_index;
 #endif
 
 	result = *ref_storage;
@@ -671,7 +671,7 @@ PG_PASCAL (memory_ref) DisposeMemory (memory_ref ref)
 {
 	register master_list_ptr		ref_storage;
 	register pgm_globals_ptr		globals;
-	register long					storage_index;
+	register size_t					storage_index;
 	mem_rec_ptr						data;
 	long							disposed_size;
 
@@ -775,11 +775,11 @@ PG_PASCAL (void) DisposeUsedMemory (memory_ref ref)
 to that new spot. NOTE: In this case, you may have the access counter at ONE
 or less, but a debug error will get flagged if access > 1. */
 
-PG_PASCAL (void PG_FAR*) InsertMemory (memory_ref ref, long offset, long insert_size)
+PG_PASCAL (void PG_FAR*) InsertMemory (memory_ref ref, size_t offset, size_t insert_size)
 {
 	mem_rec_ptr				record;
 	pg_bits8_ptr			data;
-	long					old_size, byte_offset, byte_size;
+	size_t					old_size, byte_offset, byte_size;
 	short					access, rec_size;
 
 	if (GetMemorySize(ref) == offset)
@@ -822,10 +822,10 @@ PG_PASCAL (void PG_FAR*) InsertMemory (memory_ref ref, long offset, long insert_
 new location. NOTE: In this case, you may have the access counter at ONE
 or less, but a debug error will get flagged if access > 1. */
 
-extern PG_PASCAL (void PG_FAR*) AppendMemory (memory_ref ref, long append_size,
+extern PG_PASCAL (void PG_FAR*) AppendMemory (memory_ref ref, size_t append_size,
 		pg_boolean zero_fill)
 {
-	long					old_size;
+	size_t					old_size;
 	short					rec_size, access;
 	mem_rec_ptr				record;
 	register pg_bits8_ptr	data;
@@ -848,7 +848,7 @@ extern PG_PASCAL (void PG_FAR*) AppendMemory (memory_ref ref, long append_size,
 
 	SetMemorySize(ref, old_size + append_size);
 	
-	data = UseMemoryRecord(ref, old_size, append_size - 1, TRUE);
+	data = (pg_bits8_ptr) UseMemoryRecord(ref, old_size, append_size - 1, TRUE);
 	
 	if (zero_fill)
 		pgFillBlock(data, pgGetByteSize(rec_size, append_size), 0);
@@ -859,11 +859,11 @@ extern PG_PASCAL (void PG_FAR*) AppendMemory (memory_ref ref, long append_size,
 
 /* DeleteMemory removes a certain amount of space from a specified offset */
 
-PG_PASCAL (void) DeleteMemory (memory_ref ref, long offset, long delete_size)
+PG_PASCAL (void) DeleteMemory (memory_ref ref, size_t offset, size_t delete_size)
 {
 	mem_rec_ptr				record;
 	pg_short_t				rec_size;
-	long					old_size, byte_offset, byte_size;
+	size_t					old_size, byte_offset, byte_size;
 
 	if (!delete_size)
 		return;
@@ -982,15 +982,15 @@ PG_PASCAL (void) UnuseAllFailedMemory (pgm_globals_ptr mem_globals, long memory_
 If return_byte_size is TRUE, physical byte size is returned, otherwise the total
 record size(s) are added. */
 
-PG_PASCAL (long) GetAllMemorySize (pgm_globals_ptr mem_globals, long memory_id,
+PG_PASCAL (size_t) GetAllMemorySize (pgm_globals_ptr mem_globals, long memory_id,
 			pg_boolean return_byte_size)
 {
 	register master_list_ptr	storage_list;
 	register pgm_globals_ptr	globals = mem_globals;
 	register long 				index;
-	long						mem_id, num_recs, master_list_size;
+	size_t						mem_id, num_recs, master_list_size;
 	memory_ref					ref_in_question;
-	long						result = 0;
+	size_t						result = 0;
 	short						rec_size;
 	mem_rec_ptr					data;
 	
@@ -1140,8 +1140,8 @@ actual memory_ref;  for Mac this will be the same as base_ref.  */
 PG_PASCAL (memory_ref) InitMemoryRef (pgm_globals_ptr mem_globals, pg_handle base_ref)
 {
 	register pgm_globals_ptr		globals;
-	register long					storage_index;
-	long							remaining_qty;
+	register size_t					storage_index;
+	size_t							remaining_qty;
 	master_list_ptr					storage_list;
 	memory_ref						new_ref;
 	mem_rec_ptr						data;
@@ -1170,7 +1170,7 @@ PG_PASCAL (memory_ref) InitMemoryRef (pgm_globals_ptr mem_globals, pg_handle bas
 	storage_list += storage_index;
 	*storage_list = base_ref;
 	new_ref = (memory_ref)storage_list;
-	storage_index = (long)storage_list;
+	storage_index = (size_t)storage_list;
 #endif
 	
 	data = pgMemoryPtr(new_ref);
@@ -1204,7 +1204,7 @@ PG_PASCAL (void) InitVirtualMemory (pgm_globals_ptr globals, purge_proc purge_fu
 		long ref_con)
 {
 	if (!(globals->purge = purge_function))
-		globals->purge = (mem_proc) pgStandardPurgeProc;
+		globals->purge = (purge_proc) (mem_proc) pgStandardPurgeProc;
 	
 	globals->purge_ref_con = ref_con;
 	globals->purge(MEM_NULL, globals, purge_init);
@@ -1215,13 +1215,13 @@ PG_PASCAL (void) InitVirtualMemory (pgm_globals_ptr globals, purge_proc purge_fu
 the function returns NO_ERROR, otherwise some sort of error is returned. The
 mask_ref, if non-NULL, is skipped (not considered for purging).  */
 
-PG_PASCAL (pg_error) MemoryPurge (pgm_globals_ptr globals, long minimum_amount,
+PG_PASCAL (pg_error) MemoryPurge (pgm_globals_ptr globals, size_t minimum_amount,
 		memory_ref mask_ref)
 {
-	register long			amount_purged;
+	register size_t			amount_purged;
 	register short			purge_priority_ctr;
 	memory_ref				ref_to_purge;
-	long					prior_unpurged;
+	size_t					prior_unpurged;
 	short					error;
 
 	if (globals->free_memory) {
@@ -1284,7 +1284,7 @@ PG_PASCAL (memory_ref) ForceMinimumMemorySize (memory_ref ref_to_size)
 {
 	mem_rec			data_rec;
 	memory_ref		ref;
-	long			amount_reduced;
+	size_t			amount_reduced;
 
 	ref = ref_to_size;
 
@@ -1299,7 +1299,7 @@ PG_PASCAL (memory_ref) ForceMinimumMemorySize (memory_ref ref_to_size)
 	if ((data_rec.real_num_recs > data_rec.num_recs) && (!(data_rec.purge & PURGED_FLAG))) {
 		mem_rec_ptr		data;
 		pgm_globals_ptr	globals;
-		long			reduced_size;
+		size_t			reduced_size;
 		
 		amount_reduced = pgGetByteSize(data_rec.rec_size, data_rec.real_num_recs - data_rec.num_recs);
 		
@@ -1331,11 +1331,11 @@ PG_PASCAL (memory_ref) ForceMinimumMemorySize (memory_ref ref_to_size)
 logical block size is given in block_size. Note: The block is already
 sufficient size.  */
 
-PG_PASCAL (void) pgMemInsert (memory_ref block, long offset, long byte_size,
-		long block_size)
+PG_PASCAL (void) pgMemInsert (memory_ref block, size_t offset, size_t byte_size,
+		size_t block_size)
 {
 	register pg_bits8_ptr		src, dest;
-	long						h_size, diff;
+	size_t						h_size, diff;
 
 	h_size = block_size;
 	diff = h_size - offset;
@@ -1348,7 +1348,7 @@ PG_PASCAL (void) pgMemInsert (memory_ref block, long offset, long byte_size,
 		dest += h_size;
 		src = dest - byte_size;
 		
-		pgBlockMove(src, dest, -diff);
+		pgBlockMove(src, dest, -(ptrdiff_t)diff);
 		
 		pgFreePtr(block);
 	}
@@ -1358,10 +1358,10 @@ PG_PASCAL (void) pgMemInsert (memory_ref block, long offset, long byte_size,
 /* pgMemDelete deletes byte_size amount from block at offset. The logical block
 size is passed in block_size.  NOTE: THE MEMORY BLOCK IS NOT RESIZED.  */
 
-PG_PASCAL (void) pgMemDelete (memory_ref block, long offset, long byte_size,
-		long block_size)
+PG_PASCAL (void) pgMemDelete (memory_ref block, size_t offset, size_t byte_size,
+		size_t block_size)
 {
-	long		old_size, new_size;
+	size_t old_size, new_size;
 	
 	old_size = block_size;
 	new_size = old_size - byte_size;
@@ -1384,9 +1384,9 @@ PG_PASCAL (void) pgMemDelete (memory_ref block, long offset, long byte_size,
 HOWEVER, if block_size is negative, the buffers are copied backwards
 (decrementing pointers) for absolute value of block_size. */
 
-PG_PASCAL (void) pgBlockMove (const void PG_FAR *src, void PG_FAR *dest, long block_size)
+PG_PASCAL (void) pgBlockMove (const void PG_FAR *src, void PG_FAR *dest, ptrdiff_t block_size)
 {
-	register long			byte_count;
+	register size_t byte_count;
 	
 	if (!block_size)
 		return;
@@ -1400,15 +1400,15 @@ PG_PASCAL (void) pgBlockMove (const void PG_FAR *src, void PG_FAR *dest, long bl
 	else {
 		byte_count = -block_size;
 		
-		if ((byte_count >= sizeof(long)) && (!((long)src & 1)) && (!((long)dest & 1))) {
-			register long PG_FAR	*src_bytes;
-			register long PG_FAR	*dest_bytes;
-			register long			long_count;
+		if ((byte_count >= sizeof(size_t)) && (!((size_t)src & 1)) && (!((size_t)dest & 1))) {
+			register size_t PG_FAR	*src_bytes;
+			register size_t PG_FAR	*dest_bytes;
+			register size_t			long_count;
 			
-			long_count = byte_count / sizeof(long);
-			byte_count -= (long_count * sizeof(long));
+			long_count = byte_count / sizeof(size_t);
+			byte_count -= (long_count * sizeof(size_t));
 			
-			for (src_bytes = (long PG_FAR *)src, dest_bytes = dest; long_count; --long_count)
+			for (src_bytes = (size_t PG_FAR*)src, dest_bytes = (size_t PG_FAR*)dest; long_count; --long_count)
 				*(--dest_bytes) = *(--src_bytes);
 			
 			src = src_bytes;
@@ -1419,7 +1419,7 @@ PG_PASCAL (void) pgBlockMove (const void PG_FAR *src, void PG_FAR *dest, long bl
 			register unsigned char PG_FAR	*src_bytes;
 			register unsigned char PG_FAR	*dest_bytes;
 
-			for (src_bytes = (unsigned char PG_FAR	*)src, dest_bytes = dest; byte_count; --byte_count)
+			for (src_bytes = (unsigned char PG_FAR*)src, dest_bytes = (unsigned char PG_FAR*)dest; byte_count; --byte_count)
 				*(--dest_bytes) = *(--src_bytes);
 		}
 	}
@@ -1545,7 +1545,7 @@ PG_PASCAL (memory_ref) MemoryAllocClearID (pgm_globals_ptr globals,
 
 PG_PASCAL (memory_ref) MemoryRecover (void PG_FAR *ptr)
 {
-	mem_rec_ptr  p = ptr;
+	mem_rec_ptr  p = (mem_rec_ptr) ptr;
 	return PG_LONGWORD(memory_ref) (pgRecoverMemory(--p));
 }
 
@@ -1611,7 +1611,7 @@ PG_PASCAL (void) ChangeAllMemoryID(pgm_globals_ptr mem_globals, long orig_id, lo
 records. (The reason I do it this way is to avoid excessive multiplication for
 many memory_refs that have 1 byte record sizes).  */
 
-PG_PASCAL (long) pgGetByteSize (pg_short_t rec_size, long num_recs)
+PG_PASCAL (size_t) pgGetByteSize (pg_short_t rec_size, size_t num_recs)
 {
 	switch (rec_size) {
 		
@@ -1642,10 +1642,10 @@ is changed, the allocation is set to ZERO SIZE. */
 
 PG_PASCAL (void) SetMemoryRecSize (memory_ref ref, pg_short_t new_rec_size, short extend_size)
 {
-	mem_rec_ptr						data;
-	pgm_globals_ptr					globals;
-	mem_rec							data_rec;
-	long							new_size;
+	mem_rec_ptr			data;
+	pgm_globals_ptr		globals;
+	mem_rec				data_rec;
+	size_t				new_size;
 
 	#ifdef PG_DEBUG
 	if (check_bad_ref(ref, access_zero))
@@ -1686,16 +1686,16 @@ PG_PASCAL (void) SetMemoryRecSize (memory_ref ref, pg_short_t new_rec_size, shor
 
 #ifdef PG_DEBUG
 PG_PASCAL (memory_ref) pgAllocateNewRef (pgm_globals_ptr mem_globals, pg_short_t rec_size,
-		long num_recs, short extend_size, short zero_fill, char *file,int line)
+		size_t num_recs, short extend_size, short zero_fill, char *file,int line)
 #else
 PG_PASCAL (memory_ref) pgAllocateNewRef (pgm_globals_ptr mem_globals, pg_short_t rec_size,
-		long num_recs, short extend_size, short zero_fill)
+		size_t num_recs, short extend_size, short zero_fill)
 #endif
 {
 	register mem_rec_ptr			data;
 	pg_handle						base_ref;
 	pg_error						err;
-	long							total_size;
+	size_t							total_size;
 	memory_ref						new_ref = MEM_NULL;
 
 #ifdef PG_DEBUG
@@ -1860,9 +1860,9 @@ PG_PASCAL (void) UnuseMemory (memory_ref ref)
 
 /* GetMemorySize returns a size of a memory_ref */
 
-PG_PASCAL (long) GetMemorySize (memory_ref ref)
+PG_PASCAL (size_t) GetMemorySize (memory_ref ref)
 {
-	long			num_recs;
+	size_t			num_recs;
 	mem_rec_ptr		data;
 	
 	#ifdef PG_DEBUG
@@ -1901,10 +1901,10 @@ PG_PASCAL (short) GetMemoryRecSize (memory_ref ref)
 
 /* GetByteSize returns the total memory_ref size, in bytes (instead of record numbers) */
 
-PG_PASCAL (long) GetByteSize (memory_ref ref)
+PG_PASCAL (size_t) GetByteSize (memory_ref ref)
 {
 	short			rec_size;
-	long			num_recs;
+	size_t			num_recs;
 	mem_rec_ptr		data;
 	
 	#ifdef PG_DEBUG
@@ -2029,13 +2029,13 @@ PG_PASCAL (void) pgFillBlock (void PG_FAR *block, long block_size, char value)
 			for (ctr = sizeof(long) - 1, long_value = value; ctr; --ctr,
 					long_value <<= 8, long_value |= value) ;
 
-		for (long_target = block; counter >= sizeof(long); counter -= sizeof(long))
+		for (long_target = (long *) block; counter >= sizeof(long); counter -= sizeof(long))
 			*long_target++ = long_value;
 		
 		byte_target = (unsigned char PG_FAR *) long_target;
 	}
 	else
-		byte_target = block;
+		byte_target = (unsigned char *) block;
 	
 	while (counter) {
 		*byte_target++ = value;
@@ -2084,8 +2084,8 @@ PG_PASCAL (pg_error) pgStandardPurgeProc (memory_ref ref, pgm_globals_ptr mem_gl
 	else {
 		mem_rec_ptr		data;
 		available_ptr	saved_offsets_ptr;
-		long			starting_offset, ending_offset, data_size;
-		long			original_size, new_physical_size;
+		size_t			starting_offset, ending_offset, data_size;
+		size_t			original_size, new_physical_size;
 		short			purge_flags;
 		pg_error		error;
 				
@@ -2121,7 +2121,7 @@ I have saved the data to a file.	*/
 					error = pgWriteFileData(ref_num, data_size, data);
 					pgFailError(mem_globals, pgProcessError(error));
 					
-					saved_offsets_ptr = (long PG_FAR *) data;
+					saved_offsets_ptr = (size_t PG_FAR *) data;
 					*saved_offsets_ptr++ = starting_offset;
 					*saved_offsets_ptr = starting_offset + data_size;
 			
@@ -2174,7 +2174,7 @@ I have saved the data to a file.	*/
 				else {
 				
 					++data;
-					saved_offsets_ptr = (long PG_FAR *) data;
+					saved_offsets_ptr = (size_t PG_FAR *) data;
 		
 					starting_offset = *saved_offsets_ptr++;
 					ending_offset = *saved_offsets_ptr;
@@ -2260,9 +2260,9 @@ PG_PASCAL (long) pgStandardFreeProc (pgm_globals_ptr mem_globals, memory_ref don
 
 /* MemoryToCStr converts a normal memory ref to a C string memory ref. */
 
-PG_PASCAL (long) MemoryToCStr(memory_ref ref)
+PG_PASCAL (size_t) MemoryToCStr(memory_ref ref)
 {
-	long	result;
+	size_t	result;
 	
 	result = GetMemorySize(ref);
 	AppendMemory (ref, 1, TRUE);
@@ -2274,9 +2274,9 @@ PG_PASCAL (long) MemoryToCStr(memory_ref ref)
 
 /* MemoryToPStr converts a normal memory ref to a pascal string memory ref. */
 
-PG_PASCAL (long) MemoryToPStr(memory_ref ref)
+PG_PASCAL (size_t) MemoryToPStr(memory_ref ref)
 {
-	long	result;
+	size_t	result;
 	
 	result = GetMemorySize(ref);
 	
@@ -2293,9 +2293,9 @@ PG_PASCAL (long) MemoryToPStr(memory_ref ref)
 
 /* CStrToMemory converts a C string memory ref to a normal memory ref. */
 
-PG_PASCAL (long) CStrToMemory(memory_ref ref)
+PG_PASCAL (size_t) CStrToMemory(memory_ref ref)
 {
-	long	result;
+	size_t	result;
 	
 	result = GetMemorySize(ref);
 	DeleteMemory (ref, --result, 1);
@@ -2305,9 +2305,9 @@ PG_PASCAL (long) CStrToMemory(memory_ref ref)
 
 /* PStrToMemory converts a pascal string memory ref to a normal memory ref. */
 
-PG_PASCAL (long) PStrToMemory(memory_ref ref)
+PG_PASCAL (size_t) PStrToMemory(memory_ref ref)
 {
-	long	result;
+	size_t	result;
 	
 	result = GetMemorySize(ref) - 1;
 	DeleteMemory (ref, 0, 1);
@@ -2320,7 +2320,7 @@ PG_PASCAL (long) PStrToMemory(memory_ref ref)
 PG_PASCAL (char PG_FAR *) UseMemoryToCStr(memory_ref ref)
 {
 	MemoryToCStr(ref);
-	return UseMemory(ref);
+	return (char PG_FAR *) UseMemory(ref);
 }
 
 
@@ -2330,7 +2330,7 @@ PG_PASCAL (pg_char_ptr) UseMemoryToPStr(memory_ref ref)
 {
 	if (MemoryToPStr(ref) > 255)
 		pgFailure(GetGlobalsFromRef(ref), PG_PSTRING_TOO_BIG_ERR, 0);
-	return UseMemory(ref);
+	return (pg_char_ptr) UseMemory(ref);
 }
 
 
@@ -2385,7 +2385,7 @@ PG_PASCAL (memory_ref) DuplicateNonNilMemory (memory_ref ref)
 
 PG_PASCAL (pg_boolean) EqualMemory (memory_ref ref1, memory_ref ref2)
 {
-	long		len;
+	size_t		len;
 	pg_boolean	result = FALSE;
 	
 	if ((len = GetByteSize(ref1)) == GetByteSize(ref2))
@@ -2656,12 +2656,12 @@ static void resize_purged_memory (memory_ref ref)
 	HANDLE PG_FAR		*global_handle;
 		            	
 	global_handle = (HANDLE PG_FAR *)ref;
-	data = GlobalLock(*global_handle);
+	data = (mem_rec_ptr) GlobalLock(*global_handle);
 	pgBlockMove(data, &temp_copy, sizeof(purged_mem_rec));
 	GlobalUnlock(*global_handle);
 	GlobalFree(*global_handle);		            	
 	*global_handle = GlobalAlloc(GMEM_MOVEABLE, sizeof(purged_mem_rec));
-	data = GlobalLock(*global_handle);
+	data = (mem_rec_ptr) GlobalLock(*global_handle);
 	pgBlockMove(&temp_copy, data, sizeof(purged_mem_rec));
 	GlobalUnlock(*global_handle);
 #else
@@ -2677,7 +2677,7 @@ static void reload_ref (memory_ref ref)
 {
 	register mem_rec_ptr		data;
 	volatile pgm_globals_ptr	globals;
-	long						unpurged_size;
+	size_t						unpurged_size;
 	volatile pg_error			error;
 
 	data = pgMemoryPtr(ref);
@@ -2749,12 +2749,12 @@ static void reload_ref (memory_ref ref)
 that can hold wanted_space. The file offset is returned as the function result
 and the available list is updated.  */
 
-static long find_available_space (pgm_globals_ptr globals, memory_ref avail_ref,
-		long wanted_space)
+static size_t find_available_space (pgm_globals_ptr globals, memory_ref avail_ref,
+		size_t wanted_space)
 {
 	register available_ptr	available_list;
 	mem_rec_ptr				temp_ptr;
-	register long			space_available;
+	register size_t			space_available;
 
 	temp_ptr = pgMemoryPtr(avail_ref);
 	++temp_ptr;
@@ -2787,12 +2787,12 @@ end_position.  The function returns avail_ref (because in certain platforms this
 can be a different ref when re-sized). */
 
 static memory_ref free_available_space (pgm_globals_ptr globals, memory_ref the_avail_ref,
-		long saved_position, long end_position)
+		size_t saved_position, size_t end_position)
 {
 	register available_ptr		available_list;
 	register long				offset_ctr;
 	memory_ref					avail_ref;
-	long						block_size;
+	size_t						block_size;
 	
 	avail_ref = the_avail_ref;
 	available_list = (available_ptr) UseMemory(avail_ref);
@@ -2809,7 +2809,7 @@ static memory_ref free_available_space (pgm_globals_ptr globals, memory_ref the_
 	block_size = GetMemorySize(avail_ref);
 	SetMemorySize(avail_ref, block_size + PAIR_SIZE);
 
-	available_list = InsertMemory(avail_ref, offset_ctr * sizeof(long), PAIR_SIZE);
+	available_list = (available_ptr) InsertMemory(avail_ref, offset_ctr * sizeof(long), PAIR_SIZE);
 	*available_list++ = saved_position;
 	*available_list = end_position;
 	UnuseMemory(avail_ref);
@@ -2827,7 +2827,7 @@ the reference). */
 
 static memory_ref cleanup_available_list (pgm_globals_ptr globals, memory_ref the_avail_ref)
 {
-	long			list_size, offset;
+	size_t			list_size, offset;
 	memory_ref		avail_ref;
 	
 	avail_ref = the_avail_ref;
@@ -2846,10 +2846,10 @@ static memory_ref cleanup_available_list (pgm_globals_ptr globals, memory_ref th
 for any two entries that match and returns the offset of the first entry in
 *offset and TRUE as the function result if one is found.  */
 
-static short two_available_pairs_alike (memory_ref avail_ref, long PG_FAR *offset)
+static short two_available_pairs_alike (memory_ref avail_ref, size_t PG_FAR *offset)
 {
 	register available_ptr		available_list;
-	register long				num_entries, offset_ctr;
+	register size_t				num_entries, offset_ctr;
 
 	num_entries = GetMemorySize(avail_ref) / sizeof(long);
 	available_list = (available_ptr) UseMemory(avail_ref);
@@ -2876,7 +2876,7 @@ the necessary fields in mem_globals to allow for another entry. */
 static void extend_master_list (pgm_globals_ptr mem_globals)
 {
 	long				extend_size = (MASTER_ENTRY_SIZE * DEF_MASTER_QTY);
-	long				required_purge;
+	size_t				required_purge;
 	pg_error			err;
 #ifdef MAC_PLATFORM
 	unsigned char		*zeros_ptr;
@@ -2921,7 +2921,7 @@ static void extend_master_list (pgm_globals_ptr mem_globals)
 	
 	while (next_master) {
 		
-		linked_master_list = GlobalLock(next_master);
+		linked_master_list = (master_list_ptr) GlobalLock(next_master);
 		GlobalUnlock(next_master);  // (Pointer still locked since initial creation locked it)
 
 		mem_globals->master_list = linked_master_list;

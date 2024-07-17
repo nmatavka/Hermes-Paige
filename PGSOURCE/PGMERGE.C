@@ -76,7 +76,7 @@ PG_PASCAL (pg_boolean) pgMergeText (pg_ref pg, const style_info_ptr matching_sty
 	long						old_change_ctr;
 	pg_boolean					merge_result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	merge_result = FALSE;
 	old_change_ctr = pg_rec->change_ctr;
 
@@ -148,7 +148,7 @@ PG_PASCAL (void) pgRestoreMerge (pg_ref pg, pg_boolean revert_original, short dr
 	paige_rec_ptr				pg_rec;
 	long						old_change_ctr;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_change_ctr = pg_rec->change_ctr;
 
 	if (pg_rec->merge_save) {
@@ -191,7 +191,7 @@ static pg_boolean walk_merge_styles (paige_rec_ptr pg, style_info_ptr matching_s
 	style_walk					walker;
 	select_pair					merge_range;
 	text_ref					used_text_ref;
-	long						merge_length, max_length;
+	size_t						merge_length, max_length;
 	short						style_deleted;
 	pg_boolean					merge_result;
 
@@ -239,7 +239,7 @@ static pg_boolean walk_merge_styles (paige_rec_ptr pg, style_info_ptr matching_s
 					
 					if (merge_length = GetMemorySize(merged_text)) {
 						
-						pgInsert(pg->myself, UseMemory(merged_text), merge_length,
+						pgInsert(pg->myself, (const pg_char_ptr) UseMemory(merged_text), merge_length,
 								merge_range.begin, data_insert_mode, 0, draw_none);
 	
 						UnuseMemory(merged_text);
@@ -254,7 +254,7 @@ static pg_boolean walk_merge_styles (paige_rec_ptr pg, style_info_ptr matching_s
 				else
 					UnuseMemory(used_text_ref);
 
-				appended_pairs = AppendMemory(merged_pairs, 1, FALSE);
+				appended_pairs = (select_pair_ptr) AppendMemory(merged_pairs, 1, FALSE);
 				*appended_pairs = merge_range;
 				UnuseMemory(merged_pairs);
 			}
@@ -287,7 +287,7 @@ static void restore_merge (paige_rec_ptr pg, short draw_mode)
 	
 	GetMemoryRecord(select_ref, 0, &paste_position);
 
-	for (styles_to_clear = UseMemory(pg->t_formats), 
+	for (styles_to_clear = (style_info_ptr) UseMemory(pg->t_formats), 
 			style_qty = (pg_short_t)GetMemorySize(pg->t_formats); style_qty;
 			++styles_to_clear, --style_qty)
 		styles_to_clear->class_bits &= CLR_STYLE_MERGE;

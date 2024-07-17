@@ -67,11 +67,11 @@ extern PG_PASCAL (void) pgDrawPageProc (paige_rec_ptr pg, shape_ptr page_shape,
 extern PG_PASCAL (void) pgBitmapModifyProc (paige_rec_ptr pg, graf_device_ptr bits_port,
 		pg_boolean post_call, rectangle_ptr bits_rect, co_ordinate_ptr screen_offset,
 		long text_offset);
-extern PG_PASCAL (void) pgWaitProc (paige_rec_ptr pg, short wait_verb, long progress_ctr,
-		long completion_ctr);
+extern PG_PASCAL (void) pgWaitProc (paige_rec_ptr pg, short wait_verb, size_t progress_ctr,
+		size_t completion_ctr);
 extern PG_PASCAL (void) pgMeasureProc (paige_rec_ptr pg, style_walk_ptr walker,
-		pg_char_ptr data, long length, pg_short_t slop, long PG_FAR *positions,
-		short PG_FAR *types, short measure_verb, long current_offset, pg_boolean scale_widths,
+		pg_char_ptr data, size_t length, pg_short_t slop, long PG_FAR *positions,
+		short PG_FAR *types, short measure_verb, size_t current_offset, pg_boolean scale_widths,
 		short call_order);
 extern PG_PASCAL (pg_boolean) pgMergeProc (paige_rec_ptr pg, style_info_ptr style, pg_char_ptr text_data,
 		pg_short_t length, text_ref merged_data, long ref_con);
@@ -80,7 +80,7 @@ extern PG_PASCAL (long) pgTrackCtlProc (paige_rec_ptr pg, short verb,
 		pg_char_ptr associated_text, point_start_ptr bounds_info, short modifiers,
 		long track_refcon);
 extern PG_PASCAL (long) pgCharInfoProc (paige_rec_ptr pg, style_walk_ptr style_walker,
-		pg_char_ptr data, long block_offset, long offset_begin, long offset_end, long char_offset,
+		pg_char_ptr data, size_t block_offset, size_t offset_begin, size_t offset_end, size_t char_offset,
 		long mask_bits);
 extern PG_PASCAL (void) pgDrawProc (paige_rec_ptr pg, style_walk_ptr walker, pg_char_ptr data,
 		pg_short_t offset, pg_short_t length, draw_points_ptr draw_position,
@@ -96,8 +96,8 @@ extern PG_PASCAL (void) pgActivateStyleProc (paige_rec_ptr pg, style_info_ptr st
 		select_pair_ptr text_range, pg_char_ptr text, short front_back_state,
 		short perm_state, pg_boolean show_hilite);
 extern PG_PASCAL (void) pgCopyTextProc (paige_rec_ptr src_pg, paige_rec_ptr target_pg,
-		short reason_verb, style_info_ptr style, long style_position,
-		long text_position, pg_char_ptr text, long length);
+		short reason_verb, style_info_ptr style, size_t style_position,
+		size_t text_position, pg_char_ptr text, size_t length);
 extern PG_PASCAL (void) pgDeleteTextProc (paige_rec_ptr pg, short reason_verb,
 		style_info_ptr style, long style_position, long text_position,
 		pg_char_ptr text, long length);
@@ -125,7 +125,7 @@ extern PG_PASCAL (void) pgPostPaginateProc (paige_rec_ptr pg, text_block_ptr blo
 		short action_taken_verb);
 extern PG_PASCAL (void) pgSetGrafDevice (paige_rec_ptr pg, short verb, graf_device_ptr device,
 			color_value_ptr bk_color);
-extern PG_PASCAL (void) pgPageModify  (paige_rec_ptr pg, long page_num, rectangle_ptr margins);
+extern PG_PASCAL (void) pgPageModify  (paige_rec_ptr pg, size_t page_num, rectangle_ptr margins);
 extern PG_PASCAL (long) pgBreakInfoProc (paige_rec_ptr pg, pg_char_ptr the_char, short charsize,
 		style_info_ptr style, font_info_ptr font, long current_settings);
 extern PG_PASCAL (pg_word) pgCharClassProc (paige_rec_ptr pg, pg_char_ptr the_char, short charsize,
@@ -138,30 +138,30 @@ extern PG_PASCAL (void) pgBkImageProc (paige_rec_ptr pg, pg_url_image_ptr image,
 /* Default file functions */
 
 extern PG_PASCAL (pg_boolean) pgReadHandlerProc (paige_rec_ptr pg, pg_file_key key, memory_ref key_data,
-		long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size);
+		long PG_FAR *element_info, void PG_FAR *aux_data, size_t PG_FAR *unpacked_size);
 extern PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, memory_ref key_data,
-		long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size);
+		long PG_FAR *element_info, void PG_FAR *aux_data, size_t PG_FAR *unpacked_size);
 extern PG_PASCAL (pg_boolean) pgDummyReadHandler (paige_rec_ptr pg, pg_file_key key, memory_ref key_data,
-		long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size);
+		size_t PG_FAR *element_info, void PG_FAR *aux_data, size_t PG_FAR *unpacked_size);
 extern PG_PASCAL (pg_boolean) pgDummyWriteHandler (paige_rec_ptr pg, pg_file_key key, memory_ref key_data,
-		long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size);
-extern PG_PASCAL (pg_error) pgStandardReadProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
-extern PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
-extern PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
-extern PG_PASCAL (pg_error) pgOSWriteProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
-extern PG_PASCAL (pg_error) pgScrapMemoryWrite (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
-extern PG_PASCAL (pg_error) pgScrapMemoryRead (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap);
+		size_t PG_FAR *element_info, void PG_FAR *aux_data, size_t PG_FAR *unpacked_size);
+extern PG_PASCAL (pg_error) pgStandardReadProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
+extern PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
+extern PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
+extern PG_PASCAL (pg_error) pgOSWriteProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
+extern PG_PASCAL (pg_error) pgScrapMemoryWrite (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
+extern PG_PASCAL (pg_error) pgScrapMemoryRead (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap);
 
 /* Default extend and misc. procs */
 
 extern PG_PASCAL (void) pgExtendProc (void PG_FAR *param, short verb);
-extern PG_PASCAL (long) pgCacheFree (pgm_globals_ptr mem_globals, memory_ref dont_free, long desired_free);
+extern PG_PASCAL (size_t) pgCacheFree (pgm_globals_ptr mem_globals, memory_ref dont_free, size_t desired_free);
 
 
 #ifdef __cplusplus

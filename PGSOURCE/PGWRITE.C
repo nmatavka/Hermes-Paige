@@ -32,8 +32,8 @@
 static void PG_FAR * use_array (memory_ref ref, long PG_FAR *num_recs);
 static short do_write_handler (paige_rec_ptr pg, memory_ref handlers,
 		pg_handler_ptr the_handler, memory_ref data, long element_info,
-		file_io_proc write_proc, long PG_FAR *file_position, file_ref filemap,
-		void PG_FAR *aux_data, long PG_FAR *original_size, long PG_FAR *new_element_info);
+		file_io_proc write_proc, size_t PG_FAR *file_position, file_ref filemap,
+		void PG_FAR *aux_data, size_t PG_FAR *original_size, long PG_FAR *new_element_info);
 static void extend_buffer_size (pack_walk_ptr out_data, long extend_size);
 static long send_short_hex (pg_bits8_ptr out_data, pg_short_t value,
 		short PG_FAR *no_zero_suppress);
@@ -84,7 +84,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 
 	walker.data_ref = key_data;
 	walker.remaining_ctr = GetMemorySize(walker.data_ref);
-	walker.data = UseMemory(walker.data_ref);
+	walker.data = (pg_bits8_ptr) UseMemory(walker.data_ref);
 
 	switch (key) {
 		
@@ -148,7 +148,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 			no_line_save = (pg_boolean)((pgr->flags & NO_LINE_SAVE_BIT) != 0);
 			
 			*element_info = GetMemorySize(pgr->t_blocks);
-			for (block = use_array(pgr->t_blocks, &general_ctr); general_ctr;
+			for (block = (text_block_ptr) use_array(pgr->t_blocks, &general_ctr); general_ctr;
 					++block, --general_ctr) {
 
 				pgPackTextBlock(&walker, block, FALSE, no_line_save);
@@ -183,7 +183,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 						general_ctr *= sizeof(pg_char);
 						*unpacked_size = general_ctr;
 						
-						pgPackUnicodeBytes(&walker, general_data, general_ctr, FALSE);
+						pgPackUnicodeBytes(&walker, (pg_bits8_ptr) general_data, general_ctr, FALSE);
 
 						UnuseMemory(general_ref);
 					}
@@ -192,7 +192,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 
 				general_ref = block->lines;
 				general_data = use_array(general_ref, &general_ctr);
-				pack_point_starts(&walker, general_data, (pg_short_t)general_ctr);
+				pack_point_starts(&walker, (point_start_ptr) general_data, (pg_short_t)general_ctr);
 				
 				*unpacked_size = GetByteSize(block->lines);
 				UnuseMemory(general_ref);
@@ -234,7 +234,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 				*element_info = GetMemorySize(pgr->t_formats);
 				*unpacked_size = GetByteSize(pgr->t_formats);
 	
-				for (style_ptr = use_array(pgr->t_formats, &general_ctr); general_ctr;
+				for (style_ptr = (style_info_ptr) use_array(pgr->t_formats, &general_ctr); general_ctr;
 					++style_ptr, --general_ctr)
 					if (!(style_ptr->class_bits & NO_SAVEDOC_BIT))
 						pack_style_info(pgr, &walker, style_ptr);
@@ -255,7 +255,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 				*element_info = GetMemorySize(pgr->par_formats);
 				*unpacked_size = GetByteSize(pgr->par_formats);
 	
-				for (par_ptr = use_array(pgr->par_formats, &general_ctr); general_ctr;
+				for (par_ptr = (par_info_ptr) use_array(pgr->par_formats, &general_ctr); general_ctr;
 						++par_ptr, --general_ctr)
 					if (!(par_ptr->class_info & NO_SAVEDOC_PAR))
 						pack_par_info(&walker, par_ptr);
@@ -276,7 +276,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 				*element_info = GetMemorySize(pgr->fonts);
 				*unpacked_size = GetByteSize(pgr->fonts);
 	
-				for (fonts = use_array(pgr->fonts, &general_ctr); general_ctr;
+				for (fonts = (font_info_ptr) use_array(pgr->fonts, &general_ctr); general_ctr;
 					++fonts, --general_ctr)
 					if (!(fonts->environs & FONT_NOT_SAVED))
 						pack_font_info(&walker, fonts);
@@ -325,7 +325,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 
 			*element_info = general_ctr;
 
-			for (selections = UseMemory(pgr->select); general_ctr;
+			for (selections = (t_select_ptr) UseMemory(pgr->select); general_ctr;
 				++selections, --general_ctr) {
 				
 				*unpacked_size += sizeof(t_select);
@@ -354,7 +354,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 				*element_info = general_ctr;
 				*unpacked_size = GetByteSize(pgr->applied_range);
 				
-				for (pair_ptr = UseMemory(pgr->applied_range); general_ctr;
+				for (pair_ptr = (select_pair_ptr) UseMemory(pgr->applied_range); general_ctr;
 						++pair_ptr, --general_ctr)
 					pgPackSelectPair(&walker, pair_ptr);
 
@@ -451,7 +451,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 					
 					general_ctr = GetMemorySize(pgr->exclusions);
 					*element_info = general_ctr;
-					frames = UseMemory(pgr->exclusions);
+					frames = (memory_ref *) UseMemory(pgr->exclusions);
 					
 					while (general_ctr) {
 						
@@ -511,7 +511,7 @@ PG_PASCAL (pg_boolean) pgWriteHandlerProc (paige_rec_ptr pg, pg_file_key key, me
 				*element_info = GetMemorySize(pgr->named_styles);
 				*unpacked_size = GetByteSize(pgr->named_styles);
 	
-				for (named_styles = use_array(pgr->named_styles, &general_ctr); general_ctr;
+				for (named_styles = (named_stylesheet_ptr) use_array(pgr->named_styles, &general_ctr); general_ctr;
 					++named_styles, --general_ctr) {
 					
 					pgPackUnicodeBytes(&walker, (pg_bits8_ptr)named_styles->name, FONT_SIZE * sizeof(pg_char), FALSE);
@@ -569,14 +569,14 @@ is returned.  If data size is zero, nothing is written.  */
 
 extern PG_PASCAL (pg_error) pgWriteKeyData (pg_ref pg, pg_file_key key,
 		void PG_FAR *data, long data_length, long element_info, file_io_proc io_proc,
-		file_io_proc data_io_proc, long PG_FAR *file_position, file_ref filemap)
+		file_io_proc data_io_proc, size_t PG_FAR *file_position, file_ref filemap)
 {
 	paige_rec_ptr			pg_rec;
 	pg_key_header			header;
 	file_io_proc			write_proc, data_proc;
 	pg_globals_ptr			globals;
-	long					data_size, should_be_position, header_size;
-	long					header_position;
+	size_t					data_size, should_be_position, header_size;
+	size_t					header_position;
 	pg_boolean				cached_file;
 	short					error, do_zeros;
 	
@@ -591,7 +591,7 @@ extern PG_PASCAL (pg_error) pgWriteKeyData (pg_ref pg, pg_file_key key,
 
 	do_zeros = TRUE;			/* Must include all leading zeros */
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	globals = pg_rec->globals;
 
 	cached_file = (pg_boolean)((pg_rec->cache_target_file != MEM_NULL)
@@ -675,7 +675,7 @@ NULL, num_keys pg_file_key items in the pointer are output;  if keys is NULL
 all available handlers are called. The function result is zero if successful,
 or the appropriate error code. */
 
-PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_file_key_ptr keys,
+PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, size_t PG_FAR *file_position, const pg_file_key_ptr keys,
 		pg_short_t num_keys, file_io_proc write_proc, file_ref filemap,
 		long doc_element_info)
 {
@@ -685,7 +685,7 @@ PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 	register pg_handler_ptr		handlers;
 	register text_block_ptr		block;
 	pg_handler					header_handler;
-	long						element_info, total_to_save, progress, actual_size;
+	size_t						element_info, total_to_save, progress, actual_size;
 	pg_error					result;
 	pg_short_t					ctr;
 	pg_short_t					key_qty;
@@ -693,7 +693,7 @@ PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 	volatile memory_ref			key_data = MEM_NULL;
 	volatile memory_ref			subref_list = MEM_NULL;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	subref_list = pgGetSubrefState(pg_rec, FALSE, TRUE);
 
 	wait_proc = pg_rec->procs.wait_proc;
@@ -725,7 +725,7 @@ PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 		
 		wait_proc(pg_rec, save_wait, 0, total_to_save);
 
-		handlers = UseMemory(handlers_to_use);
+		handlers = (pg_handler_ptr) UseMemory(handlers_to_use);
 		
 		pgInitOneHandler(&header_handler, pg_signature);
 		result = do_write_handler(pg_rec, MEM_NULL, &header_handler, key_data,
@@ -738,7 +738,7 @@ PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 
 			if ((handlers->key == text_key) || (handlers->key == line_key)) {
 				
-				for (block = UseMemory(pg_rec->t_blocks), ctr = (pg_short_t)GetMemorySize(pg_rec->t_blocks);
+				for (block = (text_block_ptr) UseMemory(pg_rec->t_blocks), ctr = (pg_short_t)GetMemorySize(pg_rec->t_blocks);
 						ctr;  ++block, --ctr) {
 						
 					result = do_write_handler(pg_rec, handlers_to_use, handlers, key_data,
@@ -762,7 +762,7 @@ PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 				if (pg_rec->extra_stuff) {
 					long PG_FAR		*extra_ptr;
 					
-					extra_ptr = UseMemory(pg_rec->extra_stuff);
+					extra_ptr = (long *) UseMemory(pg_rec->extra_stuff);
 					ctr = (pg_short_t)GetMemorySize(pg_rec->extra_stuff);
 					
 					
@@ -846,14 +846,14 @@ PG_PASCAL (pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_
 "cache" file (as if opened with pgCacheReadDoc() ). It is OK if filemap contains a file
 reference already in use as the cache file.  The new file must remain open. */
 
-PG_PASCAL (pg_error) pgCacheSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_file_key_ptr keys,
+PG_PASCAL (pg_error) pgCacheSaveDoc (pg_ref pg, size_t PG_FAR *file_position, const pg_file_key_ptr keys,
 		pg_short_t num_keys, file_io_proc write_proc, file_ref filemap,
 		long doc_element_info)
 {
 	paige_rec_ptr			pg_rec;
 	pg_error				result = NO_ERROR;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	if (pg_rec->cache_file == filemap)
 		pg_rec->cache_target_file = filemap;
@@ -868,7 +868,7 @@ PG_PASCAL (pg_error) pgCacheSaveDoc (pg_ref pg, long PG_FAR *file_position, cons
 			text_block_ptr			block;
 			long					ctr;
 
-			block = UseMemory(pg_rec->t_blocks);
+			block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 			
 			for (ctr = GetMemorySize(pg_rec->t_blocks); ctr; ++block, --ctr)
 				block->cache_flags &= (~(CACHE_SAVED_FLAG | CACHE_CHANGED_FLAG));
@@ -892,16 +892,16 @@ is non-PAIGE data can be written). Note that if the file's physical end of file
 is the same as the PAIGE doc end of file, this function does not need to be
 called (although it does not hurt). */
 
-PG_PASCAL (pg_error) pgTerminateFile (pg_ref pg, long PG_FAR *file_position,
+PG_PASCAL (pg_error) pgTerminateFile (pg_ref pg, size_t PG_FAR *file_position,
 		file_io_proc write_proc, file_ref filemap)
 {
 	paige_rec_ptr				pg_rec;
 	pg_handler					eof_handler;
 	memory_ref					key_data;
-	long						actual_size;
+	size_t						actual_size;
 	pg_error					result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	key_data = MemoryAlloc(pg_rec->globals->mem_globals, 1, 0, 0);
 	pgInitOneHandler(&eof_handler, pg_eof_key);
@@ -939,7 +939,7 @@ PG_PASCAL (void) pgPackData (memory_ref src_data, memory_ref target_data,
 	src_ptr = UseMemory(src_data);
 	
 	if (data_type == byte_data)
-		pgPackBytes(&walker, src_ptr, src_byte_size);
+		pgPackBytes(&walker, (pg_bits8_ptr)src_ptr, src_byte_size);
 	else {
 
 		if (data_type == short_data)
@@ -1042,7 +1042,7 @@ extern PG_PASCAL (void) pgPackTextBlock (pack_walk_ptr walker, text_block_ptr bl
 	
 	if (include_text) {
 	
-		pgPackUnicodeBytes(walker, UseMemory(block->text), (block->end - block->begin) * sizeof(pg_char), FALSE);
+		pgPackUnicodeBytes(walker, (pg_bits8_ptr) UseMemory(block->text), (block->end - block->begin) * sizeof(pg_char), FALSE);
 		UnuseMemory(block->text);
 	}
 
@@ -1061,11 +1061,11 @@ PG_PASCAL (void) pgPackNumbers (pack_walk_ptr out_data, void PG_FAR *ptr, short 
 	register long  PG_FAR	*long_ptr;
 
 	if (data_code == short_data) {
-		for (ctr = 0, short_ptr = ptr; ctr < qty; ++ctr)
+		for (ctr = 0, short_ptr = (short*) ptr; ctr < qty; ++ctr)
 			pgPackNum(out_data, short_data, short_ptr[ctr]);
 	}
 	else {
-		for (ctr = 0, long_ptr = ptr; ctr < qty; ++ctr)
+		for (ctr = 0, long_ptr = (long *) ptr; ctr < qty; ++ctr)
 			pgPackNum(out_data, long_data, long_ptr[ctr]);
 	}
 }
@@ -1183,7 +1183,7 @@ PG_PASCAL (long) pgPackShape (pack_walk_ptr walker, shape_ref the_shape)
 	long			shape_size, result;
 	
 	shape_size = result = GetMemorySize(the_shape);
-	for (rects = UseMemory(the_shape); shape_size; ++rects, --shape_size)
+	for (rects = (rectangle_ptr) UseMemory(the_shape); shape_size; ++rects, --shape_size)
 		pgPackRect(walker, rects);
 
 	UnuseMemory(the_shape);
@@ -1298,15 +1298,16 @@ and returns that result. Note: NO DATA IS WRITTEN IF ZERO LENGTH DATA. */
 
 static short do_write_handler (paige_rec_ptr pg, memory_ref handlers,
 		pg_handler_ptr the_handler, memory_ref data, long element_info,
-		file_io_proc write_proc, long PG_FAR *file_position, file_ref filemap,
-		void PG_FAR *aux_data, long PG_FAR *original_size, long PG_FAR *new_element_info)
+		file_io_proc write_proc, size_t PG_FAR *file_position, file_ref filemap,
+		void PG_FAR *aux_data, size_t PG_FAR *original_size, long PG_FAR *new_element_info)
 {
 	pg_boolean		handler_done;
 	memory_ref		global_handlers;
 	void PG_FAR		*alternate_ptr;
 	file_io_proc	data_proc;
 	short			result;
-	long			element_data, aux_default_data, data_size;
+	size_t			aux_default_data, data_size;
+	long			element_data;
 	
 	element_data = element_info;
 	result = NO_ERROR;
@@ -1439,7 +1440,7 @@ by extend_size.  */
 
 static void extend_buffer_size (pack_walk_ptr out_data, long extend_size)
 {
-	out_data->data = AppendMemory(out_data->data_ref, extend_size, FALSE);
+	out_data->data = (pg_bits8_ptr) AppendMemory(out_data->data_ref, extend_size, FALSE);
 	out_data->data -= out_data->remaining_ctr;
 	out_data->remaining_ctr += extend_size;
 }
@@ -1479,7 +1480,7 @@ static void optimize_packed_data (pack_walk_ptr walker)
 
 	new_size = walker->first_offset;
 
-	in_data = UseMemory(walker->data_ref);
+	in_data = (pg_bits8_ptr) UseMemory(walker->data_ref);
 	in_data += new_size;
 	out_data = in_data;
 
@@ -1616,7 +1617,7 @@ static long predict_byte_save (paige_rec_ptr pg, memory_ref handlers)
 	pg_short_t					qty, num_blocks;
 
 	pg_rec = pg;
-	handler = UseMemory(handlers);
+	handler = (pg_handler_ptr) UseMemory(handlers);
 	
 	for (qty = (pg_short_t)GetMemorySize(handlers), result = 0; qty; ++handler, --qty) {
 		
@@ -1637,7 +1638,7 @@ static long predict_byte_save (paige_rec_ptr pg, memory_ref handlers)
 				break;
 
 			case line_key:
-				for (block = UseMemory(pg_rec->t_blocks), num_blocks = (pg_short_t)GetMemorySize(pg_rec->t_blocks);
+				for (block = (text_block_ptr) UseMemory(pg_rec->t_blocks), num_blocks = (pg_short_t)GetMemorySize(pg_rec->t_blocks);
 						num_blocks; ++block, --num_blocks)
 					result += GetByteSize(block->lines);
 				
@@ -1879,7 +1880,7 @@ static void pack_font_info (pack_walk_ptr walker, font_info_ptr info)
 static void output_opt_character_ref(pack_walk_ptr walker, memory_ref ref)
 {
 	if (ref) {
-		pgPackBytes(walker, UseMemory(ref), GetByteSize(ref));
+		pgPackBytes(walker, (pg_bits8_ptr)UseMemory(ref), GetByteSize(ref));
 		UnuseMemory(ref);
 	}
 	else pgPackBytes(walker, (pg_bits8_ptr)walker, 0);
@@ -1895,7 +1896,7 @@ static void load_overlapping_blocks (paige_rec_ptr pg, long offset_to)
 	long					num_blocks;
 	
 	num_blocks = GetMemorySize(pg->t_blocks);
-	block = UseMemory(pg->t_blocks);
+	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	
 	while (num_blocks) {
 

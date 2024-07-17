@@ -10,14 +10,14 @@ Software, Inc.  Software by Gar. */
 #include "pgscrap.h"
 
 static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_format,
-      short PG_FAR *scrap_type, long PG_FAR *embed_type, long PG_FAR *raw_data_size,
+      short PG_FAR *scrap_type, long PG_FAR *embed_type, size_t PG_FAR *raw_data_size,
       pg_boolean load_real_data);
 static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_type native_format, pg_boolean clear_scrap);
 
 #ifdef UNICODE
-static pg_handle convert_scrap_to_unicode (pg_handle the_scrap, long PG_FAR *bytesize);
+static pg_handle convert_scrap_to_unicode (pg_handle the_scrap, size_t PG_FAR *bytesize);
 static void convert_unicode_to_scrap (memory_ref the_scrap, long charsize);
-static HGLOBAL process_cf_unicode (HGLOBAL data, long PG_FAR *text_size);
+static HGLOBAL process_cf_unicode (HGLOBAL data, size_t PG_FAR *text_size);
 #endif
 
 #ifdef WINDOWS_PLATFORM
@@ -25,7 +25,7 @@ static HANDLE bitmap_to_metafile (pg_globals_ptr globals, HBITMAP bitmap, RECT *
 static short pixel_convert (HDC hdc, short map_mode, short value);
 static short pixels_to_himetric (HDC hdc, short value);
 static HGLOBAL duplicate_data (HGLOBAL data);
-static HGLOBAL process_cf_text (HGLOBAL data, long PG_FAR *text_size);
+static HGLOBAL process_cf_text (HGLOBAL data, size_t PG_FAR *text_size);
 static HGLOBAL process_text_out (memory_ref ref, pg_boolean convert_to_bits8);
 
 #endif
@@ -62,7 +62,8 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
    pg_ref            result = MEM_NULL;
    embed_ref         embed;
    pg_fixed          vert_pos;
-   long              embed_type, position, datasize;
+   long              embed_type;
+   size_t            datasize, position;
    short             scrap_type;
    
    raw_data = get_machine_scrap(globals, native_format, &scrap_type, &embed_type, &datasize, TRUE);
@@ -96,7 +97,7 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
          #endif
          
          #ifdef WINDOWS_PLATFORM
-            text_ptr = GlobalLock(raw_data);
+            text_ptr = (pg_char_ptr) GlobalLock(raw_data);
          #endif
          
             pgInsert(result, text_ptr, datasize, 0, data_insert_mode, 0, draw_none);
@@ -113,8 +114,8 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
 
          case pg_embed_scrap:
             
-            pg_rec = UseMemory(result);
-            def_style = UseMemory(pg_rec->t_formats);
+            pg_rec = (paige_rec_ptr) UseMemory(result);
+            def_style = (style_info_ptr) UseMemory(pg_rec->t_formats);
             vert_pos = def_style->descent;
             vert_pos <<= 16;
             UnuseMemory(pg_rec->t_formats);
@@ -137,8 +138,8 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
  
                   pgFillBlock(&meta, sizeof(metafile_struct), 0);
 
-                  src_meta = GlobalLock(raw_data);
-                  meta.metafile = PG_LONGWORD(long)src_meta->hMF;
+                  src_meta = (METAFILEPICT *) GlobalLock(raw_data);
+                  meta.metafile = PG_LONGWORD(size_t)src_meta->hMF;
                   meta.mapping_mode = src_meta->mm;
               meta.x_ext = (short)src_meta->xExt;
               meta.y_ext = (short)src_meta->yExt;
@@ -197,7 +198,7 @@ PG_PASCAL (void) pgPutScrap (pg_ref the_scrap, pg_os_type native_format, short s
    if (scrap_type == (short)pg_void_scrap || scrap_type == (short)pg_native_scrap)
       keep_scrap |= put_machine_scrap(the_scrap, (int)pg_native_scrap, native_format, (pg_boolean)!keep_scrap);
    
-   pg_rec = UseMemory(the_scrap);
+   pg_rec = (paige_rec_ptr) UseMemory(the_scrap);
    full_range.begin = 0;
    full_range.end = pg_rec->t_length;
    
@@ -232,12 +233,12 @@ checks PAIGE type, then graphics, then text. If load_real_data is FALSE then we 
 for the existence of the type but return a dummy handle ("TRUE") if it exists. */
 
 static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_format,
-      short PG_FAR *scrap_type, long PG_FAR *embed_type, long PG_FAR *raw_data_size,
+      short PG_FAR *scrap_type, long PG_FAR *embed_type, size_t PG_FAR *raw_data_size,
       pg_boolean load_real_data)
 {
-   pg_handle      data = (pg_handle)NULL;
+   pg_handle        data = (pg_handle)NULL;
    long             the_embed_type = 0;
-   long             datasize;
+   size_t           datasize;
    short            the_type = pg_void_scrap;
    
 #ifdef MAC_PLATFORM
@@ -316,7 +317,7 @@ static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_fo
                      break;
                      
                data = duplicate_data(data);
-               metarecord = GlobalLock(data);
+               metarecord = (METAFILEPICT *) GlobalLock(data);
                metarecord->hMF = CopyMetaFile(metarecord->hMF, NULL);
           
                GlobalUnlock(data);
@@ -351,7 +352,7 @@ static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_fo
                converted_meta = bitmap_to_metafile(globals, (HBITMAP)data, &bounds);
                
                data = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
-               metarecord = GlobalLock(data);
+               metarecord = (METAFILEPICT *) GlobalLock(data);
                metarecord->mm = MM_ANISOTROPIC;
                { // PDA:  Begin
                   POINT wpt;
@@ -365,7 +366,7 @@ static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_fo
                   metarecord->xExt = wpt.x;
                   metarecord->yExt = wpt.y;
                } // PDA: End
-               metarecord->hMF = converted_meta;
+               metarecord->hMF = (HMETAFILE) converted_meta;
                GlobalUnlock(data);
 
                break;
@@ -407,7 +408,7 @@ Upon entry, the_scrap is a machine-specific handle containing the text
 and bytesize is the byte count. When this function exits, bytesize is changed
 to the actual character count that should be inserted into the pg_ref. */
 
-static pg_handle convert_scrap_to_unicode (pg_handle the_scrap, long PG_FAR *bytesize)
+static pg_handle convert_scrap_to_unicode (pg_handle the_scrap, size_t PG_FAR *bytesize)
 {
    pg_handle         result = the_scrap;
    pg_bits8_ptr      text;
@@ -422,7 +423,7 @@ static pg_handle convert_scrap_to_unicode (pg_handle the_scrap, long PG_FAR *byt
 #ifdef WINDOWS_PLATFORM
       GlobalUnlock(result);
       result = GlobalReAlloc(result, *bytesize * 2, 0);
-      text = GlobalLock(result);
+      text = (pg_bits8_ptr) GlobalLock(result);
 #endif
 
    *bytesize = pgBytesToUnicode(text, (pg_short_t PG_FAR *)text, NULL, *bytesize);
@@ -443,9 +444,9 @@ static pg_handle convert_scrap_to_unicode (pg_handle the_scrap, long PG_FAR *byt
 static void convert_unicode_to_scrap (memory_ref the_scrap, long charsize)
 {
    pg_short_t PG_FAR *characters;
-   long           bytesize;
+   size_t               bytesize;
 
-   characters = UseMemory(the_scrap);
+   characters = (pg_short_t *) UseMemory(the_scrap);
    bytesize = pgUnicodeToBytes(characters, (pg_bits8_ptr)characters, NULL, charsize);
    UnuseMemory(the_scrap);
    
@@ -471,9 +472,9 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
    select_pair       	full_range;
    pg_os_type        	os_type;
    long              	embed_type = 0;
-   long            	 	position;
+   size_t          	 	position;
 
-   pg_rec = UseMemory(the_scrap);
+   pg_rec = (paige_rec_ptr) UseMemory(the_scrap);
    mem_globals = pg_rec->globals->mem_globals;
    full_range.begin = 0;
    full_range.end = pg_rec->t_length;
@@ -498,7 +499,7 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
          
          if (dataref) {
          
-            text_ptr = AppendMemory(dataref, 1, FALSE);
+            text_ptr = (pg_char_ptr) AppendMemory(dataref, 1, FALSE);
             *text_ptr = 0;
             UnuseMemory(dataref);
 
@@ -524,7 +525,7 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
          
          if ((embed = pgFindNextEmbed(the_scrap, &position, 0, 0)) != MEM_NULL) {
             
-            embed_ptr = UseMemory(embed);
+            embed_ptr = (pg_embed_ptr) UseMemory(embed);
             embed_type = embed_ptr->type & EMBED_TYPE_MASK;
             
             if (embed_type == embed_mac_pict) {
@@ -544,7 +545,7 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
                
                hdc = (HDC)pg_rec->globals->machine_const;
                raw_data = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
-               metarecord = GlobalLock(raw_data);
+               metarecord = (METAFILEPICT *) GlobalLock(raw_data);
                
                metarecord->mm = (int)embed_ptr->uu.pict_data.mapping_mode;
                
@@ -569,7 +570,7 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
                     metarecord->yExt = (int)embed_ptr->height;
                }
                
-               metarecord->hMF = CopyMetaFile((HMETAFILE)(long)embed_ptr->data, NULL);
+               metarecord->hMF = CopyMetaFile((HMETAFILE)embed_ptr->data, NULL);
                GlobalUnlock(raw_data);
                
                os_type = CF_METAFILEPICT;
@@ -759,8 +760,8 @@ static short pixels_to_himetric (HDC hdc, short value)
 
 static HGLOBAL duplicate_data (HGLOBAL data)
 {
-   HGLOBAL     new_data;
-   long     datasize;
+   HGLOBAL  new_data;
+   size_t   datasize;
    
    datasize = GlobalSize(data);
    new_data = GlobalAlloc(GMEM_MOVEABLE, datasize);
@@ -774,17 +775,17 @@ static HGLOBAL duplicate_data (HGLOBAL data)
 
 /* process_cf_text processes text received from the clipboard. */
 
-static HGLOBAL process_cf_text (HGLOBAL data, long PG_FAR *text_size)
+static HGLOBAL process_cf_text (HGLOBAL data, size_t PG_FAR *text_size)
 {
-   HGLOBAL        new_data;
-   pg_bits8_ptr     src, dest;
-   long           datasize;
+   HGLOBAL      new_data;
+   pg_bits8_ptr src, dest;
+   size_t       datasize;
    
    datasize = GlobalSize(data);
    new_data = GlobalAlloc(GMEM_MOVEABLE, datasize * sizeof(pg_char));
    
-   src = GlobalLock(data);
-   dest = GlobalLock(new_data);
+   src = (pg_bits8_ptr) GlobalLock(data);
+   dest = (pg_bits8_ptr) GlobalLock(new_data);
    datasize = 0;
    
    while (*src != 0) {
@@ -802,7 +803,7 @@ static HGLOBAL process_cf_text (HGLOBAL data, long PG_FAR *text_size)
    GlobalUnlock(new_data);
 
 #ifdef UNICODE
-   dest = GlobalLock(new_data);
+   dest = (pg_bits8_ptr) GlobalLock(new_data);
    datasize = pgBytesToUnicode(dest, (pg_short_t PG_FAR *)dest, NULL, datasize);
 #endif
    
@@ -817,17 +818,17 @@ static HGLOBAL process_cf_text (HGLOBAL data, long PG_FAR *text_size)
 
 /* process_cf_unicode processes knonw unicode text received from the clipboard. */
 
-static HGLOBAL process_cf_unicode (HGLOBAL data, long PG_FAR *text_size)
+static HGLOBAL process_cf_unicode (HGLOBAL data, size_t PG_FAR *text_size)
 {
-   HGLOBAL        new_data;
-   pg_char_ptr      src, dest, unicode_ptr;
-   long           datasize;
+   HGLOBAL      new_data;
+   pg_char_ptr  src, dest, unicode_ptr;
+   size_t       datasize;
    
    datasize = GlobalSize(data);
    new_data = GlobalAlloc(GMEM_MOVEABLE, datasize * sizeof(pg_char));
    
-   src = GlobalLock(data);
-   dest = unicode_ptr = GlobalLock(new_data);
+   src = (pg_char_ptr) GlobalLock(data);
+   dest = unicode_ptr = (pg_char_ptr) GlobalLock(new_data);
    datasize = 0;
    
    while (*src != 0) {
@@ -841,7 +842,7 @@ static HGLOBAL process_cf_unicode (HGLOBAL data, long PG_FAR *text_size)
          ++src;
    }
    
-   datasize = pgUnicodeToUnicode(unicode_ptr, datasize, FALSE);
+   datasize = pgUnicodeToUnicode((pg_short_t*) unicode_ptr, datasize, FALSE);
    unicode_ptr[datasize] = 0;
    GlobalUnlock(data);
    GlobalUnlock(new_data);
@@ -860,10 +861,10 @@ static HGLOBAL process_text_out (memory_ref ref, pg_boolean convert_to_bits8)
 {
    HGLOBAL        result;
    pg_char_ptr    text, first_text;
-   long        src_text_size, cr_size;
+   size_t         src_text_size, cr_size;
    
    src_text_size = GetMemorySize(ref);
-   text = first_text = UseMemory(ref);
+   text = first_text = (pg_char_ptr) UseMemory(ref);
    cr_size = 0;
    
    while (*text) {
@@ -874,7 +875,7 @@ static HGLOBAL process_text_out (memory_ref ref, pg_boolean convert_to_bits8)
    }
    
    result = GlobalAlloc(GMEM_MOVEABLE, (src_text_size + cr_size) * sizeof(pg_char));
-   text = GlobalLock(result);
+   text = (pg_char_ptr) GlobalLock(result);
    
    src_text_size = 0;
 
@@ -902,8 +903,8 @@ static HGLOBAL process_text_out (memory_ref ref, pg_boolean convert_to_bits8)
    if (convert_to_bits8) {
       pg_bits8_ptr      bytes;
 
-      text = GlobalLock(result);
-      src_text_size = pgUnicodeToBytes(text, (pg_bits8_ptr)text, NULL, src_text_size);
+      text = (pg_char_ptr) GlobalLock(result);
+      src_text_size = pgUnicodeToBytes((pg_short_t*)text, (pg_bits8_ptr)text, NULL, src_text_size);
       bytes = (pg_bits8_ptr)text;
       bytes[src_text_size] = 0;
       GlobalUnlock(result);

@@ -32,7 +32,7 @@ extern PG_PASCAL (short) pgMaxRectInShape (shape_ref the_shape, rectangle_ptr re
 		long minimum_h, long PG_FAR *r_num, co_ordinate_ptr offset_extra);
 extern PG_PASCAL (pg_short_t) pgExcludeRectInShape (paige_rec_ptr pg, rectangle_ptr rect,
 		long minimum_width, long PG_FAR *lowest_exclude, long line_offset, memory_ref result_ref);
-extern PG_PASCAL (pg_short_t) pgGetWrapRect (paige_rec_ptr pg, long r_num, co_ordinate_ptr offset_extra);
+extern PG_PASCAL (pg_short_t) pgGetWrapRect (paige_rec_ptr pg, size_t r_num, co_ordinate_ptr offset_extra);
 extern PG_PASCAL (pg_short_t) pgGetSectWrapRect (paige_rec_ptr pg, rectangle_ptr r_sect,
 		pg_short_t PG_FAR *r_num, co_ordinate_ptr repeat_offset);
 extern PG_PASCAL (void) pgScaleShape (paige_rec_ptr pg, shape_ref shape, short numerator, short denomintor);

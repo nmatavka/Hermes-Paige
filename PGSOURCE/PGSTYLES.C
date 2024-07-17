@@ -43,7 +43,7 @@ PG_PASCAL (long) pgGetStyleInfo (pg_ref pg, const select_pair_ptr selection,
 	change_info					stuff_to_report;
 	long						first_select;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (set_any_match)
 		pgFillBlock(mask, sizeof(style_info), 0);
@@ -65,7 +65,7 @@ PG_PASCAL (long) pgGetStyleInfo (pg_ref pg, const select_pair_ptr selection,
 		stuff_to_report.base = UseMemory(pg_rec->t_formats);
 	
 		num_selects = (pg_short_t)GetMemorySize(select_list);
-		select_run = UseMemory(select_list);
+		select_run = (select_pair_ptr) UseMemory(select_list);
 		first_select = select_run->begin;
 
 		while (num_selects) {
@@ -123,7 +123,7 @@ PG_PASCAL (void) pgSetStyleInfo (pg_ref pg, const select_pair_ptr selection,
 	paige_rec_ptr				pg_rec;
 	pg_short_t					old_font_index;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_font_index = mask->font_index;
 	mask->font_index = 0;
 	
@@ -146,7 +146,7 @@ PG_PASCAL (void) pgSetStyleClassInfo (pg_ref pg, const select_pair_ptr range, lo
 	register select_pair_ptr	select_run;
 	change_info					stuff_to_change;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 	if (select_list = pgSetupOffsetRun(pg_rec, range, FALSE, TRUE)) {
 
@@ -157,7 +157,7 @@ PG_PASCAL (void) pgSetStyleClassInfo (pg_ref pg, const select_pair_ptr range, lo
 		stuff_to_change.style_change = (style_info_ptr) - 1;
 
 		num_selects = (pg_short_t)GetMemorySize(select_list);
-		select_run = UseMemory(select_list);
+		select_run = (select_pair_ptr) UseMemory(select_list);
 		stuff_to_change.change_range = *select_run;
 
 		while (num_selects) {
@@ -197,7 +197,7 @@ PG_PASCAL (void) pgGetStyleInfoRec (pg_ref pg, short style_item, style_info_ptr 
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	GetMemoryRecord(pg_rec->t_formats, style_item, format);
 	UnuseMemory(pg);
 }
@@ -211,8 +211,8 @@ and *end_position return the style boundaries and the function returns TRUE.
 End_position can be NULL if you don't need its value;  any of the style_info
 pointers can be NULL in which case the default comparisons are used.   */
 
-PG_PASCAL (pg_boolean) pgFindStyleInfo (pg_ref pg, long PG_FAR *begin_position,
-		long PG_FAR *end_position, style_info_ptr match_style, style_info_ptr mask,
+PG_PASCAL (pg_boolean) pgFindStyleInfo (pg_ref pg, size_t PG_FAR *begin_position,
+		size_t PG_FAR *end_position, style_info_ptr match_style, style_info_ptr mask,
 		style_info_ptr AND_mask)
 {
 	paige_rec_ptr		pg_rec;
@@ -220,7 +220,7 @@ PG_PASCAL (pg_boolean) pgFindStyleInfo (pg_ref pg, long PG_FAR *begin_position,
 	long				start_offset;
 	pg_boolean			result;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	result = FALSE;
 	
 	if ((start_offset = *begin_position) < pg_rec->t_length) {
@@ -278,12 +278,12 @@ PG_PASCAL (long) pgGetStyleClassInfo (pg_ref pg, long position, select_pair_ptr 
 	long						use_position;
 	long						result;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
 	use_position = pgFixOffset(pg_rec, position);
 
 	run = pgFindStyleRun(pg_rec, use_position, NULL);
-	style = UseMemory(pg_rec->t_formats);
+	style = (style_info_ptr) UseMemory(pg_rec->t_formats);
 	result = style[run->style_item].class_bits;
 	
 	if (style_range) {
@@ -334,10 +334,10 @@ PG_PASCAL (void) pgSetStyleProcs (pg_ref pg, const pg_style_hooks PG_FAR *procs,
 	pg_short_t			style_qty;
 	short				some_changed;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	some_changed = FALSE;
 
-	for (styles = UseMemory(pg_rec->t_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->t_formats);
+	for (styles = (style_info_ptr) UseMemory(pg_rec->t_formats), style_qty = (pg_short_t)GetMemorySize(pg_rec->t_formats);
 			style_qty; ++styles, --style_qty)
 		if (pgStyleMatchesCriteria(styles, match_style, mask_style, AND_style,
 				SIGNIFICANT_STYLE_SIZE)) {
@@ -392,7 +392,7 @@ PG_PASCAL (void) pgChangeStyleInfo (paige_rec_ptr pg_rec, select_pair_ptr select
 		stuff_to_change.style_mask = mask;
 	
 		num_selects = (pg_short_t)GetMemorySize(select_list);
-		select_run = UseMemory(select_list);
+		select_run = (select_pair_ptr) UseMemory(select_list);
 		stuff_to_change.change_range = *select_run;
 
 		while (num_selects) {
@@ -436,7 +436,7 @@ PG_PASCAL (void) pgChangeStyleInfo (paige_rec_ptr pg_rec, select_pair_ptr select
 				
 				if (draw_mode && !pg_rec->num_selects) {
 					
-					select = UseMemory(pg_rec->select);
+					select = (t_select_ptr) UseMemory(pg_rec->select);
 					pgSetupGrafDevice(pg_rec, &pg_rec->port, MEM_NULL, clip_standard_verb);
 					pg_rec->procs.cursor_proc(pg_rec, select, hide_cursor);
 				}
@@ -455,7 +455,7 @@ PG_PASCAL (void) pgChangeStyleInfo (paige_rec_ptr pg_rec, select_pair_ptr select
 				UnuseMemory(pg_rec->t_style_run);
 				UnuseMemory(pg_rec->t_formats);
 				
-				block = UseMemory(pg_rec->t_blocks);
+				block = (text_block_ptr) UseMemory(pg_rec->t_blocks);
 				block->flags |= NEEDS_CALC;
 				pgPaginateBlock(pg_rec, block, NULL, TRUE);
 				UnuseMemory(pg_rec->t_blocks);

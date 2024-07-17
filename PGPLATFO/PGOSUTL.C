@@ -143,7 +143,7 @@ PG_PASCAL (void) pgBitmapModifyProc (paige_rec_ptr pg, graf_device_ptr bits_port
 	if (pg->bk_image) {
 		pg_url_image_ptr		image;
 		
-		image = UseMemory(pg->bk_image);
+		image = (pg_url_image_ptr) UseMemory(pg->bk_image);
 		
 		if (!image->image_data && !image->loader_result)
 			pg->procs.background_image(pg, image, (generic_var)pg->port.machine_ref,
@@ -178,7 +178,7 @@ PG_PASCAL (generic_var) pgSetDrawingDevice (pg_ref pg, const generic_var draw_de
 	paige_rec_ptr				pg_rec;
 	generic_var					previous_device;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef MAC_PLATFORM
 	previous_device = (generic_var)pg_rec->port.machine_var;
@@ -205,9 +205,10 @@ PG_PASCAL (generic_var) pgSetScaledDrawingDevice (pg_ref pg, const generic_var d
 	paige_rec_ptr			pg_rec;
 	generic_var				old_device, machine_var;
 	pg_scale_factor			old_scale;
-	long					access_ctr, machine_ref3;
+	size_t					machine_ref3;
+	long					access_ctr;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	old_device = (generic_var)pg_rec->port.machine_ref;
 	access_ctr = pg_rec->port.access_ctr;
 	machine_ref3 = pg_rec->port.machine_ref3;
@@ -239,7 +240,7 @@ PG_PASCAL (void) pgReleaseDrawingDevice (pg_ref pg, const generic_var previous_d
 {
 	paige_rec_ptr				pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
 #ifdef MAC_PLATFORM
 	pg_rec->port.machine_var = previous_device;
@@ -298,14 +299,14 @@ then no translation is performed, rather a test for unicode or  not is returned.
 Note, the input_byte_size is a BYTE count, not a character count. RELEASE NOTE: This
 function works correctly even for non-unicode libraries. */
 
-PG_PASCAL (long) pgBytesToUnicode (pg_bits8_ptr input_bytes, pg_short_t PG_FAR *output_chars,
-		font_info_ptr font, long input_byte_size)
+PG_PASCAL (size_t) pgBytesToUnicode (pg_bits8_ptr input_bytes, pg_short_t PG_FAR *output_chars,
+		font_info_ptr font, size_t input_byte_size)
 {
-	long						result = 0;
+	size_t						result = 0;
 	register pg_short_t PG_FAR	*output;
 	register pg_bits8_ptr		input;
 	pg_short_t PG_FAR			*test_ptr;
-	long						index;
+	size_t						index;
 	int							is_unicode;
 
 	if (!(result = input_byte_size))
@@ -348,7 +349,7 @@ PG_PASCAL (long) pgBytesToUnicode (pg_bits8_ptr input_bytes, pg_short_t PG_FAR *
 count, not byte count. The function returns a byte count of valid chars. RELEASE NOTE: This
 function works correctly even for non-unicode libraries. */
 
-PG_PASCAL (long) pgUnicodeToBytes (pg_short_t PG_FAR *input_chars, pg_bits8_ptr output_bytes,
+PG_PASCAL (size_t) pgUnicodeToBytes (pg_short_t PG_FAR *input_chars, pg_bits8_ptr output_bytes,
 		font_info_ptr font, long input_char_size)
 {
 	register		pg_short_t PG_FAR	*input;
@@ -393,11 +394,11 @@ and reverses the byte order if required.  The function result is the final chara
 (which will be num_chars if no BOM, or num_chars - 1 if a BOM).
 Release note: This function works even if this lib is NOT Unicode-enabled. */
 
-PG_PASCAL (long) pgUnicodeToUnicode (pg_short_t PG_FAR *the_chars, long num_chars, pg_boolean force_reverse)
+PG_PASCAL (size_t) pgUnicodeToUnicode (pg_short_t PG_FAR *the_chars, size_t num_chars, pg_boolean force_reverse)
 {
 	pg_short_t		byte_order_mark;
-	register long	bytecount;
-	long			char_count;
+	register size_t	bytecount;
+	size_t			char_count;
 
 	if ((char_count = num_chars) > 0) {
 	
@@ -474,7 +475,7 @@ PG_PASCAL (pg_error) pgStandardReadProc (void PG_FAR *data, short verb, long PG_
 			if (verb == io_data_indirect) {
 	
 				SetMemorySize((memory_ref) data, *data_size);
-				data_ptr = UseMemory((memory_ref) data);
+				data_ptr = (pg_bits8_ptr) UseMemory((memory_ref) data);
 			}
 			else
 				data_ptr = (pg_bits8_ptr) data;
@@ -534,7 +535,7 @@ PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, long PG
 		if (verb != io_set_fpos) {
 		
 			if (verb == io_data_indirect)
-				data_ptr = UseMemory((memory_ref) data);
+				data_ptr = (pg_bits8_ptr) UseMemory((memory_ref) data);
 			else
 				data_ptr = (pg_bits8_ptr) data;
 	
@@ -594,7 +595,7 @@ PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, long PG_FAR *p
 			if (verb == io_data_indirect) {
 	
 				SetMemorySize((memory_ref) data, *data_size);
-				data_ptr = UseMemory((memory_ref) data);
+				data_ptr = (pg_bits8_ptr) UseMemory((memory_ref) data);
 			}
 			else
 				data_ptr = (pg_bits8_ptr) data;
@@ -654,7 +655,7 @@ PG_PASCAL (pg_error) pgOSWriteProc (void PG_FAR *data, short verb, long PG_FAR *
 		if (verb != io_set_fpos) {
 		
 			if (verb == io_data_indirect)
-				data_ptr = UseMemory((memory_ref) data);
+				data_ptr = (pg_bits8_ptr) UseMemory((memory_ref) data);
 			else
 				data_ptr = (pg_bits8_ptr) data;
 	
@@ -751,10 +752,10 @@ PG_PASCAL (void) QDStyleToPaige (long qd_styles, style_info_ptr the_style)
 PG_PASCAL (pg_short_t) pgCountCtlChars (text_block_ptr block, pg_short_t ctl_char)
 {
 	register pg_char_ptr			text;
-	register long					byte_size;
+	register size_t					byte_size;
 	register pg_short_t				result;
 
-	text = UseMemory(block->text);
+	text = (pg_char_ptr) UseMemory(block->text);
 	byte_size = GetMemorySize(block->text);
 	
 	result = 0;
@@ -786,7 +787,7 @@ PG_PASCAL (void) ShapeToRgn (shape_ref src_shape, long offset_h, long offset_v,
 	register shape  	PG_FAR  *the_shape;
 	rectangle	       	scale_r, src_rect;
 	pg_scale_factor 	scale;
-	register long   	r_qty;
+	register size_t  	r_qty;
 	Rect		    	box;
 	co_ordinate	     	adjust;
 
@@ -799,7 +800,7 @@ PG_PASCAL (void) ShapeToRgn (shape_ref src_shape, long offset_h, long offset_v,
 		scale.scale = 0;
 
 	r_qty = GetMemorySize(src_shape) - SIMPLE_SHAPE_QTY;
-	the_shape = UseMemory(src_shape);
+	the_shape = (shape *) UseMemory(src_shape);
 	++the_shape;
 	
 	pgSectRect(the_shape, sect_rect, &src_rect);
@@ -865,7 +866,8 @@ PG_PASCAL (void) pgBuildPageRegion (paige_rec_ptr pg, pg_scale_ptr scaler, pg_re
 	pg_region			temp_rgn;
 	rectangle			page_bounds, vis_bounds;
 	co_ordinate			vis_extra, repeat_offset, page_offset;
-	long				repeating, page_num, repeat_width, repeat_height, num_rects;
+	long				repeating, page_num, repeat_width, repeat_height;
+	size_t				num_rects;
 
 	vis_extra = pg->scroll_pos;
 	pgNegatePt(&vis_extra);
@@ -987,14 +989,14 @@ PG_PASCAL (pg_boolean) pgVisRegionChanged (paige_rec_ptr pg, pg_boolean update_t
 
 			if (!(pg->doc_info.attributes & NO_CLIP_PAGE_AREA)) {
 
-				bounds = UseMemory(pg->wrap_area);
+				bounds = (rectangle_ptr) UseMemory(pg->wrap_area);
 				result |= !pgEqualStruct(bounds, &pg->port.clip_info.page_bounds, sizeof(rectangle));
 				UnuseMemory(pg->wrap_area);
 			}
 			
 			if (!result) {
 			
-				bounds = UseMemory(pg->vis_area);
+				bounds = (rectangle_ptr) UseMemory(pg->vis_area);
 				result |= !pgEqualStruct(bounds, &pg->port.clip_info.vis_bounds, sizeof(rectangle));
 				UnuseMemory(pg->vis_area);
 			}
@@ -1091,7 +1093,7 @@ PG_PASCAL (void) pgDrawWordUnderline (paige_rec_ptr pg, style_walk_ptr walker,
 	
 	char_locs = pgGetSpecialLocs(pg, draw_position->block, draw_position->starts,
 			length, extra, COMPENSATE_SCALE);
-	locs = UseMemory(char_locs);
+	locs = (long *) UseMemory(char_locs);
 
 	offset_ctr = offset;
 	end_offset = offset_ctr + length;
@@ -1236,7 +1238,7 @@ PG_PASCAL (memory_ref) pgConvertTextCaps (paige_rec_ptr pg, style_info_ptr cur_s
 		
 		result = pg->buf_special;
 		SetMemorySize(result, length);
-		data = UseMemory(result);
+		data = (pg_char_ptr) UseMemory(result);
 		pgTransLiterate(text, length, data, (pg_boolean)(the_style->styles[all_lower_var] == 0));
 		UnuseMemory(result);
 	}
@@ -1329,7 +1331,7 @@ static long compute_subref_level (paige_rec_ptr pg)
 	while (last_subref) {
 		
 		this_subref = last_subref;
-		sub_ptr = UseMemory(last_subref);
+		sub_ptr = (paige_sub_ptr) UseMemory(last_subref);
 
 		if (!(sub_ptr->subref_flags & SUBREF_NOT_EDITABLE))
 			++level;
