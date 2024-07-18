@@ -1755,7 +1755,7 @@ This function will copy the contents of `pg`'s visual area, wrap area, and exclu
 
 Helpful hint: The easiest way to create a `shape_ref` is to call `pgRectToShape` passing a null pointer to the `rect` parameter, as follows:
 
-	shape_refnew_shape;
+	shape_ref new_shape;
 	new_shape = pgRectToShape(&paige_rsrv, NULL);
 
 The `paige_rsrv` parameter in the above example is a pointer to the same `pg_globals` passed to `pgInit`. By providing a null pointer as the second parameter, a new `shape_ref` is returned with an empty shape (all sides zero).
@@ -2112,3 +2112,796 @@ For example, suppose a large document changed from 12 point text to 18 point tex
 
 1. If you will be using the built-in scrolling support in OpenPaige, you probably never need to get the height of an OpenPaige object — see "All About Scrolling"<!-- on page 11-1-->. If you do need an exact height for other reasons, see "Getting the Max Text Bounds”<!-- on page 24-24-->.
 2. The "height" returned from this function does not consider any extra structures that aren't embedded in the text stream. For example, if you have implemented headers, footers, footnotes, or any other page "ornaments" their placement will not be considered in the text height computation.
+
+# 4 Virtual Memory
+
+## 4.1 Initializing Virtual Memory
+
+OpenPaige supports a "virtual memory" system in which memory allocations made by OpenPaige can be spooled to a disk file in order to free memory for new allocations.
+
+However, your application must explicitly initialize OpenPaige virtual memory before it is operational; this is because disk file reading and writing is machine-dependent, hence your application needs to provide a path for memory allocations to be saved.
+
+To do so, call the following function somewhere early when your application starts up and after `pgInit`:
+
+	#include "pgMemMgr.h"
+	void InitVirtualMemory (pgm_globals_ptr globals, purge_proc purge_function, long ref_con);
+
+The `globals` parameter is a pointer to a field in `pg_globals` (same structure you gave to `pgInit`). For example, if your `pg_globals` structure is called `paige_rsrv`, this parameter would be passed as follows:
+
+	&paige_rsrv.mem_globals
+
+#### Parameters
+
+* `purge_function` — a pointer to a function that will be called by OpenPaige to write (save) and purge memory allocations and/or to read (restore) purged allocations. However, OpenPaige will use its own function for `purge_proc` if you pass a null pointer for `purge_proc`. Otherwise, if you need to write your own, see "Providing Your Own Purge Function"<!-- on page 4-100--> for the definition and explanation of this function.
+
+* `ref_con` — contains the necessary information for the purge function to read and write to the disk and what you pass to `ref_con` depends on the platform you are operating and/or whether or not you are using the standard purge function (`purge_function null`).
+
+#### How to set up virtual memory (Macintosh)
+
+	// This function inits VM by setting up a temp file in System folder
+	
+	pg_globals paige_rsrv;	// Same globals as given to pgInit, pgNew
+	void init_paige_vm(void)
+	{
+		SysEnvRec theWorld;
+		sysEnvirons(2, &theWorld);	// Get system info for "folder"
+		
+		// Get whatever temp file name to use (in this example I get a STR#)
+		
+		GetIndString(temp_file_name, MISC_STRINGS, TEMP_FILE_STR);
+		Create(temp_file_name, theWorld.sysVRefNum, TEMP_FILE_TYPE);
+		FSOpen(temp_file_name, theWorld.SysVRefNum, &vm_file);
+		InitVirtualMemory(&paige_rsrv.mem_globals, NULL, vm_file);
+		
+		// Leave temp file open until quit (see below)
+	}
+	
+	// Before quit, "shut down" VM by closing temp file
+	
+	void uninit_paige_vm(void)
+	{
+		FSClose(paige_rsrv.purge_ref_con);	// VM file stored here
+	}
+	
+## 4.2 The scratch file
+	
+Assuming you will be passing a null pointer to `purge_proc`, letting OpenPaige use the built-in purge function, the steps to initialize virtual memory fully are as follows:
+
+1. First, call `pgMemStartup` to initialize the OpenPaige Memory Allocation manager, and pass the maximum memory to `max_memory` you want OpenPaige to use before allocations begin purging. If you want OpenPaige to use whatever is available, pass 0 for `max_memory` (see `pgMemStartup` in the index for additional information).
+2. Create a file that can be used as a "temp" file and open it with read/write access.
+3. Call `InitVirtualMemory`, passing the file reference from §2 in the `ref_con` parameter. (For **Macintosh** platform, this should be the file `refnum` of the opened file; for **Windows** platform, this should be the `int` returned from `OpenFile` or `GetTempFile`, etc.).
+4. Keep the scratch file open until you shut down the Allocation Manager with `pgMemShutdown`.
+
+**NOTE:** It is your responsibility to close and/or delete your temp file after your application session with OpenPaige has terminated.
+
+If you are writing your own purge function, however, `ref_con` can be anything you require to initialize virtual memory I/O, such as a file reference or a pointer to some structure of your own definition.
+
+After calling the above function, memory allocations will be "spooled" to your temp file as necessary to create a virtual memory environment.
+
+The value originally passed to `pgMemStartup` — `max_memory` — dictates the maximum memory available for the OpenPaige Allocation Manager before allocations must be purged. This is a logical partition, not necessarily physical (i.e., you might have 2 GiB available but only want OpenPaige to use 50 MiB, in which case you would pass 52428800 to `max_memory` in `pgMemStartup`).
+
+#### Providing Your Own Purge Function
+
+In most cases you can use the purging utilities provided in the Allocation Manager, see "Purging Utilities"<!-- on page 25-20-->. However, you can bypass the built-in memory purge function, if necessary. For complete details, see "Writing Your Own Purge Function"<!-- on page 25-29-->.
+
+## 5 Cut, Copy, Paste
+
+This section explains how to implement Cut, Copy, Paste and Undo, including additional methods to copy "text only."
+
+### 5.1 Copying and Deleting
+
+	(pg_ref) pgCut (pg_ref pg, select_pair_ptr selection, short draw_mode);
+	(pg_ref) pgCopy (pg_ref pg, select_pair_ptr selection);
+	(void) pgDelete (pg_ref pg, select_pair_ptr delete_range, short draw_mode);
+
+To perform a "Cut" operation — for which text is copied then deleted — call `pgCut`. The selection parameter is an optional pointer to a pair of text offsets from which to delete text. This is a pointer to the following structure:
+
+	typedef struct
+	{
+		long begin;	// Beginning offset of some text portion
+		long end;	// Ending offset of some text portion
+	}
+	select_pair, *select_pair_ptr;
+
+The `begin` field of a `select_pair` defines the beginning text offset and the `end` field defines the ending offset. Both offsets are byte offsets, not character offsets. Text offsets in OpenPaige are zero-based (first offset is zero). The last character "end" is included in the selection.
+
+**FIGURE 3 SELECTION BEGIN AND END EXPLAINED**
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-106.jpg?height=211&width=877&top_left_y=1332&top_left_x=633)
+
+**NOTE:** All offsets are byte counts. In the case of characters, they are each one byte.
+
+If the selection parameter in `pgCut` is a null pointer, the current selection in `pg` is used instead (which is usually want you want).
+
+**FUNCTION RESULT:** The function result of `pgRef` is a newly created OpenPaige object containing the copied text and associated text formatting. You can then pass this `pg_ref` to `pgPaste`, below.
+
+`draw_mode` can be the values as described in "Draw Modes"<!-- on page 2-30-->:
+
+	draw_none,		// Do not draw at all 
+	best_way,		// Use most efficient method(s) 
+	direct_copy,	// Directly to screen, overwrite 
+	direct_or,		// Directly to screen, "OR" 
+	direct_xor,		// Directly to screen, "XOR" 
+	bits_copy,		// Copy offscreen 
+	bits_or,		// Copy offscreen in "OR" mode 
+	bits_xor		// Copy offscreen in "XOR" mode
+
+##### NOTES:
+
+1. The `pg_ref` returned from `pickup` is a "real" OpenPaige object, which means you need to eventually dispose of it properly using `pgDispose`.
+2. Shapes from the source `pg_ref` are used to "clone" the resulting `pg_ref` from a copy or cut regardless of the selection range. For example, if the source `pg_ref` that gets copied contained a `page_area` shape with dimensions 10, 10, 580, 800, the resulting `pg_ref` will have the same `pg_area` shape. The same is true for `vis_area` and `exclude_area`.
+
+**CAUTION:** If there is nothing to copy (no selection range exists), both `pgCut` and `pgCopy` will return `MEM_NULL`.
+
+**CAUTION:** It is wise never to display the resulting `pg_ref` unless you first set a default graphics device to target the display. For example, doing a `pgCopy` then drawing to a "clipboard" window later could result in a crash. This can happen if the original window containing the copied `pg_ref` has been closed (rendering an invalid window attached to the copied reference). Hence, before drawing to such a "clipboard", use `pgSetDefaultDevice`. See "Setting a device"<!-- on page 3-8-->.
+
+The `pgCopy` function is identical to `pgCut` except that no text is deleted, only a `pg_ref` is returned which is the copy of the specified text and formatting and no `draw_mode` is provided (because the source `pg_ref` remains unchanged).
+
+OpenPaige provides excellent error checking for out-of-memory situations with `pgCopy`. See "Exception Handling"<!-- on page 26-1-->.
+
+The `pgDelete` function is the same as `pgCut` in every respect except that a "copy" is neither made nor returned. Use this function when you simply want to delete a selection range but not make a copy (such as a "Clear" command from a menu).
+
+## 5.2 Pasting
+
+	(void) pgPaste (pg_ref pg, pg_ref paste_ref, long position, pg_boolean text_only, short draw_mode);
+
+The `pgPaste` function takes paste_ref (typically obtained from `pgCut` or `pgCopy`) and inserts all of its text into `pg`, beginning at text offset position (which is a byte offset). The `paste_ref`'s contents remain unchanged.
+
+The position parameter, however, can be `CURRENT_POSITION` (value of -1) in which case the paste occurs at the current insertion point in `pg`. After the paste the insertion point advances the number of characters that were inserted from `paste_ref`.
+
+If `text_only` is "TRUE," only the text from paste_ref is inserted — pno text formatting is transferred.
+draw_none, best_way,
+// Do not draw at all direct_copy, direct_or, direct_xor, bits_copy, bits_or, bits_xor // Use most effecient method(s) // Directly to screen, overwrite // Directly to screen, "OR" // Directly to screen, "XOR" // Copy offscreen //Copy offscreen in "OR" mode // Copy offscreen in "XOR" mode
+
+## NOTES:
+
+(1) If there is already selected text in $p g$ (the target $p g_{-} r e f$ ), it is deleted before the paste occurs.
+
+(2) Only text and styles are affected in the target $p g \_r e f$ - bshapes remain unchanged.
+
+## TECH pgPaste custom styles
+
+There are several ways to do this. Which method you choose depends on when you need to know, i.e. if you need to know the instant it occurs versus knowing somewhere in your app following a pgPaste or pgUndo.
+
+By "instant it occurs" I mean when processing a style with one of the hooks, for instance. If that's what you need, one good way is to use the duplicate function. By mere virtue of getting called at all you know that openPaige is adding that style for one reason or another.
+
+If you need to find out if that style exists at any arbitrary time, one way is to use pgFindStyleInfo. This function searches
+all style change(s) in the text to find the first occurrence of a particular style. One useful feature in pgFindStyleInfo is that you can set up a "mask" to only compare certain specific fields in your style. I assume your custom style will contain some kind of unique value for you to identify it, in which case this function is probably exactly what you want.
+
+Then there is the "hack" method which looks dangerous, but isn't really. This method is to look at the whole style info list directly, which should remain compatible with all future OpenPaige versions AND it is even portable with Windows and other platforms! This is done as follows:
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-110.jpg?height=1041&width=1299&top_left_y=570&top_left_x=422)
+
+### 5.3 Copying Text Only
+
+text_ref pgCopyText (pg_ref pg, select_pair_ptr selection, short data_type);
+
+FUNCTION RESULT: This function returns a memory allocation containing a copy of the text in $p g$, beginning at the specified offset as follows: if selection is nonnull, it is used to determine the selection range (see "Copying and Deleting" on page 5-103 for information about select_pairstructure). If selection is a null pointer, the current selection range is used.
+
+NOTE: The memory_ref returned from pgCopyText will have a "record size" set to one byte. In other words, a GetMemorySize() will return the number of bytes copied (which might be different than number of characters since OpenPaige can theoretically contain multibyte chars).
+
+The data_type parameter specifies which type of text to copy which can be one of the following:
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-111.jpg?height=447&width=1180&top_left_y=1240&top_left_x=436)
+
+If data_type is all_data, every byte in the specified range is copied; if all_text_chars, all single byte text is copied (which excludes only custom characters that aren't really "text"); for all_roman, only ASCII characters of Roman script are copied (as opposed to some other script such as Chinese or Arabic).
+
+The function result is typed as a text_ref which is a memory allocation created by the OpenPaige Allocation Manager.
+
+NOTE: "Single byte text," in the above sense does not refer to single or double byte scripts such as Roman vs. Kanji. The all_text_chars data type will in fact include double-byte script. The only type excluded in this case is embedded graphics, controls, or some other customized text stream that really isn't text.
+
+See also "Examine Text" on page 24-4.
+
+## No zeros at the end of pgCopyText
+
+I got my text in a text_ref with pgcopyText. But there is no 0 at the end!
+
+## 1. Can I simply add a zero at the end to create a zero delimited string?
+
+Yes. But you must be careful since the memory_ref is only guaranteed to have allocated the number of bytes in the selection sent to pgCopyText. So if you want to append a zero, you should use AppendMemory, then put in the value.
+
+memory_ref the_text;
+
+the_text = pgCopyText(pg, \&the_selection, all_data);
+
+$1 *$ put a zero on the end so the parser doesn't walk off the end of the text $*$
+
+AppendMemory(the_text, sizeof(pg_char), true); UnuseMemory(the_text);
+
+## 2. How do I know where the end is?
+
+You can find the size of the text with GetMemorySize() which will return the number of "records", in this case, the number of characters. OR, you know the number of characters going into pgCopyText by knowing the selection range(s).
+
+## 6 UNDO / REDO
+
+OpenPaige provides an variety of functions to fully support multi-kinds of "Undo" for most situations. OpenPaige provides a convenient method of building custom undos which can be incorporated into your own application as well.
+
+### 6.1 Concept of Undo
+
+The concept of OpenPaige "undo" support is as follows: Before you do anything to an OpenPaige object that you want to be undo-able, call pgPrepareUndo if you are about to do a $p g C u t, p g$ Delete, $p g$ Paste or any style, font or paragraph formatting change. The function result can then be given to pgUndo which will cause a reversal of what was performed.
+
+For setting up an undo for $p g$ Cut or $p g$ Delete, pass undo_delete for the verb parameter and a null pointer for paste_ref, for setting up an undo for $p g$ Paste, pass undo_paste for the verb and the pg_ref you intend to paste from in paste_ref. For formatting changes (setting different fonts and styles or paragraph formats), pass undo_format for verb and null pointer for paste_ref.
+
+### 6.2 Prepare Undo
+
+To implement these features you must make the following function call prior to performing something that is undo-able:
+
+(undo_ref) pgPrepareUndo (pg_ref pg, short verb, void PG_FAR *insert_ref);
+
+FUNCTION RESULT: This function returns a special memory allocation which you can give to $p g$ Undo (below) to perform an Undo.
+
+The verb parameter defines what you are about to perform, which can be one of the following:
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-114.jpg?height=889&width=1158&top_left_y=970&top_left_x=434)
+
+"About to perform" means that you are about to do something you wish to be undo-able later on. This includes performing a deletion, insertion, or text formatting change of any kind.
+
+### 6.3 The insert ref Parameter
+
+For undo_paste, insert_refmust be the pg_ref you intend to paste (the source "scrap"); for undo_insert, insert_ref must be a pointer to the number of bytes to be inserted.
+
+The undo_app_insert verb is identical to undo_insert except you must specify the insert location (undo_insert assumes the current text position). To do so, insert_ref must be a pointer to an array of two long words, the first element should be the text position to be inserted and the second element the insertion size, in bytes.
+
+For undo_typing, undo_backspace and undo_fwd_delete, insert_refshould be the previous undo_ref you received for any pgPrepareUndo — por NULL if none.
+
+NOTE: insert_ref, in this case, is an undo_ref — pnot a pointer t o one — bso you must coerce the undo_ref as (void PG_FAR *).
+
+For all other undo preparations, insert_ref should be NULL.
+
+Insert 100 bytes
+
+If you are about to insert, say, 100 bytes, you would call pgPrepareUndo as follows:
+
+long length;
+
+length $=100$;
+
+pgPrepareUndo(pg, undo_insert, (void PG_FAR *)\&length);
+
+/* The following function inserts a key into pg and returns the undo_ref that can be used to perform "Undo typing". The last_undo is the previous undo_ref, or MEM_NULL if none. */
+
+undo_ref insert_width_undo (pg_ref pg, pg_char the_key, undo_ref last_undo)
+
+For undo_paste, insert_refmust be the pg_ref you are about to paste (same as before).
+
+For all other undo verbs, insert_ref is not used (so can be NULL).
+undo_page_change can be used before changing the page shape, undo_vis_change before changing the visual area and undo_exclude_change before changing the exclusion area.
+
+The undo_doc_info verb can be given before changing anything in pg_ref's doc_info. For example, you could do “Undo Page Setup” with this undo verb.
+
+The undo_embed_insert verb can be used before inserting an embed_ref(see chapter on Embedded Objects). Note, unlike undo_insert and undo_app_insert, the insert_ref parameter should be NULL for undo_embed_insert.
+
+Undoing "Containers"
+
+OpenPaige will set up an undo (and restore upon redo) both "container" rectangles and the associated refcons when you use undo_page_change. You can therefore perform a full Undo Container Change.
+
+### 6.5 Performing the Undo
+
+To perform the actual Undo operation, pass an undo_ref to the following:
+
+(undo_ref) pgUndo (pg_ref pg, undo_ref ref, pg_boolean requires_redo, short draw_mode);
+
+The ref parameter must be an undo_ref obtained from pgPrepareUndo.
+
+If requires_redo is "TRUE," pgUndo returns a new undo_ref which can be used for a "Redo".
+
+For example, if the undo_ref passed to this function performed an "Undo Cut," and requires_redo is given as TRUE, the function will return a new undo_ref which, if given to pgUndo again, would perform a "Redo Cut." Undo / Redo results can be toggled back and forth this way virtually forever.
+
+draw_mode can be the values as described in "Draw Modes" on page 2-30:
+
+| draw_none, | // Do not draw at all |
+| :--- | :---: |
+| best_way, | // Use most effecient method(s) |
+| direct_copy, | Directly to screen, overwritedirect_or, |
+| // Directly to screen, "OR" direct_xor, // Directly to screen, "XOR" |  |
+| bits_copy, // Copy offscreen <br> bits_or, // Copy offscreen in "OR"mode <br> bits_xor // Copy offscreen in "XOR" mode |  |
+
+Generally, if you want the OpenPaige object to redraw, pass best_way for draw_mode.
+
+NOTE: 1. pgUndo returns a new undo ref, which is a completely different allocation than the undo_ref you passed to it. It is your responsibility to dispose all undo_refs.
+
+NOTE: 2: When an Undo is performed, it does not matter what the selection point (or selection range) is in $p g$ at the time - $\mathrm{p} p g$ Undo will restore whatever selection range(s) existed at the time the undo_ref was created. For example, if the user performs an action for which you created an Undo ref, such as a Paste, then he selects some other text or clicks at a different location, $p g$ Undo still works correctly since the original insertion point for the Paste is recorded in the undo_ref.
+
+### 6.6 Disposing Undo Ref's
+
+Once you are through using an undo_ref, dispose it by calling the following function:
+
+(void) pgDisposeUndo (undo_ref ref);
+
+The ref parameter must be a valid undo_ref(received from pgPrepareUndo, or pgUndo); or, ref can be MEM_NULL (in which case pgDisposeUndo() does nothing).
+
+## NOTES:
+
+(1) MEM_NULL is allowed intentionally so you can blindly pass your application's last "undo-able" operation, which can be set initially to MEM_NULL.
+
+(2) There are a few cases where you should not dispose an undo_ref — bsee below.
+
+## Disposing the Previous Prepare-Undo
+
+If you are implementing single-level undo support (user can only undo the last operation), you would normally need to dispose the "old" undo_ref(the one returned from the previous $p g$ PrepareUndo() ) before preparing for the next undo. For undo_typing, undo_fwd_delete and undo_backspace you must not dispose the "old" undo_ref — pthese are the lone exceptions to the "dispose-old-undo" rule.
+
+The reason for this is that you give OpenPaige the "old" undo_ref as the insert_ref parameter; for undo_typing, undo_backspace and undo_fwd_delete, the undo_refgiven in insert_ref is either disposed or returned back to you as the function result.
+
+Never dispose the "previous" undo_ref when preparing for any of these "character" undos (undo_typing, undo_backspace and undo_fwd_delete). In all other cases, it is OK to dispose the previous undo_ref.
+
+### 6.7 Undo Type
+
+short pgUndoType (undo_ref ref);
+
+This returns what type of undo_ref will perform.
+
+FUNCTION RESULT: The function returns one of the undo verbs listed above under pgPrepareUndo, or a negative complement of a verb.
+
+If the undo_ref is intended for a redo (returned from $p g U n d o)$, the verb will be its negative complement. For example, if $p g U n d o T y p e($ ) returns undo_paste, a call to pgUndo() would essentially perform a "Redo Paste".
+
+A good use for this function is to set up a menu item for the user to indicate what can be undone.
+
+NOTE: If you want to record more information about an Undo operation than the undo verbs listed above, use pgSetUndoRefCon below.
+
+### 6.8 Undo RefCon
+
+(void) pgSetUndoRefCon (undo_ref ref, long refCon);
+
+(long) pgGetUndoRefCon (undo_ref ref);
+
+These two function allow you set (or get) a long reference inside an undo_ref.
+
+The ref parameter must be a valid undo_ref; for pgSetUndoRefCon, refCon can be anything. pgGetUndoRefCon returns whatever has been set in ref.
+
+### 6.9 Customizing undo
+
+OpenPaige has a low-level hook for which you can use to implement modified undo actions, or you can completely customize an undo regardless of its complexity. See the chapter "Customizing OpenPaige" on page 27-1 for more information.
+
+### 6.10 Multilevel Undo
+
+Your application can theoretically provide multiple-level Undo support by simply preparing a "stack" of undo_refs returned from $p g$ PrepareUndo. Since each undo_ref is independent of the next (i.e. there are no data structures within an undo_refthat depend on other undo_refs or even pg_refs), an application can keep as many of these around as desired to achieve "Undo of Undo" and "Undo of Undo of Undo," etc.
+
+Supporting a multilevel Undo (being able to undo the last several operations) simply involves "stacking" the undo_ref's returned from pgPrepareUndo.
+
+CAUTION: However, when you set up for "Undo Typing" (be it for a regular insertion, backspace or forward delete), OpenPaige might return the same undo_ref that was given to $p g$ PrepareUndo, and/or it might delete the previous undo_ref passed to the "insert_ref" parameter. In this case, make sure you check for this situation and handle it.
+
+SEE THE FOLLOWING EXAMPLE.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-122.jpg?height=1607&width=1233&top_left_y=257&top_left_x=434)
+
+## CLIPBOARD SUPPORT
+
+OpenPaige provides a certain degree of automatic support for the external clipboard, regardless of platform.
+
+### 7.1 Writing to the Clipboard
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-123.jpg?height=115&width=1083&top_left_y=1560&top_left_x=434)
+
+This function writes the appropriate data to the external clipboard for other applications to read (including your own application). The data to be written is contained in the_scrap; usually, the_scrap would have been returned earlier from $p g \operatorname{Copy}($ ) or pgCut().
+
+The scrap_type parameter indicates the preferred format within $p g$ to write to the clipboard. If scrap_type is $p g \_v o i d \_s c r a p$ (value of zero), OpenPaige will write whatever format(s) are appropriate, including its own native type.
+
+If scrap_type is nonzero it must be one of the following:
+
+| pg_native_scrap | OpenPaige native format |
+| :--- | :--- |
+| pg_text_scrap | ASCII text |
+| pg_embed_scrap | Contents of an embed_ref |
+
+For $p g \_e m b e d \_s c r a p$, only embed_mac_pict (for Macintosh) and embed_meta_file (for Windows) are supported, and only the first embed_reffound within the_scrap is written to the clipboard.
+
+The native_format parameter should contain a platform-appropriate identifier for a native OpenPaige format. For the Macintosh platform, pg_os_type is an OSType parameter; for the Windows platform, pg_os_type is a WORD parameter (Win16) or int parameter (Win32). Note that the value you place in native_format depends upon the runtime platform, as follows:
+
+Windows Platform
+
+You must first register a new format type by calling RegisterClipboardFormat(), then use that format type for every call to pgPutScrap() and pgGetScrap(). The name of this format type is arbitrary; however, to remain consistent we recommend the name used by the custom control, "OpenPaige".
+
+NOTE (Windows): IMPORTANT You must call OpenClipboard() before calling pgPutScrap(), then call CloseClipboard() after this function has returned. OpenPaige can't open the clipboard for you because it can't assume there is a valid HWND available within its structure.
+
+NOTE: Additional note: All data from the clipboard is copied, i.e. the data within the $p g \_r e f$ is not owned by the clipboard.
+
+For Macintosh, a pg_os_type is identical to OSType. This format type is somewhat arbitrary; however, to remain consistent we recommend the name used by the custom control, 'paig'.
+
+## All Platforms
+
+For both Macintosh and Windows platform, the clipboard is cleared before any data is written. If it is successful, the data can be read from the clipboard by calling pgGetScrap(), below.
+
+### 7.2 Reading from the Clipboard
+
+pg_ref pgGetScrap (pg_globals_ptr globals, pg_os_type native_format, embed_callback def_embed_callback);
+
+This function checks the external clipboard for a recognizable format and, if found, returns a new $p g \_r e f$ containing the data; the $p g \_r e f$ can then be passed to $p g P a s t e()$. This function will work for both Macintosh and Windows-based applications.
+
+The globals parameter must be a pointer to the OpenPaige globals structure (same structure used for $\operatorname{ggNew}())$.
+
+The native_format parameter should contain the same native format type identifier that was given to $p g$ PutScrap(). For example, if running on a Macintosh the native_formatmight be 'paig'. On a Windows machine, native_format would be the value returned from RegisterClipboardFormat().
+
+The def_embed_callback parameter is an optional function pointer to an embed_ref callback function. The purpose of providing this parameter is to initialize any
+embed_ref(s) read from the clipboard to use your callback function. If def_embed_callback is NULL it will be ignored (and the default callback used by OpenPaige will be placed into any embed_ref(s) read).
+
+NOTE (Windows): IMPORTANT: You must call OpenClipboard() before calling pgGetScrap(), then call CloseClipboard() after you are through processing the data. OpenPaige can't open the clipboard for you because it can't assume there is a valid HWND available within its structure.
+
+## Function Result
+
+If a format is recognized on the clipboard, a new pg_ref is returned containing the clipboard data. If no format(s) are recognized, MEM_NULL is returned.
+
+NOTE: It is your responsibility to dispose the $p g \_$ref returned from this function.
+
+### 7.3 Format Type Priorities
+
+Windows Platform
+
+OpenPaige will check the clipboard for format types it can support in the following priority order:
+
+1. OpenPaige native format (taken from native_format parameter).
+2. Text (CF_TEXT).
+3. Metafile (CF_METAFILEPICT)
+4. Bitmap (CF_BITMAP)
+
+If none of the above formats are found, $p g G e t S c r a p($ ) returns MEM_NULL.
+
+OpenPaige will check the clipboard for format types it can support in the following priority order:
+
+1. OpenPaige native format (taken from native_format parameter).
+2. Text ('TEXT').
+3. Picture ('PICT').
+
+If none of the above formats are found, $p g G e t S c r a p($ ) returns MEM_NULL.
+
+### 7.4 Checking Clipboard Availability
+
+pg_boolean pgScrapAvail (pg_os_type native_format);
+
+This function returns TRUE if there is a recognizable format in the clipboard. No data is read from the clipboard — only the data availability is returned.
+
+The native_formatshould be the appropriate clipboard format type for the OpenPaige native format (see $p g$ PutScrap() above).
+
+This function is useful for controlling menu items, e.g. disabling "Paste" if nothing is in the clipboard.
+
+NOTE (Windows): IMPORTANT: You should call OpenClipboard() before calling pgScrapAvail(), then call CloseClipboard() after this function has returned.
+
+## STYLE BASICS
+
+OpenPaige maintains three separate text formatting runs (series of text formatting changes): styles (bold, italic, super/subscript, etc.), fonts (Helvetica, Times, etc.) and paragraph formats (indentations, tabs, justification, etc.).
+
+Each of these three formats can be changed separately; any portion of text can be a combination of each of these formats. Setting each of those is described in detail in “Advanced Styles" on page 30-1. This chapter, Style Basics, describes the easiest quickest way to simply set the style, font and paragraph format you want.
+
+NOTE: Unlike a Windows font that defines the whole composite format of text, the term "font" as used in this chapter generally refers only to a typeface, or typeface name. OpenPaige considers a "font" to simply be a specific family such as Times, Courier, Helvetica, etc. while distinguishing other formatting properties such as bold, italic, underline, etc. as the text style.
+
+### 8.1 Simplified Fonts and Styles
+
+The simplest way to change the text in a pg_ref to different fonts, style or color is to use the high-level utility functions provided with OpenPaige version 1.0. These utilities provide a "wrapper" around the lower-level OpenPaige functions that change styles, fonts and text colors.
+
+The source code to the wrapper has also been provided for your convenience, so you can alter them as necessary to fit your particular application. Or, you can examine them as reference material as the need occurs to apply more sophisticated stylization to your document.
+
+Installing the Wrapper
+
+All the functions listed in this section can be installed by including the source file $p g H L e v e l . c$ in your project andpgHLevel. $h$ as its header file. These functions can be called from both Macintosh and Windows platforms and should work with all compilers that support standard C conventions.
+
+NOTE: If your application requires more sophistication than provided in this highlevel wrapper, and/or if you cannot use the wrapper for any reason, please see the chapter, “Advanced Styles” on page 30-1.
+
+### 8.2 Selection range
+
+Most of the functions in this chapter require a selection range, select_pairs and CURRENT_SELECTION.
+
+The selection range defines the range of text that should be changed, or if you pass a null pointer the current selection range (or insertion point) in $p g$ is changed.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-131.jpg?height=353&width=1242&top_left_y=240&top_left_x=429)
+
+The begin field of a select_pair defines the beginning text offset and the end field defines the ending offset. Both offsets are byte offsets, not character offsets. Text offsets in OpenPaige are zero-based (first offset is zero).
+
+### 8.3 Changing / Getting Fonts
+
+## Windows prototype:
+
+\#include "pgHLevel.h"
+
+void pgSetFontByName (pg_ref pg, LPSTR font_name, select_pair_ptr selection_range, pg_boolean redraw);
+
+## Macintosh prototype:
+
+\#include "pgHLevel.h"
+
+void pgSetFontByName (pg_ref pg, Str255 font_name, select_pair_ptr selection_range, pg_boolean redraw);
+
+This function changes the text in $p g$ to the specified font_name.
+
+If selection_range is a null pointer, the text in $p g$ currently selected is changed (or, if nothing is selected, the font is applied to the next key insertion).
+
+If selection_range is not null, it must point to a select_pair record defining the beginning and ending text offsets to apply the font. (See also "Selection range" on page 8-128).
+
+If redraw is TRUE the changed text is redrawn if there was a selected range affected.
+
+NOTE: Only the font is affected in the composite style of the specified text, i.e. the text will retain its current point size and its other style attributes; only the font family changes.
+
+## Macintosh prototype
+
+$$
+\begin{aligned}
+& \text { \#include "pgHLevel.h" } \\
+& \text { pg_boolean pgGetFontByName (pg_ref pg, Str255 font_name); }
+\end{aligned}
+$$
+
+## Windows prototype
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-132.jpg?height=107&width=1101&top_left_y=1181&top_left_x=434)
+
+This function returns the font name that is applied to the text currently highlighted in $p g$ (or, if nothing is highlighted, the font that applies to the current insertion point is returned).
+
+The font name is returned in font_name. However, if the text is selected and the text range has more than one font, pgGetFontByName returns FALSE and font_name is not certain.
+
+## Prototype (same for both Mac and Windows)
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-133.jpg?height=152&width=1116&top_left_y=405&top_left_x=436)
+
+This function changes the text point size to the new size specified.
+
+If selection_range is a null pointer, the text in pg currently highlighted is changed (or, if nothing is highlighted, the point size is applied to the next key insertion).
+
+If selection_range is not null, it must point to a select_pair record defining the beginning and ending text offsets to apply the size. (See also "Selection range" on page 8-128).
+
+If redraw is TRUE the changed text is redrawn if there was a selected range affected.
+
+NOTE: Only the text size is affected in the composite style of the specified text, i.e. the text will retain its current font family and its other style attributes; only the point size changes.
+
+## Prototype (same for both Mac and Windows)
+
+\#include "pgHLevel.h"
+
+pg_boolean pgGetPointsize (pg_ref pg, short PG_FAR *point_size);
+
+This function returns the point size that is applied to the text currently selected in $p g$ (or, if nothing is selected, the point size that applies to the current insertion point is returned).
+
+The point size is returned in *point_size (which must not be a null pointer). However, if the text is highlighted and the text range has more than one size, pgGetPointsize returns FALSE and *point_size is not certain.
+
+### 8.5 Setting / Getting Styles
+
+Setting easy styles
+
+## Prototype (same for Mac and Windows)
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-134.jpg?height=157&width=1162&top_left_y=600&top_left_x=433)
+
+This function changes the text style(s) to the new style(s) specified. "Styles" refers to text drawing characteristics such as bold, italic, underline, etc.
+
+The style(s) to apply are represented in style_bits, which can be a composite of any of the following values:
+
+|  |  |
+| :--- | :--- |
+| \#include "pgHLevel.h" |  |
+| \#define X_PLAIN_TEXT | $0 x 00000000$ |
+| \#define X_BOLD_BIT | $0 x 00000001$ |
+| \#define X_ITALIC_BIT | 0x00000002 |
+| \#define X_UNDERLINE_BIT | 0x00000004 |
+| \#define X_OUTLINE_BIT | 0x00000008 |
+| \#define X_SHADOW_BIT | 0x00000010 |
+| \#define X_CONDENSE_BIT | 0x00000020 |
+| \#define X_EXTEND_BIT | 0x00000040 |
+| \#define X_DBL_UNDERLINE_BIT | 0x00000080 |
+| \#define X_WORD_UNDERLINE_BIT | 0x00000100 |
+| \#define X_DOTTED_UNDERLINE_BIT | 0x00000200 |
+| \#define X_HIDDEN_TEXT_BIT | 0x00000400 |
+| \#define X_STRIKEOUT_BIT | 0x00000800 |
+| \#define X_SUPERSCRIPT_BIT | 0x00001000 |
+| \#define X_SUBSCRIPT_BIT | 0x00002000 |
+| \#define X_ROTATION_BIT | 0x00004000 |
+| \#define X_ALL_CAPS_BIT | 0x00008000 |
+| \#define X_ALL_LOWER_BIT | 0x00010000 |
+| \#define X_SMALL_CAPS_BIT | 0x00020000 |
+| \#define X_OVERLINE_BIT | 0x00040000 |
+| \#define X_BOXED_BIT | 0x00080000 |
+| \#define X_RELATIVE_POINT_BIT | 0x00100000 |
+| \#define X_SUPERIMPOSE_BIT | 0x00200000 |
+| \#define X_ALL_STYLES | 0xFFFFFFFF |
+|  |  |
+
+The set_which_bits parameter specifies which of the styles specified in style_bits to actually apply; the value(s) you place in set_which_bits should simply be the bits (as defined above) that you want to change.
+
+The purpose of set_which_bits is to distinguish between a style you choose to force to "off" versus a style you choose to remain unchanged.
+
+For example, suppose you want to change all the selected text to bold face but leave the other styles of the text unchanged. To do so, you would simply pass $X_{-} B O L D_{-} B I T$ in both "style_bits" and "set_which_bits."
+
+However, suppose you want to force the selected text to ONLY bold (forcing all other styles off). In this case, you would pass X_BOLD_BIT in "style_bits" and 0xFFFFFFFF (or $X \_A L L \_S T Y L E S$ ) in "set_which_bits".
+
+Also note for "plain" text (forcing all styles OFF), you pass X_PLAIN_TEXT for style_bits and $X \_A L L \_S T Y L E S$ for set_which_bits.
+
+If selection_range is a null pointer, the text in pg currently selected is changed (or, if nothing is selected, the style(s) are applied to the next key insertion).
+
+If selection_range is not null, it must point to a select_pair record defining the beginning and ending text offsets to apply the style(s). (See also "Selection range" on page 8-128).
+
+If redraw is TRUE the changed text is redrawn if there was a selected range affected.
+
+NOTE: Only the specified style attributes will affect the text, i.e. the selected text will retain its font family and point size, and all other style attributes that are not specified in set_which_bits.
+
+NOTE (Macintosh): The first six style definition bits are identical to QuickDraw's style bits. You might find it convenient to simply pass the QuickDraw style(s) to this function.
+
+## \#include "pgHLevel.h"
+
+/* The following code sets the text currently selected in pg to bold-italic but leaves all other styles in the text alone. The text gets re-draw with the changes if we had a highlight range.*/
+
+long style_bits = X_BOLD_BIT | X_ITALIC_BIT;
+
+pgSetStyleBits(pg, style_bits, style_bits, NULL, TRUE);
+
+/* The following code sets the text currently selected in pg to bold-italic but does NOT leave the other styles alone (forces text to bold-italic and turns off all other styles). The text gets re-drawn with the changes if we had a highlight range. */
+
+long style_bits = X_BOLD_BIT | X_ITALIC_BIT; pgSetStyleBits(pg, style_bits , X_ALL_STYLES, NULL, TRUE); // The following code changes all the selected text to "plain" pgSetStyleBits(pg, X_PLAIN_TEXT, X_ALL_STYLES, NULL, TRUE);
+
+## Prototype (both Mac and Windows)
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-137.jpg?height=156&width=1232&top_left_y=1688&top_left_x=434)
+
+This function returns the style(s) that are applied to the text currently highlighted in $p g$ (or, if nothing is highlighted, the style(s) that apply to the current insertion point are returned).
+
+The style(s) are returned in *style_bits (which must not be a null pointer); the value of *style_bits will be a composite of one or more of the style bits as defined in pgSetStyleBits (above).
+
+The *consistent_bits parameter will also get set to the style(s) that remains consistent throughout the selected text; if a style bit in consistent_bits is set to a "1," that corresponding bit value in *style_bits is the same throughout the selected text.
+
+For example, if *style_bits returns with all 0's, yet *consistent_bits is set to all 1's, the selection is purely "plain text" (no styles are set). However, if *style_bits returned all 0's but *consistent_bits was NOT all 1's, the text is not "plain text," rather the bits that are 0 in *consistent_bits reveal that style is not the same throughout the whole selection.
+
+NOTE: The consistent_styles parameter must not be a null pointer.
+
+### 8.6 Setting / Getting Text Color
+
+## Windows prototypes
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-138.jpg?height=246&width=1196&top_left_y=1238&top_left_x=433)
+
+## Macintosh prototypes
+
+\#include "pgHLevel.h"
+
+void pgSetTextColor (pg_ref pg, RGBColor *color, select_pair_ptr selection_range, pg_boolean redraw);
+
+void pgSetTextBKColor (pg_ref pg, RGBColor *color, select_pair_ptr selection_range, pg_boolean redraw);
+
+pgSetTextColor changes the foreground color of text in $p g$ to the specified color; $p g S e t T e x t B K C o l o r$ changes the background color of text in $p g$ to the specified color.
+
+If selection_range is a null pointer, the text in $p g$ currently highlighted is changed (or, if nothing is highlighted, the color is applied to the next key insertion).
+
+If selection_range is not null, it must point to a select_pair record defining the beginning and ending text offsets to apply the color. (See also "Selection range" on page 8-128).
+
+If redraw is TRUE the changed text is redrawn if there was a selected range affected.
+
+NOTE: Only the text color is affected in the specified text, i.e. the text will retain its current font family, point size and its other style attributes.
+
+## Windows prototypes
+
+## \#include "pgHLevel.h"
+
+pg_boolean pgGetTextColor (pg_ref pg, COLORREF PG_FAR *color); pg_boolean pgGetTextBKColor (pg_ref pg, COLORREF PG_FAR ${ }^{*}$ color);
+
+## Macintosh prototypes
+
+\#include "pgHLevel.h"
+
+pg_boolean pgGetTextColor (pg_ref pg, RGBColor *color);
+
+pg_boolean pgGetTextBKColor (pg_ref pg, RGBColor *color);
+
+pgGetTextColor returns the foreground color that is applied to the text currently highlighted in pg (or, if nothing is highlighted, the color that applies to the current insertion point is returned); pgGetTextBKColor returns the text background color.
+
+The color is returned in * color (which must not be a null pointer). However, if the text is highlighted and the text range has more than one size, the function returns FALSE and ${ }^{*}$ color is not certain.
+
+### 8.7 Style Examples
+
+Setting styles (Windows)
+
+${ }^{* *}$ The following code shows an example of setting a new point size, a new font and new style(s) taken from a "LOGFONT" structure. All new text characteristics are applied to the text currently highlighted (or they are applied to the NEXT pgInsert if no text is highlighted). */
+
+Carefully note that we do not "redraw" the text until the last function is called, otherwise we would keep "flashing" the refresh of the text. \#include "Paige. h"
+
+\#include "pgUtils.h"
+
+\#include "pgHLevel.h"
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-141.jpg?height=1481&width=1217&top_left_y=165&top_left_x=432)
+
+// Before setting the styles, check if we actually have "plain text":
+
+if (style_bits $==$ X_PLAIN_TEXT)
+
+$$
+\text { set_bits }=\bar{X} \text { _ALL_STYLES; }
+$$
+
+else
+
+$$
+\text { set_bits = style_bits; }
+$$
+
+// Note, this time we pass "TRUE" for redraw because we are done:
+
+pgSetStyleBits(pg, style_bits, set_bits, NULL, TRUE);
+
+## \#include "pgHLevel.h"
+
+/* The following code assumes a "Font" menu (which lists all available fonts), a "Style" menu (containing Plain, Bold, etc.) and a "Point" menu (with 9, 12, 18 and 24 point values). Each example assumes its respective menu has been selected by user and "menu_item" is the item selected. */
+
+/* For font menu: */ Str255 font;
+
+Getltem(FontMenu, menu_item, font); pgSetFontByName(pg, font, NULL, TRUE);
+
+/* For style menu: */
+
+long style_bits, set_bits;
+
+switch (menu_item) \{
+
+case PLAIN_ITEM:
+
+style_bits = X_PLAIN_TEXT;
+
+set_bits $=$ X_ALL_STYLES;
+
+break;
+
+case BOLD_ITEM:
+
+style_bits = set_bits = X_BOLD_BIT;
+
+break;
+
+case ITALIC_ITEM:
+
+style_bits $=$ set_bits $=$ X_ITALIC_BIT;
+
+break;
+
+case UNDERLINE_ITEM:
+
+style_bits $=$ set_bits $=$ X_UNDERLINE_BIT; break;
+
+case OUTLINE_ITEM:
+
+style_bits = set_bits $=$ X_OUTLINE_BIT;
+
+break;
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-143.jpg?height=1323&width=1004&top_left_y=193&top_left_x=436)
+
+### 8.8 Changing pg_ref style defaults
+
+Changing the defaults of the $p g \_r e f$ is done just after $p g I n i t$. Changing the defaults is shown in “A Different Default Font, Style, Paragraph” on page 3-6.
+
+### 8.9 Changing Paragraph Formats
+
+Changing the paragraph format applied to text range(s) requires a separate function call since paragraph formats are maintained separate from text styles and fonts.
+
+To set one or more paragraphs to a different format, call the following:
+
+(void) pgSetParInfo (pg_ref pg, select_pair_ptr selection, par_info_ptr info, par_info_ptr mask, short draw_mode);
+
+This function is almost identical to $p g$ SetStyleInfo or pgSetFont/nfo except a par_info record is used for info and mask.
+
+The other difference is that pgSetParInfo will always apply to at least one paragraph: even if the selection "range" is a single insertion point, the whole paragraph that contains the insertion point is affected.
+
+The selection and draw_mode parameters are functionally identical to the same parameters in pgSetStyleInfo (see "Changing Styles" on page 30-7 and "Draw Modes" on page 2-30), except whole paragraphs are changed (even if you specify text offsets that do not fall on paragraph boundaries). (See also "Selection range" on page 8-128 and "All About Selection” on page 10-1).
+
+For detailed information on par_info records — band what fields you should set up —see "par_info" on page 30-33.
+
+NOTE: If you want to set or change tabs, it is more efficient (and less code) to use the functions in the chapter "Tabs \& Indents" on page 9-1.
+
+(long) pgGetParInfo (pg_ref pg, select_pair_ptr selection, pg_boolean set_any_match, par_info_ptrinfo, par_info_ptr mask);
+
+This function returns paragraph information for a specific range of text.
+
+If selection is a null pointer, the information that is returned applies to the current selection range in $p g$ (or the current insertion point); if selection is non-null, pointing to select_pair record, information is returned that applies to that selection range (see "Copying and Deleting" on page 5-1 for information about select_pair pointer under pgGetStyleInfo).
+
+Both info and mask must both point to par_info records; neither can be a null pointer. When the function returns, both info and mask will be filled with information you can examine to determine what style(s), paragraph format(s) or font(s) exist throughout the selected text, and/or which do not.
+
+If set_any_mask was FALSE: All the fields in mask that are set to nonzero indicate that the corresponding field value in info is the same throughout the selected text; all the fields in mask that are set to zero indicate that the corresponding field value in info is not the same throughout the selected text.
+
+For example, suppose after calling $p g G e t P a r I n f o$, mask.spacing has a nonzero value. That means that whatever value has been set in info.spacing is the same for every paragraph in the selected text. Hence if info.spacing is 12, then every character is spaced the same.
+
+On the other hand, suppose after calling pgGetParInfo, mask.spacing is set to zero. That means that some of the characters in the selected text matches the spacing in info and some do not. In this case, whatever value happens to be in info.spacing is not certain.
+
+Essentially, any nonzero in mask is saying, "Whatever is in info for this field is applied to every character in the text," and any zero in mask is saying, "Whatever is in info for this field does not matter because it is not the same for every character in the text."
+
+You want to pass FALSE for set_any_mask to find out what paragraph formats apply to the entire selection (or not).
+
+| TABLE \#3 | POSSIBLE RESULTS WHEN SET_ANY_MASK IS <br> SET TO FALSE |  |
+| :---: | :---: | :---: |
+| info | mask | results |
+| 12 | -1 | All paragraphs have spacing of 12 |
+| 12 | 0 | Some paragraphs have spacing of 12 |
+
+Setting set_any_match to TRUE is used to determine if only a part of the text matches a given paragraph format. This is described in "Obtaining Current Text Format(s)" on page 30-15. The par_info structure is described in "par_info" on page 30-33.
+
