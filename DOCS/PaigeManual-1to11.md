@@ -296,8 +296,7 @@ To initialize OpenPaige you must call two functions in the order given:
 	(void) pgMemStartup (pgm_globals_ptr mem_globals, long max_memory);
 	(void) pgInit (pg_globals_ptr globals, pgm_globals_ptr mem_globals);
 
-Calling `pgMemStartup` initializes OpenPaige's allocation manager. This call must be made first before `pgInit`. The `mem_globals` parameter must be a pointer to an area of memory which you provide. The usual (and easiest) method of doing this is to define a
-global variable that will not relocate or unload during the execution of your program, such as the following:
+Calling `pgMemStartup` initializes OpenPaige's allocation manager. This call must be made first before `pgInit`. The `mem_globals` parameter must be a pointer to an area of memory which you provide. The usual (and easiest) method of doing this is to define a global variable that will not relocate or unload during the execution of your program, such as the following:
 
 	pgm_globals 	memrsrv; // <--somewhere that will NOT unload
 
@@ -498,21 +497,13 @@ Parameters `vis_area`, `page_area` and `exclude_area` define the literal shapes 
 
 For `pgNew`, you can pass `MEM_NULL` for `exclude_area`, but you must pass a valid `shape_ref` for `vis_area` and `page_area`.
 
-See "Up \& Running Shapes" on page 2-26 to create a `shape_ref`.
+See "Up \& Running Shapes"<!-- on page 2-26--> on how to create a `shape_ref`.
 
 `attribute`s can contain different bit settings which define specific characteristics for the OpenPaige object. For the purpose of getting "Up \& Running" quickly, pass 0 for this parameter (or see “Changing Attributes” on page 3-1).
 
 The initial font and text format used by the `pg_ref` returned from `pgNew` will be taken from `pg_globals`. To change what font, style or paragraph format that a new `pg_ref` assumes, set the appropriate information in `pg_globals` after calling `pgNew`.
 
-![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-027.jpg?height=571&width=653&top_left_y=494&top_left_x=439)
-
-vis_area is where text "shows through". Text may wrap or flow beyond this area but it is clipped during display
-
-page_area defines where text flows and wraps. At any time, text outside
-
-vis_area is clipped
-
-exclude_area is optional. If used, text avoids the shape, hopping across the area
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-027.jpg?height=571&width=1250&top_left_y=494&top_left_x=439)
 
 #### MEM_NULL Definition
 
@@ -916,7 +907,7 @@ If you are doing inserts with `key_insert_mode`, OpenPaige won't do anything if 
 
 ### 2.13 Keyboard Editing with MFC (Windows)
 
-To get Up and Running with basic keyboard editing you must add the following code to your MFC view class:
+To get *Up and Running* with basic keyboard editing you must add the following code to your MFC view class:
 
 	(.H) 
 	// Declare the following private variables. 
@@ -3039,3 +3030,1313 @@ TABLE \#3: POSSIBLE RESULTS WHEN `SET_ANY_MASK` IS SET TO `FALSE`
 
 Setting `set_any_match` to TRUE is used to determine if only a part of the text matches a given paragraph format. This is described in "Obtaining Current Text Format(s)"<!-- on page 30-15-->. The `par_info` structure is described in "par_info"<!-- on page 30-33-->.
 
+## 9 TABS \& INDENTS
+
+### 9.1 Tab Support
+
+One of the elements of a paragraph formats is a list of tab stops. Although you could set tabs (or change tabs) using `pgSetParInfo`, some additional functions have been provided exclusively for tabs to help save on coding:
+
+	void pgSetTab (pg_ref pg, select_pair_ptr selection, tab_stop_ptr tab_ptr, short draw_mode);
+
+This function sets a new tab that applies to the specified selection.
+
+The `selection` parameter is used in the same way as other functions use a `select_pair` parameter: if it is a null pointer, the current selection in `pg` is used, otherwise the `selection` is taken from the parameter (for information about `pgSetParInfo` regarding `select_pair` records, see "Selection range"<!-- on page 8-2-->).
+
+The `draw_mode` is also identical to all other functions that accept a `draw_mode` parameter. `draw_mode` can be any of the values described in "Draw Modes"<!-- on page 2-30-->:
+
+	draw_none, 		// Do not draw at all
+	best_way,		// Use most efficient method(s)
+	direct_copy,	// Directly to screen, overwrite
+	direct_or,		// Directly to screen, "OR"  
+	direct_xor,		// Directly to screen, "XOR"  
+	bits_copy,		// Copy offscreen
+	bits_or, 		// Copy offscreen, "OR" mode
+	bits_xor		// Copy offscreen, "XOR" mode
+
+The `tab_ptr` parameter is a pointer to the following record (`tab` must not be a null pointer):
+
+	typedef struct 
+	{
+		long tab_type;	// Type of tab
+		long position;	// Tab position
+		long leader;	// Tab leader (or null)
+		long ref_con;	// Can be used for anything
+	}
+
+The `tab_type` field can be one of the following:
+
+	typedef enum
+	{
+		no_tab,		// none (used to delete)
+		left_tab,		// left tab
+		center_tab,	// centre tab
+		right_tab,	// right tab
+		decimal_tab	// tab on decimal point
+	}
+
+The position field in a `tab_stop` defines the tab's position, in pixels. However, a tab's pixel position is relative to either the left edge of `pg`'s `page_area`, or to the left edge of the window (see "Tab Base"<!-- on page 9-151-->).
+
+If `leader` is nonzero, the tab is drawn with that value as a "leader" character. OpenPaige assumes that the character has simply been coerced to a numeric value, which will therefore imply whether the leader character is a single ASCII byte (`leader` < 256), or a double byte (`leader` > 256).
+
+For example, if the leader is a single ASCII byte for a "." (hexadecimal 2E), the value placed in leader should be `0x0000002E`. If leader is a double-byte character, such as the Kanji with hexadecimal value 802E, then the leader value should be set to `0x0000802E`, etc.
+
+	my_tab.leader = '-';
+
+A leader is the character placed before a tab, like this
+
+	01234  5  6789
+	ABC -[TAB]DEFG
+
+The `ref_con` field can be used for anything.
+
+### Deleting a Tab
+
+You can delete a tab by calling `pgSetTab` with a tab record of type `no_tab` where the position field set to the exact position of the existing tab you wish to delete.
+
+### Changing a Tab
+
+If you want to change a tab's position (location relative to the tab base), you must delete the tab and add a new one (see previous, "Deleting a Tab").
+
+If you want to change anything else (such as the tab type or leader), simply call `pgSetTab` with a tab record whose position is identical to the one you wish to change.
+
+#### NOTES:
+
+1. The maximum number of tab settings per paragraph is 32.
+2. Tab settings affect whole paragraphs. They are in fact part of the paragraph formatting.
+
+### TECH NOTE: Tabs setting different for different lines
+
+> I am displaying information in Paige with each block of info occupying 2 lines of text. I would like to have tab stops set differently for the first and second line.
+
+It depends on what you mean by "line."
+
+If each line ends with a CR (carriage return), OpenPaige considers each one a "paragraph" and thus you can simply change the paragraph formatting to be different for each line.
+
+However, if both of your lines are one continuous string of text that just word-wraps into two lines, it is virtually impossible to apply two different sets of tab stops.
+
+This is because tabs are, by definition, a paragraph format and a paragraph is simply text that ends with a CR, no matter how many lines it might have.
+
+I will assume you have CR-terminated lines ("paragraphs"). To apply different tab stops to the second line, you need to simply use the tab setting function(s) as given in the manual. of course you need to know at least one of the text positions in the line you need to change (for example, you need to know that line number 2 starts at the 60th character, or the $72 \mathrm{nd}$ character, etc.); you also need to insert the text line first before you can apply the tab-stop changes (unlike text styles, paragraph styles require that you have a "paragraph" for which to apply the style change).
+
+## 9.2 Changing / Getting Multiple Tabs
+
+### Get Tab List
+
+This provides a way to look at all the tabs within a section of text:
+
+	(void) pgGetTabList (pg_ref pg, select_pair_ptr selection, tab_ref tabs, memory_ref tab_mask, long PG_FAR *screen_offset);
+
+The `selection` parameter operates in the same way it does for `pgGetParInfo` (see "Obtaining Current Text Format(s)"<!-- on page 30-15--> for information about `pgGetStyleInfo` and `pgGetParInfo`).
+
+The `tabs` and `tab_mask` parameters for `pgGetTabList` are memory allocations which you must create before calling this function. When the function returns, `tabs` will be set to contain an array of `tab_stop` records that apply to the selection range and `tab_mask` will be set to contain an array of `long`s containing non-zeros for every tab that is consistent (the same) throughout the selection.
+
+For example, supposing that the specified selection contained 3 tabs, when `pgGetTabList` returns, `tabs` would contain all three `tab_stop` records and `tab_mask` would contain 3 long words (each corresponding to the `tab` in `tabs`). If the corresponding long word in `tab_mask` is zero, that tab is inconsistent (not the same) and/or does not exist throughout the entire selection range.
+
+The `tab_mask`, however, can be a `MEM_NULL` if you don't require a "consistency report." The `tabs` parameter, however, must be a valid `memory_ref`.
+
+The `screen_offset` parameter should either be a pointer to a `long` or a null pointer. When the function returns, the variable pointed to by `screen_offset` will get set to the tab base value (the position, in pixels, against which tabs are measured—see "Tab Base"<!-- on page 9-151-->). If `screen_offset` is a null pointer, it is ignored.
+
+##### NOTES
+1. To learn how to create the allocations passed to tabs and `tab_mask`, and how to access their contents, see "The Allocation Mgr"<!-- on page 25-1-->.
+2. Calling this function forces the tabs memory allocation to contain `sizeof(tab_stop)` record sizes. Hence, the result of `GetMemorySize(tabs)` will return the number of `tab_stop` records. Similarly, the `tab_mask` is forced to a record size of `sizeof(long)`, so `GetMemorySize(tab_mask)` will return the same number.
+3. If no tabs exist at all, `pgGetTabList` will set your tabs and `tab_mask` allocation to a size of zero.
+
+### Set Tab List
+
+	(void) pgSetTabList (pg_ref pg, select_pair_ptr selection, tab_ref tabs, memory_ref tab_mask, short draw_mode);
+
+The above function provides a way to apply multiple tabs all at once to a specified `selection`.
+
+The `selection` parameter operates the same as all functions that accept a `select_pair`.
+
+`draw_mode` can be the values as described in "Draw Modes"<!-- on page 2-30-->:
+
+	draw_none, 		// Do not draw at all
+	best_way,		// Use most efficient method(s)
+	direct_copy,	// Directly to screen, overwrite
+	direct_or,		// Directly to screen, "OR"  
+	direct_xor,		// Directly to screen, "XOR"  
+	bits_copy,		// Copy offscreen
+	bits_or, 		// Copy offscreen, "OR" mode
+	bits_xor		// Copy offscreen, "XOR" mode
+
+The `tabs` and `tab_mask` parameters must be memory allocations that you create. The `tabs` allocation must contain one or more tab stop records; the `tab_mask` allocation must have an identical number of long words, each `long` corresponding to the tab
+element in `tabs`. For every entry in `tab_mask` that is nonzero, that corresponding tab is applied to the selection range; for every `tab_mask` entry that is zero, that tab is ignored.
+
+For example, if you set up the tabs allocation to contain 3 `tab_stop` records, and the `tabs_mask` had three `long`s of 1, 0, 1, then the first and third tab would be applied to the selection range; the second tab would not be applied.
+
+However, `tab_mask` can be `MEM_NULL` if you simply want to set all tabs unconditionally.
+
+##### NOTES 
+1. To learn how to create the allocations passed to `tabs` and `tab_mask`, and how to access their contents, see "The Allocation Mgr"<!-- on page 25-1-->.
+2. The maximum number of `tab_stop`s applied to one paragraph is 32.
+3. When setting multiple tabs, any current tab settings are maintained — they do not get "deleted". However, a `tab_stop` does get *replaced* if a new tab contains the same exact position.
+
+## 9.3 Tab Base
+
+Tab positions (the pixel positions specified in the position field of a tab_stop record) are considered relative to some other position and not absolute. OpenPaige supports three "tab base" values defining the relative position for which to place tabs. If the base value is positive or zero, OpenPaige uses that value as the tab base. If the base value is negative, the tab base implies one of the following:
+
+	#define TAB_BOUNDS_RELATIVE -1	// relative to page_area bounds
+	#define TAB_WRAP_RELATIVE -2	// relative to current line wrap edge
+
+The difference between `TAB_BOUNDS_RELATIVE` and `TAB_WRAP_RELATIVE` depends on what kind of wrap shape (`page_area`) that exists in the OpenPaige object. `TAB_BOUNDS_RELATIVE` means tabs are always relative to the entire bounding area (enclosing rectangle) of the `page_area`, regardless of the shape, while `TAB_WRAP_RELATIVE` measures tabs against the leftmost edge of the specific portion of the text line for which the tab is intended.
+
+### Setting/Changing Tab Base
+
+	(void) pgSetTabBase (pg_ref pg, long tab_base);
+	(long) pgGetTabBase (pg_ref pg);
+
+To set (or change) the tab base, call `pgSetTabBase` and provide the base value in `tab_base`, which can be a positive number or zero (in which case, tabs are relative to that pixel position), or a negative number (either `TAB_BASE_RELATIVE` or `TAB_BOUNDS_RELATIVE`).
+
+To get the current tab base, call `pgGetTabBase` and the base currently used by `pg` will be the function result.
+
+**NOTE:** The default tab base in a new `pg_ref` is zero (tabs are relative to pixel position 0).
+
+The four illustrations to follow show examples of how tab positions are measured against the tab base value (the tab base value is stored in `pg_ref` and can be changed with the functions shown above).
+
+[Figure 4](#fig4) ("TAB BASE = 0") shows a tab measurement with a tab base of zero, while [Figure 5](#fig5) ("TAB BASE = 16") shows a tab base of 16, in which case all tabs are relative to 16 pixels from the left of the window. In both cases, the window's left origin is assumed to be at coördinates (0, 0).
+
+Figures [6](#fig6) ("TAB BASE = `TAB_BOUNDS_RELATIVE`") and [7](#fig7) ("TAB BASE = `TAB_WRAP_RELATIVE`") both measure tabs against the left side of `page_area`, except that, where a line of text exists, `TAB_WRAP_RELATIVE` is measured against the edge of `page_area`. If `page_area` is *a single rectangle*, both of the latter two tab base modes are *identical*.
+
+##### Figures 4 – 7
+
+The following are some illustrations of different tab base values:
+
+![fig4](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-154.jpg?height=650&width=1300&top_left_y=1328&top_left_x=426)
+![fig5](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-155.jpg?height=650&width=1300&top_left_y=210&top_left_x=432)
+![fig6](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-155.jpg?height=670&width=1300&top_left_y=990&top_left_x=432)
+![fig7](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-156.jpg?height=750&width=1300&top_left_y=190&top_left_x=426)
+
+## 9.4 Indentation Support
+
+### Set Indents
+
+One of the elements of a paragraph format is a set of paragraph indentations (left, right, and first-line indents). Although you could set these using `pgSetParInfo`, some additional functions have been provided exclusively for indents to help save on coding:
+
+	void pgSetIndents (pg_ref pg, select_pair_ptr selection, pg_indents_ptr indents, pg_indents_ptr mask, short draw_mode);
+
+The function above changes the indentations for the text range specified.
+
+The `selection` parameter operates in the same way it does for `pgGetParInfo` (see "Selection range"<!-- on page 8-2--> for information about selection ranges and "Changing Styles"<!-- on page 30-7--> about `pgSetStyleInfo` and `pgSetParInfo`).
+
+`draw_mode` can be the values as described in "Draw Modes" on page 2-30:
+
+	typedef enum
+	{
+		draw_none,			// Do not draw at all
+		best_way,			// Use most efficient method(s)
+		direct_copy,		// Directly to screen, overwrite
+		direct_or,			// Directly to screen, "OR"
+		direct_xor,			// Directly to screen, "XOR"
+		bits_copy,			// Copy offscreen
+		bits_or,			// Copy offscreen in "OR" mode
+		bits_xor,			// Copy offscreen in "XOR" mode
+		bits_emulate_copy	// Copy "fake" offscreen
+		bits_emulate_or	// "Fake" offscreen in "OR" mode
+		bits_emulate_xor	// "Fake" offscreen in "XOR" mode
+	};
+
+The indents and mask parameter must point to the following structure (neither pointer can be null):
+
+	typedef struct
+	{
+		long left_indent;	// Left margin (indent)
+		long right_indent;	// Right margin (indent)
+		long first_indent;	// First-line indent
+	}
+	pg_indents, PG_FAR *pg_indents_ptr;
+
+The `mask` parameter should contain nonzero fields for every indent you wish to change in indents.
+
+**NOTE:** "nonzero" means that you should fill the field with -1 (so all bits are set to ones).
+
+Indentations are pixel positions relative to a text line's maximum left and maximum right, as follows: the `left_indent` is the distance from the leftmost edge of a line (which will be the `page_area`'s left edge for that line); the right indent is the distance from the rightmost edge (which will be the `page_area`'s right edge). Note that this is a positive number, not a negative inset. The `first_line_indent` is relative to the `left_indent`. Note that *only* the `first_line_indent` should ever be negative (in which case the first line of the paragraph hangs to the left of the left indent).
+
+When indents are changed, they apply to whole paragraphs.
+
+## Get Indents
+
+To obtain the current indent settings of a selection range, call the following:
+
+	(void) pgGetIndents (pg_ref pg, select_pair_ptr selection, pg_indents_ptr indents, pg_indents_ptr_mask, long PG_FAR *left_screen_offset, long PG_FAR *right_screen_offset);
+
+The selection parameter operates in the same way it does for `pgGetParInfo` (see “Obtaining Current Text Format(s)"<!-- on page 30-15--> for information about `pgGetStyleInfo` and `pgGetParInfo`).
+
+The indents and mask parameters should point to a `pg_indents` record (described above); neither parameter can be a null pointer.
+
+**FUNCTION RESULT:** When this function returns, indents will be set to the indentation values found in the selection range, and mask will have every field that is consistent (the same) throughout the range to nonzero.
+
+If `left_screen_offset` and `right_screen_offset` are non-null, `pgGetIndents` will set the variables to which they point to the relative left position and right position, respectively, against which the indents are measured. The usual reason you will need to have this information is to draw a "ruler" showing indents, in which case you will need to know the relative edges to draw each indentation. This is particularly important if your `page_area` is non-rectangular (because the relative edges can change from line to line).
+
+NOTE: The `left_screen_offset` and `right_screen_offset` values will include the scrolled position of the OpenPaige object, if any (see chapter 11, "All About Scrolling"<!-- on page 11-1-->).
+
+## 10 All About Selection
+
+An OpenPaige object's text can be selected either by the user or directly by your application.
+
+### 10.1 Up \& Running with Selections
+
+Selection by the user is accomplished with `pgDragSelect`; this has already been covered in detail (see "Blinking Carets \& Mouse Selections"<!-- on page 2-420--> with regards to `pgDragSelect`).
+
+Additional support functions are provided, however, to set selections directly and/or to obtain both simple selections (insertion points or a selection pair of offsets) as well as complex selections (discontinuous selections).
+
+### 10.2 Simple Selections
+
+A "simple" selection is either a single insertion point or a pair of text offsets which implies a single range. This includes vertical selections that contain only two points (topleft and bottom-right text positions). To set a simple selection, call the following:
+
+	(void) pgSetSelection (pg_ref pg, long begin_sel, long end_sel, short modifiers, pg_boolean show_hilite);
+
+The selection range in `pg` will be set to `begin_sel` to `end_sel`, which are byte offsets; the lowest offset is zero and the highest offset is `pgTextSize(pg)`. If `begin_sel` is the same as `end_sel`, a single insertion is implied.
+
+The modifiers parameter is identical to the modifiers passed to `pgDragSelect` (see “Blinking Carets \& Mouse Selections"<!-- on page 2-42--> for a list of bits you can pass for modifiers). This parameter controls how the text is selected, i.e., extended selection, vertical selection, word selection, etc.
+
+If `should_draw` is TRUE, a new highlight region is computed and drawn. If `should_draw` is FALSE, nothing on the screen changes (but `pg` will internally change its selection).
+
+**NOTE:** If you want to select all text, pass an arbitrary-but-huge number for `end_sel`. OpenPaige will adjust large numbers to be equal to the current text size.
+
+To obtain the current selection (assuming it is a simple selection), call the following:
+
+	(void) pgGetSelection (pg_ref pg, long PG_FAR *begin_sel, long PG_FAR *end_sel);
+
+The current selection range is returned in `*begin_sel` and `*end_sel`. Either parameter can be a null pointer if you don't want the result.
+
+If the `selection` range is discontinuous, you will receive the first selection pair.
+
+**NOTE:** `pgSetSelection` will not affect the style of text. It merely highlights the text and gets the internal range within OpenPaige so that other functions can operate thereon.
+
+### 10.3 Discontinuous Selections
+
+A discontinuous selection can be accomplished with `pgDragSelect` and setting the appropriate bit in the modifiers parameter (in which case, every new `verb` of `mouse_down` will start a new selection pair). You can also accomplish this from your app with multiple `pgSetSelection` calls and the appropriate bit set in modifiers.
+
+To set a discontinuous selection from your app all at once, however, you can use the following:
+
+	(void) pgSetSelectionList (pg_ref pg, memory_ref select_list, long extra_offset, pg_boolean show_hilight);
+
+The `select_list` parameter must be a memory allocation containing one or more `xselect_pair` records (see "Selection range"<!-- on page 8-2--> for information about `select_pair`).
+
+The `offset_extra` parameter is an amount to add to each selection pair within `select_list`; if you want to apply the `select_list` as-is, pass zero for `extra_offset`.
+
+If `should_draw` is TRUE, the new selection is drawn.
+
+See "The Allocation Mgr"<!-- on page 25-1--> regarding memory allocations.
+
+To obtain the current discontinuous selection, call the following:
+
+	(memory_ref) pgGetSelectionList (pg_ref pg, pg_boolean for_paragraph);
+
+**FUNCTION RESULT:** This function returns a newly created memory allocation containing one or more `select_pair` records which represent the entire selection in `pg`.
+
+If `for_paragraph` is TRUE, the selection pairs will be paragraph-aligned; otherwise, they will be character-aligned (if you want to know what paragraphs fall in the selection range(s), the distinction *must* be made).
+
+**CAUTION:** If there is no selection range, e.g. only a caret, and for_paragraph is FALSE, this function will return `MEM_NULL` (zero).
+
+You will know how many `select_pair` records are contained in the function result by calling `GetMemorySize()` on the function result—see "The Allocation Mgr"<!-- on page 251-->.
+
+**NOTE:** It is your responsibility to dispose the memory allocation returned from this function.
+
+## 10.4 Additional Selection Support
+
+### Extending the selection
+
+	(void) pgExtendSelection (pg_ref pg, long amount_ext, short modifiers, pg_boolean show_hilite);
+
+**FUNCTION RESULT:** The above function extends the current selection by `amount_ext`; the new extension follows the attributes in `modifiers` if appropriate (for example, the selection could be extended by whole words or paragraphs).
+
+Negative values in `amount_ext` extend to the left (extend the beginning selection backwards); positive numbers extend to the right (extend the ending selection forwards).
+
+The `modifiers` can generally be a combination of:
+
+	#define EXTEND_MOD_BIT		0x0001	// Extend the selection
+	#define WORD_MOD_BIT		0x0002 // Select whole words only
+	#define PAR_MOD_BIT			0x0004 // Select whole paragraphs only
+	#define LINE_MOD_BIT		0x0008	// Select whole lines only
+	#define DIS_MOD_BIT			0x0020	// Enable discontiguous selection
+	#define STYLE_MOD_BIT		0x0040 // Select whole style range
+	#define WORD_CTL_MOD_BIT	0x0080 // Select "words" delimited by control chars
+	#define NO_HALF_CHARS_BIT	0x0100 // Click does not go left/right on half-chars
+
+These are explained in the section "Modifiers"<!-- on page 2-45-->. Vertical selection cannot be extended using the modifiers. Using that modifier in combination with the others will cause unpredictable results.
+
+If 	`show_hilite` is TRUE, the new highlight is drawn; if FALSE, the appearance does not change.
+
+**NOTE:** If the current selection is discontinuous, only the last (ending) selection pair is affected by this function.
+
+### Handling mouse \& key combinations for selection (Mac)
+
+**NOTE:** This code does not handle shift-clicks and option-clicks in the same way as the demo. The point of this code is that you can change the key combinations for your own uses. Consult the demo for other ways of handling this.
+
+	#include "Paige.h"
+	
+	#define LEFT_ARROW		0x1C
+	#define RIGHT_ARROW		0x1D
+	#define UP_ARROW		0x1E
+	#define DOWN_ARROW		0x1F
+	#define BACKSPACE_CHAR	0x08
+	#define RETURN_CHAR		0x0D
+	#define ENTER_CHAR		0x03
+	#define TAB_CHAR		0x09
+	#define LF_CHAR			0x0A
+	#define HOME_KEY		0x01
+	#define END_KEY			0x04
+	
+	static int scroll_to_cursor(pg_ref my_pg);
+	static int key_doc_proc(EventRecord *event);
+	static int is_an_arrow(char key);
+	extern pg_globals paige_rsrv;
+	extern undo_ref last_undol
+	
+	// This is the keydown proc
+	
+	static int key_doc_proc(pg_ref my_pg, EventRecord *event)
+	{
+		char the_key;
+		short modifiers;
+		pg_ref my_pg;
+		
+		the_key = event -> message & charCodeMask;
+	}
+
+Next we parse the event record. We have the record before going into `pgInsert` and can change the keys around or do other things before we send the key into the `pg_ref`. In this case, we intercept the `HOME_KEY` and the `END_KEY` and scroll the `pg_ref` to the top and bottom:
+
+	if (the_key == HOME_KEY)
+	{
+		pgScroll(my_pg, scroll_home, scroll_home, best_way);
+		UpdateScrollBarValues(my_pg);
+	}
+	else
+	if (the_key == END_KEY)
+	{
+		pgScroll(my_pg, scroll_none, scroll_end, best_way);
+		UpdateScrollBarValues(my_pg);
+	}
+	else
+	{
+		ObscureCursor();
+	}
+
+Then we check to see if they are characters that OpenPaige would normally handle and if so, we insert them into the `pg_ref`. When `pgInsert` contains the `key_insert_mode` or `key_buffer_mode` in the `insert_mode` parameter, it responds as we would expect when arrow keys are entered, i.e., by moving the insertion point, by handling backspace, by deleting previous characters, etc.
+
+We don't need to use `pgExtendSelection`.
+
+OpenPaige automatically handles extending the selection by holding down the shift key while using arrow keys if the `EXTEND_MOD_BIT` is set during `pgInsert`. `key_buffer_mode` will keep calling the events as long as OpenPaige is receiving keystrokes, making keyboard text insertion very fast. OpenPaige won't cycle through the event loop until the keystrokes are paused.
+
+	// Here are the modifiers changing the selection
+	modifiers = 0;
+	if (event -> modifiers & shiftKey)
+		modifiers |= EXTEND_MOD_BIT;
+	if (event -> modifiers & optionKey)
+		modifiers |= WORD_MOD_BIT;
+		
+	if (the_key == ENTER_CHAR)
+	{
+		event -> message = LF_CHAR;
+		the_key = LF_CHAR;
+	}
+	
+	if (the_key >= ' ' || the_key < 0 || the_key == TAB_CHAR || the_key == RETURN_CHAR || the_key == LF_CHAR || the_key == BACKSPACE_CHAR || is_an_arrow(the_key))
+	{
+		short verb_for_undo;
+		DisposeUndo(my_pg, last_undo);
+		if (the_char == paige_rsrv.bs_char)
+			verb_for_undo = undo_backspace;
+		else
+			verb_for_undo = undo_typing;
+		last_undo = pgPrepareUndo(my_pg, verb_for_undo, (void PG_FAR*) last_undo);
+			
+		pgInsert(my_pg, (pg_char_ptr &the_key, sizeof(pg_char), CURRENT_POSITION, key_insert_mode, 0, best_way);
+		
+		if (the_key == BACKSPACE_CHAR)
+			pgAdjustScrollMax(my_pg, best_way);
+
+		scroll_to_cursor(my_pg);
+	}
+	
+	return FALSE;	// to be returned
+
+### Number of selections
+
+	(pg_short_t) pgNumSelections (pg_ref pg);
+	
+This returns the number of selection pairs in `pg`. A result of zero implies a single insertion point; a result of one implies a simple selection, and likewise for higher numbers.
+
+### Caret \& Cursor
+
+	(pg_boolean) pgCaretPosition (pg_ref pg, long offset, rectangle_ptr caret_rect);
+
+**FUNCTION RESULT:** This returns a rectangle in `caret_rect` representing the "caret" corresponding to `offset`. If `offset` equals `CURRENT_POSITION` (value of 1), the current insertion point is used. If the current selection in `pg` is in fact a single insertion, the function returns TRUE; if it is not, `caret_rect` gets set to the top-left edge of the selection and the function returns FALSE.
+
+**NOTE:** If you specify some other position besides `CURRENT_POSITION`, the function will always return TRUE because you have explicitly implied a single insertion point.
+
+	(void) pgSetCursorState (pg_ref pg, short cursor_state); (short) pgGetCursorState (pg_ref pg);
+
+These two functions let you set the cursor (caret) to a specified state or obtain what state the caret is in.
+
+	typedef enum
+	{
+		dont_draw_cursor,	// Do nothing
+		toggle_cursor,		// Toggle cursor based on timer
+		show_cursor,		// Show cursor
+		hide_cursor,		// Hide cursor
+		deactivate_cursor,	// Cursor is no longer active
+		update_cursor,		// Redraw cursor per current state
+		restore_cursor,		// Turn cursor back on (chiefly Windows usage)
+	}
+
+**NOTE:** Except for very unusual applications, you should generally only use this function with `force_cursor_off` and `force_cursor_on`.
+
+To obtain the current cursor state, call `pgGetCursorState`, which will return either TRUE (cursor is currently ON) or FALSE (cursor is currently OFF).
+
+See also "Activate / Deactivate"<!-- on page 2-52-->.
+
+**NOTE:** *The function result of `pgGetCursorState` has differing usages in OpenPaige for Windows and for Macintosh.* For **Windows**, the result implies whether or not the System caret is actively blinking within the `pg_ref`. For **Macintosh**, TRUE/FALSE result implies whether or not the caret is visible at that instant while it is toggling during `pgIdle()`. 
+
+	void pgSetCaretPosition (pg_ref pg, pg_short_t position_verb, pg_boolean show_caret);
+
+This function should be used to change the location of the caret (insert position); for example, `pgSetCaretPosition` is useful for handling arrow keys.
+
+The position_verb indicates the action to be taken. The low byte of this parameter should be one of the following values:
+
+	enum
+	{
+		home_caret,
+		doc_bottom_caret,
+		begin_line_caret,
+		end_line_caret,
+		next_word_caret,
+		previous_word_caret
+	}
+
+The high byte of `position_verb` can modify the meaning of the values shown above; the high byte should either be equal to zero or to `EXTEND_CARET_FLAG`.
+
+The following is a description for each value in `position_verb`:
+
+`home_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the beginning of the document to the current position; if `EXTEND_CARET_FLAG` is clear, the caret moves to the beginning of the document.
+
+`doc_bottom_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the current position to the end of the document; if `EXTEND_CARET_FLAG` is clear the caret advances to the end of the document.
+
+`begin_line_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the current position to the beginning of the current line; if `EXTEND_CARET_FLAG` is clear the caret moves to the beginning of the line.
+
+`end_line_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the current position to the end of the current line; if `EXTEND_CARET_FLAG` is clear the caret moves to the end of the line.
+
+`next_word_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the current position to the beginning of the next word; if `EXTEND_CARET_FLAG` is clear the caret moves to the beginning of the next word.
+
+`previous_word_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the current position to the beginning of the previous word; if `EXTEND_CARET_FLAG` is clear the caret moves to the beginning of the previous word.
+
+If `show_caret` is TRUE then the caret is redrawn in its new location; otherwise, the caret does not visibly change.
+
+## 10.5 Selection shape
+
+It is possible to create a selection by specifying a shape. This next function returns a list of `select_pairs` when given a shape.
+
+	(void) pgShapeToSelections (pg_ref pg, shape_ref the_shape, memory_ref selections);
+
+**FUNCTION RESULT:** This function will place a list of selection pairs in `selections` that contain all the text that intersects `the_shape`. What gets put into `selections` is an array of `select_pair` records, similar to what is returned from `pgGetSelectionList`.
+
+The `memory_ref` passed to selections must be a valid memory allocation (which you must create).
+
+It is also possible to determine the selection shape.
+
+	(void) pgSelectToShape (pg_ref pg, memory_ref select_shape, pg_boolean show_hilite);
+
+This function sets the selection range(s) in `pg` to all characters that intersect the specified shape.
+
+For example, if the `select_shape` was one large rectangle expanding across the entire document, then every character would be selected; if the shape were smaller than the document, then only the characters that fit within that shape—whether wholly or partially—would be selected.
+
+If `show_hilite` is TRUE, the new selection region is drawn.
+
+For information about shapes and individual characters and insertion point, see "Text and Selection Positions"<!-- on page 24-23-->. For information about highlighting see "Activate / Deactivate"<!-- on page 2-52-->.
+
+### Activate/Deactivate with shape of selection still showing
+
+#### Macintosh
+
+This function can be used to draw the selection area around text when it is deactivated.
+
+	void Do_Activate(Boolean Do_An_Activate)
+	{
+		pg_ref my_pg;
+		
+		if (!(my_pg = Get_pgref_from_window(WPtr_Untitled1))) return;
+		
+		if(Do_An_Activate	// Handle the activate
+		{
+							// Update the scrollbar values
+							// -----------------------------
+							// Turn on the selection hilites
+			pgSetHiliteStates(my_pg, activate_verb, no_change_verb, TRUE); 	
+		}
+		else				// Handle the deactivate
+		{
+							// Turn off the scroll bars here
+							// -----------------------------
+							// Turn off the selection hilites
+			pgSetHiliteStates(my_pg, deactivate_verb, no_change_verb, TRUE);
+			outline_hilite(my_pg);
+			/* do this if you want to draw an outline around the selected text if the window is deactivated, as in MPW or the OpenPaige demo */
+		}					// End IF
+	}
+	
+	/* If you want the feature of drawing the line around the selected text when the window is deactivated, you can use this snippet from the OpenPaige demo */
+	
+	#include "pgTraps.h" 	// This draws xor-hilight outline
+
+	static void outline_hilite(pg_ref the_pg)
+	{
+		shape_ref outline_shape;
+		outline_shape = pgRectToShape(&paige_rsrv, NULL);
+		if (pgGetHiliteRgn(the_pg, NULL, NULL, outline_shape))
+		{
+			pg_scale_factor scale_factor;
+			RgnHandle rgn;
+			rectangle vis_r;
+			Rect clip;
+			PushPort(WPtr_Untitled1);
+			PushClip();
+			
+			pgAreaBounds(the_pg, NULL, &vis_r);
+			RectangleToRect(&vis_r, NULL, &clip);
+			ClipRect(&clip);
+			
+			rgn = NewRgn();
+			pgGetScaling(the_pg, &scale_factor);
+			ShapeToRgn(outline_shape, 0, 0, &scale_factor, rgn);
+			PenNormal();
+			PenMode(patXor);
+			SET_HILITE_MODE(50);
+			FrameRgn(rgn);
+			DisposeRgn(rgn);
+			PopClip();
+			PopPort()
+		}
+		pgDisposeShape(outline_shape);
+	}
+
+
+# 11 All about scrolling
+
+Scrolling an OpenPaige object is handled differently than previous DataPak technology, with a wider feature set.
+
+## 11.1 The ways to scroll
+
+An OpenPaige object can be scrolled in one of four ways: by *unit*, by *page*, by *absolute position*, or by a *pixel* value.
+
+1. Scrolling by *unit* generally means to scroll one text line increment for vertical scrolling, and some predetermined distance for horizontal scrolling.
+2. Scrolling by *page* means to scroll one visual area's worth of distance (clicking the "grey" areas of the scroll bar).
+3. Scrolling by *absolute position* means the document scrolls to some specified location (such as the result of dragging a "thumb").
+4. Scrolling by *pixel* means to move the position up or down by an absolute pixel amount; generally, this method is used if for some reason all of the above methods are unsuitable to your application.
+
+For scrolling by a unit, page or absolute value, when an OpenPaige object is scrolled vertically, an attempt is always made to align the results to a line boundary (so a partial line does not display across the top or bottom).
+
+## 11.2 How OpenPaige Actually Scrolls
+
+In reality, neither the text nor the page rectangle within an OpenPaige object ever "moves". Whatever coordinates you have set for an OpenPaige object's `page_area` (shape in which text will flow) remains constant and do not change; the same is true for the `vis_area` and `exclude_area`.
+
+The way an OpenPaige object changes its "scrolled" position, however, is by offsetting the display and/or the relative position of a "mouse click" when you call `pgDragSelect` or any other function that translates a coördinate point to a text location. The scrolled position is a single vertical and horizontal value maintained within the `pg_ref`; these values are added to the top-left coördinates for text display at drawing time, and they are added to the mouse coördinate when click/dragging.
+
+This could be important information if your application needs to implement some other method for scrolling, because all you would need to do is leave OpenPaige alone (do not call its scrolling functions) and offset the display yourself (`pgDisplay` will accept a horizontal and vertical value to temporarily offset the display). Realise that nothing every really moves; lines are always in the same vertical and horizontal position unless your app explicitly changes them.
+
+**NOTE:** Class library users — when implementing an OpenPaige-based document, you are generally better off letting OpenPaige handle it own scrolling. If at all possible, do not implement `scrollView` classes that attempt to scroll by changing the window origin.
+
+## 11.3 The scroll
+
+### `pgScroll`
+
+	void pgScroll (pg_ref pg, short h_verb, short v_verb, short draw_mode);
+
+Scrolls the OpenPaige object by a single unit, or by a page unit. A unit and page unit is described at "Scroll Values"<!-- on page 11-190-->. In short, `pgScroll` scrolls a specified `h_verb` and `v_verb` distance.
+
+The values to pass in `h_verb` and `v_verb` can each be one of the following:
+
+	typedef enum
+	{
+		scroll_none,	// Do not scroll
+		scroll_unit,	// Scroll one unit
+		scroll_page,	// Scroll one page unit
+		scroll_home,	// Scroll to top of document
+		scroll_end	// Scroll to end of document
+	}
+	scroll_verb
+
+Because OpenPaige will scroll the text some number of pixels, a certain amount of "white space" will result on the top or bottom for vertical scrolling, or on the left or right for horizontal scrolling. Hence, the `draw_mode` indicates the drawing mode OpenPaige should use when it refreshes the "white space" areas; normally, the value given for `draw_mode` should be `best_way`.
+
+On the other hand, while a value of `draw_none` will disable all drawing and visual scrolling completely, the text contents will still be "moved" by the specified amounts. In other words, were the OpenPaige document to be scrolled one page down (using `pgScroll`) but with `draw_none` given for `draw_mode`, nothing would change on the screen until the application redisplayed the OpenPaige text contents. In this case, the refreshed screen would appear to be scrolled one page down. The "draw nothing" feature for scrolling is therefore used only for special cases, in which an application wants to "move" the visual contents up or down without yet drawing anything.
+
+`draw_mode` can be the values as described in "Draw Modes" on page 2-30:
+
+	draw_none,		// Do not draw at all 
+	best_way,		// Use most efficient method(s) 
+	direct_copy,	// Directly to screen, overwrite 
+	direct_or,		// Directly to screen, "OR" 
+	direct_xor,		// Directly to screen, "XOR" 
+	bits_copy,		// Copy offscreen 
+	bits_or,		// Copy offscreen in "OR" mode 
+	bits_xor		// Copy offscreen in "XOR" mode
+
+### Examples
+#### Macintosh
+
+	if (the_key == HOME_KEY)
+	{
+		pgScroll(doc -> pg, scroll_home, scroll_home, best_way);
+		UpdateScrollbarValues(doc);
+	}
+	else
+	if (the_key == END_KEY)
+	{
+		pgScroll(doc -> pg, scroll_none, scroll_end, best_way);
+		UpdateScrollbarValues(doc);
+	}
+
+#### Responding to `WM_HSCROLL` and `WM_VSCROLL` events (Windows)
+
+	case WM_HSCROLL:
+	{
+		switch(wParam)
+		{
+			case SB_PAGEDOWN:
+				pgScroll(pg, -scroll_page, scroll_none, best_way);
+				break;
+			case SB_LINEDOWN:
+				pgScroll(pg, -scroll_unit, scroll_none, best_way);
+				break;
+			case SB_PAGEUP:
+				pgScroll(pg, scroll_page, scroll_none, best_way);
+				break;
+			case SB_LINEUP:
+				pgScroll(pg, scroll_unit, scroll_none, best_way);
+				break;
+			case SB_THUMBPOSITION:
+			{
+				short cur_h, cur_v, max_h, max_v;
+				pg getScrollValues(pg, &cur_h, &cur_v, &max_h, &max_v);
+				pgSetScrollValues(pg, LOWORD(lParam), cur_v, TRUE, best_way);
+				break;
+			}
+		}
+		
+		UpdateScrollbars(pg, hWnd);
+	}
+	case WM_VSCROLL:
+		if (pg)
+		{
+			switch (wParam)
+			{
+				case SB_PAGEDOWN:
+					pgScroll(pg, scroll_none, scroll_page, best_way);
+					break;
+				case SB_LINEDOWN:
+					pgScroll(pg, scroll_none, scroll_unit, best_way);
+					break;
+				case SB_PAGEUP:
+					pgScroll(pg, scroll_none, scroll_page, best_way); 
+					break; 
+				case SB_LINEUP:
+					pgScroll(pg, scroll_none, scroll_unit, best_way);
+					break;
+				case SB_TOP:
+					pgScroll(pg, scroll_none, scroll_home, best_way);
+					break;
+				case SB_BOTTOM:
+					pgScroll(pg, scroll_none, scroll_end, best_way);
+					break;
+				case SB_THUMBPOSITION:
+					case SB_THUMBTRACK:
+					{
+						short cur_h, cur_v, max_h, max_v;
+						pgGetScrollValues(pg. &cur_h, &cur_v, &max_h, &max_v);
+						pgSetScrollValues(pg, &cur_h, LOWORD(lParam), TRUE, best_way);
+						break;
+					}
+				}
+				updateScrollbars(pg, hWnd);
+			}
+		return 0;
+
+### `pgScrollToView`
+
+	(pg_boolean) pgScrollToView (pg_ref pg, long text_offset, short h_extra, short v_extra, short align_line, short draw_mode);
+
+Scrolls an OpenPaige object so a specific location in its text is visible. Canonically, this function is used to automatically scroll to the "current line," although it could also be used for a number of other purposes (such as find/replace) to show specific text location.
+
+The location in `pg`'s text is given in `text_offset`; `pg` will scroll the required distance so the character at `text_offset` is at least `h_extra` pixels from the left or right edge of the view area and `v_extra` pixels from the top or bottom edge. Whether the distance is measured from the top or bottom, or left or right depends in the value of `h_pixels` and `v_pixels`; if `h_extra` is positive, the character must scroll at least `pg` pixels from the left, otherwise the right edge is used. For `v_extra`, a positive number uses the top edge and a negative number uses the bottom edge.
+
+The `text_offset` parameter can be `CURRENT_POSITION` (value of -1), in which case the current insertion point is used to compute the required scrolling, if any.
+
+**FUNCTION RESULT:** The function returns "TRUE" if scrolling occurred.
+
+The `draw_mode` indicates how the text should be updated. The value given is identical to the `display_modes` described for `pgDisplay`; it should be noted that a value of zero will cause the text not to update at all, which technically could be used to simply "offset" the OpenPaige object contents without doing a physical scroll at all.
+
+### Scroll to cursor position (Windows)
+
+	// ScrollToCursor forces a scroll to the current insertion point (if any)
+	
+	void ScrollToCursor(pg_ref, pg, HWND hWnd)
+	{
+		short state1, state2;
+		pg GetHiliteStates(pg, &state1, &state2;
+		
+		if (state1 == deactivate_verb || state2 == deactivate_verb)
+			return;
+		
+		if (!pgNumSelections(pg))
+		{
+			pgPaginateNow(pg. CURRENT_POSITION, FALSE);
+			
+			if (pgScrollToView(pg, CURRENT_POSITION, 32, 32, TRUE, best_way))
+				UpdateScrollbars(pg, hWnd);
+		}
+		else
+			UpdateScrollbars(pg, hWnd);
+	}
+
+### Scroll to cursor position (Macintosh)
+
+	// ScrollToCursor is called to "autoscroll" to the insertion point
+	
+	short ScrollToCursor(doc_rec *doc)
+	{
+		short old_h_value;
+		if(!pgNumSelections(doc -> pg))
+		{
+			old_h_value = GetCtlValue(doc -> h_ctl);
+			if (pgScrollToView(doc -> pg, CURRENT_POSITION, 32, TRUE, best_way))
+			{
+				UpdateScrollbarValues(doc);
+				update_ruler(doc, old_h_value);
+				return TRUE;
+			}
+		UpdateScrollbarValues(doc);
+		return FALSE;
+	}
+			
+
+### TECH NOTE: Can't scroll past end of text
+
+> I've noticed that I cannot scroll vertically past the end of the text in the window. So if the OpenPaige document is empty, it is not possible to scroll vertically at all. I need to be able to scroll vertically until the bottom part of the 640x480 workspace is visible, even if the user has not yet typed any text. How do I do that?
+
+You need to force your `pg_ref` to be fixed height, not "variable". When you do `pgNew`, the default document mode is "variable", meaning that the bottom of the last text line is considered the document's bottom.
+
+A "fixed" height document is one whose page shape itself (not the text) determines the document's bottom. From your description of the app, I think this is what you want.
+
+To do so, you need to set `BOTTOM_FIXED_BIT` and `MAX SCROLL_ON_SHAPE` in the `pg_doc_info`'s attributes field. You do this right after `pgNew`, like this:
+
+	pg_doc_info doc_info;
+	pgGetDocInfo(pg, &doc_info);
+	doc_info.attributes |= (BOTTOM_FIXED_BIT | MAX_SCROLL_ON_SHAPE);
+	pgSetDocInfo(pg, &doc_info, FALSE, draw_none);
+		
+This will tell OpenPaige to scroll to the bottom of your page area regardless of how much (or how little) text there is.
+
+Of course doing this you must now make sure your page shape is exactly whatt you want, e.g. 640x480 (which you said it is).
+
+This "bonus" on this is that you will never have to worry about scrolling; i.e. you won't need to constantly adjust the scrollbar max values once they are set up because openPaige will only look at the page area's bottom. EXCEPTION: when you resize window you'll need to adjust (see answer below).
+
+### TECH NOTE: Smaller window/bad rectangle
+
+> If I resize my window to be "small", scroll to the far right and far bottom edges of the workspace, then resize the window to be "large", I am left with the bottom right corner of the workspace in the upper left corner of the screen. What I need to be able to do is to have openPaige adjust the scrolled position so that the bottom right corner of the workspace is in the bottom right corner of the screen. How do I do that?
+
+There is actually an OpenPaige function for this exact situation:
+
+	PG_PASCAL (pg_boolean) pgAdjustScrollMax (pg_ref pg, short draw_mode);
+
+What this does is the following: 
+
+1. Checks current scrolled position, and:—
+2. If you are now scrolled too far by virtue of having resized the window, OpenPaige will scroll the doc to "adjust." 
+
+Hence, you don't wind up with the situation you described. The function result is TRUE if it had to adjust (had to scroll).
+
+However, I haven't tried this yet on a "fixed height" doc (per my suggestion above), but I can't think of why it shouldn't work.
+
+Where this function should fit in the scheme of things is:
+
+1. After resize, resize the `pg_ref` (`pgGrowVisArea` or whatever you do), then:—
+2. Call `pgAdjustScrollMax`.
+
+If there's nothing to "fix" in the scrolling, OpenPaige won't do anything.
+
+### TECH NOTE: Vertical scrolling behaves strangely
+
+> In the demo \& in my application as well since I extracted scrolling code from the demo, vertical scrolling behaves strangely. As the text approaches the bottom of the window the current position indicator moves up rather than down. When the current input position reaches the bottom of the visible portion of the window and the window automatically scrolls up to create extra visible space below the input position, the current position indicator on the scrollbar moves down. I would expect it to move up to reflect the fact that the current position is no longer at the bottom of the window.
+
+I'm not sure how else this could ever work, at least in relation to how the demo sets up the document.
+
+First, the reason the indicator moves "up" as you approach the bottom is that OpenPaige is adding a whole new, blank page. So let's say you start with one page and approach the bottom and the indicator shows $90 \%$ of the document has scrolled down. Suddenly OpenPaige appends a new page, so now the doc has 2 pages. In this case the scrolled position is no longer 90%, but rather 50%, so naturally the indicator has to move UP.
+
+Following the 90-to-50% indicator change, if the document then auto-scrolls down by virtue of typing, then of course the indicator moves DOWN. This sequence is exactly as you described, which is "correct" in every respect due to the way the document has been created by the demo.
+
+If this is too disconcerting you can work around it in a couple of ways. The first way is *not* to implement "repeater shapes" the way the demo is doing it, but instead just make one long document. You do this by not setting the `V_REPEAT_BIT` in `pg_doc_info`. The end result will be less noticeable with the scrōll indicator (might move a tiny bit but won't jump so far) because OpenPaige will just add a small amount of blank space instead of a whole page.
+
+If you still want "repeater" shapes to get the page-by-page effect as in the demo, then the only workaround is to display something to the user that shows *why* the indicator has moved so much. For example, you could display "Page 1 of 1" and "Page 1 of 2" etc. So, when OpenPaige inserts a new blank page, it might be obvious to user why the indicator jumps if "Page 1 of 1" changes to "Page 1 of 2".
+
+### TECH NOTE: Scrolling doesn't include picture at bottom of document
+
+> I have implement pictures anchored to the document (where text wraps around them). However, if I have a picture below the last line of text, I can't ever scroll the document down to that location. How do I fix this?
+
+I looked over your situation with OpenPaige exclusion areas (pictures). OpenPaige actually does support what you need.
+
+In `Paige.h` you will notice the following definition near the top of the file:
+
+	#define EX_DIMENSION_BIT	Ox00000100	/* Exclude area is included as width/height */
+
+When you call `pgNew`, giving `EX_DIMENSION_BIT` as one of the attribute flags tells OpenPaige to include the exclusion area as part of the "document height"—which I believe is exactly what you want.
+
+The reason for this attribute—and the reason OpenPaige does not automatically include an embedded objects anchored to the page—is because it cannot make that assumption, but in many cases (such as your own), setting `EX_DIMENSION_BIT` tells OpenPaige to go ahead and assume that.
+
+### TECH NOTE: How do I make OpenPaige scroll to the right when using word wrap
+
+> I am building a line editor, which expands to the right, very much like a C source code editor. But my right margin is the right side of the text. How do I get it to scroll correctly?
+
+I think the reason you're having a problem is that OpenPaige can only go by what is set in the document bounds (the "page area") to determine what the width of the document is.
+
+Hence, the answer lies somewhere in forcing the `pg_ref`'s page area to expand as text expands to the right. At thât time OpenPaige will adjust its maximum scroll values, its clipping area, etc.—assuming you set the page area using the high-level functions in `Paige.h`.
+
+The real trick is to figure out how wide the text area is. I'll create some examples of how you determine the current width of a no-wrap document. See "Getting the Max Text Bounds"<!-- on page 24-24-->.
+
+## 11.4 Scroll Parameters
+
+### Set Scroll Params
+
+	(void) pgSetScrollParams (pg_ref pg, short unit_h, short unit_v, short append_h, short append_v);
+
+Sets the scroll parameters for `pg` as follows: `unit_h` and `unit_v` define the distance each scrolling unit shall be. This means if you ask OpenPaige to scroll `pg` by one unit, horizontal scrolling will advance `unit_h` pixels and vertical scroll will advance `unit_v` pixels.
+
+However, `unit_v` can be set to zero, in which case "variable" units apply. What occurs in this case (i.e., with `unit_v` equal to zero) is a scrolling distance of whatever is applicable for a single line.
+
+For example, if the line immediately below the bottom of the visual area is 18 pixels, a scrolling down of one unit will move 18 pixels; if the next line is 12 pixels, the next down scrolling would be 12 pixels, and so on.
+
+`append_h` and `append_v` define extra "white" space to allow for horizontal maximum and vertical maximum, respectively.
+
+For example, suppose you create an OpenPaige document whose total "height" is 400 pixels. Normally, the scrolling functions in OpenPaige would not let you scroll beyond that point. The `append_v` value, however, is the amount of extra distance you will allow for scrolling vertically: if the `append_v` were 100, then a 400-pixel document would be allowed to scroll 500 pixels.
+
+If you create a new `pgRef` and do not call `pgSetScrollParams`, the defaults are as follows: `unit_h = 32`, `unit_v = 0`, `append_h = 0`, `append_v = 32`.
+
+### Create scroll bars (Macintosh)
+
+	// Create a pair of scrollbars
+	CreateScrollbars(WindowPtr w_ptr, doc_rec new_doc_;
+	{
+		Rect r_v, r_h, paginate_rect;
+		InitWithZeros(&new_doc, sizeof(doc_rec)));
+		
+		new_doc.w_ptr = w_ptr;
+		new_doc.mother = mother_window;
+		new_doc.pg = create_new_paige(w_ptr);
+		
+		pgSetTabBase(new_doc.pg, TAB_WRAP_RELATIVE);
+		pgSetScrollParams(new_doc.pg, 0, 0, 0, VERTICAL_EXTRA);
+		get_paginate_rect(w_ptr, &paginate_rect);
+		
+		r_v = w_ptr -> portRect;
+		r_v.left = r_v.right - 16;
+		r_v.bottom -= 13;
+		r_h = w_ptr -> portRect;
+		r_h.left = paginate_rect.right;
+		r_h.top = r_h.bottom - 16;
+		r_h.right -= 13;
+		OffsetRect(&r_v, 1, -1);
+		OffsetRect(&r_h, -1, 1);
+		
+		new_doc.v_ctl = NewControl(w_ptr, &r_v, "", TRUE, O, 0, 0, scrollBarProc, 0);
+		new_doc.h_ctl = NewControl(w_ptr, &r_h, "", TRUE, 0, 0, 0, scrollBarProc, 0);
+	}
+
+### Getting scroll parameters		
+
+	(void) pgGetScrollParams (pg_ref pg, short PG_FAR *unit_h, short PG_FAR *unit_v, short PG_FAR *append_h, short PG_FAR *append_v);
+
+Returns the scroll parameters for pg. These are described above for `pgSetScrollParams`..
+
+## 11.5 Scroll Values
+
+### Getting scroll indicator values
+
+	(short) pgGetScrollValues (pg_ref pg, short PG_FAR *h, short PG_FAR *v, short PG_FAR *max_h, short PG_FAR *max_v);
+
+This is the function you call to get the exact settings for scroll indicators.
+
+On the Macintosh, for example, you would call `pgGetScrollValues` and set the vertical scrollbar's value to the value given in `*v` and its maximum to the value in `*max_v`. The same settings apply to the horizontal scrollbar for `*h` and `*max_h`.
+
+Note that the values are `short`s. OpenPaige assumes your controls can only handle ±32 K; hence, it computes the correct values even for huge documents that are way larger than a scroll indicator could handle.
+
+**FUNCTION RESULT:** The function returns "TRUE" if the values have changed since the last time you called `pgGetScrollValues`. The purpose of this Boolean result is to not slow down your app by excessively setting scrollbars when they have not changed.
+
+**NOTE:** The values returned from `pgGetScrollValues` are *guaranteed* to be within the ± range of an integer value. That means if the document is too large to report a scroll position within the confines of 32K, OpenPaige will adjust the ratio between the scroll value and the suggested maximum to accommodate this limitation to most controls.
+
+**CAUTION:** `pgGetScrollValues` can return "wrong" values if a major text change has occurred (such as a large insertion, or deletion, or massive style and font changes) but no text has been redrawn.
+
+The reason scroll values will be inaccurate in these cases is because OpenPaige has not yet recalculated the new positions of text lines - pwhich normally occurs dynamically as it displays text - bso it has no idea that the document's text dimensions have changed.
+
+To avoid this situation, the following rules should be observed:
+
+- A common scenario that creates the "wrong" scroll value is importing a large text file (without drawing yet, for speed purposes), then attempting to get the scrollbar maximum to set up the initial scrollbar parameters, all before the window is refreshed. To avoid this situation, it is generally wise to force-paginate the document following a massive insertion if you do not intend to display its text prior to getting the scroll values.
+- Always call `pgGetScrollValues` *after* the screen has been updated following a major text change, and never before. Normally, this is not a problem because most of the text-altering functions accept a `draw_mode` parameter which, if ≠ 0, tells OpenPaige to update the text display. There are special cases, however, when an application has reasons to implement large text changes yet passes `draw_none` for each of these; if that be the case, the screen should be updated at least once prior to `pgGetScrollbarValues`, OR the document should be repaginated using `pgPaginateNow`.
+
+## Logical Steps
+
+The following pseudo instructions provide an example for any OpenPaige platform when determining the values that should be set for both horizontal and vertical scrollbars:
+
+	if (I just made a major text change and did not draw) 
+		pgPaginateNow(pg, CURRENT_POSITION, FALSE);
+	if (pgGetScrollValues(pg, &h, &v, &max_h, &max_v)) returns "TRUE" then 
+		I should change my scrollbar values as:
+		Set horizontal scrollbar maximum to max_h
+		Set horizontal scrollbar value to h
+		Set vertical scrollbar maximum to max_v
+		Set vertical scrollbar value to v
+	else
+		Do nothing.
+
+### Update scrollbar values (Windows)
+
+	void UpdateScrollbars (pg_ref pg, HWND hWnd)
+	{
+		short max_h, max_v;
+		short h_value, v_value;
+		
+		if (pgGetScrollValues(pg (short far *) &h_value, short far, (short far *) &max_h, short far *) &max_v));
+		{
+			if max_v < 1)
+				max_v = 1; // For Windows I don't want scrollbar disappearing
+			SetScrollRange (hWnd, SB_VERT, 0, max_v, FALSE);
+			SetScrollRange (hWnd, SB_HORZ, 0, max_h, FALSE);
+			SetScrollPos (hWnd, SB_VERT, v_value, TRUE);
+			SetScrollPos (hWnd, SB_HORZ, h_value, TRUE);
+
+### Update scrollbar values (Macintosh)
+
+	void UpdateScrollbarValues (doc_rec *doc)
+	{
+		short h, v, max_h, max_v;
+		
+		if (pgGetScrollValues(doc -> pg, &h, &v, &max_h, &max_v))
+		{
+			SetCtlMax(doc -> v_ctl, max_v);
+			SetCtlValue(doc -> v_ctl, v);
+			SetCtlMax(doc -> h_ctl, max_h);
+			SetCtlValue(doc -> h_ctl, h);
+		}
+	}
+
+### TECH NOTE: "Wrong" Scroll Values
+
+> In my application I need to scroll to certain characters or styles in the document. I noticed, however, that the visual location of these special characters are often "wrong", so when I attempt to scroll to these places I do not wind up at the correct place.
+
+Regarding the scrolling issues, you've touched upon a classic problem that I have been handling with support for years and years. "To Paginate or Not To Paginate, that is the question", *pace* Shakespeare.
+
+When dealing with potentially large word-wrapping text, the editor must avoid repaginating the whole document *at all costs*; otherwise, performance is major dog-slow.
+
+Most of our users that have graduated from TextEdit (Macintosh) or EDIT controls (Windows) are limited in their document size and never understand this problem, because TextEdit maintains an array of line positions at all times. That's because it doesn't handle a lot of text so it can get away with it. Our text engines, on the other hand, support massive documents, changing point sizes, irregular wrapping and who knows what else. Hence, to learn the exact document height at any given time, OpenPaige must calculate every single word-wrapping line to come up with a good answer.
+
+To avoid turning into a major dog, OpenPaige (and its predecessors) elect to repaginate only at the point they *display*. There are several good reasons for this, the most important one being a typical OpenPaige-based app applies all kinds of inserts, embedding, style changing and the like before displaying; if OpenPaige decided to repaginate each time you set a selection or inserted a piece of text or made any changes whatsoever, it would become unbearably slow.
+
+The reason I'm explaining all of this is so you understand WHY your document behaves the way it does with regards to scrolling. Your problem is simply: you have not yet drawn the part of the document that you will scroll to, hence it is unpaginated, hence the "wrong" answer from `pgGetScrollvalues`. That is also why `auto-scroll-to-cursor` works a wee bit better, because the `auto-scroll` forces a redisplay, which forces a paginate, which forces new information about the doc's height which can then return the "right" answer.
+
+Putting it simpler, `pgGetScrollValues` doesn't have sufficient information about the whole doc if a part of the doc is "dirty" and undisplayed. That's why forced paginate fixes the problem. That's also why the "wrong" answer from `pgGetScrollValues` is intermittent—your doc won't always be "dirty" every time you call the function, and also sometimes OpenPaige's best-guess in this case is correct anyway.
+
+So yes, `pgPaginateNow` (see "Paginate Now"<!-- on page 24-2-->) is the best approach; I would call it every time before getting the scrollbar info. The problem with your current logic—paginating *after* `pgGetScrollValues`—is that the document hasn't been computed yet for `pgGetScrollValues`, so it might return FALSE, thinking that the document is unchanged. Remember, `pgPaginateNow` isn't that bad since it won't do anything unless the document really needs it.
+
+But, you should pass `CURRENT_POSITION` for the `paginate_to` parameter— that will help performance a bit.
+
+### Setting scroll values
+
+	(void) pgSetScrollValues (pg_ref pg, short h, short v, short align_line, short draw_mode);
+
+This function is the reverse of `pgGetScrollValues`. It provides a way to do absolute position scrolling, if necessary.
+
+For example, you would use `pgSetScrollValues` after the "thumb" is moved to a new location. As in `pgGetScrollValues`, the values are `short`s, but OpenPaige computes the necessary distance to scroll. (Because of possible rounding errors, however, after you have called `pgSetScrollValues` you should immediately change the scroll indicator settings with the values from a freah call to `pgGetScrollValues`.
+
+### Handling scrolling with mouse (Macintosh)
+
+	/* ClickScrollBars gets called in response to a mouseDown event. If mouse is not within a control, this function returns FALSE and does nothing. Otherwise, scrolling is handled and TRUE is returned. */
+	
+	int ClickScrollBars (doc_rec *doc, EventRecord *event)
+	{
+		Point start_pt;
+		short part_code;
+		ControlHandle the_control;
+		start_pt = event -> where;
+		
+		GlobalToLocal(&start_pt);
+		
+		if (part_code = FindControl(start_pt, doc-> w_ptr, &the_control))
+		{
+			scrolling_doc = doc;
+			if (part_code == inThumb)
+			{
+				long max_h, max_v;
+				long scrolled_h, scrolled_v;
+				long scroll_h, scroll_v;
+				short v_factor, old_h_position;
+				
+				if (TrackControl(the_control, start_pt, NULL))
+				{
+					old_h_position = GetCtlValue(doc -> h_ctl);
+					pgSetScrollValues(doc -> pg, GetCtlValue(doc -> h_ctl), GetCtlValue(doc -> v_ctl), TRUE, best_way);
+					UpdateScrollbarValues(doc);
+					update_ruler(doc, old_h_position);
+				}
+				else
+					TrackControl(the_control, start_pt, (ProcPtr) scroll_action_proc);
+			}
+			return (part_code != 0);
+		}
+					
+
+### Maximum scroll value
+
+Adjustments may be needed after large deletions; if so, call the following function.
+
+	(pg_boolean) pgAdjustScrollMax (pg_ref pg, short, draw_mode);
+
+This tells OpenPaige that `pg` might need some adjustment after a large deletion or text size change.
+
+For example, suppose you had a document in 24-point text, scrolled to the bottom. User changes the text to 12 point, resulting in a scrolled position way too far down! If you call `pgAdjustScrollMax`, this situation is corrected (by scrolling up the required distance).
+
+If `draw_mode` ≠ 0, actual physical scrolling takes place (otherwise the scroll position is adjusted internally and no drawing occurs). `draw_mode` can be the values as described in "Draw Modes"<!-- on page 2-30-->:
+
+	draw_none,		// Do not draw at all 
+	best_way,		// Use most efficient method(s) 
+	direct_copy,	// Directly to screen, overwrite 
+	direct_or,		// Directly to screen, "OR" 
+	direct_xor,		// Directly to screen, "XOR" 
+	bits_copy,		// Copy offscreen 
+	bits_or,		// Copy offscreen in "OR" mode 
+	bits_xor		// Copy offscreen in "XOR" mode
+
+**FUNCTION RESULT:** The function returns TRUE if the scroll position changed.
+
+## 11.6 Getting/Setting Absolute Pixel Scroll Positions
+
+	void pgScrollPixels (pg_ref pg, long h, long v, short draw_mode);
+
+**FUNCTION RESULT:** This function scrolls `pg` by `h` and `v` pixels; scrolling occurs from the current position (i.e., scrolling advances plus or minus from its current position by `h` or `v` amount(s).
+
+If `draw_mode` ≠ 0, actual physical scrolling takes place (otherwise the scroll position is adjusted internally and no drawing occurs).
+
+OpenPaige will not scroll out of range — the parameters are checked and OpenPaige will only scroll to the very top or to the maximum bottom as specified by the document's height and the current scroll parameters.
+
+**NOTE:** You should only use this function if you are not using the other scrolling methods listed above.
+
+	(void) pgScrollPosition (pg_ref pg, co_ordinate_ptr scroll_pos);
+
+**FUNCTION RESULT:** The above function returns the current (absolute pixel) scroll position. The vertical scroll position is placed in `scroll_pos -> v` and the horizontal position in `scroll_pos -> h`.
+
+The positions, however, are always zero or positive: when OpenPaige offsets the text to its "scrolled" position, it subtracts these values.
+
+### Forcing Pixel Alignment
+
+In some applications, it is desirable always to scroll on "even" pixel boundaries, or some multiple other than one.
+
+For example, in a document that displays grey patterns or outlines, it can be necessary to always scroll in a multiple of two pixels, otherwise the patterns can be said to be out of "alignment."
+
+To set such a parameter, call the following:
+
+	(void) pgSetScrollAlign (pg_ref pg, short align_h, short align_v);
+
+The pixel alignment is defined in `align_h` and `align_v` for horizontal and vertical scrolling, respectively.
+
+For either parameter, the effect is as follows: 
+
+* if the value is zero, the current alignment value remains unchanged. 
+* if the value is one, scrolling is performed to the nearest single
+pixel (i.e., no "alignment" is performed)
+* if the value is two or more, that alignment is used.
+
+For example, if `align_v` is two, vertical scrolling would always be in multiples of two pixels; if three, alignment would always be a multiple of three pixels, etc.
+
+##### NOTES:
+
+1. The current scrolled position in `pg` is not changed by this function. You must therefore make sure the scrolled position is correctly aligned or else all subsequent scrolling can be constantly "off" of the desired alignment. It is generally wise to set the alignment once, after `pgNew`, while the scrolled positions are zero.
+2. The default alignment after `pgNew` is one.
+3. You do not need to set scroll alignment after a file is opened (with `upgraded`); scroll alignment is saved with the document.
+
+### Getting Alignment
+
+	(void) pgGetScrollAlign (pg_ref pg, short PG_FAR *align_h, short PG_FAR *align_v);
+	
+This function returns the current scroll alignment. The horizontal alignment is returned in `*align_h` and vertical alignment in `*align_v`.
+
+Both `align_h` and `align_v` can be NULL pointers, in which case they are ignored.
+
+## 11.7 Performing Your Own Scrolling
+
+Because certain environments and frameworks support document scrolling in many different ways, a discussion here that explains what actually occurs inside an OpenPaige object that is said to be "scrolled" might prove helpful.
+
+When OpenPaige text is "scrolled," a pair of long integers inside the `pg_ref` is increased or decreased which defines the extra distance, in pixels, that OpenPaige should draw its text relative to the top-left of the window.
+
+This is a critical point to consider for implementing other methods of scrolling: the contents of an OpenPaige document *never actually "move" by virtue of `pgScroll`, `pgSetScrollParams` or `pgSetScrollValues`*. Instead, only two long words within the `pg_ref` (one for vertical position and one for horizontal position) are changed. When the time comes to display text, OpenPaige temporarily subtracts these values from the top-left coordinates of each line to determine the target display coordinates; but the coordinates of the text lines themselves (internally to the `pg_ref`) remain unchanged and are always relative to the top-left of the window's origin regardless of scrolled position.
+
+Similarly, when `pgDragSelect` is called (to detect which character(s) contain a mouse coordinate), OpenPaige does the same thing in reverse: it temporarily adds the scroll positions to mouse point to decide which character has been clicked, again no text really changes its position.
+
+Considering this method, the following facts might prove useful when `pgScroll` needs to be bypassed altogether and/or if your programming framework requires a system of scrolling:
+
+- A `pg_ref` that is "scrolled" is simply a `pg_ref` whose vertical and horizontal "scroll position" fields are nonzero; at no time does text really "scroll." OpenPaige temporarily subtracts these scroll positions from the display coordinates of each line when it comes time to draw the text.
+- The "scroll position" values can be obtained by calling `pgScrollPosition`.
+- The "scroll position" can be set directly by doing a `UseMemory(pg_ref)`, changing `Paige_rec_ptr -> scroll_position`, then `UnuseMemory(pg_ref)`.
+- The "scroll positions" are always positive, i.e. as the document scrolls from top to bottom or from left to right, the scroll positions increase proportionally by that many pixels.
+- The simplest way to understand a `pg_ref`'s "scroll position" is to realise that OpenPaige only cares about the scroll position when it draws text or processes a `pgDragSelect()`.
+- When `pgScroll` is called, all that really happens is the screen pixels within the `vis_area` are scrolled, the scroll positions are changed to new values, then the text is redrawn so the "white space" fills up.
+- If `draw_none` is given to `pgScroll`, all that occurs is the scroll positions are changed (no pixels are scrolled and no text is redrawn).
+- A call to `pgGetScrollValues` merely returns the value from the scroll position members (with the values modified as necessary to achieve ≤16-bit integer result and adjusted to match what the application has defined as a "scroll unit").
+
+### 11.8 Alternate Scrolling
+
+Scrolling a `pg_ref` "normally", using `pgScroll()` and similar functions, the top-left coordinates of the document are changed internally. However, rather than changing the window origin itself, OpenPaige handles this by remembering these scroll values, and offsetting the position of text at the time it draws its text.
+
+Using this default scrolling method, OpenPaige assumes that the window origin never changes and that the visual region is relatively constant.
+
+This method, however, can be troublesome within frameworks that require a document to scroll in some other way, especially by changing the window origin. Additionally, certain aspects of these frameworks are difficult to disable and are therefore rendered unfriendly to the OpenPaige environment.
+
+Most applications that require a different method of scrolling feel they are required to bypass OpenPaige's scrolling system completely. While this may be workable, the app suddenly looses all scrolling features in OpenPaige. For instance, aligning to the top and bottom of lines can be lost; OpenPaige's built-in suggestions of where to set scrollbars is lost, etc.
+
+Furthermore, developers that need to bypass OpenPaige's scrolling suffer a loss in performance. For example, such an application might need to have an exact "document height", and it might thus continuously need to change the OpenPaige `shapes` region and `vis_area`.<!-- Look at this again-->
+
+The purpose of the features and functions in this section is to provide additional support to scroll many different ways.
+
+### External Scrolling Attribute
+
+A flag bit has been defined that can help applications that want to do their own scrolling:
+
+	#define EXTERNAL_SCROLL_BIT 0x00000010
+
+If you include this bit in the flags parameter for `pgNew()`, OpenPaige will assume that the application's framework will be handling the document's top-left positioning in relation to scrolling.
+
+What this means is if you create the `pg_ref` with `EXTERNAL_SCROLL_BIT`, you can continue to use all the regular OpenPaige scrolling functions without actually changing the relative position of text (i.e., you can control the position of text and the view area yourself while still letting OpenPaige compute the document's maximum scrolling, its current scroll position and the amount you should scroll to align to lines).
+
+For example, using the default built-in scrolling methods (without `EXTERNAL_SCROLL_BIT` set), calling `pgScroll()` will move the display up or down by some specified amount; calling `pgGetScrollValues()` will return how far the text moved. However, if `EXTERNAL_SCROLL_BIT` is set, calling `pgScroll()` will change the scroll position values stored in the pg_ref yet *the text display itself remains unaffected*. But calling `pgGetScrollValues()` will correctly reflect the scroll position values (the same as it would using the default scrolling method).
+
+Hence, with `EXTERNAL_SCROLL_BIT` set you can still use all of the OpenPaige scrolling functions—yet you can adjust the text display using some other method.
+
+### Changing Window Origin
+
+**NOTE:** The term "window origin" in this section refers to the machine-specific origin of the window where the `pg_ref` is "attached;" it does not refer to the "origin” member of the `graf_device` structure.
+
+The only problem with changing the window's origin that contains a `pg_ref` is after you have changed the origin, OpenPaige's internal `vis_area` is no longer valid.
+
+Using the default OpenPaige scrolling system, an application would have to force new `vis_area` shapes into the `pg_ref` every time the origin changed. However, this is inefficient. The following new function has been provided to optimise this situation:
+
+	void pgWindowOriginChanged (pg_ref pg, co_ordinate_ptr original_origin, co_ordinate_ptr new_origin);
+
+If the window in which `pg` lives has changed its top-left origin *for the purpose of moving its view area in relation to text*, you should immediately call this function.
+
+By "view area in relation to text" is meant that the window origin has changed to achieve a scrolling effect.
+
+You would *not* call this function if you simply wanted the whole `pg_ref` to move, both `vis_area` and `page_area`. The intended purpose of `pgWindowOriginChanged` is to inform OpenPaige that your app has changed the (OS-specific) window origin to create a scrolled effect, hence the `vis_area` needs to be updated.
+
+The `original_origin` should contain the normal origin of the window, i.e. what the top-left origin of the window was initially when you called `pgNew()`. The `new_origin` should contain what the origin is now.
+
+Note that the `original_origin` must be the original window origin at the time the `pg_ref` was created, not necessarily the window origin that existed before changing it to new_origin. Typically, the original origin is (0, 0).
+
+However, `original_orgin` can be a null pointer, in which case the position (0, 0) is assumed. Additionally, `new_origin` can also be a null pointer, in which case the current scrolled position (stored inside the `pg_ref`) will be assumed as the new origin.
+
+OpenPaige will take the most efficient route to update its shape(s) to accommodate the new origin. Text is not drawn, nor are the scrolled position values (internal to the `pg_ref`) changed. All that changes is the `vis_area` coördinates so any subsequent display will reflect the position of the text in relationship to the visual region.
+
+### Oldies but Goodies
+
+	pgSetScrollParams();
+	pgGetScrollParams();
+	pgGetScrollValues();
+	pgScroll();
+
+The above functions are documented elsewhere in this manual, but they are listed again to encourage their use even when customising OpenPaige scrolling. If you create the `pg_ref` with `EXTERNAL_SCROLL_BIT`, you can begin using all the functions above without actually changing the relative position of text (i.e., you can control the position of text and the "view" area yourself while still letting OpenPaige compute the document's maximum scrolling, its current scroll position and the amount you should scroll to align to lines).
+
+### Additional Support
+
+	void pgScrollUnitsToPixels (pg_ref pg, short h_verb, short v_verb, pg_boolean add_to_position, pg_boolean window_origin_changes, long PG_FAR *h_pixels, long PG_FAR *v_pixels);
+	
+This function returns the amount of pixels that OpenPaige would scroll if you called `pgScroll()` with the same `h_verb` and `v_verb` values. In other words, if you are doing your own scrolling but want to know where OpenPaige would scroll if you asked it to, this is the function to use.
+
+However, this function also provides the option to change the internal scroll values in the `pg_ref`, and/or to inform OpenPaige that you will be changing the window origin.
+
+Note that if you created the `pg_ref` with `EXTERNAL_SCROLL_BIT`, you can change the scroll position values inside the `pg_ref` but the text itself does not "move." This will allow your application's framework to position the text by changing the window origin, etc., but you can still have OpenPaige maintain the relative position(s) that the document is scrolled.
+
+Upon entry, `h_verb` and `v_verb` should be one of the several scroll verbs normally given to `pgScroll()`.
+
+If `add_to_position` is TRUE, OpenPaige adjusts its internal scroll position (which does not affect visual text positions if `EXTERNAL_SCROLL_BIT` has been set in the `pg_ref`). If FALSE, the scroll positions are left alone.
+
+If `window_origin_changes` is TRUE, OpenPaige assumes that the new scroll position, by virtue of the `h_verb` and `v_verb` values, will change the window origin by that same amount. In other words, passing TRUE for this parameter is effectively the same as calling `pgWindowOriginChanged()` with coördinates that reflect the new origin after the scroll positions have been updated.
+
+When this function returns, `*h_pixels` and `*v_pixels` will be set to the number of pixels that OpenPaige would have scrolled had you passed the same `h_verb` and `v_verb` to `pgScroll()`.
+
+### Physical Drawing/Scrolling Support
+
+	pg_region pgScrollViewRect (pg_ref pg, long h_pixels, long v_pixels, shape_ref update_area);
+
+This function will physically scroll the pixels within `pg`'s `vis_area` by `h_pixels` and `v_pixels`; negative values cause the image to move up and left respectively.
+
+When the function returns, if `update_area` is not `MEM_NULL` it is set to the shape of the area that needs to be updated.
+
+	void pgSetCaretPosition (pg_ref pg, pg_short_t position_verb, pg_boolean show_caret);
+
+This function should be used to change the location of the caret (insert position); for example, `pgSetCaretPosition` is useful for handling arrow keys.
+
+The `position_verb` indicates the action to be taken. The low byte of this parameter should be one of the following values:
+
+	enum
+	{
+		home_caret,
+		doc_bottom_caret,
+		begin_line_caret,
+		end_line_caret,
+		next_word_caret,
+		previous_word_caret
+	};
+
+The high byte of `position_verb` can modify the meaning of the values shown above; the high byte should be either zero or set to `EXTEND_CARET_FLAG`.
+
+The following is a description for each value in position_verb:
+
+`home_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the beginning of the document to the current position; if `EXTEND_CARET_FLAG` is clear the caret moves to the beginning of the document.
+
+`doc_bottom_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the current position to the end of the document; if `EXTEND_CARET_FLAG` is clear the caret advances to the end of the document.
+
+`begin_line_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the current position to the beginning of the current line; if `EXTEND_CARET_FLAG` is clear the caret moves to the beginning of the line.
+
+`end_line_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the current position to the end of the current line; if `EXTEND_CARET_FLAG` is clear the caret moves to the end of the line.
+
+`next_word_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the current position to the beginning of the next word; if `EXTEND_CARET_FLAG` is clear the caret moves to the beginning of the next word.
+
+`previous_word_caret` — If `EXTEND_CARET_FLAG` is set, the text is selected from the current position to the beginning of the previous word; if `EXTEND_CARET_FLAG` is clear the caret moves to the beginning of the previous word.
+
+If `show_caret` is TRUE then the caret is redrawn in its new location, otherwise the caret does not visibly change.
+
+**NOTE:** This function is simply a portable way to physically scroll the pixels within a `pg_ref` — no change occurs to the scroll position internal to the `pg_ref`, nor does the window origin or the `vis_shape` change in any way.
+
+	void pgDrawScrolledArea (pg_ref pg, long pixels_h, long pixels_v, co_ordinate_ptr original_origin, co_ordinate_ptr new_origin, short draw_mode);
+
+This function will draw the `pg_ref` inside the area that would exist (or already exists) after a pixel scroll of `pixels_h` and `pixels_v`.
+
+For example, if you (or your framework) has already scrolled the document by, say, -60 pixels, a call to `pgDrawScrolledArea(pg, 0, -60, …)` will cause the document to update within the region that exists by virtue of such a scroll.
+
+**NOTE:** This function fills the would-be update area of a scroll but does not actually scroll anything.
+
+However, optional parameters exist to inform OpenPaige about window origin changes; if you have changed the window origin since the last display, and have not told OpenPaige about it yet, you can pass the original and new origin in `original_origin` and `new_origin` parameters, respectively. These parameters do the same exact thing as on `pgWindowOriginChanged()` — except if they are null pointers in this case, they are ignored.
+
+	void pgLastScrollAmount (pg_ref pg, long *h_pixels, long *v_pixels);
+
+This function returns the amount of the previous scrolling action, in pixels.
+
+The "scrolling action" would have been any OpenPaige function that has changed the `pg_ref`'s internal scroll position. That includes `pgScroll` and `pgScrollUnitsToPixels()` if applicable, *inter alia*.
+
+By "previous scrolling" is meant the last function call that changed the scroll position. For example, there could have been 1,000 non-scrolling functions since the last scrolling change, but `pgLastScrollAmount()` would only return the values since the last scrolling.
+
+### 11.9 Draw Scroll Hook \& Scroll Regions
+
+An application could repaint the area uncovered by a scroll with the `draw_scroll` hook:
+
+	PG_PASCAL(void) pgDrawScrollProc (paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr scroll_pos, pg_boolean post_call); 
+
+This function gets called by OpenPaige after the contents of a `pg_ref` have been scrolled; the `update_rgn` shape contains the area of the window that has been uncovered (rendered blank) by the scrolling.
+
+However, an unintentional anomaly exists with this method: the `update_rgn` contains a shape that represents the entire bounding area of the scrolled area. This presents a problem if the scrolled area is non-rectangular.
+
+For example, an application might have a "Find..." dialogue box in front of the document. If a word is found, causing the document to scroll, the uncovered document area is non-rectangular (the region is affected by the intersection of the Find window).
+
+The basic problem is that OpenPaige cannot convert a non-rectangular, platform-specific region into a `shape_ref`.
+
+The `paige_rec` structure (provided as the `pg` parameter in the above hook) contains the member `.port`, which contains a member called `scroll_rgn`. The `scroll_rgn` will be a platform-specific region handle containing the actual scrolled region.
+
+For example, if `draw_scroll` is called, `pg -> port.scroll_rgn` would be a `RgnHandle` for Macintosh and an `HRGN` for Windows. In both cases, if you were to fill that region with something, it would conform to the exact scrolled area, rectangular or not.
+
+As a rule, to avoid problems with non-rectangular scrolled area(s), use `pg -> port.scroll_rgn` instead of the `update_rgn` parameter.
