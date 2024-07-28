@@ -253,7 +253,7 @@ In addition to above:
 
 There are other miscellaneous options that may imply a requirement to be enabled (by their names) such as `WIN95_COMPILE`. Do not turn these on, regardless of platform! Enable only `WIN32_COMPILE` for all 32-bit versions.
 
-You do not need to define anything other than WIN32_COMPILE to support doublebyte multilingual editing for Windows NT and Windows 95; that support is generated automatically.
+You do not need to define anything other than `WIN32_COMPILE` to support double-byte multilingual editing for Windows NT and Windows 95; that support is generated automatically.
 
 For Unicode, you must define `UNICODE` and `_UNICODE` in your preprocessor options of the compiler. (If no preprocessor option, `#define UNICODE` somewhere in your sources or headers to allow all system header files to recognize the Unicode option).
 
@@ -280,45 +280,45 @@ Compiling with `PG_DEBUG` will dramatically reduce the performance!
 
 #### Special Resource (Macintosh only)
 
-A special resource has been provided on your OpenPaige disc which the Macintosh-specific code within OpenPaige uses to initialize default character values (such as arrow keys, backspace characters, invisible symbols, etc.). You may copy and paste this resource into your application's resource and you may modify its contents if you want different defaults.
+A special resource has been provided on your OpenPaige disc which the Macintosh-specific code within OpenPaige uses to initialise default character values (such as arrow keys, backspace characters, invisible symbols, etc.). You may copy and paste this resource into your application's resource and you may modify its contents if you want different defaults.
 
-This resource is not required to use OpenPaige successfully. If it is missing, initialization simply sets a hard-coded set of defaults.
+This resource is not required to use OpenPaige successfully. If it is missing, initialisation simply sets a hard-coded set of defaults.
 
 See also [Changing Globals](#3.8-changing-globals).
 
 ### 2.4 Software Startup
 
-Some place early in your application you need to initialize the OpenPaige software; the recommended place to do so is after all other initializations have been performed for the main menu, Mac Toolbox, etc. To initialize, you need to reserve a couple blocks of memory that OpenPaige can use to store certain global variables (OpenPaige does not use any `globals` and therefore requires you to provide areas it can use to store required global structures).
+Some place early in your application you need to initialise the OpenPaige software; the recommended place to do so is after all other initialisations have been performed for the main menu, Mac Toolbox, etc. To initialise, you need to reserve a couple blocks of memory that OpenPaige can use to store certain global variables (OpenPaige does not use any `globals` and therefore requires you to provide areas it can use to store required global structures).
 
-To initialize OpenPaige you must call two functions in the order given:
+To initialise OpenPaige you must call two functions in the order given:
 
 	#include "Paige.h"
 	(void) pgMemStartup (pgm_globals_ptr mem_globals, long max_memory);
 	(void) pgInit (pg_globals_ptr globals, pgm_globals_ptr mem_globals);
 
-Calling `pgMemStartup` initializes OpenPaige's allocation manager. This call must be made first before `pgInit`. The `mem_globals` parameter must be a pointer to an area of memory which you provide. The usual (and easiest) method of doing this is to define a global variable that will not relocate or unload during the execution of your program, such as the following:
+Calling `pgMemStartup` initialises OpenPaige's allocation manager. This call must be made first before `pgInit`. The `mem_globals` parameter must be a pointer to an area of memory which you provide. The usual (and easiest) method of doing this is to define a global variable that will not relocate or unload during the execution of your program, such as the following:
 
 	pgm_globals 	memrsrv; // <--somewhere that will NOT unload
 
-You do not need to initialize this structure to anything—`pgMemStartup` initializes this structure appropriately.
+You do not need to initialise this structure to anything—`pgMemStartup` initialises this structure appropriately.
 
-`max_memory` should contain the maximum amount of memory OpenPaige is allowed to use before purging memory allocations. If you want OpenPaige to have access to all available memory, pass 0 (RECOMMENDED) for `max_memory`.
+`max_memory` should contain the maximum amount of memory OpenPaige is allowed to use before purging memory allocations. If you want OpenPaige to have access to all available memory (which is *strongly recommended*), pass 0 for `max_memory`.
 
 For example, suppose you only wanted to use 200 kB of memory for all OpenPaige documents, combined. In this case, you would pass 200000 to pgInit. If you don't care, or want it to use all memory available, you would pass 0.
 
-After `pgMemStartup`, call `pgInit`, which initializes every other part of OpenPaige.
+After `pgMemStartup`, call `pgInit`, which initialises every other part of OpenPaige.
 
 `globals` is a pointer to an area of memory which you provide. The usual (and easiest) method of doing this is to define a global variable that will not relocate or unload during the execution of your program, such as the following:
 
 	pg_globals	paigersrv; // <-- somewhere that will NOT unload
 
-The structure `pg_globals` is defined in `paige.h` (and shown in [Changing Globals](#3.8-changing-globals)). You do not need to initialize this structure to anything—OpenPaige will initialize the globals structure as required. It is only necessary that you provide the space for this structure and pass a pointer to it in `pgInit`.
+The structure `pg_globals` is defined in `paige.h` (and shown in [Changing Globals](#3.8-changing-globals)). You do not need to initialise this structure to anything—OpenPaige will initialise the globals structure as required. It is only necessary that you provide the space for this structure and pass a pointer to it in `pgInit`.
 
 `mem_globals` parameter in `pgInit` must be a pointer to the same structure passed to `pgMemStartup`.
 
 ##### MFC NOTE
 
-The best place to initialize OpenPaige in the constructor of the `CWinApp` derived class. Also the best place to put the OpenPaige globals and memory globals is in the CWinApp derived class.
+The best place to initialise OpenPaige in the constructor of the `CWinApp` derived class. Also the best place to put the OpenPaige globals and memory globals is in the `CWinApp` derived class.
 
 ##### EXAMPLE
 	(.H)
@@ -369,33 +369,22 @@ All `pg_ref`s and all memory references allocated anywhere by OpenPaige become i
 
 Be sure to call both `pgShutdown` and `pgMemShutdown`, in that order, before `EXIT`, or you will have memory leaks and resources that are never released.
 
-##### NOTE
+##### NOTES
+* `pgShutdown` and `pgMemShutdown` actually dispose every memory allocation made by OpenPaige since `pgMemStartup`; you therefore don't really need to dispose any `pg_ref`s, `shape_ref`s or other OpenPaige allocations.
+* You must not call either shutdown function if you are using the OpenPaige Control.
+* For Macintosh applications, the shutdown procedure is completely unnecessary if you will be doing an `ExitToShell` using the app version. Mac developers working with code resource libraries will still need to call `pgShutdown` and `pgMemShutdown`.
+* For Microsoft Foundation Class applications, the appropriate method to shut down OpenPaige is to override `CxxAppxExitInstance()` and call `::pgShutdown` and `::pgMemShutdown`.
+* The best place to shutdown OpenPaige is in the destructor of the `CWinApp` derived class. Example:
 
-`pgShutdown` and `pgMemShutdown` actually dispose every memory allocation made by OpenPaige since `pgMemStartup`; you therefore don't really need to dispose any `pg_ref`s, `shape_ref`s or other OpenPaige allocations.
+		(.CPP)
+		MyWinApp::~MyWinApp()
+		{
+			...
+			pgShutdown(&m_Globals);
+			pgMemShutdown(m_MemoryGlobals);
+		}
 
-##### NOTE (Macintosh)
 
-The shutdown procedure is completely unnecessary if you will be doing an `ExitToShell` using the app version. Mac developers working with code resource libraries will still need to call `pgShutdown` and `pgMemShutdown`.
-
-##### NOTE (MFC)
-
-The best place to shutdown OpenPaige is in the destructor of the `CWinApp` derived class. Example:
-
-	(.CPP)
-	MyWinApp::~MyWinApp()
-	{
-		...
-		pgShutdown(&m_Globals);
-		pgMemShutdown(m_MemoryGlobals);
-	}
-
-##### NOTE (MFC)
-
-For Microsoft Foundation Class applications, the appropriate method to shut down OpenPaige is to override `CxxAppxExitInstance()` and call `::pgShutdown` and `::pgMemShutdown`.
-
-##### NOTE
-
-You must not call either shutdown function if you are using the OpenPaige Control.
 
 ### 2.6 Creating an OpenPaige Object
 
@@ -421,7 +410,7 @@ If `def_device` is `NULL` then current `GrafPort` is used as the default device;
 
 If `def_device` is `0L` then the current window of focus is used as the default window where drawing will occur (e.g., `GetFocus` is used to determine the window); if `def_device` is non-`NULL` and not `-1` it is assumed to be type `HWND` and that window is used for subsequent drawing.
 
-This `HWND` in the def_device is NOT a Device Context.
+This `HWND` in the `def_device` *is not* a Device Context.
 
 Essentially, the `dev_device` should be the window (or child window) that is receiving the message to create the OpenPaige object, e.g. `WM_CREATE`.
 
@@ -444,7 +433,7 @@ The best place to put `pgNew()` is in the `OnCreate()` member of the `CView` der
 	(.CPP)
 	int MyView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	{
-		pgm_globals_ptr memory_globals = ((MyWinApp*)AfxGetApp())->m_MemoryGlobals;
+		pgm_globals_ptr memory_globals = ((MyWinApp*)AfxGetApp()) -> m_MemoryGlobals;
 		int return_value = 0;
 		CRect client_rect;
 		rectangle client_paige_rect;
@@ -453,16 +442,16 @@ The best place to put `pgNew()` is in the `OnCreate()` member of the `CView` der
 		ASSERT(m_hWnd);
 		ASSERT(isWindow(m_hWind));
 		
-		// Non-OpenPaige initialization here!
+		// Non-OpenPaige initialisation here!
 		
 	GetClientRect(&client_rect);
 	RectToRectangle(&client_rect, &client_paige_rect);
 	
 	shape_ref window = pgRectToShape(AfxGetMemoryGlobals(), &rect);
 	
-	PG_TRY(AfxGetApp()->m_MemoryGlobals // See Chapter 19 of the OpenPaige manual.
+	PG_TRY(AfxGetApp() -> m_MemoryGlobals // See Chapter 19 of the OpenPaige manual.
 	{
-		m_Paige = pgNew(AfxGetApp()->m_Globals,(generic_var)(LPVOID)m_hWnd, window, window, MEM_NULL, 0);
+		m_Paige = pgNew(AfxGetApp() -> m_Globals,(generic_var)(LPVOID)m_hWnd, window, window, MEM_NULL, 0);
 	};
 	
 	PG_CATCH
@@ -525,7 +514,7 @@ The easiest way to create a new shape is to use the following function:
 
 This returns a new `shape_ref` (which can be passed to one of the `area` parameters in `pgNew`). The globals parameter must be a pointer to the same structure given in `pgInit` and `pgNew`.
 
-The *rect* parameter is a pointer to a structure consisting of a top-left and bottom-right coordinate that encloses a rectangle. The coordinate and rectangle definitions are as follows:
+The *rect* parameter is a pointer to a structure consisting of a top-left and bottom-right coördinate that encloses a rectangle. The coördinate and rectangle definitions are as follows:
 
 	typedef struct
 	{
@@ -586,7 +575,7 @@ For the purpose of getting "Up & Running", just make sure you create your window
 
 #### Origins
 
-OpenPaige does not care what a window's origin is set to (top-left `co_ordinate` values). OpenPaige only cares about the `area` parameters you provide for `pgNew`; remember, OpenPaige doesn't really know what a window is and doesn't know anything about origins. OpenPaige simply and only follows the coördinates you have set for `vis_area`, `page_area` and `exclude_area`. If your `page_area` shape passed to `pgNew`, for instance, had a top-left of -10000,-9999, the first character of the first line will be drawn at that coördinate location regardless of where the top-left of your window might physically exist. In other words, OpenPaige coordinates are always relative to the associated window's coördinates.
+OpenPaige does not care what a window's origin is set to (top-left `co_ordinate` values). OpenPaige only cares about the `area` parameters you provide for `pgNew`; remember, OpenPaige doesn't really know what a window is and doesn't know anything about origins. OpenPaige simply and only follows the coördinates you have set for `vis_area`, `page_area` and `exclude_area`. If your `page_area` shape passed to `pgNew`, for instance, had a top-left of -10000,-9999, the first character of the first line will be drawn at that coördinate location regardless of where the top-left of your window might physically exist. In other words, OpenPaige coördinates are always relative to the associated window's coördinates.
 
 ### 2.8 Attribute Settings
 
@@ -619,7 +608,7 @@ As mentioned earlier, `pgNew` will accept certain characteristics defined in the
 
 `EXTERNAL_SCROLL_BIT` tells OpenPaige that your application will control all scrolling. (This fairly complex subject is discussed elsewhere.)
 
-`COUNT_LINES_BIT` tells OpenPaige to keep track of line and paragraph numbers, in which case you can use the line and paragraph numbering features in OpenPaige (see "Line and Paragraph Numbering"<!--on page 24-16-->). Please note that constantly counting lines and paragraphs, particularly if the document is large and contains wordwrapping with style changes, can consume considerable processing time. Hence, COUNT_LINES_BIT has been provided to enable/disable this feature.
+`COUNT_LINES_BIT` tells OpenPaige to keep track of line and paragraph numbers, in which case you can use the line and paragraph numbering features in OpenPaige (see "Line and Paragraph Numbering"<!--on page 24-16-->). Please note that constantly counting lines and paragraphs, particularly if the document is large and contains wordwrapping with style changes, can consume considerable processing time. Hence, `COUNT_LINES_BIT` has been provided to enable/disable this feature.
 
 `NO_HIDDEN_TEXT_BIT` suppresses the display of all text that is "hidden" (OpenPaige will accept a hidden text attribute as a style). If this bit is not set, hidden text is displayed with a grey strike-through line; if it is set, the text is completely invisible and ignored for line width computations.
 
@@ -660,10 +649,9 @@ You can always change these attributes after an OpenPaige object is created (see
 	#include "pgTraps.h"
 	extern pg_globals paige_rsrv;
 	
-	/* Routine: Open_Window */
-	/* Purpose: Open our window */
-	/* Note: the window has already been made and will be shown and 
-		selected immediately after this function */
+	// Routine: Open_Window
+	// Purpose: Open our window
+	/* Note: the window has already been made and will be shown and selected immediately after this function */
 		
 	void Open_Window(WindowPtr win_ptr)
 	{
@@ -673,8 +661,7 @@ You can always change these attributes after an OpenPaige object is created (see
 		shape_ref vis, wrap;
 		rectangle rect;
 		
-		/* this sets vis_area and wrap_area to the shape of the window 
-		itself */
+		/* this sets vis_area and wrap_area to the shape of the window itself */
 			
 		RectToRectangle(win_ptr->portRect, &rect);
 		vis = pgRectToShape(&paige_rsrv, &rect);
@@ -727,7 +714,7 @@ The `pg_ref`'s contents are drawn to the `target_device`. If, however, you pass 
 
 `vis_target` and `wrap_target` parameters are optional shapes which will temporarily redefine the OpenPaige object's `vis_area` and `wrap_area`, respectively. Using these two parameters, you can temporarily control and/or change the way an OpenPaige object will display. Text gets clipped to `vis_target`, or, if `vis_target` is a null pointer, to the original `vis_area`, and text will wrap within `wrap_target`, or, if `wrap_target` is `MEM_NULL`, within the original `wrap_area`. (For the purposes of getting "Up \& Running", pass MEM_NULL for these two parameters.)
 
-If `offset_extra` is `non-null`, all drawing is offset by the amounts in that coördinate (all text is offset horizontally by `offset_extra->h` and vertically by `offset_extra->v`. If `offset_extra` is a null pointer, no extra offset is added to the text.
+If `offset_extra` is `non-null`, all drawing is offset by the amounts in that coördinate (all text is offset horizontally by `offset_extra -> h` and vertically by `offset_extra -> v`. If `offset_extra` is a null pointer, no extra offset is added to the text.
 
 The `draw_mode` parameter defines the way text should be transferred to the target device. The `draw_mode` selections are shown below.
 
@@ -783,7 +770,7 @@ A value of `draw_none` will disable all drawing and visual scrolling. In other w
 
 To display the OpenPaige object in MFC, use `OnPaint()`. Do not try to use `OnDraw()` or it will not draw correctly.
 
-## EXAMPLE:
+#### EXAMPLE
 
 	(.CPP)
 	
@@ -918,7 +905,7 @@ To get *Up and Running* with basic keyboard editing you must add the following c
 	// Respond to the windows message WM_KEYDOWN... 
 	void PGView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	{
-	pg_globals globals = ((MyWinApp*)AfxGetApp())->m_Globals;
+	pg_globals globals = ((MyWinApp*)AfxGetApp()) -> m_Globals;
 	pg_short_t verb;
 	
 		switch(nChar)
@@ -930,16 +917,16 @@ To get *Up and Running* with basic keyboard editing you must add the following c
 				m_KeyModifiers != CONTROL_MOD_BIT;
 				break;
 			case VK_LEFT:
-				SendMessage(WM_CHAR, globals->left_arrow_char);
+				SendMessage(WM_CHAR, globals -> left_arrow_char);
 				break;
 			case VK_UP:
-				SendMessage(WM_CHAR, globals->up_arrow_char);
+				SendMessage(WM_CHAR, globals -> up_arrow_char);
 				break;
 			case VK_RIGHT:
-				SendMessage(WM_CHAR, globals->right_arrow_char);
+				SendMessage(WM_CHAR, globals -> right_arrow_char);
 				break;
 			case VK_DOWN:
-				SendMessage(WM_CHAR, globals->down_arrow_char);
+				SendMessage(WM_CHAR, globals -> down_arrow_char);
 				break;
 			case VK_HOME:
 				verb = begin_line_caret;
@@ -1090,7 +1077,7 @@ To change the insertion point in a `pg_ref` (i.e., in response to a mouse click)
 
 For **Macintosh**, location should be the same as the "where" member of the `EventRecord`, converted to local coördinates.
 
-For **Windows**, location is usually the coördinates given to you in `IParam` when responding to `WM_LBUTTONDOWN`, `WM_LBUTTONDBLCLK`, or `WM_MOUSEMOVE`.
+For **Windows**, location is usually the coördinates given to you in `lParam` when responding to `WM_LBUTTONDOWN`, `WM_LBUTTONDBLCLK`, or `WM_MOUSEMOVE`.
 
 The `verb` parameter defines what action should occur, which must be one of the following:
 
@@ -1221,8 +1208,8 @@ To get Up and Running with simple mouse drag select in MFC, use the following co
 			co_ordinate pg_mouse;
 			mouse_contact = TRUE;
 			SetCapture(hWnd);
-			pg_mouse.h = IParam & OxFFFF;
-			pg_mouse.v = ((IParam & OxFFFF0000) >> 16);
+			pg_mouse.h = lParam & OxFFFF;
+			pg_mouse.v = ((lParam & OxFFFF0000) >> 16);
 		
 		if (wParam & MK_SHIFT)
 		pg_modifiers != EXTEND_MOD_BIT;
@@ -1265,7 +1252,7 @@ To get Up and Running with simple mouse drag select in MFC, use the following co
 
 #### Turn automatic scroll off
 
-To prevent selecting/scrolling you would simply pass FALSE for `pgDragSelect` so it doesn't try to auto-scroll. As far as not letting the user select text outside the visual area, I would simply check to see if the coordinate that will get passed to `pgDragSelect` is outside of the view area and if it is, just force it to some other point that is within the view area.
+To prevent selecting/scrolling you would simply pass FALSE for `pgDragSelect` so it doesn't try to auto-scroll. As far as not letting the user select text outside the visual area, I would simply check to see if the coördinate that will get passed to `pgDragSelect` is outside of the view area and if it is, just force it to some other point that is within the view area.
 
 In fact, you wouldn't even need to turn off auto-scroll if you forced the coördinate to always be within the visual area. Remember, you have complete control over `pgDragSelect` (control always comes back to you unlike, say, `TrackControl` on Macintosh) so there is no reason you can't adjust the "mouse" point for each pass.
 
@@ -1275,11 +1262,11 @@ In fact, you wouldn't even need to turn off auto-scroll if you forced the coörd
 
 Your test code sample should work. Therefore, I have to conclude there is something wrong with the mouse point you obtain with `GetMouse()`.
 
-I would guess that you are doing a `GetMouse()` without regards to the current `GrafPort`. Since `GetMouse()` returns a `LOCAL` point (based on current port's coördinates), if you don't have the correct `GrafPort` set you will get some other coördinate system. Worst case, you are getting "global" coordinates which will be completely different than what you expect.
+I would guess that you are doing a `GetMouse()` without regards to the current `GrafPort`. Since `GetMouse()` returns a `LOCAL` point (based on current port's coördinates), if you don't have the correct `GrafPort` set you will get some other coördinate system. Worst case, you are getting "global" coördinates which will be completely different than what you expect.
 
-Or, another possibility might have to do with the window's "origin." I know that some class libraries muck with this to create scrolling effects.
+Or, another possibility might have to do with the window's "origin". I know that some class libraries muck with this to create scrolling effects.
 
-What you need to do is, check what the actual values of `point.h` and `point.v` really are. I know that pgDragSelect works, in fact you should see the caret immediately appear at the point you give for `mouse_down` verb.
+What you need to do is to check what the actual values of `point.h` and `point.v` really are. I know that `pgDragSelect` works; in fact, you should see the caret immediately appear at the point you give for `mouse_down` verb.
 
 BTW, the usual (best) way for dragging the mouse in a `pg_ref` is to get the click right out of the `EventRecord.where` field (first doing a `GlobalToLocal` on it). That is by far the most accurate -- but I do not know if that `EventRecord` is easily available in your class library.
 
@@ -1462,7 +1449,7 @@ Or, if `overflow_size` is set to -1, a single carriage return is causing the ove
 		UnuseMemory(pg);
 		
 		return overflow_amount;
-		}
+	}
 
 ### TECH NOTE: Carriage return/line feeds causing problems
 
@@ -1533,7 +1520,7 @@ It is possible that you will want to change that default device once an OpenPaig
 
 The device parameter is a pointer to a structure which is maintained internally (and understood) by OpenPaige. (Generally, you won't be altering its structure directly but the record layout is provided at the end of this section for your reference).
 
-The contents and significance of each field in a `graf_device` depends on the platform in which OpenPaige is running. However, a function is provided for you to initialize a `graf_device` regardless of your platform:
+The contents and significance of each field in a `graf_device` depends on the platform in which OpenPaige is running. However, a function is provided for you to initialise a `graf_device` regardless of your platform:
 
 	(void) pglnitDevice (pg_globals_ptr globals, generic_var the_port, long machine_ref, graf_device_ptr device);
 
@@ -1544,8 +1531,7 @@ The `globals` parameter is a pointer to the same structure you passed to `pgInit
 The actual (but machine-dependent) graphics port is passed in `the_port`; what should be put in this parameter depends on the platform you are working with, as follows:
 
 * **Macintosh** (and PowerMac) — `the_port` should be a `GrafPtr` or `CGrafPtr`; `machine_ref` should be zero.
-
-* Windows (all OS versions) — `the_port` should be an `HWND` and `machine_ref` should be `MEM_NULL`. Or, if you only have a device context (but no window), `the_port` should be `MEM_NULL` and `machine_ref` the device context. See sample below.
+* **Windows** (all OS versions) — `the_port` should be an `HWND` and `machine_ref` should be `MEM_NULL`. Or, if you only have a device context (but no window), `the_port` should be `MEM_NULL` and `machine_ref` the device context. See sample below.
 
 The `device` parameter must be a pointer to an uninitialised `graf_device` record. The function will initialise every field in the `graf_device`; you can then pass a pointer to that structure to `pgSetDefaultDevice`.
 
@@ -1602,9 +1588,9 @@ The device is copied to the structure pointed to by `device`.
 
 ### Disposing a device
 
-If you have initialized a `graf_device`, followed immediately by `pgSetDefaultDevice()`, you do not need to uninitialize or dispose the `graf_device`.
+If you have initialised a `graf_device`, followed immediately by `pgSetDefaultDevice()`, you do not need to deïnitialise or dispose the `graf_device`.
 
-But if you have initialized a `graf_device` that you are keeping around for other purposes, you must eventually dispose its memory structures. To so call the following:
+If, however, you have initialised a `graf_device` that you are keeping around for other purposes, you must eventually dispose its memory structures. To so call the following:
 
 	(void) pgCloseDevice (pg_globals_ptr globals, graf_device_ptr device);
 
@@ -1620,7 +1606,7 @@ This function disposes all memory structure created in device when you called `p
 
 ### Quick \& easy `set-window`
 
-In certain situations you might want to temporarily change the window or device context a `pg_ref` will render its text drawing. While this can be done by initializing a `graf_device` and giving that structure to `pgSetDefaultDevice()`, a simpler and faster approach might be to use the following functions:
+In certain situations you might want to temporarily change the window or device context a `pg_ref` will render its text drawing. While this can be done by initialising a `graf_device` and giving that structure to `pgSetDefaultDevice()`, a simpler and faster approach might be to use the following functions:
 
 	generic_var pgSetDrawingDevice (pg_ref pg, const generic_var draw_device);
 	void pgReleaseDrawingDevice (pg_ref pg, const generic_var previous_device);
@@ -1655,7 +1641,7 @@ The solution is to inform OpenPaige that you wish to set your own device context
 
 This is identical to `pgSetDrawingDDevice()` except that it contains the additional parameter `scale` which specifies the scaling factor. For more information on OpenPaige scaling, see the appropriate section(s).
 
-### 3.5 Color Palettes (Windows-specific)
+## 3.5 Colour Palettes (Windows-specific)
 
 	void pgSetDevicePalette (pg_ref pg, const generic_var palette); generic_var pgGetDevicePalette (pg_ref pg);
 
@@ -1671,7 +1657,7 @@ To obtain the existing palette (if any), call `pgGetDevicePalette()`
 
 **NOTE:** OpenPaige does not delete the `HPALETTE`, even during `pgDispose()`. It is your responsibility to delete the palette.
 
-### 3.6 Changing Shapes
+## 3.6 Changing Shapes
 
 You can change the `vis_area`, the `page_area` and/or the `exclude_area` of an OpenPaige object at any time (see "Creating an OpenPaige Object"<!-- on page 2-14 about pgNew<--> for a description of each of these parameters):
 
@@ -1707,7 +1693,7 @@ The size of `vis_area` shape in `pg` is changed by adding `top_left` and `bot_ri
 
 By "adding" is meant the following: `top_left.v` is added to `vis_area`'s top and `top_left.h` is added to `vis_area`'s left; `bot_right.v` is added to `vis_area`'s bottom and `bot_right.h` is added to `vis_area`'s right.
 
-**NOTE:** This function adds to (or "subtracts" from, if coordinate parameters are negative) the visual area rather than setting or replacing the visual area to the given coördinates.
+**NOTE:** This function adds to (or "subtracts" from, if coördinate parameters are negative) the visual area rather than setting or replacing the visual area to the given coördinates.
 
 Either `top_left` or `bot_right` can be null pointers, in which case they are ignored.
 
@@ -1942,7 +1928,7 @@ After you have called $p g I n i t$, the following defaults are set for all the 
 
 If the default font is zero, then OpenPaige creates a font object using the default found in `pg_globals` record that was created with `pgNew`. If you want to change this you can change the default font in the `pg_globals`.
 
-**NOTE (Macintosh):** The `pgdf` Resource: During initialization, the machine-specific code for Macintosh searches for a special resource to determine the character defaults (above). If it does not find this resource, the values given above are used. Hence, you can change the defaults by changing the contents of this resource:
+**NOTE (Macintosh):** The `pgdf` Resource: During initialisation, the machine-specific code for Macintosh searches for a special resource to determine the character defaults (above). If it does not find this resource, the values given above are used. Hence, you can change the defaults by changing the contents of this resource:
 
 | TABLE \#2 | MACINIOSH RESOURCE TYPE \& ID |
 | :---: | :---: |
@@ -1982,9 +1968,9 @@ You can store any arbitrary long value or pointer into a `pg_ref` any time you w
 	(void) pgSetExtraStruct (pg_ref pg, void PG_FAR *extra_struct, long ref_id);
 	(void PG_FAR *) pgGetExtraStruct (pg_ref pg, long ref_id);
 
-By "storing" an arbitrary value within a `pg_ref` is meant that OpenPaige will save longs or pointers — which only have significance to your application — which can be retrieved later at any time.
+By "storing" an arbitrary value within a `pg_ref` is meant that OpenPaige will save `long`s or pointers — which only have significance to your application — which can be retrieved later at any time.
 
-To store such items, call `pgSetExtraStruct`, passing your long (or pointer) in `extra_struct` and a unique ID number in `ref_id`. The purpose of the unique id is to reference that item later in `pgGetExtraStruct`.
+To store such items, call `pgSetExtraStruct`, passing your `long` (or pointer) in `extra_struct` and a unique identification number in `ref_id`. The purpose of this UID is to reference that item later in `pgGetExtraStruct`.
 
 However, if the value in `ref_id` is already being used by an "extra struct" item within `pg`, the old value is overwritten with `extra_struct`. (Hence, that is how you can "change" a value that had previously been stored).
 
@@ -2047,7 +2033,7 @@ If you want to know if a point (`co_ordinate`) sits on top of editable text (to 
 
 	(short) pgPtInView (pg_ref pg, co_ordinate_ptr point, co_ordinate_ptr offset_extra);
 
-Given an arbitrary window coordinate (relative to that window's coordinate system) in point, `pgPtInView` returns information about what part of `pg`, if any, includes that point.
+Given an arbitrary window coördinate (relative to that window's coördinate system) in point, `pgPtInView` returns information about what part of `pg`, if any, includes that point.
 
 The `offset_extra` parameter is an optional pointer to a coördinate that holds values to temporarily offset everything in `pg` before checking intersections of the point. In other words, if `offset_extra` is non-null, this visual area in `pg` will first be offset by `offset_extra.h` and `offset_extra.v` amounts before checking the containment of point in `vis_area`; the wrap area will also be offset by this amount before checking if the wrap area contains the point, and so on.
 
@@ -2106,11 +2092,11 @@ For example, suppose a large document changed from 12 point text to 18 point tex
 
 # 4 Virtual Memory
 
-## 4.1 Initializing Virtual Memory
+## 4.1 Initialising Virtual Memory
 
 OpenPaige supports a "virtual memory" system in which memory allocations made by OpenPaige can be spooled to a disk file in order to free memory for new allocations.
 
-However, your application must explicitly initialize OpenPaige virtual memory before it is operational; this is because disk file reading and writing is machine-dependent, hence your application needs to provide a path for memory allocations to be saved.
+However, your application must explicitly initialise OpenPaige virtual memory before it is operational; this is because disk file reading and writing is machine-dependent, hence your application needs to provide a path for memory allocations to be saved.
 
 To do so, call the following function somewhere early when your application starts up and after `pgInit`:
 
@@ -2156,16 +2142,16 @@ The `globals` parameter is a pointer to a field in `pg_globals` (same structure 
 	
 ## 4.2 The scratch file
 	
-Assuming you will be passing a null pointer to `purge_proc`, letting OpenPaige use the built-in purge function, the steps to initialize virtual memory fully are as follows:
+Assuming you will be passing a null pointer to `purge_proc`, letting OpenPaige use the built-in purge function, the steps to initialise virtual memory fully are as follows:
 
-1. First, call `pgMemStartup` to initialize the OpenPaige Memory Allocation manager, and pass the maximum memory to `max_memory` you want OpenPaige to use before allocations begin purging. If you want OpenPaige to use whatever is available, pass 0 for `max_memory` (see `pgMemStartup` in the index for additional information).
+1. First, call `pgMemStartup` to initialise the OpenPaige Memory Allocation manager, and pass the maximum memory you want OpenPaige using to `max_memory` before allocations begin purging. If you want OpenPaige to use whatever is available, pass 0 for `max_memory` (see `pgMemStartup` in the index for additional information).
 2. Create a file that can be used as a "temp" file and open it with read/write access.
 3. Call `InitVirtualMemory`, passing the file reference from §2 in the `ref_con` parameter. (For **Macintosh** platform, this should be the file `refnum` of the opened file; for **Windows** platform, this should be the `int` returned from `OpenFile` or `GetTempFile`, etc.).
 4. Keep the scratch file open until you shut down the Allocation Manager with `pgMemShutdown`.
 
 **NOTE:** It is your responsibility to close and/or delete your temp file after your application session with OpenPaige has terminated.
 
-If you are writing your own purge function, however, `ref_con` can be anything you require to initialize virtual memory I/O, such as a file reference or a pointer to some structure of your own definition.
+If you are writing your own purge function, however, `ref_con` can be anything you require to initialise virtual memory I/O, such as a file reference or a pointer to some structure of your own definition.
 
 After calling the above function, memory allocations will be "spooled" to your temp file as necessary to create a virtual memory environment.
 
@@ -2253,12 +2239,12 @@ If `text_only` is "TRUE," only the text from `paste_ref` is inserted — no text
 	bits_or, 		// Copy offscreen, "OR" mode
 	bits_xor		// Copy offscreen, "XOR" mode
 
-## NOTES:
+#### NOTES:
 
 1. If there is already selected text in `pg` (the target `pg_ref`), it is deleted before the paste occurs.
 2. Only text and styles are affected in the target `pg_ref` — shapes remain unchanged.
 
-## TECH NOTE: `pgPaste` custom styles
+#### TECH NOTE: `pgPaste` custom styles
 
 > I need to know when a custom style gets inserted into a particular `pg_ref`. That is, if a style is duplicated in an undo or clipboard context, I need to know when the style is inserted into the style table for the "real" `pg_ref`.
 
@@ -2368,7 +2354,7 @@ The `verb` parameter defines what you are about to perform, which can be one of 
 		undo_exclude_change,	// Undo exclusion area change
 		undo_doc_info,			// Undo setDocInfo change
 		undo_embed_insert,		// Undo embed_ref insertion
-		undo_app_insert		// Undo insert with position parameter
+		undo_app_insert			// Undo insert with position parameter
 	};
 
 "About to perform" means that you are about to do something you wish to be undoable later on. This includes performing a deletion, insertion, or text formatting change of any kind.
@@ -2547,7 +2533,7 @@ When you set up for "Undo Typing" (be it for a regular insertion, backspace or f
 		stacked_refs[stack_index - 1] = new_undo;
 	}
 
-# CLIPBOARD SUPPORT
+# 7 CLIPBOARD SUPPORT
 
 OpenPaige provides a certain degree of automatic support for the external clipboard, regardless of platform.
 
@@ -2581,7 +2567,7 @@ For Macintosh, a `pg_os_type` is identical to `OSType`. The name of this format 
 
 For both Macintosh and Windows platform, the clipboard is cleared before any data is written. If it is successful, the data can be read from the clipboard by calling pgGetScrap(), below.
 
-### 7.2 Reading from the Clipboard
+## 7.2 Reading from the Clipboard
 
 	pg_ref pgGetScrap (pg_globals_ptr globals, pg_os_type native_format, embed_callback def_embed_callback);
 
@@ -2591,8 +2577,7 @@ The `globals` parameter must be a pointer to the OpenPaige globals structure (sa
 
 The `native_format` parameter should contain the same native format type identifier that was given to `pgPutScrap()`. For example, if running on a Macintosh, the `native_format` might be `paig`. On a Windows machine, `native_format` would be the value returned from `RegisterClipboardFormat()`.
 
-The `def_embed_callback` parameter is an optional function pointer to an `embed_ref` callback function. The purpose of providing this parameter is to initialize any
-`embed_ref`s read from the clipboard to use your callback function. If `def_embed_callback` is NULL it will be ignored (and the default callback used by OpenPaige will be placed into any `embed_ref`s read).
+The `def_embed_callback` parameter is an optional function pointer to an `embed_ref` callback function. The purpose of providing this parameter is to initialise any `embed_ref`s read from the clipboard to use your callback function. If `def_embed_callback` is NULL it will be ignored (and the default callback used by OpenPaige will be placed into any `embed_ref`s read).
 
 ##### NOTE (Windows)
 **IMPORTANT:** You must call `OpenClipboard()` before calling `pgGetScrap()`, then call `CloseClipboard()` after you are through processing the data. OpenPaige can't open the clipboard for you because it can't assume there is a valid `HWND` available within its structure.
@@ -2627,7 +2612,7 @@ OpenPaige will check the clipboard for format types it can support in the follow
 
 If none of the above formats are found, `pgGetScrap` returns MEM_NULL.
 
-### 7.4 Checking Clipboard Availability
+## 7.4 Checking Clipboard Availability
 
 	pg_boolean pgScrapAvail (pg_os_type native_format);
 
@@ -3030,9 +3015,9 @@ TABLE \#3: POSSIBLE RESULTS WHEN `SET_ANY_MASK` IS SET TO `FALSE`
 
 Setting `set_any_match` to TRUE is used to determine if only a part of the text matches a given paragraph format. This is described in "Obtaining Current Text Format(s)"<!-- on page 30-15-->. The `par_info` structure is described in "par_info"<!-- on page 30-33-->.
 
-## 9 TABS \& INDENTS
+# 9 TABS \& INDENTS
 
-### 9.1 Tab Support
+## 9.1 Tab Support
 
 One of the elements of a paragraph formats is a list of tab stops. Although you could set tabs (or change tabs) using `pgSetParInfo`, some additional functions have been provided exclusively for tabs to help save on coding:
 
@@ -3254,7 +3239,7 @@ Indentations are pixel positions relative to a text line's maximum left and maxi
 
 When indents are changed, they apply to whole paragraphs.
 
-## Get Indents
+### Get Indents
 
 To obtain the current indent settings of a selection range, call the following:
 
@@ -3270,17 +3255,17 @@ If `left_screen_offset` and `right_screen_offset` are non-null, `pgGetIndents` w
 
 NOTE: The `left_screen_offset` and `right_screen_offset` values will include the scrolled position of the OpenPaige object, if any (see chapter 11, "All About Scrolling"<!-- on page 11-1-->).
 
-## 10 All About Selection
+# 10 All About Selection
 
 An OpenPaige object's text can be selected either by the user or directly by your application.
 
-### 10.1 Up \& Running with Selections
+## 10.1 Up \& Running with Selections
 
 Selection by the user is accomplished with `pgDragSelect`; this has already been covered in detail (see "Blinking Carets \& Mouse Selections"<!-- on page 2-420--> with regards to `pgDragSelect`).
 
 Additional support functions are provided, however, to set selections directly and/or to obtain both simple selections (insertion points or a selection pair of offsets) as well as complex selections (discontinuous selections).
 
-### 10.2 Simple Selections
+## 10.2 Simple Selections
 
 A "simple" selection is either a single insertion point or a pair of text offsets which implies a single range. This includes vertical selections that contain only two points (topleft and bottom-right text positions). To set a simple selection, call the following:
 
@@ -3304,7 +3289,7 @@ If the `selection` range is discontinuous, you will receive the first selection 
 
 **NOTE:** `pgSetSelection` will not affect the style of text. It merely highlights the text and gets the internal range within OpenPaige so that other functions can operate thereon.
 
-### 10.3 Discontinuous Selections
+## 10.3 Discontinuous Selections
 
 A discontinuous selection can be accomplished with `pgDragSelect` and setting the appropriate bit in the modifiers parameter (in which case, every new `verb` of `mouse_down` will start a new selection pair). You can also accomplish this from your app with multiple `pgSetSelection` calls and the appropriate bit set in modifiers.
 
@@ -3629,7 +3614,7 @@ For scrolling by a unit, page or absolute value, when an OpenPaige object is scr
 
 ## 11.2 How OpenPaige Actually Scrolls
 
-In reality, neither the text nor the page rectangle within an OpenPaige object ever "moves". Whatever coordinates you have set for an OpenPaige object's `page_area` (shape in which text will flow) remains constant and do not change; the same is true for the `vis_area` and `exclude_area`.
+In reality, neither the text nor the page rectangle within an OpenPaige object ever "moves". Whatever coördinates you have set for an OpenPaige object's `page_area` (shape in which text will flow) remains constant and do not change; the same is true for the `vis_area` and `exclude_area`.
 
 The way an OpenPaige object changes its "scrolled" position, however, is by offsetting the display and/or the relative position of a "mouse click" when you call `pgDragSelect` or any other function that translates a coördinate point to a text location. The scrolled position is a single vertical and horizontal value maintained within the `pg_ref`; these values are added to the top-left coördinates for text display at drawing time, and they are added to the mouse coördinate when click/dragging.
 
@@ -4165,13 +4150,13 @@ Because certain environments and frameworks support document scrolling in many d
 
 When OpenPaige text is "scrolled," a pair of long integers inside the `pg_ref` is increased or decreased which defines the extra distance, in pixels, that OpenPaige should draw its text relative to the top-left of the window.
 
-This is a critical point to consider for implementing other methods of scrolling: the contents of an OpenPaige document *never actually "move" by virtue of `pgScroll`, `pgSetScrollParams` or `pgSetScrollValues`*. Instead, only two long words within the `pg_ref` (one for vertical position and one for horizontal position) are changed. When the time comes to display text, OpenPaige temporarily subtracts these values from the top-left coordinates of each line to determine the target display coordinates; but the coordinates of the text lines themselves (internally to the `pg_ref`) remain unchanged and are always relative to the top-left of the window's origin regardless of scrolled position.
+This is a critical point to consider for implementing other methods of scrolling: the contents of an OpenPaige document *never actually "move" by virtue of `pgScroll`, `pgSetScrollParams` or `pgSetScrollValues`*. Instead, only two long words within the `pg_ref` (one for vertical position and one for horizontal position) are changed. When the time comes to display text, OpenPaige temporarily subtracts these values from the top-left coördinates of each line to determine the target display coördinates; but the coördinates of the text lines themselves (internally to the `pg_ref`) remain unchanged and are always relative to the top-left of the window's origin regardless of scrolled position.
 
-Similarly, when `pgDragSelect` is called (to detect which character(s) contain a mouse coordinate), OpenPaige does the same thing in reverse: it temporarily adds the scroll positions to mouse point to decide which character has been clicked, again no text really changes its position.
+Similarly, when `pgDragSelect` is called (to detect which character(s) contain a mouse coördinate), OpenPaige does the same thing in reverse: it temporarily adds the scroll positions to mouse point to decide which character has been clicked, again no text really changes its position.
 
 Considering this method, the following facts might prove useful when `pgScroll` needs to be bypassed altogether and/or if your programming framework requires a system of scrolling:
 
-- A `pg_ref` that is "scrolled" is simply a `pg_ref` whose vertical and horizontal "scroll position" fields are nonzero; at no time does text really "scroll." OpenPaige temporarily subtracts these scroll positions from the display coordinates of each line when it comes time to draw the text.
+- A `pg_ref` that is "scrolled" is simply a `pg_ref` whose vertical and horizontal "scroll position" fields are nonzero; at no time does text really "scroll." OpenPaige temporarily subtracts these scroll positions from the display coördinates of each line when it comes time to draw the text.
 - The "scroll position" values can be obtained by calling `pgScrollPosition`.
 - The "scroll position" can be set directly by doing a `UseMemory(pg_ref)`, changing `Paige_rec_ptr -> scroll_position`, then `UnuseMemory(pg_ref)`.
 - The "scroll positions" are always positive, i.e. as the document scrolls from top to bottom or from left to right, the scroll positions increase proportionally by that many pixels.
@@ -4180,9 +4165,9 @@ Considering this method, the following facts might prove useful when `pgScroll` 
 - If `draw_none` is given to `pgScroll`, all that occurs is the scroll positions are changed (no pixels are scrolled and no text is redrawn).
 - A call to `pgGetScrollValues` merely returns the value from the scroll position members (with the values modified as necessary to achieve ≤16-bit integer result and adjusted to match what the application has defined as a "scroll unit").
 
-### 11.8 Alternate Scrolling
+## 11.8 Alternate Scrolling
 
-Scrolling a `pg_ref` "normally", using `pgScroll()` and similar functions, the top-left coordinates of the document are changed internally. However, rather than changing the window origin itself, OpenPaige handles this by remembering these scroll values, and offsetting the position of text at the time it draws its text.
+Scrolling a `pg_ref` "normally", using `pgScroll()` and similar functions, the top-left coördinates of the document are changed internally. However, rather than changing the window origin itself, OpenPaige handles this by remembering these scroll values, and offsetting the position of text at the time it draws its text.
 
 Using this default scrolling method, OpenPaige assumes that the window origin never changes and that the visual region is relatively constant.
 
@@ -4321,7 +4306,7 @@ The "scrolling action" would have been any OpenPaige function that has changed t
 
 By "previous scrolling" is meant the last function call that changed the scroll position. For example, there could have been 1,000 non-scrolling functions since the last scrolling change, but `pgLastScrollAmount()` would only return the values since the last scrolling.
 
-### 11.9 Draw Scroll Hook \& Scroll Regions
+## 11.9 Draw Scroll Hook \& Scroll Regions
 
 An application could repaint the area uncovered by a scroll with the `draw_scroll` hook:
 
@@ -4340,3 +4325,1375 @@ The `paige_rec` structure (provided as the `pg` parameter in the above hook) con
 For example, if `draw_scroll` is called, `pg -> port.scroll_rgn` would be a `RgnHandle` for Macintosh and an `HRGN` for Windows. In both cases, if you were to fill that region with something, it would conform to the exact scrolled area, rectangular or not.
 
 As a rule, to avoid problems with non-rectangular scrolled area(s), use `pg -> port.scroll_rgn` instead of the `update_rgn` parameter.
+
+# 12 ALL ABOUT SHAPES
+
+The quickest way to get "Up \& Running” with shapes is to see "Up \& Running Shapes”<!-- on page 2-20-->. This shows how to get a document up within rectangles to display and/or edit.
+
+This chapter provides more details should you wish to provide your users with more complex shapes.
+
+## 12.2 Basic shape areas
+
+As mentioned in several places in this document, an OpenPaige object maintains three basic shape areas.
+
+The exact description and behavior for each of these shapes is as follows:
+
+`vis_area` — The "viewable" area of an OpenPaige object. Stated simply, anything that OpenPaige displays that is even one pixel outside the `vis_area` gets clipped (masked out). Usually, the `vis_area` in an OpenPaige object is some portion (or all) of a window's content area and remains unmoving and stationary. (See Figure 8 *infra*).
+
+`page_area` — The area in which text will flow. For the simplest documents, the `page_area` can be considered a rectangle, or "page" which defines the top-left position of text display as well as the maximum width. For example, if you wanted to create a document representing an 8" wide page, you simply specify a `page_area` that is 8 inches wide. Hence, text will wrap within those boundaries.
+
+The `page_area` may or may not be the same size as the `vis_area`, and may or may not align with the `vis_area`'s top-left position. In fact, a large document on a small monitor would almost always be larger than the `vis_area` (see Figure 8<!-- on page 12-213-->).
+
+`exclude_area` - An optional area of an OpenPaige object which text flow must avoid. An good example of implementing an `exclude_area` would be placing a picture on a document which text must wrap over (or wrap around from left to right). The easiest way to do this would be to build an `exclude_area` that contains the picture's bounding frame, resulting in the forced avoidance of text for that area.
+
+All three shapes can be changed dynamically at any time. Changing the `page_area` would force text to rewrap to match the new shape; changing the `exclude_area` would also force text to rewrap in order to avoid the new areas.
+
+If you are specifically implementing "containers", see "Containers Support"<!-- on page 141--> which might provide an easier path.
+
+If you are implementing any kind of exclusion shapes, see "Exclusion Areas"<!-- on page 15-1-->.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-215.jpg?height=910&width=1300&top_left_y=200&top_left_x=430)
+
+As stated, the simplest documents are rectangles; however, the `page_area` can be non-rectangular. A good example of this would be columns in which text must flow from one column to the other. In this case, the `page_area` would look similar to what is shown in Figure 9 *infra*.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-215.jpg?height=600&width=1300&top_left_y=1460&top_left_x=430)
+
+## 12.3 Coordinates \& Graphic Structures
+
+For purposes of cross-platform technology, OpenPaige defines its own set of structures to represent screen positions (coordinates) and shapes. Except for machine-specific source files, no reference is made to, say, Macintosh “QuickDraw” structures.
+
+The main components ("building blocks") of shapes are the following record structures:
+
+#### `Rectangle`
+
+	typedef struct
+	{
+		co_ordinate top_left;	// Top-left of rect
+		co_ordinate bot_right;	// Bottom-right of rect
+	}
+	rectangle, *rectangle_ptr;
+
+#### `Co_ordinate`
+
+	typedef struct
+	{
+		long v;	// vertical position
+		long h;	// horizontal position
+	}
+	co_ordinate;
+
+## 12.4 What's Inside a Shape
+
+Shapes are simply a series of rectangles. A very complex shape could theoretically be represented by thousands of rectangles, the worst-case being one rectangle surrounding each pixel.
+
+All shape structures consist of a bounding rectangle (first rectangle in the array) followed by one or more rectangles; the bounding rectangle (first one) is constantly updated to reflect the bounding area of the whole shape as the shape changes.
+
+Hence, the shape structure is defined simply as:
+
+	typedef rectangle shape; // Also a "shape", really
+	typedef rectangle_ptr shape_ptr;
+
+A shape is maintained by OpenPaige, however, as a memory_ref to a block of memory that contains the shape information. In the header it is defined as:
+
+	typedef memory_ref shape_ref; // Memory ref containing a "shape"
+
+## 12.5 Rules for Shapes
+
+The following rules apply to shapes with respect to the list of rectangles they contain:
+
+1. If rectangle edges are connected exactly (i.e., if two edges have the same value), they are considered as "one" even if such a union results in a non-rectangular shape (see Figure 10<!-- on page 12-216-->).
+2. If rectangle edges are not connected, they are considered separate "containers;" even if they overlap. (Overlapping would result in overlapping text if the shape definition was intended for the area where text is drawn).
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-218.jpg?height=600&width=1300&top_left_y=190&top_left_x=420)
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-218.jpg?height=540&width=1300&top_left_y=920&top_left_x=420)
+
+## 12.6 Building Shapes
+
+Placing data into the `shape_ref` is the subject of discussion in this section. However, you will not normally manipulate the `shape_ref` data directly.
+
+### Creating new shapes
+
+The easiest way to create a new shape is to use the following function:
+
+	(shape_ref) pgRectToShape (pgm_globals_ptr globals, rectangle_ptr rect);
+
+This returns a new `shape_ref` (which can be passed to one of the "area" parameters in `pgNew`). The `globals` parameter must be a pointer to the same structure given to `pgMemStartup()` and `pgInit()`.
+
+The `rect` parameter is a pointer to a rectangle; this parameter, however, can be a null pointer in which case an empty shape is returned (shape with all sides = 0).
+
+### Setting a Shape to a Rectangle
+
+If you have already created a `shape_ref`, you can "clear" its contents and/or set the shape to a single rectangle by calling the following:
+
+	(void) pgSetShapeRect (shape_ref the_shape, rectangle_ptr rect);
+
+The shape `the_shape` is changed to represent the single rectangle `rect`. If `rect` is a null pointer, `the_shape` is set to an empty shape.
+
+### Adding to a New Shape
+
+The best way to build a shape requiring more than one rectangle is to call the following:
+
+	(void) pgAddRectToShape (shape_ref the_shape, rectangle_ptr rect);
+
+The rectangle pointed to by `rect` is added to the rectangle list in `the_shape`, combining it with other rectangles if necessary. When a rectangle is added, `pgAddRectToShape` first explores all existing rectangles in the_shape to see if any of them can "merge" with rect (see "Rules for Shapes"<!-- on page 12-215-->). If none can be combined, `rect` is appended to the end of the list.
+
+If `the_shape` is empty, `the_shape` gets set to the dimensions of rect (as if you had called `pgSetShapeRect` *supra*).
+
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-220.jpg?height=460&width=1300&top_left_y=585&top_left_x=420)
+
+### Disposing a Shape
+
+To dispose a shape, call:
+
+	(void) pgDisposeShape (shape_ref the_shape);
+
+### `Rect` to Rectangle
+
+Two utilities exist that make it easier to create OpenPaige rectangles:
+
+	#include "pgTraps.h"
+	(void) RectToRectangle (Rect PG_FAR *r, rectangle_ptr pg_rect);
+	(void) RectangleToRect (rectangle_ptr pg_rect, co_ordinate_ptr offset, Rect PG_FAR *r);
+
+`RectToRectangle` converts `Rect r` to rectangle `pg_rect`. The `pg_rect` parameter must be a pointer to a rectangle variable you have declared in your code.
+
+`RectangleToRect` converts `pg_rect` to `r`; also, if offset is non-null the resulting `Rect` is offset by the amounts of the coordinate (for example, if `offset.h` and `offset.v` were (10, 5) the resulting Rect would be the values in `pg_rect` with left and right amounts offset by 10 and top and bottom amounts offset by -5.
+
+**NOTE (Macintosh):** Since a Mac `Rect` has a ±32 K limit for all four sides, OpenPaige rectangle sides larger than 32 K will be intentionally truncated to about 30 K.
+
+**NOTE:** You *must* `#include "pgTraps.h"` in any code that calls either function above.
+
+## 12.7 Manipulating shapes
+
+### Moving shapes
+
+	(void) pgOffsetShape (shape_ref the_shape, long h, long v);
+
+Offsets (moves) `*the_shape` by `h` (horizontal) and `v` (vertical) distances. These may be negative. Positive numbers move to the right horizontally and down vertically as appropriate.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-222.jpg?height=550&width=1300&top_left_y=920&top_left_x=420)
+
+### Shrinking or expanding shape
+
+	(void) pglnsetShape (shape_ref the_shape, long h, long v);
+
+Insets (shrinks or expands) `*the_shape` by `h` and `v` amounts. Positive numbers inset the shape inwards and negative numbers expand it.
+
+	(pg_short_t) pgPtInShape (shape_ref the_shape, co_ordinate_ptr point, co_ordinate_ptr offset_extra, co_ordinate_ptr inset_extra, pg_scale_ptr scaling);
+
+`pgPtInShape` returns "TRUE" if point is within any part of `the_shape` (actually, the rectangle number is returned beginning with \#1). The point is temporarily offset with `offset_extra` if `offset_extra` is non-null before checking if it is within `the_shape` (and the offset values are checked in this case, not the original point).
+
+If scaling is non-NULL, `the_shape` is temporarily scaled by that scale factor. For no scaling, pass NULL.
+
+Also, each rectangle is temporarily inset by the values in `inset_extra` if it is non-NULL. Using this parameter can provide extra "slop" for point-in-shape detection. Negative values in `inset_extra` enlarge each rectangle for checking and positive numbers reduce each rectangle for checking.
+
+**NOTE:** For convenience, `the_shape` can be also be `MEM_NULL`, which of course returns FALSE.
+
+	(pg_short_t) pgSectRectInShape (shape_ref the_shape, rectangle_ptr rect, rectangle_ptr sect_rect)
+
+Checks to see if a rectangle is within `the_shape`. First, `offset_extra`, if non-null, moves `rect` by the amount in `offset_extra.h` and `offset_extra.v`, then checks if it intersects any part of `the_shape`. The result is TRUE if any part of `rect` is within the shape, FALSE if it is not. If `the_shape` is empty, the result is always FALSE.
+
+Actually, a "TRUE" result will really be the rectangle number found to intersect, beginning with 1 as the first rectangle.
+
+**NOTE:** A result of TRUE does not necessarily mean that rect doesn't intersect with any other rectangle in `the_shape`; rather, one rectangle was found to intersect and the function returns.
+
+If `sect_rect` is not `MEM_NULL`, it gets set to the intersection of `rect` and the first rectangle in `the_shape` found to intersect it.
+
+### Shape Bounds
+
+	(void) pgShapeBounds (shape_ref the_shape, rectangle_ptr bounds);
+
+Returns the rectangle bounds of the outermost edges of the_shape. The bounds is placed in the rectangle pointed to by bounds (which cannot be null).
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-224.jpg?height=450&width=1300&top_left_y=750&top_left_x=420)
+
+### Comparing Shapes
+
+	(pg_boolean) pgEmptyShape (shape_ref the_shape);
+
+**FUNCTION RESULT:** This function returns TRUE if `the_shape` is empty (all sides are the same or all zeros).
+
+	(pg_boolean) pgEqualShapes (shape_ref shape1, shape_ref shape2);
+
+**FUNCTION RESULT:** Returns TRUE if `shape1` matches `shape2` exactly, even if both are empty.
+
+### Intersection of shapes
+
+	(pg_boolean) pgSectShape (shape_ref shape1, shape_ref shape2, shape_ref result_shape);
+
+Sets `result_shape` to the intersection of `shape1` and `shape2`. All `shape_ref` parameters must be valid `shape_ref`s, except `result_shape` can be `MEM_NULL` (which you might want to pass just to check if two shapes intersect). Additionally, `result_shape` cannot be the shape `shape_ref` as `shape1` or `shape2` or this function will fail.
+
+If either `shape1` or `shape2` is an empty shape, the result will be an empty shape. Also, if nothing between shape 1 and shape 2 intersects, the result will be an empty shape.
+
+**FUNCTION RESULT:** The function result will be TRUE if any part of `shape1` and `shape2` intersect (and `result_shape` gets set to the intersection if not `MEM_NULL`), otherwise FALSE is returned and `result_shape` gets set to an empty shape (if not `MEM_NULL`).
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-225.jpg?height=650&width=1300&top_left_y=1332&top_left_x=420)
+
+**FUNCTION RESULT:** Neither `shape1` nor `shape2` are altered by this function.
+
+	(void) pgDiffShape (shape_ref shape1, shape_ref shape2, shape_ref result_shape);
+
+**FUNCTION RESULT:** This function places the difference in `result_shape` between `shape1` and `shape2`.
+
+Unlike `pgSectShape`, `result_shape` cannot be `MEM_NULL`; however, it *can* be the same `shape_ref` as `shape1` or `shape2`.
+
+The "difference" is computed by subtracting all portions of `shape1` from `shape2`, and the geometric difference(s) produce `result_shape`. If `shape1` is an empty shape, `result_shape` will be a mere copy of shape2; if `shape2` is empty, `result_shape` will be empty.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-227.jpg?height=1170&width=1300&top_left_y=200&top_left_x=420)
+
+### Erase a Shape
+
+	(void) pgEraseShape (pg_ref pg, shape_ref the_shape, pg_scale_ptr scale_factor, co_ordinate_ptr offset_extra, rectangle_ptr vis_bounds);
+
+**FUNCTION RESULT:** This function will erase `the_shape` (by filling it with the background colour of the device in `pg`).
+
+The `scale_factor` parameter defines scaling, if any; for no scaling, pass zero for this parameter. If you want scaling, see "Scaling an OpenPaige Object"<!-- on page 16-2-->.
+
+If `offset_extra` is non-null, `the_shape` is temporarily offset by `offset_extra -> h` and `offset_extra -> v` amounts before the erasure occurs.
+
+If `vis_bounds` is non-null, then only the parts of `the_shape` that intersect with `vis_bounds` get erased; otherwise, the whole shape is erased (see illustration *infra*).
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-228.jpg?height=679&width=1300&top_left_y=493&top_left_x=420)
+
+### Moving a Shape in a `pg_ref`
+
+	(void) pgOffsetAreas (pg_ref pg, long h, long v, pg_boolean offset_page, pg_boolean offset_vis, pg_boolean offset_exclude);
+
+This function "moves" the page area and/or visual area and/or the exclusion area of `pg`. If `offset_page` is TRUE, the page area is moved; if `offset_vis` is TRUE the visual area is moved; if `offset_exclude` is TRUE the exclusion area is moved.
+
+Each area is moved horizontally and vertically by `h` and `v` pixels, respectively. What occurs is `h` gets added to the left and right sides of all rectangles enclosed in the shape while `v` gets added to top and bottom. Hence the shape is moved left or right, up or down with negative and positive values, respectively.
+
+**NOTE:** The contents of `pg` are not redrawn.
+
+## 12.8 Region Conversion Utilities
+
+	void ShapeToRgn (shape_ref src_shape, long offset_h, long offset_v, pg_scale_factor PG_FAR *scale_factor, short inset_amount, rectangle_ptr sect_rect, RgnHandle rgn);
+
+This function sets region `rgn` to `src_shape`. In addition, the region is offset by `offset_h` and `offset_v` amounts. If `scale_factor` is non-NULL, the resulting region is scaled by that scaling factor (see "Scaling"<!-- on page 16-1-->).
+
+Each rectangle added to the region is inset by `inset_amount` (`inset_amount` is added to the top and left and subtracted from right and bottom).
+
+If `sect_rect` is non-null, every rectangle in the shape is first intersected with `sect_rect` and the intersection (only) is output to the region.
+
+**NOTE:** You *must* `#include "pgTraps.h"` to use this function.
+
+**NOTE (Windows):** - `RgnHandle` is `typedef`ed in `pgTraps.h` and is the same as `HRGN`.
+
+**CAUTION:** Converting huge complex shapes to a region can be slow.
+
+### Picture Handle to Shape (Macintosh only)
+
+The following function is available only for Macintosh that takes a picture and produces a shape that encloses the picture's outside edges:
+
+	#include "pgTraps.h"
+	(void) PictOutlineToShape (PicHandle pict, shape_ref target_shape, short accuracy)
+
+Given a picture in `pict` and a `shape_ref` in `target_shape`, this function sets `target_shape` to surround the outside bit image of the picture.
+
+The `accuracy` parameter can be a value from 0 to 7 and indicates how "accurate" the shape should be: 0 is the most accurate (but consumes the most memory) and 7 is the least accurate (but consumes the least memory). The `accuracy` value actually indicates how many pixels to skip, or "group" together in forming the image. If `accuracy = 0`, the image is produced to the nearest pixel — which theoretically can mean that a rectangle is produced for every pixel surrounding the image (which is why so much memory can be consumed).
+
+The picture does not need to be a bitmap image, and it can be in colour (the image is produced around the outside edges of all nonwhite areas for colour).
+
+**NOTE:** Large, complex images can not only consume huge amounts of memory but can take several seconds to produce the image, so use this function sparingly!
+
+**NOTE:** You *must* `#include "pgTraps.h"` to use this function.
+
+## 12.9 Page Area Background Colours
+
+OpenPaige will support any background colour (which your machine can support) even if the target window's background colour is different.
+
+The page area (area text draws and wraps) will get filled with the specified colour before text is drawn; hence this features lets you overlay text on top of non-white backgrounds (or, if desirable, will also let you overlay white text on top of dark or black backgrounds).
+
+Note that this differs from the `bk_color` value in `style_info`. When setting the `style_info` background, OpenPaige will simply turn on that background colour only for that text. Setting the general background colour (using the functions below) sets the background of the entire page area.
+
+#### COLOUR TEXT AND TEXT BACKGROUND
+
+**NOTE:** See "Setting/Getting Text Color"<!-- on page 8-10--> or "Changing Styles"<!-- on page 30-7--> for information about setting text colour and text background colour.
+
+OpenPaige will also recognize which colour is considered "transparent." Normally, this would be the same color as the window's normal background colour, typically "white."
+
+"Transparent" is simply the background colour for which OpenPaige will not set or force. Defining which color is transparent in this fashion lets you control the background colour(s) for either the entire window and/or a different colour for the window versus the `pg_ref`'s page area.
+
+## 12.10 Transparent Colour
+
+The colour that is specified as "transparent" effectively tells OpenPaige: "Leave the background alone if the page area's background is the transparent colour."
+
+For most situations, you can leave the transparent colour as its default — white.
+
+Here is an example, however, where you might need to change the transparent color. Suppose that your whole window is always blue but you want OpenPaige to draw on a white background. In this case, you would set the transparent colour to something other than "white" so OpenPaige is forced to set a white background. Otherwise, OpenPaige will not change the background at all when it draws text since it assumes the window is already in that colour.
+
+## 12.11 Setting/Getting the Background Colour
+
+	(void) pgSetPageColor (pg_ref pg, color_value_ptr color);
+	(void) pgGetPageColor (pg_ref pg, color_value_ptr color);
+
+To change the page area background colour, call `pgSetPageColor`. The new background colour will be copied from the `color` parameter.
+
+To obtain the current page colour, use `pgGetPageColor` and the background colour of `pg` is copied to `*color`.
+
+After changing the background, subsequent drawing will fill the page area with that colour before text is drawn.
+
+**NOTE:** `pgSetPageColor` does not redraw anything.
+
+## 12.12 Getting/Changing the Transparent Colour
+
+The "transparent colour" is a global value, as a field in `pg_ref`. Hence, all `pg_ref`s will check for the transparent colour by looking at this field.
+
+If you need to swap different transparent colours in and out for different situations, simply change `pg_globals -> trans_color` to the desired value.
+
+NOTE: Usually the only time you need to change the transparent colour to something other than its default (white) is the following scenario: Non-white background colour for the whole window, but white background for a `pg_ref`'s page area. In every other situation it is safe to leave the transparent colour in `pg_globals` alone.
+
+## 12.13 Miscellaneous Utilities
+
+	(void) pgErasePageArea (pg_ref pg, shape_ref vis_area);
+
+This function fills `pg`'s page area with the current page background color of `pg`.
+
+The fill is clipped to the page area intersected with the shape given in the `vis_area` parameter. However, if `vis_area` is a null pointer, then the `vis_area` in `pg` is used to intersect instead.
+
+**NOTE:** You do not normally need to call this function: OpenPaige fills the appropriate areas(s) automatically when it draws text. This function exists for special situations where you want to "erase" the page area.
+
+## 12.14 OpenPaige Background Colours
+
+The purpose of this section is to provide some additional information about OpenPaige "background" colours and their relationship to the window's background colour.
+
+First, let's clarify the difference between three different aspects of background:
+
+* *Page background colour* is the colour that fills the background of your page area. The "page area" is the specific area in the `pg_ref` in which text flows, or wraps. This is not necessarily the same colour as the window's background colour. For instance, if the page area were smaller than the window that contained it, the page background would fill only the page area, while the remaining window area would remain unchanged.
+* *Window background colour* is the background colour of the window itself. This can be different than the window's background colour.
+* *Text background colour* is the background colour of text characters, applied as a style (just as italic, bold, underline, etc. is applied to text characters). Text background colour applies only to the text character itself. This can be different from both window background and page background.
+
+## 12.15 Who/What Controls Colors
+
+When creating new OpenPaige objects, the page area background colour is purely determined by the `def_bk_color` member of OpenPaige globals. Afterwards, this colour can be changed by calling `pgSetPageColor()`.
+
+The window background colour is purely controlled by your application and no OpenPaige functions alter that colour.
+
+Text background is controlled by changing the `bk_color` member of `style_info`, and that color applies only to the character(s) of that particular style.
+
+## 12.16 What is "trans_color" in OpenPaige globals?
+
+The purpose of `pg_globals.trans_color` is to define the default `WINDOW` background. Since OpenPaige is a portable library, the `trans_color` member is provided as a platform-independent method for OpenPaige to know what the "normal" background colour is.
+
+OpenPaige uses `trans_color` only as a reference. Essentially, `trans_color` defines the colour that would appear if OpenPaige left the window alone, or the colour that would be used by the operating system if the window were "erased".
+
+The value of `trans_color` becomes the most significant when you have set the page and/or text color to something different to the window color, because OpenPaige compares the page and text colors to `trans_color` to determine whether or not to `ERASE` the background.
+
+Its reasoning is, "... If the background color I am to draw *is not* the "normal" background color [`trans_color`], then I need to force-fill the background.”
+
+Conversely, "... If the background color I am to draw *is* the same as `trans_color`, then I don't have to set anything special”.
+
+Herein is most of the difficulty that OpenPaige users encounter with background colors: they set the window to a non-white background, yet they usually leave `pg_globals.trans_color` alone. This is OK as long as `trans_color` and the page area colour are different.
+
+But if you want the page background and window background to be the same, make sure `pg_globals.trans_color` is the same as the page background color. The general rules are:
+
+1. Always set `pg_globals.trans_color` to the same value as the window's background color. Do this regardless of what the page area background color will be.
+2. The only time you need to change `pg_globals.trans_color` is when/if you have changed the window's background color to something other than what is already in `pg_globals.trans_color`.
+3. Setting page and/or text colour has nothing to do with the window's real background colour. These may or may not be the same, and OpenPaige only knows if they match the window by comparing them to `trans_color`.
+4. To make the page area AND the window backgrounds match each other, you must set `pg_globals.trans_color`, `pgSetPageColor()` and the window background colour to the same colour value.
+
+# 13 PAGINATION SUPPORT
+
+Although OpenPaige does not provide full pagination features as such, several powerful support functions and features exist to help implement page breaks, columns, margins, etc.
+
+For custom text placement not covered in this chapter and for custom pagination features such as widows and orphans, keep with next paragraph, etc. see "Advanced Text Placement"<!-- on page 37-1-->.
+
+## 13.1 OpenPaige "Document Info"
+
+In every `pg_ref`, the following structure is maintained:
+
+	typedef struct
+	{
+		long attributes;			// Various attributes (see below)
+		short page_origin;			// What corner = origin
+		pg_short_t num_pages;		// Number of "real" pages
+		short exclusion_inset;		// Amount to inset exclusion area when clipping
+		short scroll_inset;			// Amount to inset vis area when scrolling
+		short caret_width_extra;	// Width of the caret
+		long repeat_slop;			// Minimum remaining before repeat
+		short minimum_widow;		// Minimum window (lines) NOTE SPELLING!
+		short minimum_orphan;		// Minimum orphan (lines)
+		co_ordinate repeat_offset;	// Amount of "gap for repeater shapes
+		rectangle print_target;		// App can use as printed page size
+		rectangle margins;			// Applied page margins
+		rectangle offsets;			// Additional offsets of doc, 4 sides
+		long max_chars_per_line;	// Optional max characters per line, or zero
+		long future[PG_FUTURE];		// Reserved for future
+		long ref_con;				// App can store whatever
+	}
+	pg_doc_info, PG_FAR *doc_ptr;
+
+NOTE: Some of the fields in `pg_doc_info` are currently unsupported, some of them are defined in `Paige.h` but not included above (but exist for future enhancements and extensions).
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-239.jpg?height=460&width=1300&top_left_y=200&top_left_x=430)
+
+The fields that are currently supported are as follows:
+
+`attributes` — defines special characteristics for the `page_area` shape. The `attributes` field applies only to the `page_area` shape (not `vis_area` or `exclude_area`), and it is a set of bits which can be any of the following:
+
+	#define V_REPEAT_BIT			0x00000001	// Shape repeats vertically
+	#define H_REPEAT_BIT			0x00000002	// Shape repeats horizontally
+	#define BOTTOM_FIXED_BIT		0x00000004	// Shape's bottom does not grow
+	#define NO_CONTAINER_JMP_BIT	0x00000010	// Can't jump containers
+	#define MAX_SCROLL_ON_SHAPE		0x00000020	// Maximum scroll is on shape
+	#define NO_CLIP_PAGE_AREA		0x00000040	// Page area does NOT clip text
+	#define WINDOW_CURSOR_BIT		0x00000400	// Keep cursor in window view
+	#define COLOR_VIS_BIT			0x10000000	// Page colour covers whole vis_area
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-240.jpg?height=425&width=1300&top_left_y=150&top_left_x=430)
+
+`V_REPEAT_BIT` or `H_REPEAT_BIT` — causes the page_area to "repeat" itself when text overflows the bottom (see "Repeating Shapes"<!-- on page 13-243-->).
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-240.jpg?height=300&width=1300&top_left_y=775&top_left_x=430)
+
+`BOTTOM_FIXED_BIT` — forces the `page_area`'s bottom to remain the same (otherwise, the bottom is considered infinite or "variable" as text grows or shrinks).
+
+**NOTE:** You want this bit to be set if you are implementing "containers." See "Containers Support”<!-- on page 14-1-->.
+
+`NO_CONTAINER_JMP_BIT` — causes text to stay within one rectangle of the shape unless a container break character is encountered. (The usual purpose of setting this mode is for "form" documents and other matrix formats in which text can't leave a "cell" unless explicitly tabbed to do so).
+
+`MAX_SCROLL_ON_SHAPE` — causes OpenPaige to compute the maximum vertical scrolling values by the bottom-most rectangle in the page area (as opposed to the bottom-most text position).
+
+**NOTE:** This bit should be set for implementing "containers." See "Containers Support"<!-- on page 14-1-->.
+
+`NO CLIP_PAGE_AREA` — causes text drawing to be clipped to the page area. Normally, text is only clipped to the vis area. If this bit is set, it is clipped to the intersection of vis area and page area.
+
+**NOTE:** You generally want this bit set for "containers" and/or non-rectangular wrap shapes.
+
+Each attribute is said to be "on" if the bit is set. The default, after `pgNew`, is all zeros (all clear).
+
+**NOTE:** If either "repeat" bit is set, `BOTTOM_FIXED_BIT` attribute is implied (and assumed) even if `BOTTOM_FIXED_BIT` is clear. This is because a shape cannot "repeat" unless the bottom is unchangeable.
+
+`WINDOW_CURSOR_BIT` — causes the caret to stay within the `vis_area` regardless of where the document scrolls.
+
+`COLOR_VIS_BIT` — informs OpenPaige that the page background colour is one and the same as the window's background colour. Setting this bit causes all "erased" areas to be painted with the page colour. Usually you want to set this bit to avoid "flashing" during scrolling if your window's background is non-white and it is the same as the page background color.
+
+`repeat_slop` — defines the minimum amount of vertical space, in pixels, remaining at the end of a document before the page shape repeats (new page “appended”). Used for repeating shapes only.
+
+`exclusion_inset` — defines the amount to inset each exclusion rectangle for clipping. For example, if `exclusion_inset` were -1, each exclusion rectangle would be expanded 1 pixel larger before being subtracted from the clipped text display.
+
+`caret_width_extra` — defines the width of the caret, in pixels. The default is 1.
+
+`scroll_inset` — defines the amount to inset the `vis_area` when scrolling. For example, if `scroll_inset` were 1, a call to `pgScroll() `would visually scroll the `vis_area` minus 1 pixel on all four sides.
+
+`minimum_widow` — defines the minimum number of lines that can exist at the end of a page, otherwise the paragraph breaks to the next page.
+
+`minimum_orphan` — defines the minimum number of lines that can exist at the beginning of a new page, otherwise the whole paragraph breaks to the new page.
+
+`repeat_offset` — defines the distance or "gap" to place between repeated shapes (see “Repeating Shapes”<!-- on page 13-243-->).
+
+`num_pages` — contains the current "number of pages," which is really the number of times the shape will repeat itself if the whole document was displayed.
+
+**NOTE:** This is not necessarily the number of physical pages that should be printed!
+
+Repeating shapes can have "blank" pages due to the slop value on a nearly-filled page causing a new repeat. For correct printing, see pgPrintToPage.
+
+ref_con — Can contain anything you want.
+
+**TODO:** Currently, `page_origin`, `print_target` and `margins fields` are not supported but are provided for future enhancements and extensions.
+
+### TECH NOTE: Continuous document
+
+> The example demos had spacing above the document that I couldn't get rid of. I'm interested in some of the "multimedia" features of openPaige, but I want a "streaming" document (no margins/headers/footers spaces). How do I get rid of the spacing so that all of the document is one long stream of data?
+
+By "spacing" I assume you mean the white space between page breaks. We simply chose to implement the demo this way, with the "repeating shape" feature in OpenPaige. Using this implementation, the pages show exactly as they will appear when printed, i.e. with all the paper margins in each side including top/bottom.
+
+Some developers like to implement documents that way, yet some prefer the method that you mention (as one continuous "page"). To do one continuous page, one simply does not implement the "repeating shape,"; non-repeating shapes is actually the default mode. You can examine non-repeating shapes in our "Simple Demo" for Macintosh
+
+For information on page breaks in a continuous document see "Artificial page breaks"<!-- on page 13-245.-->
+
+### TECH NOTE: Relationship of `page_area`, `vis_area` and clipping regions clarified
+
+> I am having difficulty setting the appropriate attributes to make my document behave in a certain way...[etc.].
+
+It is important to understand the relationship between the `vis_area`, `page_area`, and the various attribute bits in a `pg_ref` thăt might affect the behavior of both shapes (by `attribute bits` is meant the value(s) originally given to the `flags` parameter for `pgNew` and/or new attribute settings given in `pgSetAttributes`) and/or the attributes set in `pg_doc_info`.
+
+The most essential difference between a `pg_ref`'s page area versus `vis_area` is the `page_area` is the "container" in which text will wrap, while its vis area simply becomes the document's clipping region.
+
+Generally, the `vis_area` remains constant and unchanging, whereas the `page_area`, particularly its bottom, can change dynamically as text is inserted or deleted, depending on the attribute flags that are set in the `pg_ref`. The following is the expected behaviour of the page_area when different attribute flags are set in the `pg_ref`:
+
+#### Table 4: Expected behaviour of `page_area` attributes
+
+| ATTRIBUTE BITS | `page_area` BEHAVIOUR | CLIPPING |
+| :--- | :--- | :--- |
+| no bits set (default) | Bottom grows/shrinks dynamically as text is inserted or deleted (see notes below). | All drawing is clipped to intersection of `vis_area` and the window's current clip region. |
+| `BOTTOM_FIXED_BIT` | Bottom remains constant, never changes regardless of the text content | All drawing is clipped to intersection of `vis_area`, `page_area` and the window's current clip region. |
+| `NO_WINDOW_VIS_BIT` | No effect | Same as above except window's clip region *is not* included in the clip region |
+| `EX_DIMENSION_BIT` (`pgNew()` flag) | No effect visually, but the total height of the doc's contents include the exclusion area shape (otherwise the exclusion area is not considered part of the document's dimensions). | No effect visually |
+| `COLOR_VIS_BIT` | No additional effect (but `vis_area` is erased with the background colour) | No effect visually |
+| `V_REPEAT_BIT` | Shape automatically repeats when text fills to its bottom, achieving multiple page effect. | Each repeating shape intersects with clip region |
+| `NO_CLIP_REGION` | No effect | No clipping is set at all (the application must set the clipping area) |
+
+##### NOTES
+
+On default behaviour (when no attributes have been set):
+
+1. In the default mode, the `page_area`'s bottom is said to grow dynamically to enclose the total height of text. In this case, the bottom of the `page_area` originally given to `pgNew` is essentially ignored; the page area's *top*, however, is not ignored, as that defines the precise top position of the first line of text.
+2. When the page area's bottom is said to "grow" dynamically in the default mode, the shape itself does not actually change, rather OpenPaige temporarily pretends its bottom matches the text bottom when it paginates or displays. Although the `page_area` appears to "grow," any time you might examine the page area shape, its bottom would not be changed from the original dimensions (to get document's bottom, use `pgTotalTextHeight` instead).
+3. `NO_WINDOW_VIS_BIT` works only in the Macintosh version and has no effect in the Windows version.
+
+## 13.2 Getting/Setting Document Info
+
+	(void) pgGetDocInfo (pg_ref pg, pg_doc_ptr doc_info);
+	(void) pgSetDocInfo (pg_ref pg, pg_doc_ptr doc_info, pg_boolean inval_text, short draw_mode);
+
+To obtain the current document info settings for `pg`, call `pgGetDocInfo`, and a copy of the document info record will be placed in `*doc_info`.
+
+To change the document info, call `pgSetDocInfo` and pass a pointer to the new information. OpenPaige will copy its contents in `pg`.
+
+If `inval_text` is TRUE, OpenPaige marks all the text in `pg` as "not paginated," forcing new word-wrap calculations the next time it paginates the document (which will normally be the next time the contents of `pg` are drawn).
+
+`draw_mode` can be the values as described in "Draw Modes"<!-- on page 2-30-->:
+
+	typedef enum
+	{
+		draw_none,			// Do not draw at all
+		best_way,			// Use most efficient method(s)
+		direct_copy,		// Directly to screen, overwrite
+		direct_or,			// Directly to screen, "OR"
+		direct_xor,			// Directly to screen, "XOR"
+		bits_copy,			// Copy offscreen
+		bits_or,			// Copy offscreen in "OR" mode
+		bits_xor,			// Copy offscreen in "XOR" mode
+		bits_emulate_copy	// Copy "fake" offscreen
+		bits_emulate_or	// "Fake" offscreen in "OR" mode
+		bits_emulate_xor	// "Fake" offscreen in "XOR" mode
+	};
+
+## 13.3 Repeating Shapes
+
+If `V_REPEAT_BIT` or `H_REPEAT_BIT` is set in the attributes field of `pg_doc_info`, the `page_area` shape will "repeat" itself each time text overflows the bottom. For `V_REPEAT_BIT`, the shape repeats itself vertically; for `H_REPEAT_BIT`, the shape repeats itself horizontally (see Figure 15<!-- on page 12-13-->).
+
+However, the shape itself does not physically grow. Instead, OpenPaige displays the shape repeatedly down the screen, one *page* at a time. Hence, if you changed `page_area` to some other shape while one of the `repeat` bits were on, then all repeating shapes will change to the new shape.
+
+The simplest application of the `repeat` bits is to provide a page rectangle (in original `page_area`), then as the document grows multiple "pages" are added.
+
+Note that the term `page` is used here to describe a logical section of a document: the original shape does not really need to be a `page` rectangle, rather it could be a set of columns or any non-rectangular shape. In any event, the entire shape `repeats` itself each time text fills it up.
+
+For such a feature, if you require a "gap" (page break area), you can do so by setting `repeat_offset` in `pg_doc_info` to a non-zero value. This is the amount, in pixels, to add between repeated shapes. Note that `repeat_offset` is a `co_ordinate`. This means you can specify both a vertical and horizontal displacement for repeated shapes (a horizontal displacement + vertical displacement would cause a "staircase" effect).
+
+If the shape is to repeat vertically, each occurrence of the shape falls below the last one; for horizontal repeating, each occurrence falls to the right of the last one. The "gap" (`repeat_offset`), however, is added to the appropriate corresponding sides:
+
+`repeat_offset.v` always displaces the repeating shape vertically and `repeat_offset.h` always displaces horizontally, regardless of whether `V_REPEAT_BIT` or `H_REPEAT_BIT` is set.
+
+The purpose of the `repeat_slop` field is to append a repeated shape before text actually fills the entire shape.
+
+For example, many applications prefer a new "page" to become available when text is almost filled to the bottom of the last page. The value you place in `repeat_slop` is used for this purpose, and is used by OpenPaige as follows: once the bottom of text + `repeat_slop` ≥ the shape's bottom, the shape is repeated.
+
+##### NOTES
+1. Only the text bottom is measured against the shape, not the right or left sides. Even if you set `H_REPEAT_BIT`, a shape only repeats when text BOTTOM + `repeat_slop` hits or surpasses the shape's bottom.
+2. Only one of `H_REPEAT_BIT` or `V_REPEAT_BIT` should ever be set at a time (the shape will not repeat both ways).
+
+For more details on how OpenPaige paginates, see "Advanced Text Placement"<!-- on page 37-1-->.
+
+### TECH NOTE: Artificial page breaks
+
+> I am doing my word processor similar to MS Word. I put in a page break and draw my line dividing the pages. But when I go to print, openPaige draws a single page, the text does not break to the next page.
+
+The only real problem is if a `pg_ref` has no repeating shapes (or containers), a page break char has no place to "jump." Well, then during printing—just before `pgPrintToPage`—all one needs to do is set repeating shapes, then print. When printing is done, restore non-repeating shapes. That will cause openPaige to work "correctly."
+
+But when you want to go to page view mode, you should then switch to repeating shapes, just as the above note does for printing. That will help solve your problem.
+
+Note that in a long document, anything exceeding 10 pages, finding a page will require pagination which the user wili probably notice. This is why word includes a "Paginate Now" menu item in the menu! You will probably want to paginate once and then I believe `pgFindPage` should work more quickly. If you don't allow OpenPaige to paginate, it can't know which character is the top of the page! OpenPaige (and all other word processors that display WYSIWYG pages) will have to repaginate to find the positions of the first character on the page. OpenPaige currently performs many tricks and second guessing on when and how to calculate those positions.
+
+Please note that OpenPaige cannot make the same assumptions as Word on *when* to perform those calculations. We must sometimes rely on the developer to know when to perform the pagination.
+
+## 13.4 Repeating shapes examples
+
+In Figure 13<!-- on page 12-10-->, the initial `page_area` shape contains text which is within the bounds of the shape. Once text overflows the bottom, the shape is repeated and placed at `repeat_offset.v` pixels down and `repeat_offset.h` pixels across.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-248.jpg?height=1030&width=1510&top_left_y=520&top_left_x=210)
+
+The next illustration shows what happens when `repeat_stop` is nonzero. In this example, repeat_stop value is added to the bottom of the text and, if the result overflows the shape's bottom, the shape is repeated. This provides an 'extra page' to get added before the text completely fills the page shape.
+
+##### Figure 23. The shape when text gets below the `repeat_stop` value.
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-249.jpg?height=729&width=1290&top_left_y=114&top_left_x=430)
+
+A repeating shape can actually be any shape and does not need to be a "page" rectangle. Figure 17<!-- on page 12-15--> shows an example of "columns" repeating for each "page."
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-249.jpg?height=780&width=1300&top_left_y=1175&top_left_x=430)
+
+## 13.5 Shape Repeat Deletions
+
+Repeated shapes will "delete" themselves if text shrinks above the repeated shape.
+
+For example, if text filled up "page 1" causing a "page 2" to be created, deleting all the text will effectively delete "page 2."
+
+## 13.6 Widows and Orphans
+
+OpenPaige supports "widow and orphan" control, to a certain extent. When lines are computed to flow within repeating shapes (multiple "pages"), whenever `pg_doc_info.minimum_widow` is non-zero, OpenPaige will force a whole paragraph to the next page if its number of lines on the bottom of the page are equal to or less than minimum_widow.
+
+Similarly, if `pg_doc_info.minimum_orphan` is non-zero, the whole paragraph is forced to the next page if its number of lines already breaking to the next page are less than or equal to minimum_orphan.
+
+## 13.7 Header \& Footer Support
+
+While OpenPaige does not directly support "headers and footers," a number of functions are provided to implement them more easily.
+
+### Page modify hook
+
+This "hook" allows an application to temporarily modify the top, left, right and bottom margins of a "page" before pagination occurs. This is useful for header/footer/footnote support since temporary "exclusion" areas can be tailored for any specific page—and without actually modifying the exclusion shape itself.
+
+	PG_PASCAL (void) page_modify_proc) (paige_rec_ptr pg, long page_num, rectangle_ptr margins);
+
+The above is the prototype for `page_modify`. This is a general OpenPaige hook (not a style hook). When this gets called, `page_num` will indicate a *zero-indexed* page number and margins will point to a "rectangle" that represents four margins.
+
+OpenPaige calls this hook for every page that it "paginates." Note that the margins rectangle is not actually `rectangle`, rather it represents four margin values to add to the top or left, and/or subtract from bottom or right. Normally, these values will be zero (no extra margins); but if you wanted to remove, say, 16 pixels of space from the bottom of the page, you would set `margins -> bot_right.v` to 16.
+
+Each time this function is called, all four "margins" are cleared to zero (the default). Hence if your function does nothing, the page remains the original size.
+
+This hook is also very useful for alternating "gutters," i.e. extra space on the right side for odd pages and the same extra space on the left side for even pages, etc.
+
+**CAUTION:** The top and bottom of the page can be modified randomly, i.e. each page can be different. Modifying left and/or right sides, however, must result in the same width for all pages. For example, you should not modify the left or right sides of page 1 but leave page 2's left or right side alone; it is OK to alternate sides as they are modified as long as the distance between left and right edges remain the same.
+
+For additional information, see also the chapter "Customizing OpenPaige"<!-- on page 271 -->.
+
+	void pgTextboxDisplay (pg_ref pg, paige_rec_ptr target_pg, rectangle_ptr target_box, rectangle_ptr wrap_rect, short draw_mode);
+	
+The above function is useful for drawing a `pg_ref` to any arbitrary location; the text will move (and optionally wrap) to a specified target location regardless of where its "normal" coordinates exist.
+
+**PURPOSE:** Since most applications that implement headers and footers use `pg_ref`s for a "header" or "footer", this new function exists for header/footer utilities.
+
+If `target_pg` is not null, the drawing occurs to the graphics device attached to that OpenPaige record; otherwise the drawing occurs to the device attached to `pg`. Note there are two usual ways to obtain a `paige_rec_ptr`: the first is from a low-level hook, in which case the `paige_rec_ptr` is usually one of its parameters. The second way is to do `UseMemory(pg_ref)` and then `UnuseMemory(pg_ref)` when you are done using the `paige_rec_ptr`.
+
+The `target_box` parameter is a pointer to a rectangle which defines bounding "box" in which to draw the text. This rectangle defines the top-left position of the drawing as well as the clipping region. Text *will not* rewrap into this shape; rather, it repositions its text to align with the box's top-left coordinate, and `target_box` also becomes the clipping region.
+
+The `wrap_rect` parameter is a pointer to an optional, temporary "page rect" for the text to wrap. If this is a null pointer, the page_area is used within `pg` (the source `pg_ref` ).
+
+The `draw_mode` is identical to all other functions that accept a drawing mode.
+
+OpenPaige supports several other page finding and setting commands. These are closely aligned with printing. These are shown in "Computing Pages"<!-- on page 16-13-->, and “Skipping pages"<!-- on page 16-14-->. Custom page display techniques are described in "Display Proc"<!-- on page 16-16-->,
+
+# 14 CONTAINERS SUPPORT
+
+OpenPaige has some built-in support for this purpose by providing several functions to insert, delete and change a list of rectangles that constitute `page_area`, as well as the ability to attach an application-defined reference to each "container" of the shape.
+
+The term "container" is used to describe a rectangular portion of the `page_area`. For an application to support page-layout text containers, the typical method is to build the `page_area` (the shape in a `pg_ref` in which text will flow) with the desired series of rectangles.
+
+## 14.1 Setting Up for "Containers"
+
+By default, a `pg_ref` will not necessarily handle containers the way you might expect without first setting the appropriate values in `pg_doc_info`.
+
+Before using any of the functions below, you should set *at least* the `BOTTOM_FIXED_BIT` and `MAX_SCROLL_ON_SHAPE` bits using `pgSetDocInfo`.
+
+These bits are not set by default, so you should set them soon after `pgNew` and before inserting or displaying a `pg_ref` with "containers". For more information about `pgSetDocInfo` see “Getting/Setting Document Info”<!-- on page 13-9-->.
+
+### Setting up for containers
+
+	void setup_for_containers (pg_ref pg)
+	{
+		pg_doc_info info;
+		pgGetDocInfo(pg, &info);
+		info.attributes = BOTTOM_FIXED_BIT | MAX_SCROLL_ON_SHAPE;
+		pgSetDocInfo(pg, &info, FALSE);
+	}
+
+The purpose of `BOTTOM_FIXED_BIT` is to keep the last rectangle from "growing" along with text.
+
+`MAX_SCROLL_ON_SHAPE` is optional, but will usually be what you want. Normally, OpenPaige will assume the maximum vertical scrolling position is the same as the bottom-most text position. In a "containers" application, however, that is often undesirable since a document can contain many "empty" containers. By setting `MAX_SCROLL_ON_SHAPE`, OpenPaige will find the bottom-most page area rectangle for computing maximum vertical scrolling.
+
+## 14.2 Setting and Maintaining "Containers"
+
+### Number of containers
+
+	(pg_short_t) pgNumContainers (pg_ref pg); 
+	
+Returns the number of "containers" currently in `pg`. This function actually returns the number of rectangles in the page area. Initially, after `pgNew`, the answer will be however many rectangles were contained in the initial page_area shape, which will be at least one rectangle.
+
+### Inserting containers
+
+	(void) pgInsertContainer (pg_ref pg, rectangle_ptr container, pg_short_t position, long ref_con, short draw_mode);
+
+This makes a copy of the rectangle pointed to by `container` and inserts it into `pg` 's page_area. Consequently, text will flow within the new shape now including the container rectangle, hence a new "container" is inserted.
+
+Assuming that the current page area shape is a series of rectangles, from 1 to n, the new rectangle is inserted after the rectangle number in the `position` parameter. However, if position is zero, the new container is inserted at the beginning (becomes first rectangle in the shape). If position is `pgNumContainers(pg)`, it is inserted as the very last rectangle.
+
+You can also "attach" any long-word value (such as a pointer or some other reference) to the new "container" by passing that value in `ref_con`. Consequently, you can access this value at any time using `pgGetContainerRefCon` (see "Container refCon”<!-- on page 14257-->).
+
+`draw_mode` can be any combination of the values described in "Draw Modes":
+
+	typedef enum
+	{
+		draw_none,			// Do not draw at all
+		best_way,			// Use most efficient method(s)
+		direct_copy,		// Directly to screen, overwrite
+		direct_or,			// Directly to screen, "OR"
+		direct_xor,			// Directly to screen, "XOR"
+		bits_copy,			// Copy offscreen
+		bits_or,			// Copy offscreen in "OR" mode
+		bits_xor,			// Copy offscreen in "XOR" mode
+		bits_emulate_copy	// Copy "fake" offscreen
+		bits_emulate_or	// "Fake" offscreen in "OR" mode
+		bits_emulate_xor	// "Fake" offscreen in "XOR" mode
+	};
+
+**NOTE:** The position parameter is not checked for validity! Make sure it is within the boundaries between 0 and `pgNumContainers(pg)` or a crash can result. (Also note that the other container functions given here require that the range be between 1 and `pgNumContainers`; only in `pgInsertContainer` can position be zero).
+
+### Getting particular container
+
+	void pgGetContainer (pg_ref pg, pg_short_t position, pg_boolean include_scroll, pg_boolean include_scale, rectangle_ptr container);
+
+Returns the "container" rectangle defined by the position parameter. This can be any of the rectangles contained in `pg`'s page area, from 1 to `pgNumContainers(pg)`. The rectangle is copied to the structure pointed to by the container parameter.
+
+If `include_scroll` is TRUE, the container returned will be in its "scrolled" position (as it would appear on the screen). If `include_scale` is TRUE, the container returned will be scaled to the appropriate dimensions (based on the scaling factor in `pg`).
+
+range-checking on position is not performed. Make sure it is a valid rectangle number.
+
+### Container refCon
+
+	(long) pgGetContainerRefCon (pg_ref pg, pg_short_t position);
+	(void) pgSetContainerRefCon (pg_ref pg, pg_short_t position, long ref_con);
+
+The application-defined reference that is "attached" to container `position` is returned from `pgGetContainerRefCon`; you can also set this value using `pgSetContainerRefCon`.
+
+Range-checking on `position` is not performed. Make sure it is a valid rectangle number.
+
+**NOTE:** OpenPaige does not know what you have set in `ref_con`, hence if you have set some kind of memory structure it is your responsibility to dispose of it before `pg` Dispose.
+
+### 14.3 Changing Containers
+
+	(void) pgRemoveContainer (pg_ref pg, pg_short_t position, short draw_mode);
+
+Deletes the rectangle of the `page_area` given in position. This value must be between 1 (first rectangle) and `pgNumContainers(pg)`. Range-checking on `position` is not performed.
+
+**CAUTION:** Never delete the last (and only) "container." OpenPaige does not check for this situation, and by deleting the only container you will essentially have no area for the text to flow!
+
+**CAUTION:** If you have set a `ref_con` value attached to the container to be deleted, it is gone forever after calling this function. It is your responsibility to do whatever is appropriate prior to deleting the container, such as disposing any memory structures involved with the `refCon` value, etc.
+
+	(void) pgReplaceContainer (pg_ref pg, rectangle_ptr container, pg_short_t position, short draw_mode);
+
+Replaces container defined in `position` with the rectangle given in `container`. Note that only the rectangle in the page area is replaced; the `refCon` value will remain intact—unless you change it with `pgSetContainerRefCon`.
+
+This is the function to use to change a container's dimensions, be it dragging, resizing, etc.
+
+	(void) pgSwapContainers (pg_ref pg, pg_short_t container1, pg_short_t container2, short draw_mode);
+
+The two containers defined by `container1` and `container2` "trade places." This function is therefore useful for "bring to front" and "send to back" features.
+
+The associated `refCon` values for `container1` and `container2` are also reversed; i.e., both rectangles and attached `refCons` are swapped.
+
+**CAUTION:** Range-checking is not performed. Ensure that `container1` and `container2` are valid rectangle numbers, between 1 and `pgNumContainers(pg)`.
+
+##### Note
+
+`draw_mode` can be any of the values described in "Draw Modes" <!-- on page blablabla -->.
+
+	typedef enum
+	{
+		draw_none,			// Do not draw at all
+		best_way,			// Use most efficient method(s)
+		direct_copy,		// Directly to screen, overwrite
+		direct_or,			// Directly to screen, "OR"
+		direct_xor,			// Directly to screen, "XOR"
+		bits_copy,			// Copy offscreen
+		bits_or,			// Copy offscreen in "OR" mode
+		bits_xor,			// Copy offscreen in "XOR" mode
+		bits_emulate_copy	// Copy "fake" offscreen
+		bits_emulate_or	// "Fake" offscreen in "OR" mode
+		bits_emulate_xor	// "Fake" offscreen in "XOR" mode
+	};
+
+
+## 14.4 "Clicking" and Character Support
+
+### Point within container
+
+	(pg_short_t) pgPtInContainer (pg_ref pg, co_ordinate_ptr point, co_ordinate_ptr inset_extra);
+
+Returns the container rectangle containing `point`, if any.
+
+If `inset_extra` is non-NULL, every rectangle in the page area is first inset by `inset_extra -> h` and `inset_extra -> v` values before it is checked for containing point. Negative inset values expand the rectangle outwards, and positive numbers shrink the rectangle.
+
+The usual purpose of `inset_extra` is to detect a certain amount of "slop" when looking for a mouse-click within a container. For example, if you want a container-click detection within four pixels of each container's edges, pass `inset_extra` as a pointer to a `co_ordinate` of (-4, -4).
+
+**FUNCTION RESULT:** If no container contains point, zero is returned. Otherwise, the container number is returned (which will always be between 1 and `pgNumContainers(pg)`).
+
+**NOTE:** Both scrolled position and scaling are taken into consideration by this function. In other words, container rectangles will be checked as they appear on the screen.
+
+### Character within container
+
+	(pg_short_t) pgCharToContainer (pg_ref pg, long offset);
+	
+Returns the container number, from 1 to `pgNumContainers(pg)`, containing the specified text offset. The `offset` parameter is relative to the start of all text and is a byte offset; it must be between 0 and `pgTextSize(pg)`.
+
+However, `offset` can also be `CURRENT_POSITION` (`#define`d as -1) which will return the container number for the current insertion point (or the starting selection point if there is a highlight range).
+
+	(long) pgContainerToChar(pg_ref pg, pg_short_t position);
+
+Returns the text offset of the first character that exists in container number `position`. This function is useful to locate the first character within a container.
+
+However, it is possible that the container has no text at all (text is not large enough to fill all containers), in which case the function result will be -1.
+
+The `position` parameter must be between 1 and `pgNumContainers(pg)`.
+
+**CAUTION:** Range-checking is not performed!
+
+### TECH NOTE: Containers v. Repeating Shapes
+
+> How expensive is containers support in general, compared to repeating shapes?
+
+Repeating shapes are light-years faster, because they don't really "repeat," at least not physically. All a repeating shape does is repeat its display. If you have, say, a single-`rect` shape, if it is repeating that shape remains a single `rect` even if the doc repeats a million times.
+
+Containers, on the other hand, consist of a physical array of rectangles. So that's one big difference—if a single `rect` repeats 100 times, the "containers" method will have 100 rectangles; a repeating shape of course has just one.
+
+"Repeating" is fastest because OpenPaige only has to consider one rectangle—and relative positions thereof. On the other hand, when computing word-wrapping within containers, OpenPaige must continuously walk through *all* `rect`s to see which ones intersect the text line, etc. So the processing is much more extensive in this case.
+
+The general rule is: If your shape, regardless of its complexity, must literally "repeat" in its exact form, then use *repeating shapes*. If your shape does not necessarily repeat as-is—or if the reoccurrence of the shape can be slightly different than the previous occurrence, then you are forced to use containers.
+
+# 15 EXCLUSION AREAS
+
+An OpenPaige "exclusion" area is typically used for page layout features in which text will wrap around one or more rectangles, including complex shapes (which are also a series of small rectangles).
+
+## 15.1 Setting \& Maintaining Exclusions
+
+As in OpenPaige's "container" support in the previous chapter, several functions are provided to insert, delete and change the series of rectangles in the exclude shape of an OpenPaige object.
+
+### Number of exclusions
+
+	(pg_short_t) pgNumExclusions (pg_ref pg);
+
+Returns the number of exclusion rectangles currently in `pg`. This function actually returns the number of rectangles in the exclude area. Initially, after `pgNew`, the answer will be however many rectangles were in your `exclude_area` shape, if any.
+
+Unlike `pgNumContainers`, it is possible (and often likely) to have zero exclusion rectangles, so this function can legitimately report zero.
+
+### Inserting exclusion
+
+	(void) pgInsertExclusion (pg_ref pg, rectangle_ptr exclusion, pg_short_t position, long ref_con, short draw_mode);
+
+This makes a copy of the rectangle pointed to by exclusion and inserts it into `pg`'s `exclude_area`. Consequently, text will flow around (will avoid) the new shape now including the exclusion rectangle.
+
+If `position` is zero, the new exclusion is inserted at the beginning (becomes first rectangle in the shape). If `position` is `pgNumExclusions(pg)`, it is inserted as the very last rectangle.
+
+It is possible that the current exclusion area in pg is empty or does not exist; for example, you might have passed a null pointer for `exclude_area` in `pgNew`. This function will recognise that situation and will work correctly, building an initial `exclude_area` if necessary. However, in this situation, the only valid position for insertion is zero.
+
+You can also "attach" any long-word value (such as a pointer or some other reference) to the new `exclusion` rectangle by passing that value in `ref_con`. Consequently, you can access this value at any time using `pgGetExclusionRefCon` (see "Exclusion `refCon`" on page 15-267).
+
+**CAUTION:** The position `parameter` is not checked for validity! Make sure it is within the boundaries between 0 and `pgNumExclusions(pg)` or a crash can result.
+
+	(void) pgInsertExclusionShape (pg_ref pg, pg_short_t position, shape_ref exclude_shape, short draw_mode);
+
+Inserts an entire shape into the exclusion area of `pg`. The list of rectangles within `exclude_shape` is inserted after rectangle number `position`; if `position` is zero, the shape is inserted at the beginning. If `position` is `pgNumExclusions(pg)`, the shape is inserted at the end.
+
+If no exclusion area exists in `pg` prior to this function, the result is essentially the same as `pgSetAreas` to change or set a new exclusion area.
+
+The contents of `exclude_shape` are copied, therefore you can dispose `exclude_shape` any time after calling this function.
+
+**NOTE:** Associated `ref_con` values for all new rectangles will be initialized to zero.
+
+##### Note
+
+`draw_mode` can be any of the values described in "Draw Modes" <!-- on page blablabla -->.
+
+	typedef enum
+	{
+		draw_none,			// Do not draw at all
+		best_way,			// Use most efficient method(s)
+		direct_copy,		// Directly to screen, overwrite
+		direct_or,			// Directly to screen, "OR"
+		direct_xor,			// Directly to screen, "XOR"
+		bits_copy,			// Copy offscreen
+		bits_or,			// Copy offscreen in "OR" mode
+		bits_xor,			// Copy offscreen in "XOR" mode
+		bits_emulate_copy	// Copy "fake" offscreen
+		bits_emulate_or	// "Fake" offscreen in "OR" mode
+		bits_emulate_xor	// "Fake" offscreen in "XOR" mode
+	};
+
+### 15.2 Get exclusion information
+
+	(void) pgGetExclusion (pg_ref pg, pg_short_t position, pg_boolean include_scroll, pg_boolean include_scale, rectangle_ptr exclusion);
+
+Returns the exclusion rectangle defined by the `position` parameter. This can be any of the rectangles contained in `pg`'s exclusion area, from 1 to `pgNumExclusions(pg)`. The rectangle is copied to the structure pointed to by the exclusion parameter.
+
+If `include_scroll` is TRUE, the rectangle returned will be in its "scrolled" position (as it would appear on the screen). If `include_scale` is TRUE, the rectangle returned will be scaled to the appropriate dimensions (based on the scaling factor in `pg` ).
+
+##### Warnings
+1. Range-checking on position is not performed. Make sure it is a valid rectangle number.
+2. Unlike containers, it is possible to have zero exclusion rectangles. You must not call this function if `pgNumExclusions = 0`.
+
+## 15.3 Exclusion refCon
+
+	(long) pgGetExclusionRefCon (pg_ref pg, pg_short_t position);
+	(void) pgSetExclusionRefCon (pg_ref pg, pg_short_t position, long ref_con);
+
+The application-defined reference that is "attached" to exclusion rectangle position is returned from `pgGetExclusionRefCon`; you can also set this value using `pgSetExclusionRefCon`.
+
+##### Warnings
+
+1. Range-checking on position is not performed. Make sure it is a valid rectangle number.
+2. OpenPaige does not know what you have set in `ref_con`; hence if you have set some kind of memory structure it is your responsibility to dispose of it before `pgDispose`.
+
+## 15.4 Changing Exclusion Rectangles
+
+### Removing exclusions
+
+	(void) pgRemoveExclusion (pg_ref pg, pg_short_t position, short draw_mode);
+
+Deletes the rectangle of the exclusion area given in `position`. This value must be between 1 (first rectangle) and `pgNumExclusions(pg)`. Range-checking on `position` is not performed.
+
+**NOTE:** Unlike containers, it is acceptable to delete the last and only exclusion rectangle.
+
+**CAUTION:** If you have set a `ref_con` value attached to the exclusion rectangle to be deleted, it is gone forever after calling this function. It is your responsibility to do whatever is appropriate prior to deleting the exclusion, such as disposing any memory structures involved with the `refCon` value, etc.
+
+	(void) pgReplaceExclusion (pg_ref pg, rectangle_ptr exclusion, pg_short_t position, short draw_mode);
+
+Replaces exclusion rectangle defined in `position` with the rectangle given in exclusion.
+
+**NOTE:** Only the rectangle in the exclusion area is replaced; unless you change it with `pgSetExclusionRefCon`, the `refCon` value will remain intact.
+
+This is the function used to change an exclusion rectangle's dimensions, be it dragging, resizing, etc.
+
+### Swapping exclusions
+
+	(void) pgSwapExclusions (pg_ref pg, pg_short_t exclusion1, pg_short_t exclusion2, short draw_mode);
+
+The two exclusion rectangles defined by `exclusion1` and `exclusion2` "trade places". This function is therefor useful for "bring to front" and "send to back" features.
+
+The associated `refCon` values for `exclusion1` and `exclusion2` are also reversed, i.e. both rectangles and attached `refCon`s are swapped.
+
+CAUTION: Range-checking is not performed. Make sure `exclusion1` and `exclusion2` are valid rectangle numbers, between 1 and `pgNumExclusions(pg)`.
+
+##### Note
+
+`draw_mode` can be any of the values described in "Draw Modes" <!-- on page blablabla -->.
+
+	typedef enum
+	{
+		draw_none,			// Do not draw at all
+		best_way,			// Use most efficient method(s)
+		direct_copy,		// Directly to screen, overwrite
+		direct_or,			// Directly to screen, "OR"
+		direct_xor,			// Directly to screen, "XOR"
+		bits_copy,			// Copy offscreen
+		bits_or,			// Copy offscreen in "OR" mode
+		bits_xor,			// Copy offscreen in "XOR" mode
+		bits_emulate_copy	// Copy "fake" offscreen
+		bits_emulate_or	// "Fake" offscreen in "OR" mode
+		bits_emulate_xor	// "Fake" offscreen in "XOR" mode
+	};
+
+## 15.5 "Clicking" Exclusion Rectangles
+
+	(pg_short_t) pgPtInExclusion (pg_ref pg, co_ordinate_ptr point, co_ordinate_ptr inset_extra);
+
+Returns the exclusion rectangle containing `point`, if any. It is safe to call this function even if there are no exclusion rectangles (in which case `pgPtInExclusion` will always return zero).
+
+If `inset_extra` is non-NULL, every rectangle in the exclusion area is first inset by `inset_extra -> h` and `inset_extra -> v` values before it is checked for containing `point`.
+
+Negative inset values expand the rectangle outwards, and positive numbers shrink the rectangle.
+
+The usual purpose of `inset_extra` is to detect a certain amount of "slop" when looking for a mouse-click within an exclusion area. For example, if you want a click detection within four pixels of each exclusion's edges, pass `inset_extra` as a pointer to a `co_ordinate` of -4, -4.
+
+**FUNCTION RESULT:** If no exclusion contains point, or if no exclusion area exists, zero is returned. Otherwise, the exclusion rectangle number is returned (which will always be between 1 and `pgNumExclusions(pg)`).
+
+**NOTE:** Both scrolled position and scaling are taken into consideration by this function. In other words, rectangles will be checked as they appear on the screen.
+
+## 15.6 Drawing Exclusion Contents
+
+If your exclusion rectangle(s) contain some type of graphic image you need to draw, the recommended method for doing this is to use the `page_proc` hook. OpenPaige calls this "hook" function after drawing each page of text; this is explained in the chapter "Customizing OpenPaige".
+
+## 15.7 Attaching Exclusions to Paragraphs
+
+Any exclusion rectangle can be "attached" to the top of a paragraph. First, create the exclusion rectangle, then call the following function:
+
+	void pgAttachParExclusion (pg_ref pg, long position, pg_short_t index, short draw_mode)
+
+The exclusion rectangle is represented by `index`; this is a value from 1 to `pgNumExclusions(pg)`.
+
+The paragraph is represented by the `position` parameter; this is a text position into the document, and the paragraph to which the exclusion rectangle attaches is the paragraph which contains the position.
+
+**NOTE:** The text position does not need to be the exact position of a paragraph beginning, rather it can be anywhere within the paragraph (before the carriage return).
+
+The exclusion rectangle, however, "attaches" to the top line of the paragraph regardless of the text position given.
+
+After this function is called, the exclusion rectangle will constantly and dynamically align to the top line of the paragraph even as the text is changed or deleted. If the paragraph is deleted, the exclusion rectangle will still exist but will remain stationary and attached to no paragraph.
+
+Otherwise, the exclusion rectangle is no different than any other exclusion rectangle—text will wrap around the rectangle appropriately, even if that text is part of the paragraph to which the exclusion is attached.
+
+##### Notes and Warnings
+
+1. Only the vertical position of the exclusion rectangle is aligned to the paragraph; its horizontal position will remain unchanged.
+2. Do not attach more than one exclusion rectangle to the same paragraph or unexpected erroneous results will occur.
+
+`draw_mode` can be any of the values described in "Draw Modes" <!-- on page blablabla -->. The document will redraw in its entirety if any `draw_mode` but `draw_none` is selected; otherwise, the document will not redraw at all.
+
+	typedef enum
+	{
+		draw_none,			// Do not draw at all
+		best_way,			// Use most efficient method(s)
+		direct_copy,		// Directly to screen, overwrite
+		direct_or,			// Directly to screen, "OR"
+		direct_xor,			// Directly to screen, "XOR"
+		bits_copy,			// Copy offscreen
+		bits_or,			// Copy offscreen in "OR" mode
+		bits_xor,			// Copy offscreen in "XOR" mode
+		bits_emulate_copy	// Copy "fake" offscreen
+		bits_emulate_or	// "Fake" offscreen in "OR" mode
+		bits_emulate_xor	// "Fake" offscreen in "XOR" mode
+	};
+
+### Determining the Attached Paragraph
+
+To determine if an exclusion rectangle is currently attached to a paragraph, call the following function:
+
+	long pgGetAttachedPar(pg_ref pg, pg_short_t exclusion);
+
+The exclusion rectangle in question is represented by `exclusion`; this can be any value from 1 through `pgNumExclusions(pg)`.
+
+This function returns the text position of the paragraph to which the exclusion is attached, if any.
+
+If the exclusion is attached to no paragraph, the function returns -1.
+
+
+# 16 SCALING, PRINTING \& DisPlAYING
+
+### 16.1 Scaling
+
+An OpenPaige object can be scaled, which is to say enlarged or reduced by a specified amount.
+
+Scaling, however, must be equal for both vertical and horizontal dimensions.
+
+The scaling factor is maintained by OpenPaige using the following record:
+
+	typedef struct
+	{
+		co_ordinate origin;	// Relative origin
+		pg_fixed scale;		// Scaling (hiword/loword fraction)
+	}
+	pg_scale_factor, PG_FAR *pg_scale_ptr;
+
+The `origin` field *supra* contains the origin point to compute scaling. Generally, this should be the top-left point of your overall `page_area` (text flow area). The purpose of the `origin` value is for OpenPaige to know what scaling is relative to, or stated more simply, what is the top-left point of the entire area that is being scaled.
+
+The scale field is a `long` whose high-order and low-order words define a numerator and denominator. Stated as a formula, the scale value is computed as:
+
+	high word of (scale) / low word of (scale)
+
+Hence, if scale is 0x00020001, scaling is 2-to-1 (`2 / 1`); if scale is 0x00010002, then scaling is 1-to-2 (`1 / 2`), etc.
+
+If the scale value is zero, that is interpreted as no scaling (same as `1 / 1`).
+
+### 16.2 Scaling an OpenPaige Object
+
+	(void) pgSetScaling (pg_ref pg, pg_scale_ptr scale_factor, short draw_mode);
+
+This sets the scaling for `pg`. The scale_factor parameter must be a pointer to a `pg_scale_factor` *supra*; it cannot be a null pointer. From that moment on, `pg` will display and edit in the specified scaled amount.
+
+To obtain the current scaling factor, call:
+
+	(void) pgGetScaling (pg_ref pg, pg_scale_ptr scale_factor);
+
+The scaling factor of `pg` is returned in the `pg_scale_factor` pointed to by `scale_factor` (which cannot be null).
+
+##### Notes
+
+1. OpenPaige makes a copy of your `scale_factor`, so it does not need to remain static.
+2. On *Macintosh* only, scaling text may be inaccurate for environments that do not support Color QuickDraw.
+3. `draw_mode` can be any of the values described in "Draw Modes" <!-- on page blablabla -->. If `draw_mode` is not `draw_none`, the text is redrawn in the new scale. 
+
+-
+
+	typedef enum
+	{
+		draw_none,			// Do not draw at all
+		best_way,			// Use most efficient method(s)
+		direct_copy,		// Directly to screen, overwrite
+		direct_or,			// Directly to screen, "OR"
+		direct_xor,			// Directly to screen, "XOR"
+		bits_copy,			// Copy offscreen
+		bits_or,			// Copy offscreen in "OR" mode
+		bits_xor,			// Copy offscreen in "XOR" mode
+		bits_emulate_copy	// Copy "fake" offscreen
+		bits_emulate_or	// "Fake" offscreen in "OR" mode
+		bits_emulate_xor	// "Fake" offscreen in "XOR" mode
+	};
+
+### 16.3 Scaling and Vis Areas
+
+A scaled `pg_ref` normally does not scale its `vis_area`. If the attribute flag `scale_vis_bit` has been set in the `pg_ref`, the `vis_area` is scaled, otherwise the `vis_area` remains unscaled.
+
+**Fig. 25 needs redrawn!**
+
+`SCALE_VIS_BIT` is usually set when one or more `pg_ref`s are components of a larger document, not the whole document itself. For example, an object-oriented drawing program using OpenPaige to show text objects would probably want to set `SCALE_VIS_BIT` to achieve the rendering as shown in the bottom part of the above example.
+
+A general word-processor window, however, would probably not want `SCALE_VIS_BIT`; instead, it may be more desirable to leave the `vis_area` alone, as shown in the top part of the above example.
+
+### 16.4 Additional Scaling Utilities
+
+	(void) pgScaleLong(long scale_factor, long origin, long PG_FAR *value);
+	(void) pgScalePt(pg_scale_ptr scale_factor, co_ordinate_ptr amount_offset, co_ordinate_ptr pt);
+	(void) pgScaleRect(pg_scale_ptr scale_factor, co_ordinate_ptr amount_offset, rectangle_ptr rect);
+	
+The three functions above will scale a `long`, a `co_ordinate` and a `rectangle`, respectively.
+
+For `pgScaleLong`, the `scale_factor` is only the "scale" part of a complete `pg_scale_factor` and the `origin` is the appropriate origin position. The value to scale must be pointed to by value and the value will be scaled when the function returns.
+
+For `pgScalePt`, the `pt` parameter gets scaled by the scaling factor in `scale_factor`; for `pgScaleRect`, the `rect` parameter is scaled by `scale_factor`. For both `pgScalePt` and `pgScaleRect`, `amount_offset` should be a pointer to the amount the document is "scrolled", or a null pointer if this does not matter.
+
+Usually, `amount_offset` should be a negative compliment of `pgScrollPosition(&offset)`, as:
+
+	co_ordinate offset;
+	pg_scale_factor scaling;
+	
+	pgGetScaling(pg, &scaling);
+	pgScrollPosition(pg, &offset);
+	pgNegatePt(&offset);
+	pgScaleRect(&scaling, &amount, &rect);
+	
+	(void) pgScaleRectToRect(pg_scale_ptr, scale_factor, rectangle_ptr src_rect, rectangle_ptr target_rect, co_ordinate_ptr offset_extra);
+
+This function is similar to `pgScaleRect` except the scaled result of `src_rect` is placed in `target_rect`. In addition, `src_rect` is temporarily offset before being scaled by `offset_extra` amounts (unless `offset_extra` is a null pointer).
+
+### TECH NOTE: Scaling a point inside a shape
+
+> I was looking through the manual and can't seem to find any function that scales a whole shape. Am I missing something?
+
+You are right, OpenPaige does not have a "scale shape" function, probably because it does not need one internally. That is because nothing inside an OpenPaige document is ever really "scaled," it's all an illusion (only the drawing itself is scaled; all shapes and text positions remain the same at all times).
+
+OpenPaige locates a mouse point in a scaled document by "reverse scaling" the mouse point. By that I mean it scales the `co_ordinate` in question the opposite amount that the document is (apparently) scaled.
+
+It's fairly easy to reverse-scale something. All you do is negate the current scale factor, for example:
+
+	scale_factor.scale = -scale_factor.scale;
+	pgScalePt(&scale_factor, &point);
+
+This brings up an interesting point. Although I can see that your function to find a point in a scaled shape will work, perhaps a much faster method is to reverse-scale the point instead of scaling the whole shape, then just find the point without the non-scaled shape.
+
+### 16.5 Printing Support
+
+**IMPORTANT:** Do not confuse "pages" in the context of printing with "paging" for repeating shapes. These are two different concepts entirely. Printed pages are simply sections of text; "pages" of repeating shapes are simply repeating display of the same shape, and in fact, might not contain text at all. A printed page and repeating shape page are not necessarily the same dimensions. See "Repeating Shapes" <!-- on page 13-9 -->.
+
+"Printing" for OpenPaige is simply an alternate method of displaying its text offset and pinned neatly to a specified "page" rectangle. In itself it knows nothing about printing or printer devices.
+
+The following function is intended to handle most printing requirements:
+
+	(long) pgPrintToPage (pg_ref pg, graf_device_ptr target, long starting_position, rectangle_ptr page_rect, short draw_mode); 
+
+The target parameter is an optional pointer to a graphics device other than `pg`'s default device (see “Graphic Devices”<!-- on page 3-8-->).
+
+The `starting_position` parameter is the text offset, in bytes of the first text that should be printed (thia is a zero-indexed number).
+
+The function will draw as much text that can completely fit inside `page_rect`, starting with `starting_position` in `pg`, and drawing the first line relative to `page_rect`'s top-left. No text will be drawn that does not completely fit vertically inside `page_rect`, hence no "half lines" will exist at `page_rect`'s bottom. Horizontal fitting is not checked—see note below.
+
+The effective result of this function is that a "page" of text is drawn to some specified device.
+
+The `draw_mode` parameter should generally be set to `best_way`, `direct_or` or `bits_emulate_or`.
+
+Highlighting and the "caret" is suppressed when the text is drawn by this function and the current `vis_area` is ignored (it is temporarily replaced with the dimensions of `page_rect`).
+
+**FUNCTION RESULT:** The function returns the next text position following the last line printed. If no more text is available (all text fit from starting_offset to end of document), zero is returned.
+
+To print consecutive pages, you would print the first page with `starting_offset = 0`, then call `pgPrintToPage` again with `starting_offset = function result`, and continue doing so until the function result is zero.
+
+During the time `pgPrintToPage` is being executed, `pg` 's attribute flags will have `PRINT_MODE_BIT` set.
+
+##### NOTES:
+
+1. Text is not automatically rewrapped to `page_rect` even if `page_rect` is a different width than `pg`'s `page_area`. Whether or not the lines will spill off to the right is also not checked. It is therefore your responsibility to make sure `page_rect` is wide enough and, if necessary, force `pg` to rewrap by changing the `page_area` first.
+2. If you want to print in a "scaled" state, simply set `pg` to the desired scaling then print the pages.
+
+### Printing in Windows
+
+OpenPaige printing for Windows is similar to Macintosh in the sense that drawing is temporarily redirected to some device other than the application document window.
+
+When calling `pgPrintToPage`, you need to set up a `graf_device` (a multipurpose output device for platform-independent drawing) and pass a pointer to that record in the target parameter.
+
+To create the `graf_device`, use:
+
+	(void) pglnitDevice(pg_globals_ptr globals, generic_var the_port, long machine_ref, graf_device_ptr device);
+
+The `globals` parameter must be a pointer to OpenPaige globals (same structure given to `pgInit()` and `pgNew()`). Pass `MEM_NULL` to `the_port`. For Windows, this would normally be type `HWND` but in this case there isn't any window associated with the device.
+
+Pass the Device Context handle in `machine_ref`. This should be the `HDC` that you will be "printing" to.
+
+After calling `pgInitDevice()` you then pass the `graf_device` structure to `pgPrintToPage()` as the target parameter.
+
+Once you are completely through using the `graf_device`, you must call the following:
+
+	(void) pgCloseDevice (pg_globals_ptr globals, graf_device_ptr device);
+
+The `globals` parameter must point to the same OpenPaige globals as before; the device parameters must be a pointer to the `graf_device` previously initialized with `pgInitDevice`.
+
+##### Notes
+1. `pgCloseDevice` only disposes memory structures created by OpenPaige. The Device Context is not affected.
+2. When creating a `graf_device` in this fashion, the Device Context given to `pgInitDevice` must remain valid until you are completely through drawing to the device (and consequently call `pgCloseDevice`).
+
+### Printer Resolution
+
+If you create a `graf_device` for printing per the instructions above, you do not need to do anything special with regard to the resolution of the target print device. The `pgInitDevice()` function will resolve all resolution issues and `pgPrintToPage()` should render the image correctly.
+
+### Sample to print on the Macintosh
+
+Here is an example of printing a `pg_ref` to a standard Macintosh print driver. Note that you must first create a `graf_device` for OpenPaige to accept the print driver as the current "port". This example shows how to do that as well:
+
+	void print_pg_doc(pg_ref pg, THPrint print_rec)
+	{
+		Rect page_rect;
+		rectangle pg_page;
+		graf_device pg_port;
+		long print_offset;
+		int cancel;
+		short page_num;
+		TPPrPort print_port;
+		TPrStatus p_status;
+		page_rect = (**print_rec) prInfo.rPage;
+		RectToRectangle(&page_rect, &pg, page);
+		// print page rectangle
+		
+		print_port = PrOpenDoc(print_rec, NULL, NULL);
+		pgInitDevice(&paige_rsrv, print_port, 0, &pg_port);
+		// Makes graf_device
+		cancel = FALSE;
+		
+		print_offset = 0;
+		page_num = 1;
+		
+		while (page_num && (!cancel))
+		{
+			prOpenPage(print_port, NULL);	// Prints a "page"
+			print_offset = pgPrintToPage(pg, &pg_port, print_offset, &pg_page, best_way);
+			PrClosePage(print_port);
+
+			if (print_offset)	// If more to print, next offset non-zero
+				++page_num;
+			else
+				page_num = 0;		// This way we break the loop
+				cancel = (PrError() == iPrAbort);
+			}
+			
+		PrCloseDoc(print_port);
+		if (!cancel)
+			PrPicFile(print_rec, NULL, NULL, NULL, &p_status);			
+			pgCloseDevice(&paige_rsrv, &pg_port);		// Disposes graf_device
+
+### TECH NOTE What do I need to do about higher resolution coördinate systems?
+
+> I noticed that the coordinate system is in pixels. How do we handle coordinates in for high resolution printing? Are we limited to a 1/8" granularity?
+
+In Windows, OpenPaige handles printing resolution by checking the capabilities of the device context you provide. Assuming you have set up a `graf` device (per examples shown in the Programmer's Guide), the device resolution is determined and stored within the `grafdevice` structure. Then when you call `pgPrintToPage()`, OpenPaige will scale the image to match the printer's resolution.
+
+Usually, you don't need to do anything special for printing the maximum resolution since OpenPaige handles the difference(s) automatically between the screen and printer.
+
+### TECH NOTE Scaled Printing 
+> [Using Windows version], I am trying to print an OpenPaige document scaled to something other than 100%. I do this by setting OpenPaige scaling but it has no effect, the document always prints 100%.
+
+The reason scaling doesn't get reflected when you print is that OpenPaige overrides the scaling you have set to the screen intentionally.
+
+This is because it has to scale everything to match the printer's resolution, hence it temporarily changes the scaling factor.
+
+The work-around is to trick OpenPaige into thinking the printer's resolution is something else. The scaling will reflect the printer's resolution + whatever you want. This is possible to do as long as you change the resolution in the `graf_device` *after* you initialize it (see below).
+
+For example, suppose you are printing to a 300 DPI device. Let's say you want to reduce the printed image by 50%. All you do is set the resolution to the grafdevice to 300/2=150 DPI. In this case, OpenPaige will scale only half the size it should for 300 DPI, which would render your output 50% reduced.
+
+The printer resolution is in the graf device.resolution field, and this value is a long word whose high/low words are the horizontal and vertical resolutions (dots per inch).
+
+#### Example
+
+	void print (HDC out_dc)
+	{
+		graf_device print_port;
+		rectangle page_rect;
+		long offset, print_x, print_y;
+		
+		pgInitDevice(&pg_globals, MEM_NULL, out_dc, &print_port);
+		
+		// Get print resolution
+		
+		print_y = GetDeviceCaps(out_dc, LOGPIXELSY);
+		print_x = GetDeviceCaps(out_dc, LOGPIXELSX);
+		
+		// I want 50% reduction, so put the resolution at 1/2 the norm:
+		
+		print_y /= 2;
+		print_x /= 2;
+		print_dev -> resolution = print_x;
+		print_dev -> resolution <<- 16;
+		print_dev -> resolution |= print_y;
+
+## 16.6 Computing Pages
+
+	(short) pgNumPages (pg_ref pg, rectangle_ptr page_rect);
+
+**FUNCTION RESULT:** This function returns the number of "pages" that would print with `page_rect`.
+
+In other words, if `page_rect` were passed to `pgPrintToPage` and the whole document were printed, `pgNumPages` will return how many passes would be made (which implies how many pages would print).
+
+##### NOTES
+1. This function only works if you have the exact same settings in `pg` that will exist when `pgPrintToPage` is called, i.e., scaling factor, page_area size, etc.
+2. Using this function for large documents will consume a lot of time. This is because OpenPaige has to determine the exact number of pages by paginating every line of text according to the page rectangle you have specified.
+
+## 16.7 Skipping pages
+
+	(long) pgFindPage (pg_ref pg, short page_num, rectangle_ptr page_rect;
+
+**FUNCTION RESULT:** This function will return a text offset that you could pass to `pgPrintToPage` to print page number `page_num`, assuming a page rectangle `page_rect`.
+
+In other words, the following question is answered by this function: if you called pgPrintToPage `page_num` times using `page_rect`, what text offset would be returned?
+
+In essence, you could use this function to "skip" pages by computing the offset in advance without printing.
+
+When printing in the Windows environment, the printer font(s) do not always match the screen font(s) in terms of character placement and width. Per Microsoft's technical notes, if the application prefers that print quality take precedence over screen quality, yet WYSIWYG character placement is equally important, the recommended method is to render the screen image to match the (eventual) printed page. OpenPaige provides the following function to accomplish this:
+
+	pg_boolean pgSetPrintDevice (pg_ref pg, generic_var device);
+
+Calling this function causes all subsequent wordwrapping and character placement in `pg` to match the printed result. The device parameter should be the printer `HDC` you will be using to print the document. Please note that in this case, `device` is an `HDC` and not a graf_device.
+
+The appropriate time to call `pgSetPrintDevice()` is immediately after `pgNew()`, and any time after the user has changed the print device or printing attributes.
+
+**FUNCTION RESULT:** If the new print device is not the same as the previous device within the `pg`, TRUE is returned.
+
+NOTE: It is your responsibility to delete the printer `DC`. OpenPaige will not delete the `DC` even if you set it to something else or destroy the `pg_ref`.
+
+CAUTION: If you use this feature, the printer `DC` must remain valid until the `pg_ref` is destroyed, or until another device is set. Or, you can clear the existing `DC` from the `pg_ref` by passing `MEM_NULL` for the "device".
+
+##### NOTES:
+
+1. This function changes the way the text appears on the screen, not the printer. Its one and only purpose is to force the screen rendering to match the printing as close as possible.
+2. You should not use this function if the quality of the screen rendering is more important than the printed quality.
+
+-
+
+	generic_var pgGetPrintDevice (pg_ref pg);
+
+This function returns the existing printer `DC` stored in `pg`, previously set by `pgSetPrintDevice()`. If no `DC` exists, `MEM_NULL` is returned.
+
+### 16.9 Display Proc
+
+	(void) pgDrawPageProc (paige_rec_ptr pg, shape_ptr page_shape, pg_short_tr_qty, pg_short_t page_num, co_ordinate_ptr vis_offset, short draw_mode_used, short call_order);
+
+The purpose of `pgDrawPageProc` is to give the app a chance to draw "page stuff" such as grey outlines around page margins, and/or in the demo's case, it draws outlines around containers. Other ornaments can be drawn such as floating pictures—the demo uses this function to draw `pict`s that are anchored to document (as opposed to `pict`s embedded into text).
+
+`pgDrawPageProc` is actually the default procedure for the `draw_page_proc`, see "`draw_page_proc`"<!-- on page 27-65-->.
+
+This function only gets called from `pgDisplay` and/or from internal display following a `ScrollRect`. It is not called when typing/display of keyboard inserts. The function is called after all text is drawn and just before returning to the app.
+
+If called from `pgDisplay`, the clip region is set to the `vis_area` of `pg`. If called from pgScroll the clip is set to the scrolled "white" space.
+
+This function can appear more complex than it is when you have irregular `page_area` shapes and/or repeating shapes. But all that is happening is that `pgDrawPageProc` gets called once for each "page" regardless of how many `rect`s are inside your `page_area` shape.
+
+Assume the simplest case: a `pg_ref` with a single rectangle for page_area and nonrepeating (i.e. one long rectangular document). In this case, `pgDrawPageProc` is called ONCE after drawing text in `pgDisplay` (see `param` description below).
+
+Assume the next most simple case, which is a single `rect` page area but `V_REPEAT_BIT` set. In this case, `pgDrawPageProc` gets called for *n* number of times, where *n* is the number of "repeats" that appear in the vis_area.
+
+But here's what might be confusing: `pgDrawPageProc` always gets called once only if non-repeating shape, and *n* times if repeating, regardless of how many "containers" you have (how many rects comprise the page_area shape). If you have multiple rects such as columns or containers, it is up to *your* `pgDrawPageProc` to do whatever it needs to, say, draw an outline around each rect. The fact that `pgDrawPageProc` might get called more than once depends purely on `V_REPEAT_BIT` being set or not.
+
+If you imagine `page_area` as being one thing, i.e. a "page," then `pgDrawPageProc` makes the most sense.
+
+Stated simply, if you had one huge monitor that showed 3 "pages" (3 occurrences of shape repeat), `pgDrawPageProc` gets called 3 times. It doesn't matter how complex the shape or how many columns/containers, etc.
+
+The meaning of each parameter in `pgDrawPageProc()` is as follows:
+
+`page_shape` - is a pointer to the *first* rectangle in the `page_area` shape. This will literally be a *used* pointer to the `page_area`'s first `rect` (a shape is a series of rectangles). The `rect`(s) are *unaltered* (they are unchanged as you set them in the `pg_ref`, i.e. the are neither "scrolled" nor scaled).
+
+`r_qty` — contains number of `rect`s that `page_shape` points to.
+
+> **NOTE:** This *is not* how many "repeating occurrences" exist for repeating shape mode, rather how many physical `rect`s `page_shape` points to. This will always be at least 1. For simple docs, it will be 1 (`rect`); for a three-column doc it will *probably* be 3, and so on. For example, if your page shape had three `rect`s representing columns, the "column rects" could be accessed as `page_shape[0]`, `page_shape[1]`, and `page_shape[2]`. Simply stated, `page_shape` for `r_qty` `rect`s represents the unscaled/unscrolled/original `page_area` of `pg`.
+
+`page_num` — contains the logical "page" number for which the function is intended, the first page being "1". This is a *logical* number, not a physical `rect` element (`r_qty` might only be "1" but `page_num` could be 900). Note that this parameter makes more sense if you have repeating shapes, otherwise it is always "1". As mentioned above, if the doc has repeating shapes, OpenPaige makes repetitive calls to `pgDrawPageProc` for as many shape-repeats as will fit in the `vis_area`. Also note that page_num can be literally interpreted as "page number" as it represents the *n*th repeat of the shape. That also means that if the doc is scrolled to, say, page 100, the first call to `pgDrawProc` will probably be 100—*not* "1". Lastly, note that `page_shape` points to the *same* `rect`s for every repetitive call to `pgDrawPageProc`.
+
+`vis_offset` — the amount you would need to "offset" each rect in `page_shape` to achieve the correct visual screen position for page number page num. As stated above, `page_shape` points to unscrolled `rect`(s). Suppose you wanted to use `pgDrawPageProc` to draw page margins. Because the doc might be scrolled and/or because the "page" might be the *n*th repeating of the shape, you can't just do `FrameRect`s—you need to offset each `rect` by `vis_offset` amount. This amount also includes the `repeat` element, i.e. it is supplied to you with extra amounts based on `page_num`. Hence, all rects in `page_shape` offset by `vis_offset` are *physical* screen locations for `page_num`.
+
+`draw_mode_used` — the `draw_mode` that was used by OpenPaige just before it called `pgDrawPageProc`. The intended purpose of this is to let an app know if it did a bitmap draw of text. There are *future* cases where an extension will need to know that for optimisation. 
+
+**EXAMPLE:** Background `pict`s that get drawn directly into the offscreen bitmap along with text—have already been drawn before `pgDrawPageProc` gets called. Hence, it would be useful for the app to know this so that it would not draw `pict`s unless `draw_mode_used` was non-bitmap.
+
+`call_order` — tells you how many times `pgDrawPageProc` has been called so far in this display loop. For example, if you call `pgDisplay` for a doc that has repeating shape, `pgDrawPageProc` might get called 2 or 3 times (one for each "page"). The `call_order` parameter gives you info regarding this. If zero, it is the first call of several; if positive and non-zero, it is the *n*th call but there will be at least one more; if negative, it is being called for the last time. One thing I use this for is drawing floating `pict`s—I don't want to draw pictures until `pgDrawPageProc` is being called for the LAST time.
