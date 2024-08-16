@@ -4,8 +4,6 @@
 
 The purpose of this document is to provide initial programming information for the OpenPaige developers. Comments are welcome, as are useful example code submissions. Questions and answers from OpenPaige developers may be used in subsequent editions of the manual.
 
-This function sets a new tab that applies to the specified selection.
-
 ## 1.2 How to use this manual
 
 The OpenPaige technology is quite extensive, so we recommend that you do not simply dive into the middle of this manual and start implementing complex features.
@@ -835,7 +833,7 @@ For keyboard insertions, the recommended `draw_mode` is `best_way`.
 The insertion will assume either the text format of the current insertion point OR the format of the last style/font/format change, whichever is more recent. This is true even if you specify an insert position other than the current point. If you want to force the insertion to be a particular font or style, simply call the appropriate function to change the text format prior to your insertion.
 
 ##### FUNCTION RESULT
-The function returns TRUE if the text and/or highlighting in `pg` changed in any way. Note that no change occurs only if `key_buffer_mode` is passed as the insert mode, in which case the characters are stored and not drawn until the next call to `pgIdle`. Another situation that will not change anything visually is passing `draw_none` as the `draw_mode`. In both cases, `pgInsert` would return FALSE. The purpose of this function result is for the application to know whether or not it should update scrollbar values or scroll to the insertion point, etc. (i.e., it is a waste of processing time to check or change scroll positions if nothing changed on the screen).
+The function returns `TRUE` if the text and/or highlighting in `pg` changed in any way. Note that no change occurs only if `key_buffer_mode` is passed as the insert mode, in which case the characters are stored and not drawn until the next call to `pgIdle`. Another situation that will not change anything visually is passing `draw_none` as the `draw_mode`. In both cases, `pgInsert` would return `FALSE`. The purpose of this function result is for the application to know whether or not it should update scrollbar values or scroll to the insertion point, etc. (i.e., it is a waste of processing time to check or change scroll positions if nothing changed on the screen).
 
 #### Running Unicode
 
@@ -1042,7 +1040,7 @@ There might be an occassion, however, that requires immediate insertion of anyth
 
 	(pg_boolean) pgInsertPendingKeys (pg_ref pg);
 
-Calling this function will immediately "empty" any pending characters, inserting and displaying them as appropriate. If there aren't any pending characters, `pgInsertPendingKeys` does nothing. The function returns TRUE if one or more characters were inserted.
+Calling this function will immediately "empty" any pending characters, inserting and displaying them as appropriate. If there aren't any pending characters, `pgInsertPendingKeys` does nothing. The function returns `TRUE` if one or more characters were inserted.
 
 ##### NOTE
 
@@ -1062,10 +1060,10 @@ To cause the "caret" to blink in a `pg_ref`, call the following as often as poss
 
 The `pg` parameter must be a valid `pg_ref` (can not be a null pointer).
 
-**FUNCTION RESULT:** The function returns TRUE if character(s) were inserted and displayed that were stored previously from `pgInsert` calls with `key_buffer_mode`. This will only happen if you had called `pgInsert`, passing `key_buffer_mode` as the data transfer parameter. A result of TRUE or FALSE from `pgIdle` can help your application know whether or not it should update scrollbar values (since new text has been inserted). For Windows `key_buffer_mode` is not usually necessary, see “Key Insertion”<!-- on page 2-39-->.
+**FUNCTION RESULT:** The function returns `TRUE` if character(s) were inserted and displayed that were stored previously from `pgInsert` calls with `key_buffer_mode`. This will only happen if you had called `pgInsert`, passing `key_buffer_mode` as the data transfer parameter. A result of `TRUE` or `FALSE` from `pgIdle` can help your application know whether or not it should update scrollbar values (since new text has been inserted). For Windows `key_buffer_mode` is not usually necessary, see “Key Insertion”<!-- on page 2-39-->.
 
 ##### NOTE (Windows)
-You do not need to call `pgIdle()` since the blinking caret is maintained by the OS. Calling `pgIdle` by "accident" however is harmless.
+You do not need to call `pgIdle()` since the blinking caret is maintained by the OS. Needlessly calling `pgIdle`, however, is harmless.
 
 ## Clicking \& Dragging
 
@@ -5697,3 +5695,3676 @@ The meaning of each parameter in `pgDrawPageProc()` is as follows:
 **EXAMPLE:** Background `pict`s that get drawn directly into the offscreen bitmap along with text—have already been drawn before `pgDrawPageProc` gets called. Hence, it would be useful for the app to know this so that it would not draw `pict`s unless `draw_mode_used` was non-bitmap.
 
 `call_order` — tells you how many times `pgDrawPageProc` has been called so far in this display loop. For example, if you call `pgDisplay` for a doc that has repeating shape, `pgDrawPageProc` might get called 2 or 3 times (one for each "page"). The `call_order` parameter gives you info regarding this. If zero, it is the first call of several; if positive and non-zero, it is the *n*th call but there will be at least one more; if negative, it is being called for the last time. One thing I use this for is drawing floating `pict`s—I don't want to draw pictures until `pgDrawPageProc` is being called for the LAST time.
+
+# 17 OPENPAIGE IMPORT EXTENSION (for "RTF" and other types)
+
+The OpenPaige import extension provides high-level functionality for importing ASCII files, other OpenPaige files and Rich Text Format (RTF) files. Although it is designed as a C++ framework, files can be imported from straight C if necessary.
+
+## 17.1 Installation
+
+**NOTE:** The installation procedure mentions the directory, "pgtxr".
+
+If you are installing the importer for the Macintosh platform and/or for Win16 or Win32 and are not using MFC, simply add the following files from the "pgtxr" directory to your project:
+
+##### Minimum configuration (import ASCII text only)
+* `pgimport.cpp`
+* `pgdeftbl.c`
+
+##### Native OpenPaige file Import (in addition to above)
+* `pgnative.cpp`
+
+##### RTF File Import (in addition to Minimum Configuration)
+* `pgrtfdef.c`
+* `pgrtfimp.cpp`
+
+### Header Files
+
+##### If you will be importing files using C++:
+* `#include "pgtxrcpp.h"`
+
+##### If you will be importing only from straight C:
+* `#include "pgtxr.h"`
+
+## 17.2 Importing Files (from C++)
+
+**CUSTOM CONTROL USERS:** There are (intentionally) no control messages that support the OpenPaige Import extension. Use the method shown below; also, see "Importing to the OpenPaige Custom Control"<!-- on page 17-311-->.
+
+Loading a file with this extension can be accomplished in a few easy steps:
+
+1. Start with an existing `pg_ref` or OpenPaige control as the target document to receive the import. This may be a, empty document or a document which already has text (in which case the file contents will be inserted at the current insertion point).
+2. To import from a disk file, open the file you wish to import. To import from memory, allocate the memory and fill its contents with the appropriate file data. If you are starting with a Macintosh Handle or Windows `HGLOBAL` you can convert it to a `memory_ref` by calling `HandleToMemory()`.
+3. Create a new object (with `new` keyword) of the appropriate type for the file. (If you aren't sure about what type of file you just opened, see "Determining File Type"<!-- on page 17-301 --> in this document. Currently we support raw text files, RTF and OpenPaige files. The following is an example of creating an appropriate import object:
+
+		#include "pgTxrCPP.h"
+		PaigelmportObject filter;
+	
+		// To import a plain ASCII text file:
+		filter = new PaigelmportFilter();
+		
+		// To import an RTF file:
+		filter = (PaigelmportObject) new PaigeRTFImportFilter();
+		
+		// To import an OpenPaige file:
+		filter =(PaigelmportObject) new PaigeNativeImportFilter();
+
+4. Call the initialization member function `pgInitImportFile()`. This function is defined as follows:
+
+		pg_error pglnitlmportFile (pg_globals_ptr globals, pg_file_unit fileref, memory_ref memory_unit, file_io_proc read_proc, long first_position, long last_position);
+	
+	This function prepares for importing a file, setting up whatever is necessary for the file's native format. A file can be imported from a physical file, or from memory. This is differentiated by the value(s) you pass in the function parameters, as follows:
+	* `globals` - A pointer to your OpenPaige globals. Custom control users can get a pointer to the OpenPaige globals as follows: 
+		1. Getting the `pg_ref` from the control by sending a `PG_GETPGREF` message, and
+		2.  Calling the OpenPaige API, `pgGetGlobals()`.
+	* `fileref` - If importing from a file on disc, this parameter must be a reference to the opened file (the `refNum` for *Macintosh* or a file handle for *Windows*). If importing from memory, `fileref` should be zero. **MFC** users on *Windows* should note that the `fileref` parameter must be a "real" `HFILE` (or `NULL` if importing from memory), not some other MFC-generated class member that you may assume is a file handle.
+	* `memory_unit` — If importing from a file on disc, this parameter must be `MEM_NULL`. If importing from memory, this must be a `memory_ref` (see "The Allocation Mgr"<!-- on page 25-1-->). Importing from memory requires that `memory_unit` contains the same information in the same format as it would if it were a disk file.
+	* `read_proc` — This is an optional I/O function to be used instead of the default low-level reading function. Refer to the OpenPaige Programmer's Guide for information about custom I/O functions. For reading a standard file from disk or memory, pass NULL for this parameter.
+	* `first_position`, `last_position` — These two values indicate the beginning and ending file positions to import, respectively. The `first_position` can be zero or some other byte offset into the file to begin reading. If `last_position` is unknown (or if you want to read the file whole), pass `UNKNOWN_POSITION` for `last_position`. Otherwise, the file will be imported from byte offset `first_position` to, but not including the byte at `last_position`. <br> **FUNCTION RESULT:** If this function is successful, zero is returned, otherwise an error code is returned.
+
+5. To read the file and insert its contents into an OpenPaige document, call the member function, `pgImportFile()`:
+
+		pg_error pgImportFile (pg_ref pg, long pg_position, long import_flags, pg_boolean keep_selection, short draw_mode)
+
+	* `pg` — The target document. Custom control users: obtain the `pg_ref` by sending a `PG_GETPGREF` message.
+	* `pg_position` — The text position (in the OpenPaige document) to receive the insertion. If this value is `CURRENT_POSITION`, the file will be imported to the current insertion.
+	* `import_flags` — A set of bits defining which item(s) to import, which can be any or all of the data types shown below. (Note, setting these bits causes that data item to import only if supported by the importer).
+	
+			#define IMPORT_EVERYTHING_FLAG			0x00FFFFFF	// Import everything
+			#define IMPORT_TEXT_FLAG				0x00000001	// Import raw text
+			#define IMPORT_TEXT_FORMATS_FLAG		0x00000002	// Import text formats
+			#define IMPORT_PAR_FORMATS_FLAG		 	0x00000004	// Import paragraph formats
+			#define IMPORT_PAGE_INFO_FLAG			0x00000008	// Import page information
+			#define IMPORT_CONTAINERS_FLAG			0x00000010	// Import container boxes
+			#define IMPORT_HEADERS_FLAG				0x00000020	// Import headers
+			#define IMPORT_FOOTERS_FLAG				0x00000040	// Import footers
+			#define IMPORT_FOOTNOTES_FLAG			0x00000080	// Import footnotes
+			#define IMPORT_EMBEDDED_OBJECTS_FLAG	0x00000100	// Import embedded graphics
+			#define IMPORT_PAGE_GRAPHICS_FLAG		0x00000200	// Import page pictures
+			#define IMPORT_STYLESHEETS_FLAG			0x00000400	// Import style sheets
+<br> In addition to the above, setting the following bit causes page dimensions (paper size, margins) to get applied:
+			
+			#define APPLY_PAGE_DIMENSIONS	0x02000000	// Apply page size(s)
+			#define IMPORT_CACHE_FLAG		0x04000000	// Page-read the file
+<br>If `APPLY_PAGE_DIMENSIONS` is set, the `pg_ref`'s page shape is changed per the import information (if such information is supported). For example, when importing an RTF file, setting `APPLY_PAGE_DIMENSIONS` will apply the page size(s) found in the RTF information. If this bit is not set, the page area remains unchanged. If `IMPORT_CACHE_FLAG` is set, the file is opened in "paging" mode, i.e. its text is not read all at once; rather, its text sections are read as needed. This is particularly useful for opening very large files. 
+<br> **NOTE:** `IMPORT_CACHE_FLAG` is only supported for OpenPaige and ASCII text files. (See 2.0b release notes, "Huge File Paging”)
+
+	* `keep_selection` — If TRUE, the selection point in the text does not advance, otherwise the selection point in the document advances by the number of bytes that were imported.
+	* `draw_mode` — If non-zero, the document is redrawn showing the new data contents; otherwise, nothing is redrawn.
+<br> **FUNCTION RESULT:** If this function is successful, zero is returned, otherwise an error code is returned.
+
+6. Delete the object, or if you want to import another file, repeat steps 4 through 5.
+
+#### Import File Example
+
+	 #include "pgTxrCPP.h"
+	 
+	 /* This function imports a file into a pg_ref, first creating an object for the appropriate file type. If all is well, the document is re-drawn and NO_ERROR is returned. */
+	 
+	 pg_error ImportFile (pg_ref pg, pg_filetype filetype, long feature_flags, long file_begin, pg_file_unit f_ref)
+	 {
+	 	PaigeImportObject filter;
+	 	pg_globals_ptr globals;
+	 	long flags;
+	 	pg_error result = NO_ERROR;
+	 	
+	 	if (!(flags = feature_flags))
+	 		flags = IMPORT_EVERYTHING_FLAG;
+	 		globals = pgGetGlobals(pg);
+
+	 	switch (filetype)
+	 	{
+	 		case pg_text_type:
+	 			filter = new PaigeImportFilter();
+	 			break;
+	 		case pg_rtf_type:
+	 			filter = (PaigeImportObject) new
+	 			PaigeRTFImportFilter();
+	 			break;
+	 		case pg_paige_type:
+	 			filter = (PaigeImportObject) new
+	 			PaigeNativeImportFilter();
+	 			break;
+	 		default:
+	 			return (pg_ERROR) BAD_TYPE_ERR;
+	 	}
+	 	
+	 	if((result = filter -> pgInitImportFile
+	 	
+## 17.3 Determining File Type
+
+There might be cases where the file type is unknown and/or you want to verify that a file is truly the type that you expect. There is a function you can call to determine the type:
+
+	pg_filetype pgDetermineFileType (pg_file_unit fileref, file_io_proc io_proc, long starting_position)
+
+**NOTE:** Calling this function examines the appropriate contents of a file looking for a signature recognized by one of the support file import classes. The actual file contents are examined to determine the type.
+
+`fileref` — An opened file reference (the "refNum" for Macintosh or file handle for Windows).
+
+`io_proc` — The low-level function to perform I/O. This is described in the OpenPaige Programmer's Guide. Except for implementing very special features, usually you should pass NULL for this parameter.
+
+`starting_position` — Indicates the file position you will (eventually) begin importing.
+
+This function will always return one of the following types:
+
+	#include "pgTxr.h"
+	
+	enum
+	{
+		pg_unknown_type,	// Unknown file type
+		pg_text_type,		// Standard ASCII text
+		pg_rtf_type,		// Rich text format
+		pg_paige_type,	// Standard OpenPaige file type
+	}
+
+**NOTE:** An unrecognised file will usually return as `pg_text_type` because a `text` file is considered to be practically anything. For this reason, `pgDetermineFileType()` will first check for `pg_rtf_type` and `pg_paige_type` before deciding it is simply a text file.
+
+## 17.4 Determining the Feature Set
+
+You can determine what data type(s) are supported by the importer if you examine `object -> feature_bits` immediately after creating the import object. This member will be initialised to some combination in list shown on the following page:
+
+	IMPORT_TEXT_FEATURE				Can import raw text
+	IMPORT_TEXT_FORMATS_FEATURE		Can import styled text
+	IMPORT_PAR_FORMATS_FEATURE		Can import paragraph formats
+	IMPORT_PAGE_INFO_FEATURE		Can import page dimensions
+	IMPORT_CONTAINERS_FEATURE		Can import containers
+	IMPORT_HEADERS_FEATURE			Can import headers
+	IMPORT_FOOTERS_FEATURE			Can import footers
+	IMPORT_FOOTNOTES_FEATURE		Can import footnotes
+	IMPORT_EMBEDDED_OBJECTS_FEATURE	Can import supported embed_refs
+	IMPORT_PAGE_GRAPHICS_FEATURE	Can import page-layour graphics
+	IMPORT_CACHE_FLAG				Can disc-page the file
+
+#### Example
+
+	PaigeImportObject filter;
+	
+	filter = (PaigeImportObject) new PaigeRTFImportFilter();
+	
+	if (!(filter -> feature_bits & IMPORT_EMBEDDED_OBJECTS_FEATURE))
+		AlertUser("Any pictures in document will be lost. Open anyway?")
+
+## 17.5 Cross-Mapping Font Tables
+
+The OpenPaige importer extension provides a default mapping table for font names when you import a file generated from another platform. For any font name that is imported, if a match is found in the table then the suggested substitute name is used; if no match is found, the default font name (defined in OpenPaige globals) is used instead. The assumption is that the font name won't exist in the target platform.
+
+You can override the defaults in one of two ways:
+
+1. Substitute your own pointer to a font mapping table (see below). You can substitute your own table after the `PaigeImportFilter` object is created. For example:
+		
+		PaigeImportObject filter;
+		
+		filter = (PaigelmportObject) new PaigeRTFImportFilter();
+		filter -> font_cross_table = (pg_char_ptr)MyOwnFontTable;
+		
+2. Override the font mapping member function. The function that maps font substitution can be overridden if you subclass the desired import structure. The font mapping function is declared as:
+
+		virtual void pgMapFont (font_info_ptr font, long importing_os, long current_os);
+-
+Upon entry, "font" is the `font_info` pointer in question. The `importing_os` and `current_os` define the platform of the importing file and the current (runtime) platform, respectively. These platform definitions will be one of the following:
+
+		#define MACINTOSH_OS	1
+		#define WINDOWS_OS		2
+		#define UNIX_OS			3
+-
+To substitute a font, simply change `font -> name` before returning from the function.
+
+CAUTION: The font name, by default, is a pascal string (first byte is its length). If you replace it with a cstring you must set font->environs to NAME_IS_CSTR.
+
+If you want no font mapping at all, set the object's member "font_cross_table" to NULL after creating it.
+
+### Font Table Format
+
+The font mapping table is a table of null-terminated text strings. Each entry (delimited by a null character) is ordered in ascending alphabetical order, the last entry is terminated with `\ff` (see default tables below). Each entry contains a font name (with possible asterisk `*` wildcard) followed by a substitute name in square brackets `[]`.
+
+#### EXAMPLE 1:
+
+	"WingDings[Zapf Dingbats]\0"
+
+If the imported font name is "WingDings" then substitute "Zapf Dingbats".
+
+#### EXAMPLE 2:
+
+	"Times*[Times]\0"
+
+If imported font's first five characters are "Times" then substitute "Times". (Hence, both “Times New Roman” and “Times Roman” would be subtitled with “Times”).
+
+## 17.6 Default Font Tables
+
+### Importing to Macintosh (and file is from Windows)
+
+	static pg_char cross_font_table[] =
+	{
+		"Arial*[Helvetica]\0"
+		"Book*[Bookman]\0"
+		"Century Gothic[Avant Garde]\0"
+		"Century Sch*[New Century Schoolbook]\0"
+		"Courie*[Courier]\0"
+		"Fixedsys[Chicago]\0"
+		"Helvetic*[Helvetica]\0"
+		"Monotype Cors*[Zapf Chancery]\0"
+		"MS S*[Geneva]\0"
+		"Roman[New York]\0"
+		"Script[Zapf Chancery]\0"
+		"Small Fonts[Monaco]\0"
+		"Terminal[Monaco]\0"
+		"Times*[Times]\0"
+		"Wingdings[Zapf Dingbats]\0"
+		"\ff"
+	};
+		
+### Importing to Windows (and file is from Macintosh)
+
+	static pg_char cross_font_table[] =
+	{
+		"Avant Garde[Arial]\0"
+		"Bookman[Times New Roman]\0"
+		"Chicago[FixedSys]\0"
+		"Courier[Courier New]\0"
+		"Geneva[MS Sans Serif]\0"
+		"Helvetica[Arial]\0"
+		"Monaco[Courier New]\0"
+		"Helvetic*[Arial]\0"
+		"New York[MS Serif]\0"
+		"Palatino[Arial]\0"
+		"Symbol[WingDings]\0"
+		"Times[Times New Roman]\0"
+		"Zapf Chancery[Script]\0"
+		"Zapf Dingbats[WingDings]\0"
+		"\ff"
+	};
+
+## 17.7 Character Mapping
+
+The importing mechanism will also map ASCII characters > 0x7F. If you wish to override the defaults you should subclass the `import` class and override the following function:
+
+	virtual void pgMapChars (pg_char_ptr c hars, long num_chars, long file_os, long current_os);
+
+This function gets called after each block of text is imported. Upon entry, `chars` points to the block of text and `num_chars` defines the number of bytes. The `file_os` and `current_os` define the platform of the importing file and the current (runtime) platform. The possible values for these will be one of the following:
+
+	#define MACINTOSH_OS	1
+	#define WINDOWS_OS		2
+	#define UNIX_OS			3
+
+You can also override the character mapping by substituting your own character mapping table. The character mapping table is a series of unsigned characters, each entry representing consecutive characters from 0x80 to 0xFF.
+
+For example, if the first three bytes being imported were 0x80, 0x81, and 0x82, the following character mapping table would cause 0xAA, 0xBB, and 0xCC to be inserted into the OpenPaige document:
+
+	unsigned char mapping_table[]=
+	{
+		0xAA, 0xBB, 0xCC, ...
+	}
+
+An entry in the mapping table of null (zero value character) denotes that the character is not available in the current platform. If so, the `unknown_char` member in `paige_globals` is used.
+
+To substitute your own mapping table, first create the import object then change `object -> character_table`.
+
+#### EXAMPLE:
+
+	PaigeImportObject filter;
+	filter = (PaigeImportObject) new PaigeRTFImportFilter();
+	filter -> character_table = (pg_char_ptr)MyOwnCharTable;
+
+## 17.8 Importing from C
+
+**CUSTOM CONTROL USERS:** There are (intentionally) no control messages that support the OpenPaige Import extension. Use the method shown below; also, see "Importing to the OpenPaige Custom Control"<!-- on page 17-311-->. If you need to import a file from a non-C++ environment—or if you want to import a file from a single line of code—you can do so by calling the following function:
+
+	pg_error pgImportFileFromC (pg_ref pg, pg_filetype filetype, long feature_flags, long file_begin, pg_file_unit f_ref)
+
+This function imports a file of type `filetype` into `pg`. The `filetype` parameter must be one of the following:
+
+	pg_text_type, 	// Standard ASCII text
+	pg_rtf_type,		// Rich text format
+	pg_paige_type		// Standard OpenPaige file type
+
+The `feature_flags` parameter indicates which data type(s) you want to import, which can be any of the following bit settings:
+
+	#define IMPORT_EVERYTHING_FLAG			0x00FFFFFF	// Import everything
+	#define IMPORT_TEXT_FLAG				0x00000001	// Import raw text
+	#define IMPORT_TEXT_FORMATS_FLAG		0x00000002	// Import text formats
+	#define IMPORT_PAR_FORMATS_FLAG		 	0x00000004	// Import paragraph formats
+	#define IMPORT_PAGE_INFO_FLAG			0x00000008	// Import page information
+	#define IMPORT_CONTAINERS_FLAG			0x00000010	// Import container boxes
+	#define IMPORT_HEADERS_FLAG				0x00000020	// Import headers
+	#define IMPORT_FOOTERS_FLAG				0x00000040	// Import footers
+	#define IMPORT_FOOTNOTES_FLAG			0x00000080	// Import footnotes
+	#define IMPORT_EMBEDDED_OBJECTS_FLAG	0x00000100	// Import embedded graphics
+	#define IMPORT_PAGE_GRAPHICS_FLAG		0x00000200	// Import page pictures
+	#define IMPORT_STYLESHEETS_FLAG			0x00000400	// Import style sheets
+
+In addition to the above, setting the following bit causes page dimensions (paper size, margins) to get applied:
+
+	#define APPLY_PAGE_DIMENSIONS	0x02000000	// Apply page size(s)
+	#define IMPORT_CACHE_FLAG		0x04000000	// Page-read the file
+
+The `file_begin` parameter indicates the first file position to begin reading.
+
+The `f_ref` parameter must be a reference to an opened file (`refNum` for Mac, `file handle` for Windows).
+
+If this function is successful, the contents of the file are inserted into the current position of `pg` and the document is redrawn and `NO_ERROR (0)` is returned. Otherwise the appropriate error code will be returned.
+
+## 17.9 Importing to the OpenPaige Custom Control
+
+There is no message-based support in the custom control to import a file using the methods shown in this document; the lack of message-based importing is an intentional omission to allow optional compiling of the import classes independent of the control. To import a file into the custom control, you may simply obtain the `pg_ref` using the `PG_GETPGREF` message.
+
+However, importing a file into a control can cause an out-of-sync situation with scrollbar positions, pagination, etc., so you should always send the following message immediately after importing a file:
+
+	SendMessage(hwnd, PG_REALIZEIMPORT, wParam, 0);
+
+The `PG_REALIZEIMPORT` message informs the control that you have imported a file and that it should make any adjustments necessary to reflect those changes.
+
+If `wParam` is TRUE the control repaints itself.
+
+## 17.10 The `PaigeImportFilter`: Overrideables
+
+	class PaigeImportFilter
+	{
+		public:
+		pg_char_ptr font_cross_table;	// Table of cross-fonts
+		pg_char_ptr character_table;	// Table of cross-chars
+		
+		// Overrideable member functions (higher level):
+		
+		virtual pg_error pgVerifySignature(void);
+		virtual pg_error pgPrepareSignature(void);
+		virtual pg_boolean pgReadNextBlock(void);
+		virtual pg_error pgImportDone();
+		virtual void PG_FAR * pgProcessEmbedData (memory_ref ref, long embed_type);
+		virtual void pgMapFont (font_info_ptr font, long importing_os, long current_os);
+		virtual void pgMapChars (pg_char_ptr chars, long num_chars, long file_os, long current_os);
+	};
+
+**NOTE:** All of the class definitions are not shown. Only the members of potential interest and usefulness are given. For a complete description of this class, see pgtxrcpp.h.
+
+### Member-by-Member Description
+
+`font_cross_table` — A pointer to the font mapping table. See "Cross-Mapping Font Tables" <!-- on page 17-303--> in this document.
+
+`character_table` — A pointer to the character mapping table (for characters > 0x7F). See "Character Mapping"<!-- on page 17-308--> in this document.
+
+`pg_error pgVerifySignature()` — Called to verify if the file about to be imported contains valid contents for the supported type. For example, `pgVerifySignature()` for the RTF class checks for the existence of the keyword `\rtf` at the start of the file to verify if it is truly an RTF file or some other format. If the file is valid, `NO_ERROR` should be returned, otherwise return `BAD_TYPE_ERR`.
+
+`pgPrepareImport()` — Called to make any preparations for importing the file. No actual file transfer is performed, but this function should be used to initialize private members to perform the first "read". There are no parameters to this function. The values taken from the application's call to `pgInitImportFile()` will have been placed into the appropriate member values before `pgPrepareImport()` is called.
+
+`pg_boolean pgReadNextBlock()` — Called to import (read) the next block of text. A "block of text" means a block of one or more characters that are rendered in the same consistent format.
+
+For example, if the incoming text contained "**Bold**\_Plain\_*Italic*", the import class must consider `Bold_`, `Plain_` and `Italic_` as three separate blocks. The first time `pgReadNextBlock()` gets called, the text `Bold_` would be returned; the next time `Plain_` is returned, and so forth.
+
+Most of the text and format information must be placed in the "translator" member of the class; this member is a record defined as follows:
+
+	struct pg_translator
+	{
+		memory_ref data;				// Data transferred (read) or to-transfer (write)
+		memory_ref stylesheet_table;	// Contains list of possible style sheets
+		long bytes_transferred;			// Number of bytes in buffer
+		long total_text_read;			// Total transferred to-moment
+		style_info format;				// Style(s) and charcter format of text
+		par_info par_format;			// Paragraph format(s) of the text
+		font_info font;					// Font applied to this text
+		pg_doc_info doc_info;			// General document information
+		unsigned long flags;			// Attributes of last transfer
+		pg_boolean format_changed;		// Set to TRUE - format has changed
+		pg_boolean par_format_changed;	// Set to TRUE - para has changed
+		pg_boolean font_changed;		// Set to TRUE - font has changed
+		pg_boolean doc_info_changed;	// Set to TRUE if document info has changed
+
+Imported text bytes are inserted into the `translator.data` `memory_ref` (using the appropriate OpenPaige Allocation Manager calls). The byte size returned is assumed to be `GetMemorySize(translator.data)`. Note, to implement special features, it is acceptable to return zero bytes for each call. Your function will be called repeatedly until you return FALSE.
+
+For the best examples of `pgReadNextBlock()` consult the source code files for each import class.
+
+**FUNCTION RESULT:** If there are no more bytes to transfer, return FALSE. Note that you can return FALSE even if the current function called transferred one or
+more bytes, yet end-of-file comes after that position. A result of FALSE indicates that `pgReadNextBlock()` should not be called again.
+
+`pgImportDone()` — Called when importing has completed. This function essentially balances `pgPrepareImport()`. Anything you allocated previously in `pgPepareImport()` should be disposed.
+
+	void PG_FAR * pgProcessEmbedData (memory_ref ref, long embed_type);
+
+Called when the `import` class has read data that is intended for an `embed_ref`. (For version 1.02b of the import extension, this function only gets called by the RTF importer.)
+
+Upon entry, `ref` contains the data read from the file and `embed_type` is the type of `embed_ref` that will be inserted. Note that the data in `ref` *is not* an `embed_ref`; rather, it is raw, binary data read from the file. The purpose of `pgProcessEmbedData()` is to convert that binary data into whatever form necessary to be successfully inserted as an `embed_ref`.
+
+**FUNCTION RESULT:** This function must return the appropriate data type for a subsequent creation and insertion of an `embed_ref`. Note, however, that the class that calls this function assumes that the `memory_ref` `ref` is either no longer valid, or the same `memory_ref` is returned as the function result (with its contents altered, for instance).
+
+In other words, the assumption is made that the `ref` parameter has been converted into something else appropriate for the embed type, and that new data element is returned as the function result.
+
+For example, if the `embed_type` were `embed_meta_file`, the appropriate function result might be to create a new `HMETAFILE`, set the bitstream data from `ref` into the new metafile `HANDLE`, dispose the `embed_ref` and return the new `HMETAFILE`.
+
+### Default Function
+
+The default function (when using the RTF import class) processes `embed_mac_pict` and `embed_meta_file`; if the type is `embed_mac_pict`, the `memory_ref` is converted to a `Handle` and returned as the function result. If the type is `embed_meta_file`, the contents of the `memory_ref` are converted to a new `HMETAFILE` and the `memory_ref` is disposed.
+
+See source code for the default function in `pgImport.cpp`.
+
+	pgMapFont(), pgMapChars()
+
+These are called to cross-map fonts and characters between platforms. See "Cross-Mapping Font Tables"<!-- on page 17-303--> and "Character Mapping"<!-- on page 17-308--> (this document) for a detailed description.
+
+## 17.11 RTF Import Overridables
+
+There are some lower-level member functions in `PaigeRTFImportFilter` class that you can override to process unsupported key words:
+
+	class PaigeRTFImportFilter: public PaigeImportFilter
+	{
+		public;
+		virtual void ProcessInfoCommand (short command, short parameter);
+		virtual void UnsupportedCommand (pg_char_ptr command, short parameter);
+	}
+	ProcessInfoCommand(short command, short parameter);
+
+`ProcessInfoCommand()` gets called by the RTF class when a "document information" key word is recognized but not processed. Upon entry, the `command` parameter will be equivalent to one of the values shown in the table below.
+
+The value in `parameter` will be the numerical appendage to the keyword, if any. For example, the key word "dy23" would result in a command value of 5 (for "dy" and a parameter value of 23).
+
+	1	author
+	2	buptim
+	3 	creatim
+	4	doccomm
+	5	dy
+	6	edmins
+	7	hr
+	8	id
+	9	keywords
+	10	min
+	11	mo
+	12	nextfile
+	13	noofchars
+	14	nofpages
+	15	nofwords
+	16	operator
+	17	printtim
+	18	revtim
+	19	sec
+	20	subject
+	21	title
+	22	verno
+	23	version
+	24	yr
+
+-
+
+	UnsupportedCommand (pg_char_ptr command, short parameter
+
+`UnsupportedCommand()` gets called by the `RTF` class when a key word is encountered that is not understood. The purpose of this overridable member function is to get access and process `RTF` tokens that are not normally supported.
+
+Upon entry, `command` is a null-terminated string that contains the literal command (minus the `\` prefix); the value in `parameter` will be the numerical appendage to the keyword, if any. For example, the key word `bonus99` would result in a command string of `bonus\0` and a parameter value of `99`).
+
+## 17.12 Processing Tables
+
+Since OpenPaige does not support the concept of "tables" directly, importing a table from an RTF file results in a tab-delimited text stream which represents each cell of the table. If your application requires more extensive implementation of tables, there are specific functions in the RTF importing class which you may override to implement them differently.
+
+### Table Processing Member Functions
+
+	void BeginTableImport();
+
+This function is called when a table is recognized in the `RTF` input stream, but no data has been processed. The purpose of `BeginTableImport()` is to prepare whatever structure(s) are necessary to process the table.
+
+**NOTE:** The RTF class contains a private variable, `doing_table`, which must be set to TRUE at this time. Otherwise, the remaining table functions will never be called.
+
+### Default Implementation
+
+Only `table_cell`, `cell_setright` and `table_row_end` are processed; all other key words are ignored. For `table_cell`, a tab character is imported; for `cell_setright`, a paragraph tab position is set; for `table_row_end`, a carriage return is imported.
+
+The class member `doing_table` is set to TRUE.
+
+	pg_boolean ProcessTableCommand (short command, short parameter);
+
+This function is called for all table-type `RTF` key words. Upon entry, `command` contains the table key word (below) while `parameter` contains the appended parameter to the keyword, if any.
+
+For example, the RTF key word `cellx900` indicates a cell's right position, in this case 900 (measured in `TWIPS`). The command value given to this function would be `cell_setright`, and `parameter` would be 900.
+
+**FUNCTION RESULT:** A result of "TRUE" implies that the current text and formatting should be inserted into the main document, otherwise the current text and formatting is buffered and the next text and/or key words are read.
+
+### Table Key Words
+
+The following values are defined in `PGRTFDEF.H`:
+
+
+	enum {
+		table_cell = 1,			// Data that follows is next cell
+		cell_setright,			// Set cell's right side
+		cell_border_bottom,		// Cell's bottom has border
+		cell_border_left,		// Cell's left has border
+		cell_border_right,		// Cell's right has border
+		cell_border_top,		// Cell's top has border
+		cell_first_merge,		// First table in range of cells to be merged
+		cell_merge,				// Contents of cell are merged with preceding cell
+		cell_shading,				// Cell is shaded */
+		enter_table,		
+		table_row_end,		// End current row of cells
+		table_border_bottom,	// Table's bottom has border
+		table_border_horizontal,	// Table's content has horizontalborder
+		table_border_left,		// Table's left has border
+		table_border_right,		// Table's right has border
+		table_border_vertical,	// Table's content has vertical border
+		table_border_top,		// Table's top has border
+		table_spacing,		/* Half the space between cells in twips */
+		table_header,		/* Data that follows is table header */
+		table_keep_together,
+		table_position_left,	/* Position table to left */
+		table_center,		// Centre-align table
+		table_left,		// Left-align table
+		table_right,		// Right-aligh table
+		table_height		// Indicates total height of table
+	};
+
+-
+
+	pg_boolean InsertTableText ();
+
+This function is called if text (cell contents) is processed while in table mode. This function will never get called unless `doing_table` is TRUE and one or more characters other than key words are read.
+
+This function will also never overlap text formats, i.e. 	`InsertTableText()` gets called every time the character or paragraph style changes.
+
+Upon entry, all information regarding the text and its format can be found in the `translator` member of the class:
+
+	translator.data					- A memory_ref contains the text
+	translator.bytes_transferred 	- Number of characters in translator.data
+	translator.format				- Current text format (style_info)
+	translator.par_format			- Current paragraph format (par_info)
+	translator.font					- Current font (font_info) 
+
+**FUNCTION RESULT:** A result of "TRUE" implies that the current text and formatting should be inserted into the main document; otherwise, the current text is discarded (and never inserted into the main document).
+
+**NOTE:** A result of FALSE would be necessary if you are processing the text into a target that is not the main document (such as a graphic picture).
+
+### Default Implementation
+
+The `doing_table` member is cleared to FALSE, then TRUE is returned.
+
+	pg_boolean EndTableImport();
+
+This function is called when the end of the table is reached. The purpose of `EndTableImport()` is to terminate the table.
+
+**FUNCTION RESULT:** If TRUE is returned, any pending text and formatting will be inserted into the main document, otherwise existing text and formatting will be discarded.
+
+**NOTE:** This function must clear `doing_table` to FALSE.
+
+## 18 OPENPAIGE EXPORT EXTENSION <br> (FOR "RTF" AND OTHER TYPES)
+
+The OpenPaige export extension provides high-level functionality for saving files to non-OpenPaige formats. Version 1.03b supports OpenPaige format, ASCII text format, and Rich Text Format (RTF). Although the export extension is a C++ framework, it can be called from straight C programs if necessary.
+
+## 18.1 Installation
+
+**NOTE:** The installation procedure mentions the directory, `pgtxr`.
+
+## 18.2 Macintosh and Windows Users
+
+Simply add the following files from the "pgtxr" directory to your project:
+
+### Minimum configuration (export ASCII text only):
+
+	pgexport.cpp
+	pgdeftbl.c
+
+#### Native OpenPaige File Export (in addition to above)
+
+	pgnative.cpp
+
+#### RTF File Export (in addition to Minimum Configuration)
+
+	pgrtfdef.c
+	pgrtfexp.cpp
+
+If you will be exporting files using C++:
+
+	#include "pgtxrcpp.h"
+
+If you will be exporting only from straight C:
+
+	#include "pgtxr.h"
+
+## 18.3 Exporting Files (from C++)
+
+**NOTE:** "Exporting", in many cases, is synonymous to "Save". We use the term "export" only to distinguish it from earlier methods of saving OpenPaige files (such as `pgSaveDoc`); from an implementation viewpoint, however, your application can respond to `Save` and `Save As` by "exporting" a file.
+
+Exporting a file with this extension can be accomplished in a few easy steps:
+
+1. To export to a disk file, create and open the file you wish to export. To export to memory, allocate an empty `memory_ref` (using `MemoryAlloc`).<br><br>
+**NOTE:** You can discover the recommended file type (Macintosh) or file extension (Windows) by examining the `file_kind` member of the export class — see "File Type and Extension"<!-- on page 18-334-->).
+
+2. Create a new object (with "new" keyword) of the appropriate type for the file. Currently we support raw text files, RTF and OpenPaige files. The following is an example of creating an appropriate export object:
+
+		#include "pgTxrCPP.h"
+		PaigeExportObject filter;
+		
+		// To export a plain ASCII text file:
+		filter = new PaigeExportFilter();
+		
+		// To export an RTF file:
+		filter = (PaigeExportObject) new PaigeRTFExportFilter();
+		
+		// To export an OpenPaige file:
+		filter = (PaigeExportObject) new PaigeNativeExportFilter();
+
+3. Call the initialization member function, `pgInitExportFile()`. This function prepares for exporting a file, setting up whatever is necessary to write file's native format. A file can be exported to a physical file, or to memory, differentiated by the value(s) you pass in the function parameters. The `pgInitExportFile()` function is defined as follows:
+		
+		pg_error pgInitExportFile (pg_globals_ptr globals, pg_file_unit fileref, memory_ref memory_unit, file_io_proc write_proc, long first_position);
+-
+**FUNCTION RESULT:** If this function is successful, zero is returned, otherwise an error code is returned.
+
+4.  Call the member function, `pgExportFile()`. This exports the data from a `pg_ref` to the file (or `memory_ref`) specified in `pgInitExportFile()`. The `pgInitExportFile()` function is defined as follows:
+
+		pg_error pgExportFile (pg_ref pg, select_pair_ptr range, long export_flags, pg_boolean selection_only);
+-
+**FUNCTION RESULT:** If this function is successful, zero is returned; otherwise, an error code is returned.
+5. Delete the object, or if you want to export another file, repeat steps 3 through 4.
+
+
+### `pgInitExportFile()` - Parameters
+
+* `globals` - A pointer to your OpenPaige globals. Custom control users: You can get a pointer to the OpenPaige globals as follows: 
+	1. Get the `pg_ref` from the control by
+sending a PG_GETPGREF message, and 
+	2. Call the OpenPaige API, `pgGetGlobals()`.
+* `fileref` - If exporting to a disk file, this parameter must be a reference to the opened file (the `refNum` for Macintosh, or a file handle for Windows). If exporting to memory, `fileref` should be zero. If using the *Microsoft Foundation Classes* on *Windows*, the `fileref` parameter must be a "real" `HFILE` (or NULL if exporting to memory), not some other MFC-generated class member that you may assume is a file handle.
+* `memory_unit` — If exporting to a disk file, this parameter must be `MEM_NULL`. If exporting to memory, this must be a `memory_ref` of zero byte size (see "The Allocation Mgr”<!-- on page 25-1-->).
+* `write proc` — This is an optional I/O function to be used instead of the default lowlevel writing function. Refer to the OpenPaige Programmer's Guide for information about custom I/O functions. For writing to standard file from disk or memory, pass `NULL` for this parameter.
+* `first_position` — This value indicates the beginning file position to write. The `first_position` can be zero or some other byte offset into the file to begin writing.
+
+### `pgExportFile()` - Parameters
+
+* `pg` - The source document. Custom control users: obtain the `pg_ref` by sending a `PG_GETPGREF` message.
+
+* `range` - The selection range (in the OpenPaige document) to export. This parameter is ignored, however, if `selection_only` is FALSE (in which case the whole document is exported). If range is NULL and `selection_only` is TRUE, only the current selection range is exported. If range is NULL and `selection_only` is FALSE, the whole document is exported.
+
+* `export_flags` — A set of bits defining which item(s) to export, which can be any or all of the data types shown below.<br>
+**NOTE:** Setting these bits causes that data item to export only if supported by the exporter.
+
+
+		#define EXPORT_TEXT_FLAG				0x00000001L	/* Export raw text */
+		#define EXPORT_TEXT_FORMATS_FLAG		0x00000002L	/* Export text formats */
+		#define EXPORT_PAR_FORMATS_FLAG			0x00000004L	/* Export paragraph formats */
+		#define EXPORT_PAGE_INFO_FLAG			0x00000008L	/* Export page info */
+		#define EXPORT_CONTAINERS_FLAG			0x00000010L	/* Export container boxes */
+		#define EXPORT_HEADERS_FLAG				0x00000020L	/* Export headers */
+		#define EXPORT_FOOTERS_FLAG				0x00000040L	/* Export footers */
+		#define EXPORT_FOOTNOTES_FLAG			0x00000080L	/* Export footnotes */
+		#define EXPORT_EMBEDDED_OBJECTS_FLAG	0x00000100L	/* Export recognized embed_refs */
+		#define EXPORT_PAGE_GRAPHICS_FLAG		0x00000200L	/* Export page-anchored pictures */
+		#define EXPORT_STYLESHEETS_FLAG			0x00000400L	/* Export defined stylesheets */
+		#define EXPORT_HYPERTEXT_FLAG			0x00000800L	/* Export hypertext links (or index, toc). */
+		#define INCLUDE_LF_WITH_CR				0x02000000L	/* Add LF with CR if not already */
+		#define EXPORT_CACHE_FLAG				0x04000000L	/* Export cached file */
+		#define EXPORT_UNICODE_FLAG				0x08000000L	/* Write text as UNICODE */
+		#define EXPORT_EVERYTHING_FLAG			0x00FFFFFFL	/* Export everything you can */
+
+* `selection_only` — If TRUE, the only current selection (or the selection specified in the range parameter) is exported. If range is NULL and selection_only is TRUE, only the current selection range is exported. If range is NULL and `selection_only` is FALSE, the whole document is exported. <br>
+**FUNCTION RESULT:** If this function is successful, zero is returned, otherwise an error code is returned.
+
+### Export File Example
+
+	#include "pgTxrCPP.h"
+	
+	/* This function exports a file from a pg_ref, first creating an object for the appropriate file type. If all is well, NO_ERROR is returned. */
+	
+	pg_error ExportFile (pg_ref pg, pg_filetype filetype, long feature_flags, select_pair_ptr output_range, pg_boolean use_selection, pg_file_unit f_ref)
+
+	{
+		PaigeExportObject filter;
+		pg_globals_ptr globals;
+		long flags, file_begin;
+		pg_error result = NO_ERROR;
+		
+		if (!(flags = feature_flags))
+			flags = EXPORT_EVERYTHING_FLAG;
+			globals = pgGetGlobals (pg);
+			
+		switch (filetype)
+		{
+			case pg_text_type:
+				filter = new PaigeExportFilter();
+				break;
+			case pg_rtf_type:
+				filter = (PaigeExportObject) new PaigeRTFExportFilter();
+				break;
+			case pg_paige_type:
+				filter = (PaigeExportObject) new PaigeNativeExportFilter();
+				break;
+			default:
+				return (pg_error)BAD_TYPE_ERR;
+		}
+		
+		if (!output_range)
+			file_begin = 0;
+		else
+			file_begin = output_range -> begin;
+			
+		if ((result = filter -> pgInitExportFile(globals, f_ref, MEM_NULL, NULL, file_begin)) == NO_ERROR)
+			result = filter -> pgExportFile(pg, output_range, flags, use_selection);
+			delete filter
+			return result;
+	}
+
+### 18.4 Determining the Feature Set
+
+You can determine what data type(s) are supported by the exporter if you examine `object -> feature_bits` immediately after creating the export object. This member will be initialized to some combination of the following:
+
+	#define EXPORT_TEXT_FEATURE				0x00000001L	/* Can Export raw text */
+	#define EXPORT_TEXT_FORMATS_FEATURE		0x00000002L	/* Can Export text formats */
+	#define EXPORT_PAR_FORMATS_FEATURE		0x00000004L	/* Can Export paragraph formats */
+	#define EXPORT_PAGE_INFO_FEATURE		0x00000008L	/* Can Export page dimensions */
+	#define EXPORT_CONTAINERS_FEATURE		0x00000010L	/* Can Export containers */
+	#define EXPORT_HEADERS_FEATURE			0x00000020L	/* Can Export headers */
+	#define EXPORT_FOOTERS_FEATURE			0x00000040L	/* Can Export footers */
+	#define EXPORT_FOOTNOTES_FEATURE		0x00000080L	/* Can Export footnotes */
+	#define EXPORT_EMBEDDED_OBJECTS_FEATURE	0x00000100L	/* Can Export standard, supported embed_refs */
+	#define EXPORT_PAGE_GRAPHICS_FEATURE	0x00000200L	/* Can Export graphics anchored to page */
+	#define EXPORT_HYPERTEXT_FEATURE		0x00000400L	/* Can Export hypertext (or index, toc, etc. */
+	#define EXPORT_CACHE_FEATURE			0x00100000L	/* Can Export cache method */
+	#define EXPORT_UNICODE_FEATURE			0x00200000L	/* Can export UNICODE */
+
+
+#### EXAMPLE:
+
+	PaigeExportObject filter;
+	filter = (PaigeExportObject) new PaigeRTFExportFilter();
+	
+	if (!(filter->feature_bits & EXPORT_EMBEDDED_OBJECTS_FEATURE))
+		AlertUser("Any pictures in document will be lost. Save anyway?");
+
+### Resulting File Size
+
+If exporting is successful, the physical end-of-file is set to the first position beyond the last byte written (if writing to a disk file). If exporting to memory, the `memory_ref` is set to the exact size that was saved.
+
+## 18.5 File Type and Extension
+
+For Windows development, it may be convenient to determine what type of file extension to create (e.g., ".txt”, “.rtf”, etc.); for Macintosh it may also be convenient to determine the default type ("TEXT", "RTF_", etc.). This might become increasingly important in the future if many export classes are developed.
+
+Every export class will place the recommended file type or extension into the following member by its constructor function:
+
+	pg_by tefile_kind[KIND_STR_SIZE];	// Recommended filetype
+
+If running in a Windows environment, `file_kind` will be initialized to the recommended 3-character extension ("TXT", "RTF", etc.). If running in a Macintosh environment, `file_kind` will get set to the recommended 4-character file type.
+
+## 18.6 Exporting from C
+
+If you need to export a file from a non-C++ environment—or if you want to import a file from a single line of code—you can do so by calling the following function:
+
+	pg_error pgExportFileFromC (pg_ref pg, pg_filetype filetype, long feature_flags, long file_begin, select_pair_ptr output_range, pg_boolean use_selection, pg_file_unit f_ref);
+
+This function exports a file of type filetype into `pg`. The filetype parameter must be one of the following:
+
+	pg_text_type,	// Standard ASCII text 
+	pg_rtf_type,	// RTF format
+	pg_paige_type	// Standard OpenPaige file type
+
+The `feature_flags` parameter indicates which data type(s) you want to export, which can be any of the following bit settings:
+
+	#define EXPORT_TEXT_FLAG				0x00000001	// Export raw text
+	#define EXPORT_TEXT_FORMATS_FLAG		0x00000002	// Export text formats
+	#define EXPORT_PAR_FORMATS_FLAG			0x00000004	// Export paragraph formats
+	#define EXPORT_PAGE_INFO_FLAG			0x00000008	// Export page info
+	#define EXPORT_CONTAINERS_FLAG			0x00000010	// Export container boxes
+	#define EXPORT_HEADERS_FLAG				0x00000020	// Export headers
+	#define EXPORT_FOOTERS_FLAG				0x00000040	// Export footers
+	#define EXPORT_FOOTNOTES_FLAG			0x00000080	// Export footnotes
+	#define EXPORT_EMBEDDED_OBJECTS_FLAG	0x00000100	// Export recognized embed_refs
+	#define EXPORT_PAGE_GRAPHICS_FLAG		0x00000200	// Export page-anchored pictures
+	#define EXPORT_STYLESHEETS_FLAG			0x00000400L	// Export defined stylesheets
+	#define EXPORT_HYPERTEXT_FLAG			0x00000800	// Export hypertext links (or index, toc).
+	#define INCLUDE_LF_WITH_CR				0x02000000	// Add LF with CR if not already
+	#define EXPORT_CACHE_FLAG				0x04000000	// Export cached file
+	#define EXPORT_UNICODE_FLAG				0x08000000	// Write text as UNICODE
+	#define EXPORT_EVERYTHING_FLAG			0x00FFFFFF	// Export everything you can
+
+
+
+The `file_begin` parameter indicates the first file position to begin writing.
+
+The `output_range` and `use_selection` parameters indicate the range of text to export: if `use_selection` is FALSE, `output_range` is ignored and the entire document is exported. If `use_selection` is TRUE, the selection specified in `output_range` is specified (or if NULL the current selection in `pg` is used).
+
+The `f_ref` parameter must be a reference to an opened file ( `refNum` for Mac, file handle for Windows).
+
+If this function is successful, the contents of the `pg_ref` are written to the file, the end-of-file mark is set and `NO_ERROR` (0) is returned.
+
+## 18.7 The OpenPaige Export Filter: Overridables
+
+	class PaigeExportFilter
+	{
+		pg_char file_kind[KIND_STR_SIZE]; // Recommended filetype
+		
+		virtual pg_char_ptr pgPrepareEmbedData (embed_ref ref, long PG_FAR *byte_count, long PG_FAR *local_storage);
+		
+		virtual void pgReleaseEmbedData (embed_ref ref, long local_storage);
+		virtual pg_error pgPrepareExport (void);
+		virtual pg_boolean pgWriteNextBlock (void);
+		virtual pg_error pgExportDone ();
+
+**NOTE:** All of the class definitions are not shown. Only the members of potential interest and usefulness are given. For a complete description of this class, see `pgtxrcpp.h`.
+
+### Member-by-Member Description
+
+`file_kind` — Contains the recommended file type (Mac) or file extension (Windows). This is initialized by the class constructor.
+
+`pgPrepareExport()` — Called to make any preparations for exporting the file. No actual file transfer is performed, but this function should be used to initialize private members to perform the first "write". There are no parameters to this function. The values taken from the application's call to `pgInitExportFile()` will have been placed into the appropriate member values before `pgPrepareExport()` is called.
+
+`pg_boolean pgWriteNextBlock()` — Called to export (write) the next block of text. A "block of text" means a block of one or more characters that are rendered in the same consistent format.
+
+For example, if the outgoing text contained "**Bold**\_Plain\_*Italic*", the export class must consider `Bold_`, `Plain_` and `Italic_` as three separate blocks. The first time `pgWriteNextBlock()` gets called, the text `Bold_` would be provided; the next time `Plain_` is provided, and so forth.
+
+The text and format information is placed in the `translator` member of the class; this member is a record as defined in the following example:
+
+	struct pg_translator 
+	{
+		memory_ref		data;				// Data transferred (read) or to-transfer (write)
+		memory_ref		stylesheet_table;	// Contains list of possible stylesheets
+		long			bytes_transferred;	// Number of bytes in buffer
+		long			total_text_read;	// Total transferred to-moment
+		long			cache_begin;		// Beginning file offset (if cache enabled)
+		style_info		format;				// Style(s) and character format of text
+		par_info		par_format;			// Paragraph format(s) of the text
+		font_info		font;				// Font applied to this text
+		pg_doc_info		doc_info;			// General document information
+		pg_hyperlink	hyperlink;			// Hypertext link
+		pg_hyperlink	hyperlink_target;	// Target hypertext link
+		unsigned long	flags;				// Attributes of last transfer
+		pg_boolean		format_changed;		// Set to TRUE if format is different than last txr
+		pg_boolean		par_format_changed;	// Set to TRUE if par format different than last txr
+		pg_boolean		font_changed;		// Set to TRUE if font different than last txr
+		pg_boolean		doc_info_changed;	// Set to TRUE if document info changed since last txr
+		pg_boolean		hyperlink_changed;	// Set to TRUE if a hypertext link gets added
+		pg_boolean		hyperlink_target_changed;  // Set to true if hyperlink target changes
+		long			par_format_verb;	// Verb that indicates how to apply par_format
+		long			par_format_mark;	// Used with par_mark and verb
+	};
+
+Text byte(s) are available in `translator.data`; the byte size can be determined with `GetMemorySize(translator.data)`.
+
+For each consecutive call to `pgWriteNextBlock()`, if `format_changed`, `par_format_changed`, or `font_changed` are TRUE then the text format, paragraph format or font is different than the last `pgWriteNextBlock()` call, respectively.
+
+For the best examples of `pgReadWriteBlock()` consult the source code files for each import class.
+
+**FUNCTION RESULT:** If TRUE is returned, `pgWriteNextBlock()` will get called again if there is any more text to export; if FALSE is returned, exporting is aborted.
+
+`pgExportDone()` — Called after exporting has completed. This function essentially balances `pgPrepareExport(). Anything you allocated previously in `pgPepareExport()` should be disposed.
+
+`pg_error pgPrepareEmbedData()` — Called to prepare `embed_ref` data to be exported. The purpose of this function is to make any data conversions necessary to provide a serialised, binary stream of data to be exported.
+
+Upon entry, the `ref` parameter is the `embed_ref` that is about to be exported. This function needs to return a pointer to byte stream to transfer and the byte count of the byte stream should be stored in `*byte_count`.
+
+The `local_storage` parameter is a pointer to a long word; whatever is placed in `*local_storage` will be returned in `pgReleaseEmbedData()`, below. The purpose of this parameter is to provide a way for `pgPrepareEmbedData()` to "remember" certain variables required to un-initialize the `embed_ref` data (for example, `*local_storage` might be used to save a `HANDLE` that gets locked, hence it can be unlocked when `pgReleaseEmbedData()` is called).
+
+### Default Function
+
+The default `pgPrepareEmbedData()` function processes a Mac picture by locking the `PicHandle` and returning a de-referenced pointer to the `PicHandle` contents; if the runtime platform is Windows, a metafile is processed by returning the metafile bits.
+
+`pgReleaseEmbedData()` is called to balance a previous call to `pgPrepareEmbedData()`. The purpose of this function is to deïnitialise anything that was done in `pgPrepareEmbedData()`, and it gets called after the `embed_ref` data has been exported.
+
+Upon entry, the `ref` parameter is the `embed_ref`, the `local_storage` parameter will contain whatever value was set in `*local_storage` during `pgPrepareEmbedData()`.
+
+## 18.8 RTF Export Overrideables
+
+The RTF export class is derived from `PaigeExportFilter` and has some RTF-specific functions that can be overridden as well as data members that may prove usefrul:
+
+	class PaigeRTFExportFilter : public PaigeExportFilter 
+	{
+		public:
+			virtual pg_error OutputHeaders ();
+			virtual pg_error OutputFooters ();
+			virtual pg_error OutputEmbed ();
+			virtual pg_error OutputCustomParams();
+
+			pg_char def_stylename[FONT_SIZE + BOM_HEADER]; // Default "normal" stylesheet name
+	}
+
+This member function is called to export document headers; the default function does nothing (since OpenPaige does not directly support headers). To implement this feature (in terms of export), (see “Custom RTF Output"<!-- on page 18-343 this document-->).
+
+	pg_error OutputFooters ();
+
+This member function is called to export document footers; the default function does nothing (since OpenPaige does not directly support footers). To implement this feature (in terms of export), (see "Custom RTF Output"<!-- on page 18-343 this document-->).
+
+	pg_error OutputEmbed();
+
+This member function gets called to export an `embed_ref`. Upon entry, the `embed_ref` to be exported is available as:
+
+	this -> translator.format.embed_object;
+
+The default function handles the "supported" `embed_ref` types — `embed_mac_pict` and `embed_meta_file`. To implement exporting of other types, you need to override this function and handle the data transfer in some way that is appropriate.
+
+	OutputCustomParams();
+
+This function gets called after all text and paragraph formatting attributes have been exported, but before any text has been exported for each call to `pgWriteNextBlock()`. The purpose of this function is to output additional formatting information.
+
+For example, OpenPaige 3.0 does not support paragraph borders, but if they were implemented by your application you might want to output border information when appropriate.
+
+The default function does nothing; to write your own RTF data, (see "Custom RTF Output"<!-- on page 18-343 this document-->).
+
+## 18.9 Lower-level Export Member Functions
+
+Typically, to create new or custom export classes, you would override `PaigeExportFilter` (or a subclass thereof). When you do so, the following lower-level member functions are available to assist you in exporting data to the target file:
+
+	void pgWriteByte (pg_char the_byte);
+
+This sends a single byte to the output file.
+
+	pgWriteNBytes (pg_char_ptr bytes, long num_bytes);
+
+This sends to the output file; the bytes are taken from the bytes pointer.
+
+	void pgWriteDecimal (short decimal_value);
+
+Sends an ASCII representation of `decimal_value` to the target file. For example, a binary value of -2 would be sent out as (ASCII) "-2". All leading zeros are suppressed (i.e., a value of 1 is sent as "1", not "000001").
+
+	void pgWriteHexByte (pg_char the_byte);
+
+Sends a hex representation of `the_byte` to the target file. For example, a binary value of 0x0A would be sent out as (ASCII) "0A".
+
+	void pgWriteString (pg_char_ptr the_str, pg_char prefix, pg_char suffix);
+
+Sends the contents of `the_str` (a null-terminated string) to the output file. If prefix is non-zero, that byte is sent first before the contents of the string are sent; if suffix is non-zero, that byte is sent after the contents of `the_str` is sent.
+
+## 18.10 Custom RTF Output
+
+If you have derived a new class from `PaigeRTFExportFilter`, the following member functions are available to assist you with exporting custom RTF data:
+
+	void WriteCommand (pg_char_ptr rtf_table, short table_entry, short PG_FAR *parameter, pg_boolean delimeter);
+
+`WriteCommand` will write an RTF token word, followed by an optional parameter value and character delimiter to the output file.
+
+The table parameter should be a null-terminated string containing one or more token word entries, each entry separated by a single space character. The `table_entry` parameter must indicate which of these elements to write.
+
+### NOTES:
+
+1. The first element is 1, not zero.
+2. The "token" entries in this string have no significance to this function; rather, the *n*th element (`table_entry`) of the space-delineated table is merely written to the output file.
+
+	The token word must not contain any special command character — only ASCII characters less than 0x7B should be contained in this string, and the token word must terminate with a space character (the space character is not sent to the output). This function will automatically prefix the token word output with the RTF command character ("\\").
+
+	If parameter is non-NULL, then the value in `*parameter` is appended to the output as an ASCII numeral. For example, if the token were `bonus` and `*parameter` contained a value of 3, the resulting output would be: `\bonus3`
+
+	If delimiter is TRUE, a single space character is output following the token word; otherwise no extra characters are output.
+
+#### EXAMPLE 1
+	pgWriteCommand((pg_char_ptr) "border \0", 1, NULL, FALSE);
+
+##### OUTPUT
+
+	"\lborder "
+
+#### EXAMPLE 2
+		short param;
+		param = 24;
+		pgWriteCommand((pg_char_ptr) "border \0", 1, &param, TRUE);
+
+##### OUTPUT:
+
+	"\border24 "
+
+#### EXAMPLE 3
+
+	pg_char custom_table[] = {"comment footer footerl footerf footerr footnote "};
+	pgWriteCommand(custom_table, 6, NULL, TRUE);
+
+##### OUTPUT:
+
+	"\footnote "
+-
+	OutputCR (pg_boolean unconditional);
+
+`OutputCR` outputs a hard carriage return. If unconditional is FALSE, the carriage return is not output unless no carriage returns have been output during the last 128 or more characters; if unconditional is TRUE the carriage return is output regardless of the previously output characters.
+
+	short PointConversion (short value, pg_boolean convert_resolution, pg_boolean x10)$;
+
+`PointConversion` converts value to points and/or decipoints (a decipoint is a tenth of a point). If `convert_resolution` is TRUE, the value given to this function is converted to points (1/72 of an inch or equivalently 1/12 of a pica) based on the current screen resolution setting. If `x10` is TRUE, the resulting output is multiplied times 10 before being returned as the function result.
+
+Hence, if value is a screen size value (for example, the pixel width of a graphic), passing TRUE for both `convert_resolution` and `x10` would result in a true decipoint conversion.
+
+# 19 PARAGRAPH BORDERS AND SHADING
+
+## 19.1 Borders
+
+A "paragraph border" is a frame drawn around one or more paragraphs and is part of the paragraph format (`par_info`) definition.
+
+Paragraph borders are defined as four potential sides to a frame. Any one side may be drawn or not. Hence, a paragraph border can be defined to show only part of the frame (such as the bottom side), or two sides, or all four sides, etc.
+
+### Setting a Border
+
+Borders are set by changing the "table" structure within the `par_info` structure, as shown below. Applying the `par_info` to the desired portion of the text will render the affected paragraphs with that border definition:
+
+	struct par_info
+	{
+		// various members in par_info
+	
+		pg_table table;	// Table and border info
+	
+		// more members in par_info
+	};
+
+
+The table member contains information for both tables and paragraph borders:
+
+	struct pg_table
+	{
+		// various members of pg_table
+		
+		long border_info;	// Borders for paragraph
+		
+		// more members of pg_table
+	};
+	
+
+NOTE: The `pg_table` record, generally used for defining table formats, also contains the definition for the paragraph borders, if any. If `table.table_columns` is zero, `border_info` is applied to the whole paragraph; if `table.table_columns` is non-zero, `border_info` applies to frame of the table.
+
+If `par_info.table.border_info` is zero, the paragraph has no borders. Otherwise, borders are defined by one or more of the following bit combinations:
+
+	#define PG_BORDER_LEFT		0x000000FF	/* Left border */
+	#define PG_BORDER_RIGHT		0x0000FF00	/* Right border */
+	#define PG_BORDER_TOP		0x00FF0000	/* Top border */
+	#define PG_BORDER_BOTTOM	0xFF000000	/* Bottom border */
+
+Each of the above definitions define 8-bit fields within a long word for each side of a border; which bits you should set in each 8-bit field depends upon the desired border effect.
+
+In other words, the lowest-ordered byte defines the properties of the left border line; the second lowest byte defines the properties of the right border line; the next higher bytes define the properties of the top and bottom lines.
+
+For each of these four 8-bit fields, the following properties can be set:
+
+**Lower three bits:** define the width of the border line, in pixels. This may be any value between 0 and 0x07, inclusively. If the value is zero, no line is drawn; otherwise, a line is drawn 1 to 7 pixels wide.
+
+**Upper five bits:** define additional characteristics for the line, as follows:
+
+	#define PG_BORDER_GRAY		0x00000008	// Grey border
+	#define PG_BORDER_DOTTED	0x00000010	// Dotted line
+	#define PG_BORDER_SHADOW	0x00000020	// Shadow effect
+	#define PG_BORDER_DOUBLE	0x00000040	// Double lines
+	#define PG_BORDER_HAIRLINE	0x00000080	// Hairline
+
+The following border definitions are also provided that represent commonly applied borders:
+
+	#define PG_BORDER_ALLGRAY	0x08080808 // All sides grey
+	#define PG_BORDER_ALLDOTTED	0x10101010 // All sides dotted
+	#define PG_BORDER_ALLDOUBLE	0x40404040 // All sides double
+	#define PG_BORDER_ALLSIDES	0x01010101 // All sides 1 pixel
+	#define PG_BORDER_SHADOWBOX	0x21012101 // Shadowbox all sides
+
+Some of these definitions need to be combined. For example, to obtain a four-sided double border you would set `par_info.table.border_info` to:
+
+	PG_BORDER_ALLDOUBLE | PG_BORDER_ALLSIDES
+
+To set a four-sided gray border you would use:
+
+	PG_BORDER_ALLGRAY | PG_BORDER_ALLSIDES
+
+### 19.2 Paragraph Shading
+
+Paragraph shading is an optional colour that will fill the background of a paragraph. Usually this shading applies to table formats, yet paragraph shading can be drawn for non-table paragraphs as well.
+
+Shading set by changing the `table` structure within the `par_info` structure, as shown below. Applying the `par_info` to the desired portion of the text will render the affected paragraphs with that shading (colour) definition:
+
+	struct par_info
+	{
+		... various members in par_info ...
+		
+		pg_table table; // Table and border info
+		
+		... more members in par_info ...
+	};
+
+
+The `table` member contains information for both tables and paragraph borders:
+
+	struct pg_table
+	{
+		// various members of pg_table
+		
+		long border_shading;	// Background shading
+		
+		// more members of pg_table
+	};
+
+NOTE: The `pg_table` record, generally used for defining table formats, also contains the definition for paragraph shading, if any. If `table.table_columns` is zero, `border_shading` is applied to the whole paragraph; otherwise, `border_shading` applies to default background shading of the table.
+
+If `border_shading` is zero, no shading is applied; otherwise, `border_shading` represents a "red-green-blue" component using bitwise fields `0x00BBGGRR`. The `BB` bits represent the blue component of the color, the `GG` bits represent the green component, and `RR` represents the red component.
+
+**NOTE:** These bits are identical to the bits in a *Windows* `COLORREF`.
+
+# 20 OPENPAIGE HYPERTEXT LINKS
+
+
+## 20.1 General Concept
+
+A "hypertext link" is similar to a character style and can be applied to groups of characters anywhere in the document. However, its attributes are independent to the text and paragraph formats.
+
+OpenPaige maintains two hypertext link runs - a source run and target run.
+
+The hypertext link source run generally contains all the visual links (e.g. displayed in a different colour, underlined, and expected to provide some type of response when the user clicks).
+
+The target run generally contains "markers" for the source run links to locate. In actuality, the source and target runs are independent of each other and each run knows nothing about the other. It is therefore the responsibility of the application to provide logical "linking" between them.
+
+Most of the functions and definitions are in `pghtext.h`; you should therefore add the following to your code:
+
+	#include "pghtext.h"
+
+## 20.3 Contents of a Hypertext Link
+
+Every hypertext link is stored as a record structure containing the following information:
+
+### Text range
+
+The beginning and ending position of the link. This text range is maintained by OpenPaige as the document is changed.
+
+### URL string
+
+Link-specific information represented by a `cstring`. The OpenPaige API refers to this mostly as the "URL" parameter, but in reality this is simply a string. Both source and target hypertext links each contain their own URL string; it is the application's responsibility to understand and/or parse its contents.
+
+### Display styles
+
+Style(s) that define how the hypertext link should be drawn in various states. These styles are represented by OpenPaige stylesheet ID(s). For each link created there are default stylesheets created; the application can override these defaults, hence displaying the links in any text style that OpenPaige supports.
+
+### Note
+
+This document makes reference to a "URL" member of the hypertext link record. The "URL" in this sense is merely a data string and is not to be confused with a genuine network locator address (although it can be used as such by an application).
+
+## 20.4 Setting New Links
+
+### Setting Source Links
+
+`long pgSetHyperlinkSource (pg_ref pg, select_pair_ptr selection, pg_char_ptr URL, pg_char_ptr keyword_display, ht_callback callback, long type, long id_num, short state1_style, short state2_style, short state3_style, short draw_mode);`
+
+#### Purpose
+
+Sets a new source hypertext link. A link is "set" by applying the attributes (defined by the other parameters in this function) to one or more characters in the document.
+
+#### Parameters
+
+* `pg` — The `pg_ref` to receive the link.
+* `selection` — An optional range of text to apply the link. If selection is NULL, then current selection (highlighting) is used.
+* `URL` — An optional string that will get stored with the link. If NULL, no string is stored; otherwise, the `URL` parameter is considered a `cstring` of any length. The `URL` string can be accessed and/or changed later by your application if necessary.
+* `keyword_display` An optional string to insert that displays as the key word for the link. If this is NULL, the characters contained in the selection parameter become the "key word"; otherwise, the `keyword_display` parameter is inserted into the beginning of the specified selection and the character range of the link becomes the beginning of that insertion + the length of
+`keyword_display`.
+* `callback` — Pointer to a callback function (which you provide) that is called when the hypertext link is clicked. If `callback` is NULL the default callback function is used.
+* `type` — An optional type variable. This value can be used by the application to distinguish between different types of links.
+* `id_num` — An optional unique ID value. This can be used for searching and connecting links. The typical use for `id_num` is to set this value to a number that exists in the same field for a target link. You can then call `pgFindHyperlinkTargetByID()`.
+* `state1_style` through `state3_style` — Optional stylesheet IDs that define the display attributes for three different hypertext links states. If the parameter is zero, the default style is used (see below). The three "states" are actually arbitrary as the application generally should control the "state" of a link; at the lowest level, a "state" is simply the choice of display style to use any given moment.
+* `draw_mode` — The drawing mode to use. If `draw_none`, nothing redraws.
+
+#### Function result
+
+The function returns the `id_num` value (which will be whatever was passed in `id_num`).
+
+#### Comments
+
+All hypertext links must include at least one character in their selection in order to be valid. In other words, you must not apply a hypertext link to an empty selection (where `selection begin == selection end`). The single exception, however, is when the `keyword_display` parameter is a valid non-empty `cstring`. In this case, the "selection" range becomes the current selection's beginning + the length of `keyword_display`.
+
+#### Default display states
+
+* `State 1` (the initial state when the link is set) — Blue with underline.
+* `State 2` — Red with underline.
+* `State 3` — Dark gray (no underline).
+
+### Setting Target Links
+
+	long pgSetHyperlinkTarget (pg_ref pg, select_pair_ptr selection, pg_char_ptr URL, ht_callback callback, long type, long id_num, short display_style, short draw_mode);
+
+#### Purpose
+
+Sets a new target hypertext link. A link is "set" by applying the attributes (defined by the other parameters in this function) to one or more characters in the document. A target link differs from a source link mainly in the implementation from the application; essentially, both types of links contain the same kind of information.
+
+#### Parameters
+
+* `pg` — The `pg_ref` to receive the link.
+* `selection` — An optional range of text to apply the link. If selection is NULL, then current selection (highlighting) is used.
+* `URL` — An optional string that will get stored with the link. If NULL, no string is stored; otherwise, the `URL` parameters are considered a `cstring` of any length. The `URL` string can be accessed and/or changed later by your application if necessary.
+* `callback` — Pointer to a callback function (which you provide) that is called when the hypertext link is clicked. If `callback` is NULL the default callback function is used. (**NOTE:** for target links you will usually want a NULL callback since clicking on a target link probably requires no special action).
+* `type` — An optional `type` variable. This value can be used by the application to distinguish between different types of links. For example, an index entry (to generate an index listing) would be different than a link to somewhere else in a document. For convenience there are some predefined types:
+
+							/* Hyperlink types */
+		#define HYPERLINK_NORMAL				0x00000001	// Hyperlink normal
+		#define HYPERLINK_INDEX					0x00000002	// Hyperlink is an index
+		#define HYPERLINK_TOC					0x00000004	// Hyperlink is TOC.
+		#define HYPERLINK_SUBJECT				0x00000008	// Hyperlink is target subject
+		#define HYPERLINK_SUMMARY				0x00000010	// Summary link (and all those > 0x10)
+						// BOG: eudora hyperlink support
+		#define HYPERLINK_EUDORA_ATTACHMENT 0x00000020  // hyperlink is an eudora attachment
+		#define HYPERLINK_EUDORA_PLUGIN     0x00000040  // hyperlink is an eudora plugin
+		#define HYPERLINK_EUDORA_AUTOURL    0x00000080	// hyperlink is an auto-generated url
+=
+**NOTE:** The RTF importer will set `HYPERLINK_INDEX` and `HYPERLINK_TOC` for index and table-of-contents entries where appropriate.
+* `id_num` An optional unique ID value. This can be used for searching and connecting links. The typical use for `id_num` is to initialize this value to a unique `id_num` that can be searched for. If you have created a source link to connect to this target, that same `id_num` can be placed in the target. Using the function `pgFindHyperlinkTargetByID()` allows you to find a link by the value in `id_num`. If the `id_num` parameter is zero, `pgSetHyperlinkTarget` initializes the target link `id_num` to a unique value (which does not exist in any other target link). 
+* `display_style` — Optional stylesheet ID that defines the display attributes of the link. If the parameter is zero the default style is used (see below).
+* `draw_mode` — The drawing mode to use. If draw_none, nothing redraws.
+
+#### Function result
+
+The function returns the `id_num` value (which will be the unique number chosen for the target link if the `id_num` parameter was zero, or the value in `id_num` if it was nonzero).
+
+**NOTE:** unlike setting a source link, setting a target link automatically assigns a unique `ID` value if `id_num` is zero. You can find this link in the document using `pgFindHyperlinkTargetByID()`.
+
+#### Comments
+
+All hypertext links must include at least one character in its selection in order to be valid. In other words, you must NOT apply a hypertext link to an empty selection (where `selection begin == selection end`).
+
+### Default display
+
+Target links display with a yellow background colour. You can turn this display off by setting the following attribute with `pgSetAttributes2()`:
+
+	#define HIDE_HT_TARGETS
+
+This value must be set with `pgSetAttributes2()` (note the "2").
+
+#### Example
+
+To turn off the default display so target links display in their own native style(s), you would do the following:
+
+	long flags;
+	flags = pgGetAttributes2(pgRef);
+	flags |= HIDE_HT_TARGETS;
+	pgSetAttributes2(pgRef);
+
+### 20.5 The Callback Function
+
+	PG_PASCAL (void) ht_callback (paige_rec_ptr pg, pg_hyperlink_ptr hypertext, short command, short modifiers, long position, pg_char_ptr URL);
+
+This is the function that gets called for various events (usually when a link is clicked). You need to provide a pointer to your own function that handles these events.
+
+#### Parameters
+
+* `pg` — The `paige_rec` that owns the link.
+* `hypertext` — The internal hypertext link record (see structure below).
+* `command` — The value defining the event (see table below). 
+* `modifiers` — The state of the mouse (where applicable). These will be set to the appropriate bits. For example if modifiers contained `EXTEND_MOD_BIT`, the application has performed a shift-click. This can be important to determine the nature of a mouse click within a link; typically you may not want to "jump" to a link if the user is performing a `shift-click` or `control-click`, etc.
+* `position` — The text position of the link (relative to the beginning of the document).
+* `URL` — The `URL` string contained in the link. This will contain the character string given to the `URL` parameter when the link was created (or the string that was set using other function calls). Note that the `URL` parameter will never be NULL; if you created the link with a NULL pointer for `URL`, the parameter at this time will be an empty `cstring`.
+
+#### Comments
+
+Do not try to use the URL data from the 	`hyperlink` parameter; use the `URL` parameter instead.
+
+The `hyperlink` parameter points to a copy of the original record; it is therefore safe to alter (and even delete) the original (via the proper function calls) even from within this hook.
+
+When responding to a hypertext link event you should call the default source callback function if you want the link display to change states. This function is called `pgStandardSourceCallback()`; when you do so, the link that has been clicked will change its display to `state 2` and all other links in the document will change to `state 1`.
+
+#### Example
+
+	PG_PASCAL (void) HyperlinkCallback (paige_rec_ptr pg, pg_hyperlink_ptr hypertext, short command, short modifiers, long position, pg_char_ptr URL)
+	{
+		// Call the standard callback first to get default behaviour:
+		pgStandardSourceCallback(pg, hypertext, command, modifiers, position, URL);
+		switch(command)
+		{
+			case hyperlink_mousedown_verb:
+				// etc
+				break;
+		}
+	}		
+	
+#### Callback command values
+
+* `hyperlink_mousedown_verb` — Called when link is first clicked
+* `hyperlink_doubleclick_verb` – Called if link is double-clicked
+* `hyperlink_mouseup_verb` — Called when mouse is up
+* `hyperlink_delete_verb` — Called when link gets deleted
+
+## 20.6 Hyperlink Record Struct
+
+	struct pg_hyperlink
+	{
+		select_pair applied_range;				// Offset(s) of source
+		pg_char URL[FONT_SIZE + BOM_HEADER];	// String data
+		memory_ref alt_URL;						// URL (if > FONT_SIZE -1)
+		ht_callback callback;					// Callback function
+		short active_style;						// Style to show
+		short state1_style;						// Primary state style
+		short state2_style;						// Secondary state style
+		short state3_style;						// Style to show when invalid
+		long unique_id;							// Unique ID used for searching
+		long type;								// Type of link
+		long refcon;								// App can keep whatever
+	};
+
+The `applied_range` member contains the current text positions for the beginning and ending of the link. The URL member contains the URL string if it is < `FONT_SIZE` - 1. Otherwise, the string is inside `alt_URL`. The `unique_id`, `type`, and `refcon` members are optional values that can be used by the application for locating specific links.
+
+## 20.7 Finding/Locating Links
+### Finding by URL Strings
+
+	long pgFindHyperlinkSource (pg_ref pg, long starting_position, long PG_FAR *end_position, pg_char_ptr URL, pg_boolean partial_find_ok, pg_boolean case_insensitive, pg_boolean scroll_to);
+	
+	long pgFindHyperlinkTarget (pg_ref pg, long starting_position, long PG_FAR *end_position, pg_char_ptr URL, pg_boolean partial_find_ok, pg_boolean case_insensitive, pg_boolean scroll_to);
+
+
+These functions can be used to perform a "search" that locates a specific link based on its URL string value. The `pgFindHyperlinkTarget` function searches for a target link while `pgFindHyperlinkSource` searches for a source link.
+
+#### Parameters
+
+* `starting_position` — The text position to begin the search; this is a zero-indexed value.
+* `end_position` — Optional pointer to a long word. If this is non-null, the long word gets initialised to the text position following the link if found (the `*end_position` value remains unchanged if a match is not found).
+* `URL` — The string to search for (`cstring`).
+* `partial_find_ok` — If TRUE, a match is considered valid if URL matches only the first part of the link's URL. For example, if searching for `Book`, a match will be made on `Book1` and `Book2`, etc. 
+* `case_insensitive` — If TRUE, the comparison is not case-sensitive. 
+* `scroll_to` — If TRUE, the document is scrolled to the found location.
+
+#### Function result
+
+If the link is found, the function returns the text position where the link begins (and if `*end_offset` is non-null it gets set to the link's ending position). If no match is found, the function returns `-1`.
+
+### Finding by "ID" Number
+
+	long pgFindHyperlinkSourceByID (pg_ref pg, long starting_position, long PG_FAR *end_position, long id_num, pg_boolean scroll_to);
+
+	long pgFindHyperlinkTargetByID (pg_ref pg, long starting_position, long PG_FAR *end_position, long id_num, pg_boolean scroll_to);
+
+These functions can be used to perform a "search" that locates a specific link based on its value in `id_num`. The link's `id_num` is usually set when you set the original source or target link. The `pgFindHyperlinkTargetByID` function searches for a target link while `pgFindHyperlinkSourceByID` searches for a source link.
+
+#### Parameters
+
+* `starting_position` — The zero-indexed text position to begin the search.
+* `end_position` Optional pointer to a long word. If this is non-null, the long word gets initialized to the text position following the link if found (the `*end_position` value remains unchanged if a match is not found).
+* `id_num` The value being searched for. The `id_num` member in the link is compared to the `id_num` parameter passed to this function. The link's `id_num` is usually set when you set the original source or target link.
+* `scroll_to` If TRUE, the document is scrolled to the found location. If the link is found, the function returns the text position where the link begins (and if `*end_offset` is non-null it gets set to the link's ending position). If no match is found, the function returns -1.
+
+## 20.8 Changing Existing Links
+
+	void pgChangeHyperlinkSource (pg_ref pg, long position, select_pair_ptr selection, pg_char_ptr URL, ht_callback callback, short display_style, short draw_mode);
+	void pgChangeHyperlinkTarget (pg_ref pg, long position, select_pair_ptr selection, pg_char_ptr URL, ht_callback callback, short display_style, short draw_mode);
+
+These two functions are used to change the attributes of an existing hypertext link; `pgChangeHyperlinkSource()` changes a source link and `pgChangeHyperlinkTarget()` changes a target link.
+
+All parameters are completely identical to `pgSetHyperlinkTarget()` and `pgSetHyperlinkSource()` except for the additional `position` parameter — this specifies where the link is located, i.e. its character position in the text. (There are several ways to find the character position, not the least of which is simply getting the selection range from the `pg_ref`, assuming it is within a link). See also the various utility functions that return a text position of a link.
+
+For each parameter that is non-zero, that value is changed to the value specified; otherwise, the current corresponding value remains unchanged.
+
+For example, a non-null URL parameter changes the URL string, while a null pointer leaves the existing string unchanged.
+
+## 20.9 Detecting Mouse Points
+
+	long pgPtInHyperlinkSource(pg_ref pg, co_ordinate_ptr point);
+	long pgPtInHyperlinkTarget(pg_ref pg, co_ordinate_ptr point);
+
+These two functions are used to detect which link, if any, contain a point. Use `pgPtInHyperlinkSource` for detecting a point in a source link and `pgPtInHyperlinkTarget` for detecting one in a target link.
+
+The point parameter is a point in screen coordinates (*not* scrolled and *not* scaled).
+
+#### FUNCTION RESULT
+
+If a link contains the point, its beginning text position is returned. If no link contains a point, point -1 is returned.
+
+## 20.10 Changing Display State
+
+	void pgSetHyperlinkSourceState (pg_ref pg, long position, short state, pg_boolean redraw);
+	void pgSetHyperlinkTargetState (pg_ref pg, long position, short state, pg_boolean redraw);
+
+These functions can be used to change the display state of a link; `pgSetHyperlinkTargetState` changes the display state of target links and `pgSetHyperlinkSourceState` changes the display state of source links.
+
+#### Parameters
+
+* `position` — The text position of the link. Or, if `position` is -1 the `state` is applied to all the links of this type (i.e. all target links or all source links). For example, to force all source links to state 0 you could call `pgSetHyperlinkSourceState(pg, -1, 0, TRUE)`.
+* `state` — One of three states ( 0,1 or 2 ). The `state` simply defines which of the three possible styles to display the link.
+* `redraw` — If TRUE the link(s) redraw their new `state`.
+
+## 20.11 File I/O
+
+There is no special function you need to call to read or write OpenPaige hypertext links. However, after reading or importing a file with possible links you must reinitialize your callback function pointers, if any:
+	
+	void pgSetHyperlinkCallback (pg_ref pg, ht_callback source_callback, ht_callback target_callback);
+
+This function walks through all existing links, sets the callback function in the source links to `source_callback` and the callback function in target links to `target_callback`. Either function can be null, in which case the default callback is used.
+
+## 20.12 Removing Links
+
+	void pgDeleteHyperlinkSource (pg_ref pg, long position, pg_boolean redraw);
+	void pgDeleteHyperlinkTarget (pg_ref pg, long position, pg_boolean redraw);
+
+These functions remove a source link or target link, respectively.
+
+#### Parameters
+
+* `position` — indicates which link to remove; this must be a text position that exists somewhere within the link.
+* redraw — if TRUE, the document is redrawn showing the change.
+
+#### Note
+
+Only the applied link and its displayed styles, etc. are removed; the text itself as it exists in the document is not changed. For example, if the word `Book` existed in the document and had a target hypertext link applied to it, removing the link simply means there is no longer any associated link to this word yet the word `Book` remains in the text, drawn in its normal (non-link) style.
+
+## 20.13 Miscellaneous
+
+#### `pgGetSourceURL()`
+
+	pg_boolean pgGetSourceURL (pg_ref pg, long position, pg_char_ptr URL, short max_size);
+	pg_boolean pgGetTargetURL (pg_ref pg, long position, pg_char_ptr URL, short max_size);
+
+These functions return the contents of the URL string from a specific source or target link, respectively.
+
+#### Parameters
+
+* `position` – The text position of the link.
+* URL — Pointer to a character buffer (to receive the string).
+* `max_size` — The maximum number of characters that can be received in the buffer, including the null terminator of the `cstring`.
+
+#### Function result
+
+If there is no link found at the specified text position, FALSE is returned (and no characters are copied into URL). Otherwise the string is set at URL (and truncated, if necessary, if the `string` size > `max_size`).
+
+#### `pgGetSourceID`
+
+	long pgGetSourceID (pg_ref pg, long position);
+	long pgGetTargetID (pg_ref pg, long position);
+
+These functions return the unique "ID" value in a specific source or target link, respectively.
+position The text position of the link.
+
+#### Parameters
+* `position` — The zero-indexed text position of the link.
+
+#### Function result
+
+The unique ID value, if any, belonging to the specified link is returned.
+
+NOTE: a value of zero is returned if the link's id_num member is zero or if there is not a link associated to the specified position.
+
+#### `pgGetHyperlinkSourceInfo`
+
+	pg_boolean pgGetHyperlinkSourceInfo (pg_ref pg, long position, pg_boolean closest_one, pg_hyperlink_ptr hyperlink);
+	pg_boolean pgGetHyperlinkTargetInfo (pg_ref pg, long position, pg_boolean closest_one, pg_hyperlink_ptr hyperlink);
+
+These two functions return the actual hyperlink record for a specific source or target link, respectively.
+
+#### Parameters
+
+* `position` — The zero-indexed text position of the link.
+* `closest_one` — If FALSE, the link must be found at the specified position; otherwise, the link is found nearest to, or to the right of the specified position.
+* `hyperlink` — Pointer to a `pg_hypertext` record. If the link is found, the record is copied to this structure.
+
+#### Function result
+
+FALSE is returned if no link is found at the specified position (or no link is found between the position and end of document when closest_one is TRUE).
+
+#### `pgInitDefaultSource`
+
+	void pgInitDefaultSource (pg_ref pg, pg_hyperlink_ptr link);
+	void pgInitDefaultTarget (pg_ref pg, pg_hyperlink_ptr link);
+
+These functions initialise a hypertext record to the defaults. Usually you won't need to call this function. It is mainly used for building hypertext links while importing files.
+
+#### `pgNewHyperlinkStyle`
+
+	short pgNewHyperlinkStyle (pg_ref pg, pg_short_t red, pg_short_t green, pg_short_t blue, long stylebits, pg_boolean background);
+
+This function creates a stylesheet that can be subsequently passed to a function that sets a new hypertext link.
+
+#### Parameters
+
+* `red`, `green`, `blue` — define the R-G-B components of a colour ("black" is the result of red, green and blue all zeros). This colour is applied to the text if the background parameter is FALSE; otherwise, the colour is applied to the text background.
+* `stylebits` — Defines optional style(s) to apply to the text. This is a set of bits which can be a combination of the following:
+
+		#include "pgHLevel.h"
+		#define X_PLAIN_TEXT	 		0x00000000
+		#define X_BOLD_BIT				0x00000001
+		#define X_ITALIC_BIT			0x00000002
+		#define X_UNDERLINE_BIT			0x00000004
+		#define X_OUTLINE_BIT 			0x00000008
+		#define X_SHADOW_BIT			0x00000010
+		#define X_CONDENSE_BIT			0x00000020
+		#define X_EXTEND_BIT			0x00000040
+		#define X_DBL_UNDERLINE_BIT		0x00000080
+		#define X_WORD_UNDERLINE_BIT	0x00000100
+		#define X_DOTTED_UNDERLINE_BIT	0x00000200
+		#define X_HIDDEN_TEXT_BIT		0x00000400
+		#define X_STRIKEOUT_BIT			0x00000800
+		#define X_SUPERSCRIPT_BIT		0x00001000
+		#define X_SUBSCRIPT_BIT			0x00002000
+		#define X_ROTATION_BIT			0x00004000
+		#define X_ALL_CAPS_BIT			0x00008000
+		#define X_ALL_LOWER_BIT			0x00010000
+		#define X_SMALL_CAPS_BIT		0x00020000
+		#define X_OVERLINE_BIT			0x00040000
+		#define X_BOXED_BIT				0x00080000
+		#define X_RELATIVE_POINT_BIT	0x00100000
+		#define X_SUPERIMPOSE_BIT		0x00200000
+		#define X_ALL_STYLES			0xFFFFFFFF
+* `background` — If TRUE, the colour is applied to the text background; otherwise, the colour is applied to the text.
+
+#### Function result
+
+A new `stylesheet` ID is returned. If the exact `stylesheet` already exists its ID is returned instead (hence, you will not create duplicate styles). This stylesheet ID can be given to the function(s) that set new hypertext links.
+
+#### `pgScrollToLink`
+
+	void pgScrollToLink (pg_ref pg, long text_position);
+
+#### Function result
+
+This function causes the document to scroll to the specified, zero-indexed text position.
+
+#### Note
+
+The text position does not necessarily contain a link; rather, this is a convenience function that forces the document to scroll to the location specified.
+
+# 21 TABLES AND BORDERS
+
+## 21.1 General
+
+A table is tab-delimited text formatted as rows and columns of "cells." The formatting information itself is paragraph-based, while the text itself is internally maintains each cell as tab or CR-delimited text and each row is delimited by a CR.
+
+At a very low level, table attributes are applied with `pgSetParInfo()`. Higher level functions, described in this document, provide methods to insert new tables and format existing ones.
+
+Table attributes are part of `par_info.table` represented by the following record:
+
+	struct pg_table
+	{
+		long table_columns;			// Number of columns (tables)
+		long table_column_width;	// Default column width
+		long table_cell_height;		// MINIMUM cell height
+		long border_info;			// Borders
+		long border_spacing;		// Extra spacing (for borders)
+		long border_shading;		// Border background shading
+		long cell_borders;			// Default borders around cells
+		long grid_borders;			// Non-printable cell borders
+		long unique_id;				// Unique table ID
+		long cell_h_extra;			// Extra inset inside cells
+	};
+	
+#### Parameters
+
+* `table_columns` — Number of columns in the table. If this is zero, the paragraph is not a table.
+* `table_column_width` — The default width for each cell. If this is zero, cell widths are determined dynamically according to the width of the paragraph. For example, if the width of the paragraph after subtracting paragraph indents is 6 inches, a 6-column table will render 1" cells. Note that individual column widths can be altered after a table is inserted.
+* `table_cell_height` — The default height for a row. This is the minimum height for all rows. If zero, the height is determined by the height(s) of the text within the row.
+* `border_info` — Paragraph border information. If `table_columns` is zero, `border_info` defines the surrounding paragraph border lines (see section on *Paragraph Borders* <!-- on page bugger all -->).
+* `border_spacing` — The amount of extra spacing between border line(s) and the text, in pixels. This value is applied to paragraph borders.
+* `border_shading` — The background colour for the paragraph or table. If this is zero, the normal window colour is used. Otherwise, this is a 24-bit representation of an RGB value (see "RGB Values" *infra*).
+* `cell_borders` — The default border line(s) around each cell. This differs from `border_info` because it applies only to cells within a table.
+* `grid_borders` — The amount of extra spacing between border line(s) and the text, in pixels. This value is applied to paragraph borders. The default border line(s) to display around cells if no other borders are present. These cell borders are not drawn when the document is printed; they apply only to table cells.
+* `unique_id` — **Used internally.** The `table_id` is used to maintain unique paragraph records; *do not* alter this value.
+* `cell_h_extra` — Extra space, in pixels, between cells.
+
+## 21.3 RGB Values
+
+Border and cell shading is represented by the following bitwise settings in a long word:
+
+	0x00BBGGRR
+
+The `BB` bits represent the blue component of the colour, the `GG` bits represent the green component, and `RR` represents the red component.
+
+**NOTE:** These bits are identical to the bits in a Windows `COLORREF`.
+
+## 21.4 Table Functions
+
+**NOTE:** These functions are defined in `pgTable.h`.
+
+### Inserting New
+
+	void pgInsertTable (pg_ref pg, long position, pg_table_ptr table, long row_qty, short draw_mode);
+
+Inserts a new table beginning at the text position specified. The position parameter can be `CURRENT_POSITION`.
+
+#### Parameters
+
+* `table` is a pointer to a `pg_table` record defining all the table attributes.
+* `row_qty` indicates the desired number of rows. If this is zero at least one row is inserted.
+* `draw_mode` causes the text to redraw if nonzero.
+	NOTE: Since tables are a paragraph format, this function may insert carriage return(s) before and after the specified position so as more clearly to delimit the format run.
+
+### Changing Columns and Cells
+
+	void pgSetColumnWidth (pg_ref pg, long position, short column_num, short width, short draw_mode);
+
+Changes the width of a specific column in a table.
+
+#### Parameters
+
+* `position` indicates the text position of the table, which can also be `CURRENT_POSITION`. This value can be the position of any character within the table (i.e. it does not need to be the very beginning of the table or a cell). If the specified `position` is not part of a table, this function does nothing.
+* `column_num` The column defined by `column_num` gets set to the value in width; this is a zero-indexed number.
+
+-
+
+	void pgSetColumnBorders (pg_ref pg, long position, short column_num, long border_info, short draw_mode);
+
+Changes the cell border line(s) of a specific column in a table.
+
+#### Parameters
+
+* `position` indicates the text position of the table, which can also be `CURRENT_POSITION`. This value can be the position of any character within the table (i.e. it does not need to be the very beginning of the table or a cell). If the specified `position` is not part of a table, this function does nothing.
+* `column_num` The column defined by `column_num` changes its cell borders to `border_info`; this is a zero-indexed number.
+
+-
+
+	void pgSetColumnShading (pg_ref pg, long position, short column_num, long shading, short draw_mode);
+
+Changes the cell shading (background color) of a specific column in a table.
+
+#### Parameters
+
+* `position` indicates the text position of the table, which can also be `CURRENT_POSITION`. This value can be the position of any character within the table (i.e. it does not need to be the very beginning of the table or a cell). If the specified `position` is not part of a table, this function does nothing.
+* `column_num` The column defined by `column_num` changes its background colour to `shading`; this is a zero-indexed number.
+
+-
+
+	void pgSetColumnAlignment (pg_ref pg, long position, short column_num, short alignment, short draw_mode);
+
+Changes the cell text alignment ("justification") of a specific column in a table.
+
+#### Parameters
+
+* `position` indicates the text position of the table, which can also be CURRENT_POSITION. This value can be the position of any character within the table (i.e. it does not need to be the very beginning of the table or a cell). If the specified `position` is not part of a table, this function does nothing.
+* `column_num` — The column defined by `column_num` changes its alignment to the value specified; columns are zero-indexed. Alignment values are the same as paragraph justification values (`justify_left`, `justify_center`, `justify_right`, `justify_full`).
+
+-
+
+	pg_boolean pgIsTable (pg_ref pg, long position);
+
+Returns TRUE if the specified position is within any part of a table.
+
+#### Parameters
+
+* `position` can be `CURRENT_POSITION`.
+
+-
+
+	pg_boolean pgPtInTable (pg_ref pg, co_ordinate_ptr point, pg_boolean non_focus_only, select_pair_ptr offsets);
+
+Returns TRUE if the specified `point` is anywhere within a table.
+
+#### Parameters
+
+* `non_focus_only` — value is ignored; pass FALSE for compatibility.
+* `offsets` — if non-NULL and the `point` is within a table, `offsets -> begin` and `offsets -> end` get set to the beginning and ending text position for the whole table. (If the `point` was not within any table, `offsets` is unchanged).
+
+-
+
+	memory_ref pgTableColumnWidths (pg_ref pg, long position);
+
+Returns a `memory_ref` containing the width(s) for each column. The memory size of the reference will be equal to the number of columns in the table.
+
+#### Parameters
+
+* `position` indicates the text position of the table, which can also be `CURRENT_POSITION`. This value can be the position of any character within the table (i.e. it does not need to be the very beginning of the table or a cell). If the specified position is not part of a table, this function returns `MEM_NULL`.
+
+-
+
+	void pgCellOffsets (pg_ref pg, long position, select_pair_ptr offsets);
+
+Returns the text positions of the text contents of a specific cell.
+
+#### Parameters
+
+* `position` indicates the text position of the table, which can also be `CURRENT_POSITION`. This value can be the position of any character within the table. If the specified position is not part of a table, this function does nothing; otherwise, `offsets -> begin` and `offsets -> end` will return with the beginning and ending of the contents of the cell containing the original position.
+	**NOTE:** If the cell contents are empty, `offsets -> begin` and `offsets -> end` will be equivalent.
+
+-
+
+	void pgTableOffsets (pg_ref pg, long position, select_pair_ptr offsets);
+
+Returns the text positions for the beginning and ending of the whole table.
+
+#### Parameters
+
+* `position` indicates the text position of the table, which can also be `CURRENT_POSITION`. This value can be the position of any character within the table. If the specified position is not part of a table, this function does nothing; otherwise, `offsets -> begin` and `offsets -> end` will return with the beginning and ending of the whole table.
+
+### Inserting / Deleting Rows and Columns
+
+	void pgInsertColumn (pg_ref pg, long position, short column_num, tab_stop_ptr info, short draw_mode);
+
+Inserts a new, empty column into the table that contains the text position specified.
+
+#### Parameters
+
+* `position` can be `CURRENT_POSITION`; if it is not contained in a table, this function does nothing.
+* `column_num` — The new column is inserted before `column_num` (zero-indexed). To append a column to the far right side of the table, `column_num` should be equal to the current number of columns (see `pgNumColumns` <!-- on page bugger all -->).
+* `tab_stop.position` — Column width, in pixels. (Zero = automatic widths). 
+* `tab_stop.type` — Justification. Set to `left_tab`, `center_tab`, etc. Default cell borders.
+* `tab_stop.leader` — Default cell borders.
+* `tab_stop.ref_con` — Default background shading (zero for none).
+
+=
+
+	void pgInsertRow (pg_ref pg, long position, long row_num, short draw_mode);
+
+Inserts a new, empty row into the table that contains the text position specified.
+
+#### Parameters
+
+* `position` can be `CURRENT_POSITION`; if it is not contained in a table, this function does nothing.
+* `row_num` — The new row is inserted before `row_num` (zero-indexed). To append a row to the bottom end of the table, `row_num` should be equal to the current number of rows (see `pgNumColumns` <!-- on page bugger all -->).
+
+-
+
+	void pgDeleteColumn (pg_ref pg, long position, short column_num, short draw_mode);
+
+Removes a column (including its text contents).
+
+#### Parameters
+
+* `position` — specifies a text position anywhere within a table and can be `CURRENT_POSITION`. If the `position` is not contained in a table, or if there is only one column, this function does nothing.
+* `column_num` — specifies the column to delete and must be between zero and `pgNumColumns()` - 1.
+
+-
+
+	void pgDeleteRow (pg_ref pg, long position, long row_num, short draw_mode);
+
+Removes a row (including its text contents).
+
+#### PARAMETERS
+
+
+* `position` — specifies a text position anywhere within a table and can be `CURRENT_POSITION`. If the `position` is not contained in a table, or if there is only one row, this function does nothing.
+* `row_num` — specifies the row to delete and must be between zero and `pgNumRows()` - 1.
+
+### Miscellaneous
+
+	short pgNumColumns (pg_ref pg, long position);
+
+Returns the number of columns in the table containing `position`. If `position` is not contained in a table, this function returns zero.
+
+	long pgNumRows (pg_ref pg, long position);
+
+Returns the number of rows in the table containing `position`. If `position` is not contained in a table, this function returns zero.
+
+**NOTE:** the total number of rows is returned for the whole table regardless of the position parameter. For instance, a 10-row column would cause `pgNumRows()` to return 10 whether the position is in the first row, middle row or last row, etc.
+
+### Changing "Row" Information
+
+There are no row-specific functions for tables since a table "row" is really a paragraph. Hence, to change attributes to a row you should use `pgSetParInfo()` and make the desired changes.
+
+For example, setting the justification value for a table row (paragraph) will cause each of the cells in that row to assume the justification. Setting paragraph borders or shading for the row will affect all the cells in that row, etc.
+
+**CAUTION:** Do *not* alter the tab settings or tab quantity in a paragraph format applied to tables; the tab array is used to record column attributes. Also, do *not* alter the number of columns in the table record.
+
+## Getting Other Table Info
+
+Table information is simply a member of `par_info`. To get information about a table that is not covered in one of the functions above, use `pgGetParInfo()`.
+
+# 22 FILE STANDARDS, INPUT & OUTPUT
+
+**NOTE:** If you will only be saving files as OpenPaige native format or RTF and will be including no customized file formatting, see "OpenPaige Import Extension"<!-- on page 17-293--> and "OpenPaige Export Extension"<!-- on page 18-325-->. Importing and exporting may be a simpler approach.
+
+The OpenPaige technology includes a file handling system to help implement the following:
+
+- *Platform-independent file transfers* — a proposed standard and function set that enables OpenPaige software to read files saved by other C.P.O.S. as well as save or re-save files to be understood in reverse.
+- *Upgrade/update independent file transfers* — the proposed standard guarantees upward and even backwards compatibility for future enhancements to OpenPaige with regards to file transfer. For example, every internal record structure, including style records, can theoretically be altered and enhanced, yet older files will still be loaded correctly and older software will even be able to read the newer files (eliminating, of course, any new feature set that was inherently saved).
+- *Application-independent file transfers* — diverse applications, even on the same platforms, are able to read file saved by other applications even if unknown elements have been saved. Using OpenPaige's file transfer methods, application-specific data embedded in the file is simply "skipped" without any adverse consequences.
+- *Subset of functions for app-specific saves* — OpenPaige makes it fairly easy to save and read your own data structures along with the OpenPaige object data, all the while maintaining compatibility with each concept listed above.
+- *Preserves OpenPaige structures that have `long`s* — If you roll your own I/O, OpenPaige structures containing long words would get flipped around (backwards). For example, if you just slam an OpenPaige `struct` to a file as a byte stream it won't work on the other end. Fortunately OpenPaige's built-in I/O handler takes care of this problem. I strongly recommend you utilize the file "key" system provided. If special/custom I/O is required anywhere, take a look at the latest release notes regarding files—there are now ways to "roll your own" while still using OpenPaige's system.
+
+## 22.1 Up \& Running
+
+Since the information in this chapter can be somewhat complex in its entirety, the following example is provided for you to be "up and running" with file I/O by simply using the defaults.
+
+	/* DoSave saves the current pg_ref to a file. If file_stuff is not NULL a new file is to be saved (first-time saves and Save As) */
+	void DoSave (HWND hWnd, OPENFILENAME far *file_stuff)
+	{
+		int file_ref, far *f_ptr;
+		long position;
+		memory_ref file_map;
+		
+		if ((file_ref = _lcreat(file_stuff -> lpstrFile, 0)) != -1
+		{
+			file_map = MemoryAlloc(&mem_globals, sizeof(int), 1, 0);
+			f_ptr = UseMemory(file_map);
+			*f_ptr = file_ref;
+			UnUseMemory(file_map);
+			position = 0;
+			pgSaveDoc(test_pg, &position, NULL, 0, NULL, file_map, 0);
+			
+			DisposeMemory(file_map);
+			_lclose(file_ref);
+		}
+	}
+	
+### Up & Running I/O Example (Mac)
+	
+	/* In this file saving example, the ref_num parameter is a file reference created and opened using File OS functions. If there is a problem, an error result is returned. */
+	
+	static OSErr save_file (pg_ref pg, short ref_num)
+	{
+		OSErr error;
+		file_ref filemap;
+		long file_position;
+		short *filemap_ptr;
+
+		filemap = MemoryAlloc(&mem_globals, sizeof(short), 1, 0);
+		filemap_ptr = UseMemory(filemap);
+		*filemap_ptr = ref_num;
+		UnuseMemory(filemap);
+		error;
+	}
+	
+	file_position = 0;
+	error = pgSaveDoc(pg, \&file_position, NULL, 0, NULL, filemap, 0);
+	DisposeMemory(filemap);
+	return
+
+##### NOTE
+The "save" code is quite small. If you aren't saving anything special, writing a document is fairly straightforward.
+
+### Reading a document (Mac)
+
+	/* In this file reading example, the ref_num parameter is a file reference opened using File OS functions. The app assumes it is an OpenPaige file (saved with the example above). If there is a problem, NULL is returned, otherwise a new pg_ref is returned. */
+	pg_ref read_file (short ref_num)
+	{
+		pg_ref pg;
+		OSErr error;
+		file_ref filemap;
+		long file_position;
+		short *filemap_ptr;
+
+		pg = pgNewShell(&paige_rsrv);	// Creates empty OpenPaige object
+		filemap = MemoryAlloc(&paige_rsrv.mem_globals, sizeof(short), 1, 0);
+		filemap_ptr = UseMemory(filemap);
+		*filemap_ptr= ref_num;
+		UnuseMemory(filemap);
+		file_position = 0;
+		
+		// NOTE: You can also use OpenPaige's PG_TRY, PG_CATCH here for exception handling
+		error = pgReadDoc(pg, \&file_position, NULL, 0, NULL, filemap); 
+		if (error != noErr)
+		{
+			show_error(error);
+			pgDispose(pg);
+			pg = NULL;
+		}
+		DisposeMemory(filemap);
+		return pg;
+	}
+
+### Reading an OpenPaige file on Windows
+
+	/* DoFileOpen opens an OpenPaige file which has already been specified by user. */
+
+	void DoFileOpen (HWND hWnd, OPENFILENAME far *file_stuff)
+	{
+		int file_ref, far *f_ptr;
+		long position;
+		RECT view_area;
+		memory_ref file_map;
+
+		if ((file_ref = _lopen(file_stuff -> lpstrFile, OF_READ)) != -1)
+		{
+			file_map = MemoryAlloc(&mem_globals, sizeof(int), 1, 0);
+			f_ptr = UseMemory(file_map);
+			*f_ptr = file_ref;
+			UnuseMemory(file_map);
+			position = 0;
+			pgReadDoc(test_pg, &position, NULL, 0, NULL, file_map);
+			DisposeMemory(file_map);
+			_lclose(file_ref);
+			GetClientRect(hWnd, &view_area);
+			InvalidateRect(hWnd, &view_area, FALSE);
+		}
+	}
+
+### 22.2 Saving a Document
+
+If you want to "save" a pg_ref in the native, default format, call the following:
+
+	(pg_error) pgSaveDoc (pg_ref pg, long PG_FAR *file_position, pg_file_key_ptr keys, pg_short_t num_keys, file_io_proc write_proc, file_ref filemap, long doc_element_info);
+
+This function writes all the information within `pg` to a specified file; the first byte is written to `*file_position`. When the function returns, `*file_position` will be updated to the next file location (hence, `*file_position` minus the position before the function is called = total byte size written to the file).
+
+If the ending file position of all OpenPaige data will not necessarily be the physical end-of-file, you must terminate the file properly. <!--(Please see "The pgWriteKeyData and ReadHandler method" <!--Section on page 398.-->
+
+The keys parameter is an optional pointer to a list of file keys known as file handlers. If this is a null pointer, all components of `pg` are written.
+
+If the keys parameter is non-null, then `num_keys` must indicate how many items are in the list pointed to by keys, and `pgSaveDoc` only writes the components in the list of keys.
+
+The `write_proc` is a pointer to a function that should do the physical I/O. However, this parameter can be a null pointer, in which case the standard file transfer function is used.
+
+If `write_proc` is non-null, it must point to valid `file_io_proc` function — see "The `file_io_proc`"<!-- on page 34-705--> if you want to write your own io function.
+
+The filemap parameter is a `memory_ref` allocation that contains machine-specific information referencing the physical file that is to be written to.
+
+**NOTE:** The `filemap` must be a file reference to an opened file with write permission. The way to accomplish this is shown in the following function example (the `f_ref` parameter is a file reference obtained from `FSOpen`, or `PBOpen`, etc. for *Macintosh* or`_lopen`, etc. for Windows).
+
+The `doc_element_info` parameter is used for identifying multiple $p g \_r e f$ "documents" written to the same file. For a single document (or first in a series of pg_ref writes) doc_element_info should be zero.
+
+**CAUTION:** If you intend to write any data following the OpenPaige data, or if the physical end-of-file will not exactly match the ending file position after `pgSaveDoc()`, it is essential that you terminate the OpenPaige file by calling `pgTerminateFile()`. Not doing so will result in unexplained crashes when the file is reöpened.
+
+CAUTION: OpenPaige does not set the physical end-of-file. In other words, if you created a file 1 megabyte in size and OpenPaige wrote only 10 K of data, your physical file size will still be 1 megabyte. If appropriate you must truncate your file once all the data is saved.
+
+### How to create an OpenPaige filemap
+
+	file_ref make_paige_filemap (short_f_ref)
+	{
+		file_ref ref_for_file;				// will be function result
+		short *f_ptr;						// needs to init the "filemap"
+		
+		// creates an allocation, 2 bytes
+		ref_for_file = MemoryAlloc(&paige_rsrv.mem_globals, sizeof (short), 1, 0);
+		f_ptr = UseMemory(ref_for_file);	// gets pointer to allocation *f_ptr_ref
+		
+		// fill in file ref
+		UnuseMemory(ref_for_file);			// unlock the application
+		return ref_for_file;
+	}
+	
+	/* Once you have finished saving the file, you dispose the filemap as follows: */
+	DisposeMemory(filemap);
+
+**NOTE:** For a complete understanding of memory allocations, as shown in the above examples, see "The Allocation Mgr" on page 25-441.
+
+If `pgSaveDoc` is successful, zero is returned (implying no I/O errors). If unsuccessful, the appropriate error code will be returned (see "Error Codes"<!-- on page 39-765-->).
+
+### Saving text only
+
+The best/fastest way to save text only is to walk through each block of text and write the text to a file. (OpenPaige maintains text as separate records, each record containing a piece of the whole document). The following is a brief example of how you can do this:
+
+	paige_rec_ptr pg_rec;
+	pg_char_ptr text;
+	text_block_ptr block;
+	long num_blocks, text_size;
+	
+	pg_rec = UseMemory(pg); 	// First get pointer to "real" OpenPaige record
+	num_blocks = GetMemorySize(pg_rec -> t_blocks); // = number of blocks
+	block = UseMemory(pg_rec -> t_blocks);			// = first block
+	
+	while (num_blocks)
+	{
+		text_size = GetMemorySize(block -> text);
+		text = UseMemory(block -> text);
+		/* At this point, text_size is number of text bytes and text is pointer to text; hence, you can save *text to a file for text_size bytes. */
+		UnuseMemory(block -> text);
+		++block;
+		--num_blocks;
+	}
+	UnuseMemory(pg_rec -> t_blocks);
+	UnuseMemory(pg);
+
+### Terminating the File
+
+If the ending file position of all OpenPaige data will not be the physical end-of-file, you must terminate the file properly using `pgTerminateFile` as shown below.
+
+For example, if you were to call `pgSaveDoc`, then set the physical end-of-file to the ending file position, your file save is complete (you do not need to terminate the file in any other way). If, however, you were to call pgSaveDoc but you then wanted to write additional data of your own beyond that point, you would first have to call the following function:
+
+	(pg_error) pgTerminateFile (pg_ref pg, long PG_FAR *file_position, file_io_proc write_proc, file_ref filemap);
+
+This function writes a file key that specifies the logical end-of-file for the OpenPaige document. Later, when the file is read with `pgReadDoc`, OpenPaige will recognise this key as the logical end-of-file and discontinue reading any data beyond that position.
+
+Upon entry, `pg`, `file_position`, and `write_proc` should all be the same parameters that were given to `pgSaveDoc`.
+
+##### NOTES:
+
+- You *do not* need to call this function if the end of the OpenPaige document and physical end-of-file is identical (but it does not hurt to do so).
+- The term "logical end of file" implies the end of the very last piece of data that can be read (later) by `pgReadDoc`. That includes all data written by `pgSaveDoc` and/or `pgWriteKeyData`.
+- When and if `pgReadDoc` encounters the logical end-of-file, the file offset returned by `pgReadDoc` will be positioned at the first byte after the end-of-file (which would have been the first byte written by your application if you wrote nonOpenPaige data after this position).
+
+## 22.3 Reading a Document
+
+To read a document previously saved with `pgSaveDoc`, call the following:
+
+	(pg_error) pgReadDoc (pg_ref pg, long PG_FAR *file_position, pg_file_key_ptr keys, pg_short_t num_keys, file_io_proc read_proc, file_ref filemap);
+	
+In this function, `pg` must be a valid OpenPaige object reference for which all data that is read can be placed; `pg`, however, can be completely empty. If it does contain data (text, styles, etc.), those items get replaced with data that is read from the file; items that are not processed from the file (i.e., data components not recognized or components that don't even exist in the file) will leave that component in `pg` unchanged.
+
+**NOTE:** It may be helpful to know that a function exists to create a completely "empty" `pg_ref` for purposes of `pgReadDoc` — see "A Quick & Easy Empty OpenPaige Object"<!-- on page 34-728-->.
+
+When `pgReadDoc` is called, what occurs is as follows: a data component is read beginning at the specified file offset; the data component always includes a "header" that includes the data key as well as the data size. The file handler (`pg_handler`) is searched for that contains the data key and, if found, the file handler function is called to process the data. If a `pg_handler` is not found, a special "exception handler" is called which will be described later in this section, and then the data is skipped.
+
+Each data component is handled in this way, one element at a time, until the end-of-file is reached.
+
+**NOTE:** The "end-of-file" is not necessarily the physical end-of-file; rather, it is determined by the file position given to `pgTerminateFile()`.
+
+The `file_position` parameter must point to the first file offset to read, in bytes. The offset is zero-indexed, relative to the beginning of the file, and must be the same position given to `pgSaveDoc()` when the file was written.
+
+If `keys` is a null pointer, `pgReadDoc` will try to process every data element it reads. If keys is non-null, it must be a pointer to a list of `num_key` keys; if such a list is given, `pgReadDoc` will only consider processing the `keys` that are in the list.
+
+The `read_proc` is a pointer to a function that should do the physical I/O. However, this parameter can be a null pointer, in which case the standard file transfer function is used.
+
+If `read_proc` is non-null, it must point to valid `file_io_proc` function — see "The file_io_proc" <!--on page 34-705--> if you want to write your own I/O function.
+
+The `filemap` parameter is a `memory_ref` allocation that contains a file reference, native to the runtime platform.
+
+**NOTE:** The `filemap` must be a file reference to an opened file with at least read permission. The way to accomplish this is shown in the example above for `pgSaveDoc`.
+
+If `pgReadDoc` is successful, zero is returned (implying no I/O errors). If unsuccessful, the appropriate error code will be returned (see "Error Codes"<!-- on page 39-765--> in the Appendix).
+
+## 22.4 Verifying an OpenPaige-formatted File
+
+You can verify if a file is a true OpenPaige file or not by calling the following:
+
+	(pg_error) pgVerifyFile (file_ref filemap, file_io_proc io_proc, long position);
+
+Use this function to "test" any file to find out if it is truly an OpenPaige file. Upon entry, `filemap` and `io_proc` must be the same parameters you would pass to `pgReadDoc()`.
+
+The position parameter specifies the file position, in bytes.
+
+**FUNCTION RESULT:** If the function returns zero, the file is a valid OpenPaige file. Otherwise the appropriate error code is returned (usually `BAD_TYPE_ERR`).
+
+## 22.5 Do you need the remaining info?
+
+The rest of this chapter explains the details of extending the OpenPaige saving mechanisms to your own applications. If you are saving only the contents of a `pg_ref`, you do not need to read anything else in this chapter. If you are saving "custom" information, read on.
+
+## 22.6 Saving Your Own Data Format
+
+**NOTE:** There is nothing preventing you from writing and reading whatever you want before and after OpenPaige transfers the contents of a `pg_ref`. Calling `pgSaveDoc()` simply serialises a stream of objects beginning at the file position you have specified, and there is nothing to prevent you from writing other data after that location. If you consider the composite stream of OpenPaige data as one single "record" in a file, the concept of integrating your own data may be simplified.
+
+On more than one occasion, an OpenPaige user has asked how some particular data format can be forced using the OpenPaige file mechanism, or how text can be saved as one continuous block of text, etc.
+
+The answer is possibly non-intuitive, yet fairly simple once it is grasped:
+
+1. If you have no reason to make OpenPaige automatically read your custom data, just write the data before or after the OpenPaige data and read it back the same way (see note *supra*).
+2. If you want OpenPaige to save the data for you and notify you when it reads it back, use `pgWriteKeyData` to save the structure, and then use a custom handler to read the structure (see example *infra*).
+
+If you want OpenPaige to write your data and notify you when it is read, the easiest way to go is to write the data with `pgWriteKeyData` and retrieve it with a read handler. If this method seems appropriate to your situation, the following sample code illustrates how this can be done:
+
+	void SaveMyData (some_arbitrary_struct *myData, long myDataSize, pg_file_key myFileKey)
+	{
+	
+	/* First, save pg_refusing all the defaults. The "myFileRef" is a memory_ref containing the file reference specific to the machine. For Macintosh, the memory_ref contains the file refNum. For Windows, the memory_ref contains the integer result from OpenFile (or _lopen, etc.). */
+	
+	long position;
+	position = 0; 	// We save file starting at first byte (but don't have to) 
+	pgSaveDoc(pg, \&position, NULL, 0, NULL, myFileRef, 0);
+	pgWriteKeyData(pg, myFileKey, (void *)myData, myDataSize, myRefCon, NULL, &position, myFileRef);
+	}
+
+##### Notes:
+1. `myRefCon` represents any value you want to save as a reference. You will get this value handed back to you in the read handler (below). 
+2. `MyFileKey` can be any number >= `CUSTOM_HANDLER_KEY`. This value is used to identify the data item when the file is read later. 
+3. You can call a similar function as above multiple times. When the file is read, your read handler will get called for each occurrence of the data as it is read.
+
+### The Read Handler
+
+To read the data structure(s) back, you first install a read handler:
+
+	pgSetHandler(&paige_globals, myFileKey, myReadHandler, NULL, NULL, NULL, NULL);
+
+The value for `myFileKey` should be the same as the value used in the above example for writing the data.
+
+Your read handler should look like this:
+
+	PG_PASCAL (pg_boolean) myReadHandler (paige_rec_ptr pg, pg_file_key the_key, memory_ref key_data, long PG_FAR *element_info, void PG_FAR *aux_data, long PG_FAR *unpacked_size)
+	{
+		/* ... */
+	}
+
+OpenPaige calls this function each time it reads data from the file that was saved as `the_key` (previously written as `myFileKey` in the example contained in the section preceding). You can ignore almost all of the parameters; the only two you probably care about are `key_data` (which holds the data that has been read from the file) and `element_info` (which points to "myRefCon" saved earlier).
+
+Retrieving the data in the read handler: the data, as originally written to the file, will be contained in `key_data`. To get a pointer to the data, simply do:
+
+	ptr = UseMemory(key_data);
+
+NOTE: be sure to do `UnuseMemory` after accessing the data in `ptr`. To learn how large the data is, do:—
+
+	data_size = GetMemorySize(key_data);
+	
+### The Hybrid
+
+Sometimes you need to save file data in some specific format, bypassing the OpenPaige file I/O system altogether, yet you want OpenPaige to save most of the `pg_ref` data items.
+
+To do so, perform the following logic:
+
+#### To save
+
+1. Call `pgSaveDoc` in the normal way (if you need to save regular `pg_ref` items).
+2. Call `pgTerminateFile` (which tells OpenPaige there will be no more OpenPaige-based data).
+3. At this point the file position will be known (i.e. the next byte offset to write some additional data). Write this data in any way you choose.
+
+#### To retrieve the data
+
+1. Call `pgReadDoc` (if you used `pgSaveDpc` to save).
+2. The file offset will return to you positioned on the first byte you originally wrote. Read the data in whatever method is appropriate.
+
+**NOTE:** You can perform the "reverse," if necessary, by calling `pgSaveDoc` *after* you write your own data. This will still work so long as you provide the correct file position to `pgSaveDoc` to begin saving that same file position for `pgReadDoc` to begin reading.
+
+OpenPaige file mechanism provides some *optional* utilities to "compress" a series of numbers so your data transfer is smaller. You can certainly use your own instead of these.
+
+These functions make data portable between platforms. This is because they resolve the saving and retrieving certain numbers between Macintosh and Windows which save those numbers backwards from each other. These function make those numbers portable.
+
+By "series of numbers" is meant an array of longs or shorts, or consecutive fields in a record structure, etc.
+
+For example, suppose you need to save a large record structure that consists mostly of zeros. Using the "pack" and "unpack" methods described below you can conserve a great deal of space.
+
+	#include "pgFiles.h"
+	(void) pgSetupPacker (pack_walk_ptr walker, memory_ref ref, long first_offset);
+
+`pgSetupPacker` sets up a special record to begin packing or unpacking numbers. For "packing" numbers, you begin with a zero-size `pg_ref` and the packing functions append data to it; for unpacking, you begin with a `memory_ref` that already has packed data (or contains packed data read from a file) and retrieve the data with the unpacking functions (see below).
+
+The `walker` parameter must be a pointer to a `pack_walk` record (defined in `pgFiles.h`). If you are packing/unpacking from a read or write handler, the `ref` parameter should be the `key_data` `memory_ref` given to you when a read or write handler is called. Or, if you are using the pack/unpack functions outside of a read or write handler, `ref` must be a valid `memory_ref` with a record size of one byte and a memory size of zero for packing, or a valid `memory_ref` containing previously packed data for unpacking.
+
+The `first_offset` parameter should be zero.
+
+Once the `pack_walk` record is set up, you can use the functions given below.
+
+**NOTE:** If packing numbers, once you are through, call `pgFinishPack`.
+
+### Packing
+
+	#include "pgFiles.h"
+	(void) pgPackNum (pack_walk_ptr out_data, short code, long value);
+
+Adds a long or short numeric value to the packed data. The `out_data` parameter must point to an initialized `pack_walk` record previously set up with `pgSetupPacker`.
+
+The `code` parameter should be `short_data` if packing an integer or `long_data` for packing a `long`. The value parameter is the numeric value to pack.
+
+	#include "pgFiles.h"
+	(void) pgPackNumbers (pack_walk_ptr out_data, void PG_FAR *ptr, short qty, short data_code);
+
+Identical to `pgPackNum` except an array of numbers are packed. The `ptr` parameter must point to the first number in the array, the `qty` parameter indicates the number of elements in the array, and `data_code` must be `short_data` if the elements are integers or `long_data` if the elements are `long`s. All elements must be the same type (all must be either `short`s or `long`s, not a mixture).
+
+	#include "pgFiles.h"
+	(memory_ref) pgFinishPack (pack_walk_ptr walker);
+
+Completes the packing within `walker` (by optimising the compression and terminating the internal packed data structure).
+
+If you have packed anything at all, you *must* call this function.
+
+**CAUTION:** *Do not* call `pgFinishPack` if you have not actually packed any data (i.e., the original `memory_ref` is still zero size).
+
+The function returns the same `memory_ref` you originally gave `pgSetupPacker`.
+
+### Unpacking
+
+	#include "pgFiles.h"
+	(long) pgUnpackNum (pack_walk_ptr in_data);
+
+Returns a number that was previously packed. The `in_data` parameter must be a pointer to an initialised `pack_walk` record (using `pgSetupPacker`).
+
+**NOTE:** Numbers must be unpacked in the same order as they were packed. However, `pgUnpackNum` will simply return zero(s) if you ask for more numbers than were packed.
+
+	#include "pgFiles.h"
+	(void) pgUnpackNumbers (pack_walk_ptr out_data, void PG_FAR *ptr, short qty, short data_code);
+
+Identical to `pgUnpackNum` except an array of numbers are unpacked. The `ptr` parameter must point to the first number in the array to receive the numbers, the `qty` parameter indicates the number of elements in the array, and `data_code` must be `short_data` if the elements are integers or `long_data` if the elements are `long`s. All elements must be the same type (all must be either `short`s or `long`s, not a mixture) and they must be the same type(s) that were originally packed. If more numbers are asked for than were packed, this function fills the extra array elements with zeros.
+
+**NOTE:** You *do not* call `pgFinishPack` for unpacking—that function is only used to terminate data after using the "pack" functions.
+
+### Additional Pack/Unpack Utilities
+	
+	#include "pgFiles.h"
+	(void) pgPackBytes (pack_walk_ptr out_data, pg_char_ptr the_bytes, long length);
+
+Appends `the_bytes` data of size `length` to the packed data in `out_data`.
+
+**NOTE:** The data is not actually "compressed" but is simply included in the data stream and can be retrieved with `pgPackBytes` or `pgUnpackPtrBytes` below.
+
+It is OK to mix `pgPackBytes` with `pgPackNum` or `pgPackNumbers` as long as you retrieve the data in the same order that you packed it.
+
+	#include "pgFiles.h"
+	(void) pgUnpackPtrBytes (pack_walk_ptr in_data, pg_char_ptr out_ptr);
+
+Unpacks data previously packed with `pgPackBytes`. The bytes are written to `*out_ptr` in the same order they were originally packed. It is your responsibility to make sure `out_ptr` can contain the number of bytes about to be unpacked. (If you aren't sure about the size of the unpacked data, or if the data might be arbitrarily huge, it might be better to use `pgUnpackBytes` below).
+
+	#include "pgFiles.h"
+	(void) pgUnpackBytes (pack_walk_ptr in_data, memory_ref out_data);
+
+Identical to `pgUnpackPtrBytes` except the unpack data is placed in `out_data` `memory_ref`. The `memory_ref` will be sized to hold the total number of unpacked
+bytes. The advantage of using this method versus `pgUnpackPtrBytes` is that you do not need to know how large the data is.
+
+	#include "pgFiles.h"
+	(long) pgGetUnpackedSize (pack_walk_ptr walker);
+
+Returns the size, in bytes, of the next data in `walker`. This function works for all types of data that have been packed, both numbers and bytes.
+
+#### Rectangle
+
+	#include "pgFiles.h"
+	(void) pgPackRect (pack_walk_ptr walker, rectangle_ptr r);
+	(void) pgUnpackRect (pack_walk_ptr walker, rectangle_ptr r);
+
+Packs/unpacks a rectangle `r`.
+
+#### Co_ordinate
+
+	#include "pgFiles.h"
+	(void) pgPackCoOrdinate (pack_walk_ptr walker, co_ordinate_ptr point);
+	(void) pgUnpackCoOrdinate (pack_walk_ptr walker, co_ordinate_ptr point);
+
+Packs/unpacks a `co_ordinate`.
+
+#### Colour
+
+	#include "pgFiles.h"
+	(void) pgPackColor (pack_walk_ptr walker, color_value PG_FAR *color);
+	(void) pgUnpackColor (pack_walk_ptr walker, color_value PG_FAR *color);
+
+Packs/unpacks a `color_value` colour into the packed data.
+
+#### Shape
+
+	#include "pgFiles.h"
+	(long) pgPackShape (pack_walk_ptr walker, shape_ref the_shape); 
+	(void) pgUnpackShape (pack_walk_ptr walker, shape_ref the_shape);
+
+Packs/unpacks a shape `the_shape`.
+
+#### Select pair
+
+	#include "pgFiles.h"
+	(void) pgPackSelectPair (pack_walk_ptr walker, select_pair_ptr pair);
+	(void) pgUnpackSelectPair (pack_walk_ptr walker, select_pair_ptr pair);
+
+Packs/unpacks a `select_pair` pair.
+
+# 23 HUGE FILE PAGING
+
+"File paging" is a method in which large files are not read into memory all at once; rather, only the portion(s) that are needed to display are read dynamically as the user scrolls or "pages" through the document.
+
+## 23.1 Paging OpenPaige Files
+
+Any file that has been saved with `pgSaveDoc()` (or with the custom control message `PG_SAVEDOC`) can be opened in "paging" mode by calling a different function instead of `pgReadDoc()`:
+
+	pg_error pgCacheReadDoc (pg_ref pg, long PG_FAR *file_position, const pg_file_key_ptr keys, pg_short_t num_keys, file_io_proc read_proc, file_ref filemap);
+
+This function is 100% identical to `pgReadDoc()` except that the document is set to disc-paging mode. This means that the text portion of the document is not loaded into memory all at once; rather, only the portions that are needed are loaded dynamically.
+
+The parameter values should be completely identical to what you would pass to `pgReadDoc()`. However, the physical disc file must remain open for disc paging to be successful, and closed only after the `pg_ref` is finally disposed.
+
+Not only should the file remain open, but the filemap parameter must also remain valid. For example, if `filemap` is a `memory_ref` (which it will be for the standard "open" function), that `memory_ref` and its content must remain intact until the `pg_ref` has been disposed.
+
+If `pgCacheReadDoc()` returns without error, all portions of the document except for its text will have been loaded into memory; the text portions will be loaded as needed during the course of the user's session with this document.
+
+Similarly, for tight memory situations, OpenPaige will unload text portions as required (if they have not been altered) to make room for other allocations. This unloading process occurs transparently even if you have not enabled virtual memory.
+
+**NOTE:** Calling `pgDispose()` does not close the file; your application must close the file after the `pg_ref` has been destroyed. If you need to obtain the original file reference, see "`pgGetCacheFileRef()`"<!-- on page 23-409 this document-->. If you are using your own `file_io_proc`, that `file_io_proc` must be available at all times until the document is disposed.
+
+## 23.2 OpenPaige Import Extension
+
+If you are opening file(s) with the OpenPaige import extension, instead of calling `pgReadDoc()`, file paging is enabled by setting the `IMPORT_CACHE_FLAG` bit in the `import_flags` parameter as explained in section 17.2, "Importing Files (from C++)" <!-- on page bugger all, just insert a hyperlink-->.
+
+### Text file paging
+
+You can set a raw ASCII text file for file paging by using the OpenPaige import extension for ASCII text files. To enable file paging, set the `IMPORT_CACHE_FLAG` bit in the `import_flags` parameter.
+
+Paging text files causes only the text that is required for displaying to be loaded into memory.
+
+**NOTE:** You must keep the text file open until the document is disposed.
+
+## 23.3 Custom Control
+
+Use the message `PG_CACHEREADDOC` instead of `PG_READDOC` to enable disk paging.
+
+**NOTE:** `wParam` and `lParam` are identical with both messages. The file must remain open, however, until the control window is closed.
+
+## 23.4 Getting the File Reference
+
+	file_ref pgGetCacheFileRef (pg_ref pg);
+
+This function returns the file, if any, that was given to `pgCacheReadDoc()`. Or, if you enabled file paging with the OpenPaige import extension, the value returned from this function will be the original file reference given to the import class.
+
+The usual reason for calling this function is to obtain the file reference before disposing the `pg_ref` so the file can be closed.
+
+### 23.5 File Paging Save
+
+	pg_error pgCacheSaveDoc (pg_ref pg, long PG_FAR *file_position, const pg_file_key_ptr keys, pg_short_t num_keys, file_io_proc write_proc, file_ref filemap, long doc_element_info);
+
+This function is identical to `pgCacheReadDoc()` except it should be called to save a file that is currently enabled for file paging (i.e., the document was previously opened with `pgCacheReadDoc()` or imported with the `IMPORT_CACHE_FLAG` bit).
+
+Calling `pgCacheSaveDoc()` creates an identical file to `pgSaveDoc()` and accepts the same parameters to its function; the difference, however, is how it handles certain situations that might otherwise fail (for example, saving to the same file that is currently open for file paging).
+
+It is safe to use `pgCacheSaveDoc()` even if the document is not enabled for file paging.
+
+If this function is successful, the filemap parameter becomes the new file paging reference (the same as if you had reopened the file with `pgCacheReadDoc()`). It is therefore important that you close the previous file (if it was different) and that you do not close the new file just saved.
+
+**NOTE:** Opening a file with `pgCacheReadDoc()` then re-saving to that same file with `pgCacheSaveDoc()` will only work correctly if the filemap parameter is exactly the same `file_ref` for both opening and saving.
+
+## 23.6 Writing Additional Data
+
+If you need to write additional data to an OpenPaige file it is safe to do so after `pgCacheSaveDoc()` returns; or, if you are certain that the file being written is a different file than the original file given to `pgCacheReadDoc()`, it is safe to write data before and/or after `pgCacheSaveDoc()`.
+
+You may also call extra functions such as `pgSaveAllEmbedRefs()` and `pgTerminateFile()` in the same way they are used with `pgSaveDoc()`.
+
+## 23.7 OpenPaige Export Extension
+
+If you are saving file(s) with the OpenPaige export extension, you can cause the same effect as `pgCacheSaveDoc()` by setting the `EXPORT_CACHE_FLAG` bit in the `export_flags` parameter—see Chapter 18, OpenPaige Export Extension<!-- on page fuck all - needs hyperlink -->.
+
+# 24 MISCELLANEOUS UTILITIES
+
+## 24.1 Require `recalc`
+
+	(void) pgInvalSelect (pg_ref pg, long select_from, long select_to);
+
+The text from `select_from` to `select_to` in `pg` is *invalidated*, i.e., marked to require recalculation, new word wrap, etc.
+
+Both parameters are zero-indexed byte offsets. No actual calculation is performed until `pgPaginateNow` is called (see "Paginate Now"<!-- on page 24-414-->) or the text (or highlighting) is drawn.
+
+## 24.2 Highlight Region
+
+	pg_boolean pgGetHiliteRgn (pg_ref pg, select_pair_ptr range, memory_ref select_list, shape_ref rgn);
+
+This function sets `rgn` to the "highlight" shape for the specified range of text.
+
+The `rgn` parameter must be a valid `shape_ref` (which you create); when the function returns, that shape will contain the appropriate highlight region.
+
+The text offsets that are used to compute the region are determined as follows: if `range` is not a NULL pointer, that selection pair is used; if `range` is NULL but `select_list` is not `MEM_NULL`, then `select_list` is used as a list of selection pairs (see below). If both are NULL, the current selection range in `pg` is used.
+
+The `select_list` parameter, if not `MEM_NULL`, must be a valid `memory_ref` containing a list of `select_pair` records. Usually, a selection list of this type is used for discontinuous selections (see "Discontinuous Selections"<!-- on page 10-161--> for information about `pgGetSelectionList` and `pgSetSelectionList`).
+
+**FUNCTION RESULT:** TRUE is returned if the resulting highlight region is not empty.
+
+## 24.3 Paginate Now
+
+	(void) pgPaginateNow (pg_ref pg, long paginate_to, short use_best_guess);
+
+The OpenPaige object is forcefully "paginated" (lines computed) from the start of the document up to the text offset `paginate_to`.
+
+If `use_best_guess` is TRUE, OpenPaige does not calculate every single line, rather it makes a guess as to the document's height.
+
+If the document is already calculated, this function does nothing.
+
+##### NOTES:
+
+1. On a large document, full pagination from top to bottom can take several seconds; be that as it may, it is the only *guaranteed* method to produce 100% accuracy on text height or line positions.
+2. OpenPaige automatically calls this function for you in most cases that require it.
+
+## 24.4 Style Info
+
+	(pg_boolean) pgFindStyleInfo (pg_ref pg, long PG_FAR *begin_position, long PG_FAR *end_position, style_info_ptr match_style, style_info_ptr mask, style_info_ptr AND_mask);
+
+**FUNCTION RESULT:** This function returns `TRUE` if a specific style—or portions thereof—can be found in `pg`.
+
+Upon entry, `begin_position` must point to a text offset (i.e., a zero-indexed byte offset); when this function returns and a style is found, `*begin_position` will get set to the offset where the found style begins and `*end_position` to the offset where that style ends in the text.
+
+Styles are searched for by comparing the fields in `match_style` to all the `style_info` records in `pg` as follows: Only the fields corresponding to the non-zero fields in `mask` are compared; before the comparison, the corresponding value in `AND_mask` is `AND`ed temporarily with the value in the `style_info` record in question. If all fields match in this way, the function returns `TRUE` and sets `begin_position` and `end_position` accordingly.
+
+If `match_style` is a null pointer, the function will always return `TRUE` (it will simply advance to the next style). If `mask` is null, then all fields are compared (such that the whole style must match to be `TRUE`). If `AND_mask` is null, no `AND`ing is performed (and the whole field is compared).
+
+## 24.5 Examine Text
+
+	pg_char_ptr pgExamineText (pg_ref pg, long offset, text_ref *text, long PG_FAR *length);
+
+This function provides a way for you to examine text directly in an OpenPaige object.
+
+The `offset` parameter should be set to the absolute, zero-indexed byte offset you wish to return. The text parameter is a pointer to a `text_ref` variable which will get set to a `memory_ref` by OpenPaige before the function returns. The length parameter must point to a `long`, which also gets set by OpenPaige.
+
+FUNCTION RESULT: A pointer is returned that points to the first character of offset; `*text` is set to the `memory_ref` for that text, which you must "unuse" after you are through looking at the text (see below); `*length` will get set to the text length of the pointer, which will be the number of characters to the end of the text block from which the text was taken (it won't necessarily be the remaining length of all text in `pg`).
+
+	// This shows getting the text at offset 123:
+	text_ref ref_for_text;
+	long_t length;
+	pg_char_ptr the_text;
+	the_text = pgExamineText(pg, 123, &ref_for_text, &t_length);
+	
+	// ... do whatever with the text, then:
+	UnuseMemory(ref_for_text);	
+	// .. otherwise it stays locked! */
+
+### TECH NOTE: Examining some text
+
+> I'd like to know how to fetch the text from an OpenPaige document. I've read the manual and still don't get it. I've created an OpenPaige document in a dialog so I can allow the user to enter more than 255 characters. Inserting text is no problem. How do I get it back out. A hint would be fine, a snippet of code would be marvelous.
+
+Although some of the solutions below will work, the method above described is more for high-speed direct text access used for find/replace features, or spell checking, etc.
+
+In your case, however, I think walking through the text blocks using pgExamineText might be unnecessarily complex. Just use the following function:
+
+	text ref pgCopyText (pg_ref pg, select_pair_ptr selection, short data_type;
+	/* See section "Copying Text Only" <!-- on page 5-109--> */
+
+Given a specific selection of text in `selection`, this returns a `memory_ref` that has the text you want. Very simple. The `data_type` parameter should be one of the following:
+
+	enum
+	{
+		all_data,				// Return all data
+		all_text_chars,			// All text that is writing script
+		all_roman,				// All Roman ASCII chars
+		all_visible_data,		// Return all visible data
+		all_visible_text_chars,	// All visible text that is writing script
+		all_visible_roman		// All visible Roman ASCII chars
+	};
+
+The one you want is probably `all_data` or `all_text_chars`.
+
+If `selection` is NULL, the text returned will be the currently selected (highlighted) text; otherwise, it returns the text within the specified selection (which is probably what you want). This parameter should therefore point to a `select_pair` record which is defined as:
+
+	typedef struct select_pair
+	{
+	long begin;	// beginning of selection
+	long end;		// end of selection
+	};
+
+To copy all text, `begin` should be zero and `end` should be `pgTextSize(pg)`.
+
+The function returns a `text_ref` which is a `memory_ref`. To get the text inside, do this:
+
+	Ptr text;
+	text = UseMemory(ref); /* .. where "ref" is function result */
+
+Then when you're finished looking at the text, do:
+
+	UnuseMemory(ref);
+
+Finally, to dispose the `text_ref` call `DisposeMemory(ref)`.
+
+This should be the way to go.
+
+### TECH NOTE: Examining text across the text blocks
+
+> I am using `pgExamineText` to access the text in the openPaige object I am searching. This creates some problems because of the OpenPaige text blocks.
+
+It depends on what you are searching for. Under normal conditions, OpenPaige always splits a block on a CR (carriage return) character (including the CR as its last character, which means it can't ever break in the middle of a line or word. And by "normal" conditions I mean a document composed of reasonably sized paragraphs where CRs exist at, say, every few hundred characters. If you have some mongo paragraph that goes for pages, the block gets split somewhere else with no other choice. Even then, however, it tries to break it at a word boundary and not in the middle.
+
+Hence you might improve your searching by checking for CR at the end of the block—it would only be when you're searching on something that must cross a CR boundary would it be necessary to cross the block.
+
+In any event, it also depends on how you are actually doing the search/compare. If you're using some black-box code that requires a continuous text pointer, then I see why you have a problem. But if you rolled your own, why can't you just increment to the next buffer with a new `pgExamineText`?
+
+> A second related issue has to do with non-case sensitive searches. To handle this I convert the find string & all the text in the OpenPaige target to upper case (`CtoUpper` <!-- ??? --> function) and search in the regular way.
+
+Again, I am wondering if you're doing your own compare-character function versus calling someone's "compare" black box. I've written character compare searches many times, and to do case insensitive compares I simply convert the character from each pointer to upper case (in a separate variable) before comparing. Of course you can do all that at once by copying all of it to a buffer. I'm not sure which way is fastest.
+
+> … it appears that I need to allocate memory, move the text into it and work with the copy. It looks like `MemoryDuplicate` may be the way to go.
+
+Maybe, but what would be a lot faster is to allocate a worst-case `memory_ref`, then use `MemoryCopy`. The reason this would be a lot faster is you wouldn't need to keep creating a `memory_ref`, rather you would just slam the text straight into your allocation for each block. And, the way OpenPaige Allocation Mgr works is that almost no `SetHandleSize` would ever occur.
+
+If you want to concatenate two text blocks together in your `memory_ref`, you should first do `MemoryCopy` for the first one, then for the second you do:
+
+	ptr = AppendMemory(memory_ref, size_of_2nd_block, FALSE);
+	BlockMove(text_ptr_of_send_block, ptr, size_of_2nd_block);
+	UnuseMemory(memory_ref);
+
+For additional speed, if you elect to do the `MemoryCopy` method, you might consider bypassing `pgExamineText` and going directly to the block. You can do this using the same functions OpenPaige uses (the `offset` parameter is the desired text offset):
+
+	paige_rec_ptr pg rec;
+	text_block_ptr block;
+	pg_rec = UseMemory(pg);	// pg = your pg_ref
+	block = pgFindTextBlock(pg_rec, offset, NULL, FALSE);
+	text_ptr = UseMemory(block -> text);
+
+… then, when through with block:
+
+	UnuseMemory(block -> text);
+	UnuseMemory(pg_rec -> t_blocks);
+	UnuseMemory(pg);
+
+You can also get total number of blocks as:
+
+	num_blocks = GetMemorySize(pg_rec -> t_blocks);
+
+**NOTE:** you need to include `pgText.h` which contains the lowlevel function prototype for `pgFindTextBlock`.
+
+### TECH NOTE: Things to know about text blocks
+
+> Text blocks are an important part of OpenPaige. We have found that only by using text blocks can you get acceptable performance. In fact, these text blocks are around 2 K in size by default. If text was not put into blocks you would get performance like TextEdit when text exceeds small blocks. As you know, it comes to a crawl when the text is larger than about 5 K.
+
+There are some important things you may want to know about text blocks however.
+
+First of all, you should not look at the text using `HandleToMemory`, etc. OpenPaige provides functions for getting a locked pointer to a chunk of text.
+
+Second, you should not change the text by inserting directly into a block. You can exchange a character while in `pgExamineText`. But if you try and do any direct insertions, the block will be messed up, and all the subsequent styles will be wrong.
+
+Third, OpenPaige does its very best to break text blocks at a carriage return. If there is a carriage return within the block, Openpaige breaks there. If not, it simply breaks it at a convenient place. Therefore, you cannot be assured what the
+last character is. You must use the length given you by `pgExamineText`. There is no character that you can check to know where the end of the text block is. OpenPaige cannot assume you will want to use any particular character. No matter what character we might pick, someone will be using it in their data.
+
+To access all the text, you simply walk through the blocks using `pgExamineText`.
+
+## 24.6 Information about a particular character
+
+	(long) pgCharType (pg_ref pg, long offset, long mask_bits); 
+	(pg_short_t) pgCharByte (pg_ref pg, long offset, pg_char_ptr char_bytes);
+
+The two functions above will return information about a character.
+
+**FUNCTION RESULT:** The function result of `pgCharType` will be a set of bits describing specific attributes of the character in `pg` at byte location `offset`.
+
+The `mask_bits` parameter defines which characteristics you wish to know; this parameter should contain the bit(s) set, according to the values listed *infra*, that you wish to be "tested".
+
+For example, if all you want to know about a character is whether or not it is "blank", you would call `pgCharType` and pass `BLANK_BIT` in `mask_bits`; if you wanted to know if the character was blank or if the character is a control character, you would pass `BLANK_BIT | CTL_BIT`, etc. Selecting specific character info bits greatly enhances the performance of this function.
+
+The result (and mask) can contain one or more of the following bits:
+
+	#define BLANK_BIT				0x00000001	// Character is blank
+	#define WORD_BREAK_BIT			0x00000002	// Word breaking char
+	#define WORD_SEL_BIT			0x00000004	// Word select char
+	#define SOFT_HYPHEN_BIT			0x00000008	// Soft hyphen char
+	#define INCLUDE_BREAK_BIT		0x00000010	// Word break but include with word
+	#define INCLUDE_SEL_BIT			0x00000020	// Select break but include with word
+	#define CTL_BIT					0x00000040	// Char is a control code
+	#define INVIS_ACTION_BIT		0x00000080	// Char is not a display char, but arrow, bksp, etc
+	#define PAR_SEL_BIT				0x00000100	// Char breaks a paragraph
+	#define LINE_SEL_BIT			0x00000200	// Char breaks a line (soft CR)
+	#define TAB_BIT					0x00000400	// Char performs a TAB
+	#define FIRST_HALF_BIT			0x00000800	// First half of a multi-byte char
+	#define LAST_HALF_BIT			0x00001000	// Last half of a multi-byte char
+	#define MIDDLE_CHAR_BIT			0x00002000	// Middle of a multi-byte char run
+	#define CONTAINER_BRK_BIT		0x00004000	// Break-container bit
+	#define PAGE_BRK_BIT			0x00008000	// Break-repeating-shape bit
+	#define NON_BREAKAFTER_BIT		0x00010000	// Char must stay with char(s) after it
+	#define NON_BREAKBEFORE_BIT		0x00020000	// Char must stay with char(s) before it
+	#define NUMBER_BIT				0x00040000	// Char is numeric
+	#define DECIMAL_CHAR_BIT		0x00080000	// Char is decimal mark (for decimal tab)
+	#define UPPER_CASE_BIT			0x00100000	// Char is MAJUSCULE
+	#define LOWER_CASE_BIT			0x00200000	// Char is minuscule
+	#define SYMBOL_BIT				0x00400000	// Char is a symbol
+	#define EUROPEAN_BIT			0x00800000	// Char is ASCII-European
+	#define NON_ROMAN_BIT			0x01000000	// Char is not Roman script
+	#define NON_TEXT_BIT			0x02000000	// Char is not really text
+	#define FLAT_QUOTE_BIT			0x04000000	// Char is a typewriter quote
+	#define SINGLE_QUOTE_BIT		0x08000000	// Quote char is single ' quote
+	#define LEFT_QUOTE_BIT			0x10000000	// Char is a left quote
+	#define RIGHT_QUOTE_BIT			0x20000000	// Char is a right quote
+	#define PUNCT_NORMAL_BIT		0x40000000	// Char is normal punctuation
+	#define OTHER_PUNCT_BIT 		0x80000000	// Char is other punctuation in multi-byte
+	
+	/* Convenient char_info macro for any quote char in globals: */
+	#define QUOTE_BITS (FLAT_QUOTE_BIT | SINGLE_QUOTE_BIT | LEFT_QUOTE_BIT |RIGHT_QUOTE_BIT)
+	
+	/* CharInfo/pgCharType convenient mask_bits */
+	#define NON_MULTIBYTE_BITS ( (FIRST_HALF_BIT | LAST_HALF_BIT))
+	#define WORDBREAK_PROC_BITS (WORD_BREAK_BIT | WORD_SEL_BIT |NON_BREAKAFTER_BIT | NON_BREAKBEFORE_BIT)
+
+**NOTE:** When `pgCharType` is called, OpenPaige calls the `char_info` function for the style assigned to the character at the specified offset.
+
+If you need additional information about a character—or to obtain the character itself—use `pgCharByte`. This function will return the length of the character at byte location offset (remember that a character can be more than one byte). In addition to returning the length, the character itself will be copied to the buffer pointed to by `char_bytes`; make sure that this buffer contains enough space to hold a potential multi-byte character.
+
+When calling `pgCharByte`, if the specified offset calls for a byte in the middle of a character, the appropriate adjustment will be made by OpenPaige so the whole character is returned in `char_bytes`; the function result (length of character) will also reflect that adjustment. Hence, it will always return the whole character size even if offset indicates the last byte of a multi-byte character.
+
+You can also use `pgCharByte` just to determine the length of a character: by passing a NULL pointer to `char_bytes`, `pgCharByte` simply returns the character size.
+
+### TECH NOTE: Control characters don't draw
+
+> OpenPaige makes the assumption that all control characters (less than ASCII space) should be "invisible." Rightly or wrongly, this is the default behavior we chose to avoid drawing unwanted, garbage characters. Hence, if you insert a "command" char (ASCII 17) it will be drawn as a blank.
+
+The correct workaround is to override OpenPaige's default character handling in this one special case. This is not as difficult or complex as it may first seem and I will illustrate the exact code you need to implement:
+
+Right after `pgInit`, you need to place a function pointer in OpenPaige globals default style "hook" for getting character info. This function pointer will point to some small code that you will write (which I will show you). Let's suppose your OpenPaige globals is called `paigeGlobals` and this (new) function you will write is called `CommandCharInfo`. Right after `pgInit`, you do this:
+
+	paigeGlobals.def_style.procs.char_info = CommandCharInfo;
+
+This sets `CommandCharInfo` as the "default" function for all future styles, and OpenPaige calls that function to find out about a character of text. The `CommandCharInfo` function definition must look like the function example below. This function's main duty in life is to tell openPaige that the command character *is not* blank, otherwise it just falls through and calls the standard `charInfo` function:
+
+	// This function can be used to override "get character info"
+	
+	#include "defprocs.h"	// You MUST INCLUDE this for function to compile
+	
+	PG_PASCAL (long) CommandCharInfo (paige_rec_ptr pg, style_walk_ptr style_walker, pg_char_ptr data, long global_offset, long local_offset, long mask_bits)
+	{
+		if (data[local_offset] == 17)	// If "command char"
+			return (mask_bits & (WORD_BREAK_BIT | WORD_SEL_BIT));
+			
+		// otherwise, just call the standard OpenPaige charInfo function:
+		
+		return pgCharInfoProc(pg, style_walker, data, global_offset, local_offset, mask_bits);
+	}
+
+For more information on char info proc see `char_info_proc`<!-- on page 27-498-->.
+
+Many applications that want to display the Command Character may want to display other special characters, so I thought you
+might prefer including something like the attached code in your examples as an alternative to the above.
+
+	#include <Fonts.h>
+	PG_PASCAL (long) CommandCharInfo(paige_rec_ptr pg, style_walk_ptr style_walker, pg_char_ptr data, long global_offset, long local_offset, long bits)
+	{
+		switch(data[local_offset])
+		{
+			case commandMark:
+			case checkMark:
+			case diamondMark:
+			case appleMark:
+				return (bits & (WORD_BREAK_BIT | WORD_SEL_BIT));
+		}
+		return pgCharInfoProc(pg, style_walker, data, global_offset, local_offset, bits);
+	}
+
+
+## 24.7 Finding The Boundaries (word, line or paragraph)
+
+	(void) pgFindWord (pg_ref pg, long offset, long PG_FAR *first_byte, long PG_FAR *last_byte, pg_boolean left_side, pg_boolean smart_select);
+	(void) pgFindCtIWord (pg_ref pg, long offset, long PG_FAR *first_byte, long PG_FAR *last_byte, short left_side);
+	(void) pgFindPar (pg_ref pg, long offset, long PG_FAR *first_byte, long PG_FAR *last_byte);
+	(void) pgFindLine (pg_ref pg, long offset, long PG_FAR *first_byte, long PG_FAR *last_byte);
+
+**NOTE:** The term "find" in these functions does not imply a context search; rather, it refers to locating the bounding text positions at the beginning and ending of a section of text.
+
+These function can be used to locate words, paragraphs, or lines.
+
+For all functions, the `offset` parameter should indicate where to begin the search. This is a zero-indexed byte offset.
+
+For `pgFindWord`, `*first_byte` and `*last_byte` will get set to the nearest word boundary beginning from `offset`.
+
+**NOTE:** `*first_byte` can be less than `offset`, but `*last_byte` will always be equal to or greater than `offset`. If `left_side` is `TRUE`, the word to the immediate left is located if `offset` is not currently in the middle of a word.
+
+For example, suppose the specified `offset` sat right after the word `the` and before a `.` (full stop). If `left_side` is `FALSE`, the "word" that is found would be `.` but if `left_side` is `TRUE`, the word found would be `the`.
+
+The `smart_select` parameter tells `pgFindWord` whether or not to include trailing blank characters for the word that has been found. If `smart_select` is `TRUE`, then trailing blanks ("spaces") that follow the word are included. Example: If the text contained `This is a test for find word,` if `smart_select` is `TRUE` then finding the word `test` will return the offsets for `test__` (where `_` represent spaces).
+
+The `pgFindCtlWord` function works exactly the same as `pgFindWord` except "words," in this case, are sections of text separated by control codes such as tab and CR. ("Control codes" is used here to explain this function, but in actuality a character is considered only a "control" char by virtue of what is returned from the `char_info_proc`—see “Customizing OpenPaige”<!-- on page 27-485-->.
+
+The `pgFindPar` and `pgFindLine` return the nearest paragraph boundaries or the nearest line boundaries to offset, respectively.
+
+## 24.8 Line and Paragraph Numbering
+
+**NOTE:** The attribute bit `COUNT_LINES_BIT` *must* be set in the `pg_ref` for any of the following functions to work. This attribute can be set either by including it with other bits in the `flags` parameter for `pgNew`, or can be set with `pgSetAttributes`.
+
+**CAUTION:** Constantly counting lines and paragraphs, particularly within a large document with word wrapping enabled and complex style changes can consume considerable processing time. Hence, the `COUNT_LINES_BIT` has been provided to enable line counting only for applications that truly need this feature.
+
+### Line Numbering
+
+	(long) pgNumLines (pg_ref pg);
+
+Returns the total number of lines in `pg`. This function will return zero if `COUNT_LINES_BIT` has not been set in `pg` (see previous note).
+
+**NOTE:** A "line" in an OpenPaige object is simply a horizontal line of text which may or may not end with a CR or LF character. If word wrapping has been enabled, a line can terminate either because it word-wrapped or because it ended with CR.
+
+**CAUTION:** This function may consume a lot of time if the document is relatively large and has not been paginated to the end of the document. This is because OpenPaige cannot possibly know how many word-wrapping lines exist unless it computes every line in the document from beginning to end; even if word-wrapping is disabled, OpenPaige must still count all the line breaks (CR characters) if text has recently been inserted. 
+
+**NOTE:** OpenPaige will always take the fastest approach wherever possible, e.g. if the document has already been fully paginated this function will return a relatively instant response.
+
+	(long) pgOffsetToLineNum (pg_ref pg, long offset, pg_boolean line_end_has_precedence);
+	
+Returns the line number that contains `offset` text position. The line number is *one-indexed* (i.e., the first line in `pg` is `1`). The `offset` parameter can be any position from 0 to `pgTextSize(pg)`, or `CURRENT_POSITION` for the current insertion point.
+
+This function will always return at least one line even if the document has no text (since an empty document still has one line, albeit blank).
+
+If `line_end_has_precedence` is `TRUE`, then the line number to the immediate left of `offset` is returned in situations where that offset is on the boundary between two lines.
+
+**NOTE:** The only time this happens is when the specified offset is precisely at the end of a word-wrapping line and there is another line below that.
+
+For example, consider the insertion point within the following two lines:
+
+	This is a line of text in OpenPaige and the insertion
+	|
+	point is sitting on the end of the line above.
+
+**NOTE:** In the example above, the "|" point text offset could be interpreted to be the end of the first line *or* the beginning of the next line. Since OpenPaige can't possibly know which one is desired, the `line_end_has_precedence` parameter has been provided. From the above example, if `line_end_has_precedence` is `TRUE`, the first line would be returned; otherwise, the second line would be returned.
+
+	(void) pgLineNumToOffset (pg_ref pg, long line_num, long *begin_offset, long *end_offset);
+
+Returns the text offset(s) of `line_num` line. The `line_num` parameter is one-indexed (i.e., the first line of text is `1` and not `0`).
+
+The beginning text position of the line is returned in `*begin_offset` and the ending position is returned in `*end_offset`; both values will be zero-indexed (first position of text is zero). Either `begin_offset` or `end_offset` can be a null pointer, in which case it is ignored.
+
+### Paragraph numbering
+
+	(long) pgNumPars (pg_ref pg);
+
+Returns the total number of paragraphs in `pg`. This function will return zero if `COUNT_LINES_BIT` has not been set in `pg` (see note at the top of this section).
+
+**NOTE:** A "paragraph" in an OpenPaige object is simply a block of text that terminates with a CR character (or CR/LF), or the last (or only) block of text in the document. This has nothing to do with word wrapping; in fact, if word wrapping has been disabled, lines and paragraphs are considered to be one and the same (since a line would only break on a CR character).
+
+	(long) pgOffsetToParNum (pg_ref pg, long offset);
+
+Returns the paragraph number that contains `offset` text position. The paragraph number is one-indexed (i.e., the first paragraph in pg is `1`). The `offset` parameter can be any position from `0` to `pgTextSize(pg)`, or `CURRENT_POSITION` for the current insertion point.
+
+This function will always return at least one paragraph even if the document has no text (since an empty document still has one "paragraph" albeit empty).
+
+	(void) pgParNumToOffset (pg_ref pg, long par_num, long *begin_offset, long *end_offset);
+
+Returns the text offset(s) of `par_num` paragraph. The `par_num` parameter is one-indexed (i.e., the first paragraph of text is `1` and not `0`).
+
+The beginning text position of the paragraph is returned in `*begin_offset` and the ending position is returned in `*end_offset`; both values are zero-indexed (first position of text is zero). Either `begin_offset` or `end_offset` can be a null pointer, in which case it is ignored.
+
+**NOTE:** The ending offset of a "paragraph" will be the position after its CR character (or the end of text if last or only paragraph in the document).
+
+### Line and paragraph bounds
+
+	(void) pgLineNumToBounds (pg_ref pg, long line_num, pg_boolean want_scrolled, pg_boolean want_scaled, line_end_has_precedence, rectangle_ptr bounds);
+
+Returns the bounding rectangular area that encloses `line_num` line. The line number is one-indexed (first line in `pg` is `1` and not `0`).
+
+The bounding rectangle is returned in `*bounds` (which must not be a null pointer).
+
+If `want_scrolled` is `TRUE`, the bounding rectangle will be offset to reflect the current scrolled position of `pg`, if any; if `want_scaled` is `TRUE`, the bounding rectangle will be scaled to `pg`'s current scaling factor, if any.
+
+**NOTE:** The width of the rectangle that is returned will be the width of the text in the line, which is not necessarily the width of the visible area nor is it necessarily the same as the document's page width; the line width can also be zero if the line is completely empty.
+
+	(void) pgParNumToBounds (pg_ref pg, long par_num, pg_boolean want_scrolled, pg_boolean want_scaled, rectangle_ptr bounds);
+
+Returns the bounding rectangular area that encloses `par_num` paragraph. The paragraph number is one-indexed (first paragraph in `pg` is `1` and not `0`).
+
+The bounding rectangle is returned in `*bounds` (which must not be a null pointer).
+
+If `want_scrolled` is `TRUE`, the bounding rectangle will be offset to reflect the current scrolled position of `pg`, if any; if `want_scaled` is `TRUE`, the bounding rectangle will be scaled to `pg`'s current scaling factor, if any.
+
+**NOTE:** The width of the rectangle that is returned will be the width of all composite lines within the paragraph, which is not necessarily the width of the visible area nor is it necessarily the same as the document's page width; the paragraph width can also be zero if the paragraph is completely empty.
+
+### TECH NOTE: Getting pixel height between lines
+
+> What's the best way to calculate the pixel height of the text between given startline and endline? (replacing `TEGetHeight (endLine, startLine, macTE)`).
+
+The easiest approach depends on how you are currently determining the text location of these two "lines." In your question you mention copying the lines to another `pg_ref`. But how did you figure out where the boundaries are of these two lines?
+
+I will assume that you already know the text offset position for the start of each line. In this case, you can simply use `pgCharacterRect` for each text position and subtract the first rectangle's top from the second rectangle's bottom, which would be the line height difference between them.
+
+Another method which is not as fast (but is certainly faster than your chosen method of copying the text into a temporary `pg_ref`) is to make a temporary highlight region for the text range, then get the enclosing bounds `rect` for the highlight. To get a highlight region, use `pgGetHiliteRgn` (you also have to know the text positions for each line). The way this function works is that you first create a shape (using `pgRectToShape(&pgm_globals, NULL)`) and passing that shape to `pgGetHiliteRgn`. Then to get the "bounds" area of the shape, you use `pgShapeBounds(shape, &rectangle)`.
+
+## 24.9 Character type
+
+	(long) pgFindCharType (pg_ref pg, long char_info, long PG_FAR *offset, pg_char_ptr the_byte);
+
+This function locates the first character in `pg` that matches `char_info`, beginning at byte offset `*offset`.
+
+The `char_info` parameter should be set to one or more of the character info bits as explained for `char_info_proc`. See "Information about a particular character"<!-- on page 24-422-->.
+
+For example, to search for a `return` character, you would pass `PAR_SEL_BIT` for `char_info` (which will locate a character that can break a paragraph).
+
+If `the_byte` pointer is non-null, the character located, if any, gets placed into the buffer to which it points.
+
+**CAUTION:** Given that characters in OpenPaige can be more than one byte, you *must* be sure that the character found will fit into the buffer. If you aren't sure, then pass a null pointer for `the_byte` until you get the information about the character, then make another call to get the data.
+
+**FUNCTION RESULT:** The complete character type is returned (all the appropriate `char_info_proc` bits will be set). The `offset` parameter will be updated to the byte offset for the character found. If the character in question was *not* found, this function will return `*offset` equal to the text size in `pg`.
+
+## 24.10 Change counter
+
+	(long) pgGetChangeCtr (pg_ref pg);
+	(long) pgSetChangeCtr (pg_ref pg, long ctr);
+
+OpenPaige maintains a "changes made" counter which you can use to detect changes made to the object; for every change made (insertions, deletions, style changes, etc.), the change counter is incremented. Additionally, a `pgUndo` will decrement the counter.
+
+This counter begins at zero when a new `pg_ref` is created; to get the counter, call `pgGetChangeCtr`. To set it, call `pgSetChangeCtr` with `ctr` as the new value.
+
+### TECH NOTE: When does change counter change?
+
+> I'm using this counter to tell myself whether I need to resave the document. Why is the count different from what I expect?
+
+This counter is changed by OpenPaige anytime **it** thinks it needs to be changed. It changes for *everything*. We use our own change counter in the demo to keep track of when we need to resave the document.
+
+I suggest that you may want to keep your own change counter.
+
+## 24.11 Text and selection positions
+
+	(void) pgTextRect (pg_ref pg, select_pair_ptr range, pg_boolean want_scroll, pg_boolean want_scaled, rectangle_ptr rect);
+	(void) pgCharacterRect (pg_ref pg, long position, short want_scrolled, short want_scaled, rectangle_ptr rect);
+
+These functions can be used to compute outline(s) around one or more characters.
+
+For `pgTextRect`, a rectangle is returned in `rect` that exactly encloses the text range in range. If `want_scroll` is `TRUE`, the rectangle is "scrolled" to the location where it would appear on the screen, otherwise it remains relative to `pg`'s top-left of `page_area`. If `want_scaled` is `TRUE`, the rectangle is scaled to the scale factor set in `pg`.
+
+To get the rectangle surrounding a single character, call `pgCharacterRect` which does exactly the same thing as `pgTextRect`, except in that you give it a single-byte offset.
+
+	(long) pgPtToChar (pg_ref pg, co_ordinate_ptr point, co_ordinate_ptr offset_extra);
+
+**FUNCTION RESULT:** This function returns the (byte) offset of the first character that contains point. If `offset_extra` is non-null, the point is first offset by that much before the character is located.
+
+## 24.12 Getting the Max Text Bounds
+
+OpenPaige computes the smallest rectangle that will fit around all text when you call:
+
+	(void) pgMaxTextBounds (pg_ref pg, rectangle_ptr bounds, pg_boolean paginate);
+
+Returns the smallest bounding rectangle pointed to in `bounds` that encloses all the text in `pg`. The `bounds` parameter must point to a rectangle and can't be a null pointer.
+
+The dimensions of `bounds` essentially gets set to the top of the first line for the rectangle's top, the line furthest to the left and right for the rectangle's left and right sides, and the furthest line to the bottom for the rectangle's bottom.
+
+If `paginate` is `TRUE` then OpenPaige will repaginate the document if necessary to render the most accurate possible dimensions.
+
+**NOTE:** When paginate is `TRUE` the pagination can be slower, but if you pass `FALSE` you won't always get an accurate measurement.
+
+**CAUTION:** Paginating a large document can consume a lot of time. However, the only way OpenPaige can possibly return exact dimensions is if every line has been calculated from top to bottom.
+
+### How to call `pgMaxTextBounds`
+
+	rectangle bounds; long doc_width;
+	pgMaxTextBounds(pg, &bounds, TRUE);
+	doc_width = bounds.bot_right.h - bounds.top_left.h;
+
+The `doc_width` in the above example would be the width of the *widest* text line (from the left margin to the right side of the last character).
+
+### TECH NOTE: Expanding the `page_area` as text is typed
+
+> I want to set an ever-expanding `page_area` that grows as the user types, but only if I need to. How and when should I do that with `pgMaxTextBounds`?
+
+As for changing the page area of the `pg_ref`, yes, you should use `pgSetAreas` and/or `pgSetAreaBounds`—but only when it really changes and/or only when you physically want to expand it.
+
+To answer your question as to *when* you figure out the doc width, I would not do it every key insertion (you are right, that would be *very* slow, particularly when text gets fairly large). The best way to detect the document's height has grown is to examine a field inside the `pg_ref` called `overflow_size`. This field gets set by OpenPaige if and when one or more characters have flowed below the bottom of your page area.
+
+For this feature to work, however, you need to set `CHECK_PAGE_OVERFLOW` with `pgSetAttributes2()`. By setting this attribute, OpenPaige will check the "character overflow" situation after every operation that can cause text to change.
+
+So after anything that might cause an overflow (which would notify the need to change the page rectangle), check `overflow_size` as follows:
+
+	long CheckOverflow(pg_ref pg)
+	{
+		paige_rec_ptr pg_rec;
+		long overflow_amt;
+		
+		pg_rec = UseMemory(pg);
+		overflow_amt = pg_rec -> overflow_size;
+		UnuseMemory(pg);
+		
+		return (overflow_amt);
+	}
+
+In the above example, the function result is the number of character(s) that overflow the bottom of the page rectangle. If `overflow_size` is `-1`, the text overflows the bottom only by a single CR character (i.e. blank line).
+
+## 24.13 Unique value
+
+This function obtains a unique ID value unique within a `pg_ref`.
+
+	(long) pgUniqueID(pg_ref pg);
+
+This simply returns a number guaranteed to be unique ("unique" compared to the previous response from `pgUniqueID`).
+
+This function simply increments an internal counter within `pg` and returns that number, hence each response from `pgUniqueID` is "unique" from the last response. The very first time this function gets called after `pgNew`, the result will be `1`.
+
+The intended purpose of this function is to place something in a `style_info` or `par_info` record to make it "unique" so it will be distinguished from all other style runs in `pg`. Other than that, this function is rarely used by an application.
+
+For example, if an application applied a customised style to a group of characters, as far as OpenPaige is concerned that style might look exactly like the style(s) surrounding those characters; since OpenPaige will automatically delete redundant style runs, customised styles generally need to place something in one of the `style_info` fields to make it "unique."
+
+## 24.13 Filling a Structure
+
+	#include "MemMgr.h"
+	(void) pgFillBlock (void PG_FAR *block, long block_size, pg_char value);
+	
+`pgFillBlock` fills a memory block of `block_size` byte size with byte value in `pg_char` parameter.
+
+## 24.15 Splitting a long byte
+
+	#include "pgUtils.h"
+	(short) pgLoWord(long value);
+	(short) pgHiWord(long value);
+
+It is often necessary to split a `long` into two `short`s. This is a cross-platform way of doing just that. The low word returns the least significant `short`, the high word returns the most significant.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-441.jpg?height=375&width=1300&top_left_y=1430&top_left_x=432)
+
+## 24.16 Maths
+
+	#include "pgUtils.h"
+	(long) pgAbsoluteValue(long value);
+	(pg_fixed) pgRoundFixed(pg_fixed fix);
+	(pg_fixed) pgMultiplyFixed(pg_fixed fix1, pg_fixed fix2);
+	(pg_fixed) pgDivideFixed(pg_fixed fix1, pg_fixed fix2);
+	(pg_fixed) pgFixedRatio(short n, short d);
+
+`pgAbsoluteValue` — returns an absolute value.
+
+`pgRoundFixed` — rounds the fixed number to the nearest whole (but is still a `pg_fixed`). For example, `0x00018000` will return as `0x00020000`.
+
+`pgMultiplyFixed` - multiplies two fixed decimal numbers (a fixed decimal is a `long` whose high-order word is the integer and low-order word the fraction. Hence, `0x00018000` = `1.5`.
+
+`pgDivideFixed` — divides fixed number `fix1` into `fix2` (a fixed decimal is a long whose high-order word is the integer and low-order word the fraction. Hence, `0x00018000` = `1.5`).
+
+`pgFixedRatio` - returns a fixed number which is the ratio of `n : d` (a fixed decimal is a `long` whose high-order word is the integer and low-order word the fraction). Hence, 0x00018000 = 1.5.
+
+# 25 THE ALLOCATION MANAGER
+
+This section deals exclusively with the Allocation Manager within OpenPaige (the portion of software that creates, manages and disposes memory allocations).
+
+## 25.1 Up & Running
+
+The Allocation Manager used by OpenPaige is full of features that have been requested by developers and used by OpenPaige itself. All these features are available to you as a developer.
+
+Like most of OpenPaige, there are just some basics to know about the Allocation Manager to initially use it effectively.
+
+These are:
+
+1. To allocate a block of memory, you call a function that returns an "ID" code (not a pointer or an address).
+2. Then to access that memory, you pass the "ID" code to a function which returns an address to that memory.
+3. Once you are through accessing that memory, you report its "non-use" by calling another function.
+4. "Reporting" to the allocation manager when you are accessing a memory block and when you are through makes virtual memory possible (blocks can be purged that are not in use).
+5. Memory allocations do not have to be byte-oriented, rather they can be groups of logical records. For example, a memory allocation can be defined as a group of 100-byte records. 
+
+### Simple example to allocate some memory and use it:
+
+		/* Allocation: */
+		memory_ref allocation; 
+		allocation = MemoryAlloc(&mem_globals, sizeof(char), 100, 0);
+		
+		/* Note: "mem_globals" is the pgm_globals field in the OpenPaige globals, same struct given to pglnit and pgNew. The "allocation" result is not an address, but an "ID" code. To get the address, call: */
+	
+		char *memory_address;
+		memory_address = UseMemory(allocation);
+	
+		/* In the above, not only is the memory addressed returned but the memory is now locked and unpurgable. Thus it is important to "report" when you are through accessing it: */
+	
+		UnuseMemory(allocation);
+		
+		/* Tell allocation mgr we are done. */
+		
+		// Once you are completely through, dispose the allocation:
+		
+		DisposeMemory(allocation);
+
+## 25.2 Theory
+
+Since OpenPaige is intended to operate on multiple platforms, it became necessary to remove the majority of its code as far away from a specific operating system as possible.
+
+An integral part of any computer OS is its memory management system. However, no two memory management designs are alike, and for this reason OpenPaige's Allocation Manager works as follows:
+
+1. OpenPaige only creates memory allocations through high-level functions, far removed from the operating system. Among these functions are `MemoryAllocate`, `MemoryDuplicate` and `MemoryCopy`.
+2. Regardless of platform, functions to allocate memory remain constant (the same function names and parameters are the same regardless of the OS).
+3. To allow for virtual memory and debugging features, OpenPaige must inform the Allocations Manager, as a rule, when it is about to access a block of memory and when it is through accessing that block. The purpose of this is threefold:
+
+	1. If no part of OpenPaige is accessing a memory block, the Allocation Manager can "unlock" the block and allow it to relocate for maximum memory efficiency,
+	2. Blocks of memory can be temporarily purged if they are not being accessed.
+	3. Debugging features can be implemented: since the main software must "ask" for access to a block of memory, the Allocation Manager can check the validity of the block at that time (when running in "debug mode").
+
+4. Since memory is never allocated directly, the Allocation Manager can provide additional features to a block of memory. Among the features that exist in OpenPaige's Allocation Manager are logical record sizes (a block of memory can be an array of records, as opposed to bytes), nested "lock memory" capability (more than one function can "lock" a block from relocating or purging, in which case the block can not be free for relocation or purging until each "lock" has been "unlocked").
+
+## 25.3 Memory Block References
+
+As far as OpenPaige (and your application) is concerned, when memory is allocated. the Allocation Manager does not return a memory address; rather, it returns an ID number called a `memory_ref`. You can consider a `memory_ref` as simply a long word whose value, when given later to the Allocation Manager, will identify a block of memory.
+
+## 25.4 Access Counter
+
+Frequent reference is made in this chapter to a memory reference's access counter.
+
+Every block of memory created through the Allocation Manager has an associated access counter. This counter increments every time your program requests the block to become locked (non-relocatable and non-purgeable), and decrements for every request to unlock the block (making it re-locatable and purgeable). The purpose of this is to allow nested "lock/unlock" logic as opposed to a simple locked or unlocked state: using the access counter method, Allocation Manager will make a block relocatable or purgeable only when its access counter is zero. This provides protection against memory blocks moving "out from under" nested situations.
+
+## 25.5 Logical vs. Physical Sizes
+
+Every allocation made through the Allocation Manager is considered to have two sizes: a logical size and a physical size. (For how this is implemented, see "The `extend_size` parameter"<!-- on page 25-447-->).
+
+The physical size of a block is the actual amount of reserved memory that has been allocated, in bytes; the logical size, however, may or may not be the same amount and in fact is often smaller.
+
+The physical size of an allocation might be, for example, $10 \mathrm{~K}$ but its logical size might be as small as zero. The purpose of the two-size distinction is speed and performance. Depending on the OS, physically resizing a block of memory can consume large amounts of time, particularly in tight situations where thousands of blocks require relocation or purging just to append additional memory to one block. For this reason, the Allocation Manager may elect to allocate a block larger (physical size) than what you have asked for but "tell" you it is a smaller size (logical size); then if you asked for that block to be extended to a large size, the extra space might already exist, in which case the
+
+Allocation Manager merely changes its logical size without any need to expand the block physically.
+
+Generally, it is a block's logical—*not* physical—size that your program should always work with.
+
+## 25.6 Purged Blocks
+
+**All references in this chapter to *purging* and *purged blocks* imply virtual memory, in which a block's contents are saved to a scratch file so that the allocation can be temporarily disposed.** Such allocations are not lost, rather they recover on demand by reloading from the scratch file. At no time does the Allocation Manager permanently dispose an allocation unless you explicitly tell it to do so.
+
+## 25.7 Starting Up
+
+The Allocation Manager must have already been started before `Y` was called. You need to make any function calls to initialize this portion of the software. To start OpenPaige with the Allocation Manager and for details on `pgMemStartup`, see "Software Startup"<!-- on page 2-10-->.
+
+**CAUTION:** You must not, however, use any functions listed below unless you have called `pgMemStartup`.
+
+**NOTE:** You can theoretically use the Allocation Manager, by itself, without ever initializing OpenPaige.
+
+## 25.8 Allocating and Deällocating Memory
+
+To allocate memory through the Allocation Manager, call one of the following:
+
+	(memory_ref) MemoryAlloc (pgm_globals_ptr globals, pg_short_t rec_size, long num_recs, short extend_size);
+	(memory_ref) MemoryAllocClear (pgm_globals_ptr globals, pg_short_t rec_size, long num_recs, short extend_size);
+	
+`MemoryAlloc` allocates a block of memory and returns a `memory_ref` that identifies that block; `MemoryAllocClear` is identical except in that it clears the block (sets all bytes to zero).
+
+By allocation is meant a block of memory of some specified byte size that becomes reserved exclusively for your use, guaranteed to remain available until you deällocate that block (using `DisposeMemory`, below).
+
+Both functions return a `memory_ref`, which is a reference ID to the allocation. You should neither consider a `memory_ref` to be an address nor a pointer. Rather, give this reference to the various functions listed below to get a pointer to the memory block, change its allocation size, make it purgeable or nonpurgeable, etc.
+
+The `memory_ref` returned is always non-zero if it succeeds or `MEM_NULL` (zero) if it fails. The easiest way to check for failures is by using OpenPaige's try/catch exception handling. See "The TRY/CATCH Mechanism"<!-- on page 26-1--> and the example, "Creating a `memory_ref`"<!-- on page 26-6-->.
+
+The `globals` parameter must point to the `mem_globals` you gave to `pgMemStartup`. Or, if you have initialized OpenPaige with `pgInit()` you can also access `mem_globals` through the OpenPaige globals:
+
+	paige_globals.mem_globals;
+
+The size of the allocation is determined by the formula `rec_size * num_recs`, where `rec_size` is a record size, in bytes, and `num_recs` is the number of such records in the block. Hence, you can create allocations that are considered arrays of records, if necessary.
+
+For example, allocating a block of `rec_size = 16` and `num_recs = 100`, the total byte size of the allocation would be 1600. The intended purpose of allowing a record size, as opposed to always creating blocks consisting of single bytes, is to provide high-level features of accessing record elements.
+
+If you only want a block of bytes, without regard to any "record" size, simply create an allocation with a "record" size of 1.
+
+A `rec_size` of zero is not allowed; a `num_recs` value of zero, however, is allowed.
+
+### The extend_size parameter
+
+The purpose of the `extend_size` parameter is to provide the Allocation Manager with some insight, for performance purposes, as to how large the allocation might grow from subsequent SetMemorySize calls.
+
+To understand this fully, a distinction between a `memory_ref`'s "logical size" versus "physical size" must be clarified: when a `memory_ref` is initially created, its logical size is simply the size that was asked for (which is `rec_size * num_recs`). However, the actual size allocation can be greater than the logical size, which essentially provides an extra "buffer" that can be utilized to change the logical size later without the necessity to physically resize the allocation through OS calls.
+
+A good example of this would be the allocation of a large string whose initial byte size begins at zero, yet it is expected to grow larger in size as time goes by, perhaps as large as 500 bytes in length. If such a memory allocation started at a physical byte size of zero, then it would become necessary (and very slow) to ask the OS to physically resize the allocation each and every time new byte(s) were appended.
+
+However, if such an allocation were initially created with a 500-byte `extend_size` (but a logical size of zero), it would never need to physically resize unless or until the string grew larger than 500 bytes.
+
+Hence, `MemoryAlloc` could create such an allocation whereby the physical size and logical size are different:
+
+	MemoryAlloc(&mem_globals, sizeof(byte), 0, 500);
+
+The `extend_size` is therefore an enhancement tool, and should be set to a reasonable amount according to what the resizing forecast holds for that allocation. If the allocation will never be resized, `extend_size` should be zero.
+
+**NOTE:** The value of `extend_size` does not necessarily imply future memory resizing will occur or will not occur, rather it is a performance variable only: the Allocation Manager will still resize a memory allocation even if extend_size is zero (although possibly slower than if extend_size were larger).
+
+See also “Logical vs. Physical Sizes”<!-- on page 25-444-->.
+
+**NOTE:** The `extend_size` indicates a number of *records* (each of size `rec_size` bytes), not bytes.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-451.jpg?height=1025&width=1575&top_left_y=250&top_left_x=160)
+
+### Deällocation
+
+Once you no longer need a memory allocation, pass its `memory_ref` to the following:
+
+	void DisposeMemory (memory_ref ref);
+
+`DisposeMemory` physically disposes the block assigned to `ref`, and `ref` is no longer a valid reference thereafter.
+
+	(memory_ref) MemoryDuplicate (memory_ref src_ref);
+	(void) MemoryCopy (memory_ref src_ref, memory_ref target_ref);
+
+`MemoryDuplicate` returns a new `memory_ref` whose data content and record size is exactly the same as `src_ref`. In effect, this function returns a "clone" of `src_ref`, but it is a new, independent `memory_ref`.
+
+`MemoryCopy` copies the contents of `src_ref` into `target_ref`.
+
+`MemoryCopy` differs from `MemoryDuplicate` in that for `MemoryCopy` both `src_ref` and `target_ref` are allocations that already exist. `MemoryDuplicate` actually creates a new `memory_ref` for you, so it cannot already exist.
+
+The logical size of `target_ref` can be any size, even zero, as `MemoryDuplicate` will change its size as necessary. Record sizes of each `memory_ref`, however, must match.
+
+The access counters are not set, since the memory is allocated but not in use.
+
+### TECH NOTE: Practical difference between `MemoryCopy` and `MemoryDuplicate` 
+
+> What is the difference really between `MemoryCopy` and `MemoryDuplicate`? Please do comment on the appropriate situation for using either.
+
+I can clarify the difference in usage between `MemoryCopy` and `MemoryDuplicate`. It is very simple:
+
+* `MemoryDuplicate` is for obtaining a "clone" of a `memory_ref`.
+* `MemoryCopy` is to *fill in* a *preëxisting* `memory_ref` with the contents of another.
+
+In my own code, I am constantly wanting to copy contents of a `memory_ref` into one that I created earlier. One example of this is some routine that wants to keep copying a bunch of different `memory_ref`s—to copy an array of "tabs" for instance. It would be a lot slower to create a `memory_ref` with `MemoryDuplicate`, then dispose it, then create it again, then
+then keep copying different `memory_ref`s into it.
+
+## 25.10 Accessing Memory
+
+### Using memory
+
+To obtain a pointer to a block of memory allocated from MemoryAlloc or `MemoryAllocClear`, call one of the following:
+
+	(void PG_FAR*) UseMemory (memory_ref ref); 
+	(void PG_FAR*) UseForLongTime (memory_ref ref);
+
+`UseMemory` and `UseForLongTime` takes a `memory_ref` in `ref` and returns a pointer to the memory block assigned to that reference. The `ref`'s access counter is incremented, which means that the memory block is now guaranteed to neither relocate nor purge (see “Access Counter"<!-- on page 25-444-->).
+
+The primary purpose of `UseMemory` is to tell the Allocation Manager that a particular block of memory is now "in use", in which case it is marked as unpurgeable and nonrelocatable.
+
+`UseForLongTime` does exactly the same thing as `UseMemory` except in that the memory block is relocated in the optimum way, before locking, to avoid memory fragmentation. The purpose of using this function, as opposed to `UseMemory`, is for situations where you know the block will stay locked for quite a while and you don't want to cause unreasonable fragments.
+
+**NOTE:** Don't use `UseForLongTime` *too* liberally because it is substantially slower than `UseMemory` (since the machine often needs to relocate the memory).
+
+`UseMemory` and `UseForLongTime` calls can be nested, but each must be eventually balanced with `UnuseMemory` or else the block will remain in a locked state, which in turn can cause memory difficulties such as fragmentation and the inability to change the allocation size.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-454.jpg?height=990&width=1310&top_left_y=225&top_left_x=410)
+
+### Unuse memory
+
+Once you are finished using the pointer returned from `UseMemory` or `UseForLongTime`, call the following:
+
+	(void) UnuseMemory (memory_ref ref);
+
+Essentially, `UnuseMemory` decrements `ref`'s access counter. If its access counter goes to zero, the allocation is then free to relocate or purge.
+
+It is therefore important that all `UseMemory` and `UseForLongTime` calls get eventually *balanced* with UnuseMemory, otherwise unwanted locked memory fragments will result.
+
+![](https://cdn.mathpix.com/cropped/2024_04_30_f87dba95664e91f9803eg-455.jpg?height=1000&width=1300&top_left_y=410&top_left_x=430)
+
+## 25.11 "Random-Access" Pointers
+
+You can obtain a pointer to a specific "record" within a block of memory by calling the following:
+
+	(void PG_FAR*) UseMemoryRecord (memory_ref ref, long wanted_rec, long seq_recs_used, short first_use);
+
+This function is similar to `UseMemory` except a pointer to a specified record of an allocation is returned.
+
+The `wanted_rec` is the (zero-indexed) record number you need a pointer to. The record size (originally defined in `rec_size` for `MemoryAlloc`) determines which physical byte the resulting pointer will reference. For instance, if the record size were, 128 bytes, a `UseMemoryRecord` for `wanted_rec` of `10` would return a pointer to the 1280th byte.
+
+The `seq_recs_used` parameter should indicate how many additional sequential records beyond `wanted_rec` record you want access to. The purpose of this parameter is for future Allocation Manager enhancements in which partial block(s) can be loaded into memory from a purged state. In such a case, `UseMemoryRecord` needs to know how many additional sequential records, besides `wanted_rec`, you would like to have loaded into memory if the allocation has been purged.
+
+<!-- TO DO: The purpose of this parameter is for future Allocation Manager enhancements in which partial block(s) can be loaded into memory from a purged state. -->
+
+For example, suppose a block of memory consisting of 1000 records is temporarily purged (which really means its contents have been saved to a "scratch" file and the block currently does not physically exist in memory). Full access to all records would require the Allocation Manager to load the entire allocation (all 1000 records). `UseMemoryRecord`, however, could get away with loading only a few records within that allocation, but it needs to know how many sequential records you intend to access beyond `wanted_rec`.
+
+If you want to use all records following `wanted_rec`, whatever that quantity might be, you can also pass `USE_ALL_RECS` (value of `-1`) for `seq_recs_used`.
+
+If `first_use` is `TRUE`, the block's access counter is incremented (same thing as results from a `UseMemory` call); if `first_use` is `FALSE`, the access counter remains unchanged. The purpose of this parameter is for situations where you intend to randomly access many records from the same `memory_ref` within the same routine, but you essentially need only one UseMemory to lock the allocation; otherwise, you would need to balance every random access with `UnuseMemory`.
+
+Thus, setting `first_use` to `TRUE` is essentially sending the Allocation Manager the message, "Please lock the allocation," then subsequent `UseMemoryRecord` calls with `first_use` as `FALSE` is like saying, "I know the allocation is already locked, so just give me another pointer."
+
+An `UnuseMemory` call must eventually balance each `UseMemoryRecord` call that gave TRUE for `first_use`.
+
+**NOTE:** OpenPaige loads the whole allocation specified in `UseMemoryRecord` (does not do partial loads). However, to guarantee future compatibility, you should assume that all records in the allocation lower than `wanted_rec` and all records greater than `wanted_rec + seq_recs_used` are purged, not loaded, and therefore not valid should you attempt to access them with the same pointer.
+
+## 25.12 "Quick Record"
+
+If you simply want a copy of a single record from an allocation, call the following:
+
+	void GetMemoryRecord (memory_ref ref, long wanted_rec, void PG_FAR *record);
+
+Record number `wanted_rec` (zero-indexed) in `ref` is copied to the structure pointed to by record. The access counter in `ref` is unchanged. Hence, `GetMemoryRecord` provides a way to get a single record without the need to balance `UseMemory` and `UnuseMemory`.
+
+It is your responsibility to make sure `record` is sufficient size to hold a record from `ref`.
+
+**NOTE:** `GetMemoryRecord` will work correctly regardless of the `memory_ref`'s access counter state and regardless of whether or not the allocation has been purged.
+
+## 25.13 Changing Allocation Sizes
+
+### Memory sizes
+
+	(void) SetMemorySize (memory_ref ref, long wanted_size);
+	(long) GetMemorySize (memory_ref ref);
+
+`SetMemorySize` changes the logical size of `ref` to `wanted_size`. `GetMemorySize` returns the logical size of `ref`.
+
+For both functions, the "size" is not a byte size, but rather a record quantity. A `SetMemorySize(ref, 10)` for an allocation whose record size is 500 bytes, the allocation is set to 5000 bytes, i.e. `10 * 50`; `SetMemorySize(ref, 10)` for a 1-byte record size allocation would result in a logical byte size of `10`, and so on.
+
+If `SetMemorySize` fails for any reason, an OpenPaige exception is raised (see “Exception Handling"<!-- on page 26-1-->).
+
+`GetMemorySize` returns the current size of ((number of records within) `ref`.
+
+**Changing the size of an allocation whose access counter is non-zero might fail!** (A non-zero access counter means sufficient `UnuseMemory` calls have not been made to balance `UseMemory` calls, resulting in a locked allocation).
+
+**NOTE:** `GetMemorySize` will work correctly regardless of the `memory_ref`'s access counter state and regardless of whether or not the allocation has been purged.
+
+### Record size, byte size
+
+	(short) GetMemoryRecSize (memory_ref ref);
+	(long) GetByteSize (memory_ref ref);
+
+`GetMemoryRecSize` returns the record size in `ref` (which will be whatever size you gave `MemoryAlloc` or `MemoryAllocClear` when the allocation was made). This function is useful for generic functions that need to know a `memory_ref`'s record size.
+
+`GetByteSize` returns the byte size of `ref` (as opposed to the number of records as in `GetMemorySize`). Essentially a `memory_ref`'s byte size is its record size times number of logical records.
+
+**NOTE:** Both functions above will work correctly regardless of the `memory_ref`'s access counter state and regardless of whether or not the allocation has been purged.
+
+### TECH NOTE: A bigger or smaller record size
+
+> Can I make my record size bigger after it is allocated?
+
+No. You can only change the number of records. You can create a new `memory_ref` and copy the old data into the new one using `pgBlockMove`.
+
+## 25.14 Insert & Delete
+
+	(void PG_FAR*) InsertMemory (memory_ref ref, long offset, long insert_size);
+	(void PG_FAR*) AppendMemory (memory_ref ref, long append_size, pg_boolean zero_fill);
+
+* `InsertMemory` — inserts `insert_size` records into `ref`'s allocation at record position `offset`, then returns a pointer to the first record inserted. The new record(s) are not initialised to anything—the allocation size is simply increased by `insert_size` and one or more record(s) is moved to make room for the insertion.
+* `AppendMemory` — does the same thing except the "insertion" is added to the end of the memory block: the allocation is increased by `append_size` and a pointer to the first record of the appendage is returned. If `zero_fill` is `TRUE`, the appended memory is cleared to zeros.
+
+Both `InsertMemory` and `AppendMemory` assume record quantities, not byte sizes (i.e., `InsertMemory` for a ref whose record size is 100 will insert 200 bytes if `insert_size = 2`).
+
+For both functions, the access counter in `ref` is incremented (or not) according to the following rules:
+
+- if `ref`'s access counter is zero upon entry, the requested memory is inserted, the access counter is incremented by 1, and the allocation is set to its "used" state (locked, unpurgeable);
+- if the access counter is 1 upon entry, it is decremented to zero and unlocked, the requested memory is inserted, then the access counter is incremented and the allocation is set to its "used" state;
+- if the access counter is greater than 1, nothing occurs and the situation is considered illegal, generating an error if debugging has been enabled (see "Debug Mode"<!-- on page 25-465-->).
+
+The reasoning behind these rules for the access counter when inserting memory is the common situation wherein multiple insertions need to occur within a loop. Since `InsertMemory` and `AppendMemory` allow an access counter of 1, each repetitive insertion can avoid the requirement of calling UnuseMemory.
+
+**CAUTION:** For insertions with an access counter of 1, the pointer you had prior to `InsertMemory` or `AppendMemory` might be invalid after memory has been inserted (the block might relocate). Therefore, always update your pointer with whatever is obtained from the function result.
+
+### TECH NOTE: `UnuseMemory` after `InsertMemory` or `AppendMemory`
+
+> So do I need to do a `UnuseMemory` after these?
+
+`InsertMemory` and `AppendMemory` really are the same as `SetMemorySize` to a larger number of records, then a (single) `UseMemory`. So you need to do a single `UnuseMemory()` after a series of repetitive inserts. In other words, if you called `InsertMemory()` or `AppendMemory()` 100 times, you only need to do *one* `UnuseMemory()`.
+
+	struct my_special_struct
+	{
+		short index_number;
+	}
+	for (i = 0, i < 100, i++)
+	{
+		my_new_record = InsertMemory(the_ref, i, sizeof(my_special_struct));
+		my_new_record.index_number = i;
+	}
+	UnuseMemory(the_ref);
+	
+### Delete
+
+	(void) DeleteMemory (memory_ref ref, long offset, long delete_size);
+
+`DeleteMemory` deletes `delete_size` records in `ref` beginning at `offset`. Both `delete_size` and `offset` are record quantities, not bytes.
+
+The access counter is not changed by this function. However, the access counter must be zero when this function is called.
+
+## 25.15 Purging Utilities
+
+**NOTE:** All references in the Chapter to "purging" and "purged blocks" imply virtual memory, in which a block's contents are saved to a scratch file so that the allocation can be temporarily disposed. If the scratch file was not set up when the Allocation Manager was initialized, there will be no purging.
+
+**NOTE:** The topic covered herein is not to be confused with "purging" resources on the Mac. Allocation Manager knows nothing about the Mac other than basic things about the file system. It handles its own "purging" without the Resource Manager.
+
+An allocation is said to be "purged" when additional memory space needs to be freed, thus an allocation is saved to a "scratch" file and it is temporarily disposed.
+
+### Purge priorities
+
+The priority for purging, i.e., what `memory_ref`s should get purged first, can be controlled by calling the following:
+
+	(void) SetMemoryPurge (memory_ref ref, short purge_priority, pg_boolean no_data_save);
+
+The `ref` allocation's purging priority is set to `purge_priority`. The `purge_priority` can be any number between 0 and 255, with 0 as the lowest priority (will get purged first above all others). The `purge_priority` parameter can also be `NO_PURGING_STATUS` (`OXFF`), in which case it will never be purged.
+
+If `no_data_save` is `TRUE`, the contents of `ref` do not need to be saved to a scratch file when purged. Another way to state this is a `ref` with TRUE for `no_data_save` is known to have nothing in its contents of any value or consequence; thus, Allocation Manager can simply purge it without saving any of its contents.
+
+An example of a `memory_ref` that could be set for `no_data_save` would be an "offscreen bitmap" buffer. After it is used to transfer an image, an application might not care if all its contents get temporarily disposed, because on the next usage whole new contents (new bits) will be created all over again anyway.
+
+##### Notes
+1. This function will still work regardless of `ref`'s access counter state and regardless of whether or not it is purged.
+2. A `memory_ref` whose access counter is nonzero will not be purged, even if its purge priority is zero.
+3. Setting `NO_PURGING_STATUS` on a `memory_ref` that has already been purged will not take effect until it is unpurged. In other words, changing purge status does not automatically reload purged allocations—you still need to access its pointer (such as `UseMemory`) if you want its contents loaded into memory.
+
+### Purging memory
+
+	(pg_error) MemoryPurge (pgm_globals_ptr globals, long minimum_amount, memory_ref mask_ref);
+
+`MemoryPurge` will purge `memory_ref`(s) until at least `minimum_amount` of memory (in bytes) has become available.
+
+The `globals` parameter must be a pointer to the same structure given to `MemoryAlloc` (which is also the `mem_globals` field within the structure given to `pgInit`).
+
+If `mask_ref` is non-null, that `memory_ref` is considered "masked" (protected) and will not be purged during this process.
+
+All purgeable, unlocked allocations will be purged, one at a time and in the purge priority they are set for (lowest purge priorities are taken first) until `minimum_amount` of available space has been achieved.
+
+If `minimum_amount` fails to become available, even after purging every eligible allocation, `MemoryPurge` will return an error (see "Error Codes"<!-- on page 39-1--> in the Appendix); if successful, `NO_ERROR` (`0`) will be the function result.
+
+The `minimum_amount` specified is for the total memory available, which means if there is already enough or nearly as much available as `minimum_amount`, very little will get purged.
+
+##### Notes
+
+1. The amount of "available memory" is based on what was given to `pgInit` for `max_memory` minus the total physical sizes of all existing `memory_ref`s—see `pgInit`.
+2. You normally do not need to call this function since `MemoryPurge` gets called for you as required for allocations and resizing blocks. The function has been provided mainly for freeing memory for objects that you are not allocating with the OpenPaige Allocation Manager.
+3. Even though this function might return no error (success), that still does not necessarily guarantee a block of `minimum_amount` can be allocated, because the available memory might not be contiguous.
+
+## 25.16 Allocation Manager Shutdown
+
+	(void) pgMemShutdown (pgm_globals_ptr mem_globals);
+
+Call this function once you are through using the Allocation Manager. Be sure it is called after `pgShutdown`.
+
+**NOTE:** This function is not necessary if you will be doing ExitToShell() on *Macintosh*.
+
+See “OpenPaige Shutdown”<!-- on page 2-13-->.
+
+## 25.17 Miscellaneous Memory Functions
+
+### Unuse & dispose
+
+	(void) UnuseAndDispose (memory_ref ref);
+
+`UnuseAndDispose` decrements the access counter in `ref`, then disposes the allocation. This function does exactly the same thing as:
+
+	UnuseMemory(ref);
+	DisposeMemory(ref);
+
+### Memory globals
+
+	(pgm_globals_ptr) GetGlobalsFromRef (memory_ref ref);
+
+`GetGlobalsFromRef` returns a pointer to `pgm_globals` located from an existing `memory_ref`. This function is useful for situations where you do not have access to the `globals` structure. Any valid, non-disposed `memory_ref`, locked or unlocked, purged or not, can be used for `ref`. For more information on getting `pgm_globals_ptr` see “Get globals from pg_ref, paige_rec_ptr, etc."<!-- on page 26-11-->.
+
+	#include "pgTraps.h"
+	(memory_ref) HandleToMemory (pgm_globals *mem_globals, Handle h, pg_short_t rec_size);
+	(Handle) MemoryToHandle (memory_ref ref);
+
+`HandleToMemory` accepts `Handle` `h` and returns a `memory_ref` for that `Handle`.
+
+**FUNCTION RESULT:** After this function is called, the `Handle` is now "owned" by the Allocation Manager, which is to say you should no longer access nor dispose that `Handle`. Access to the `Handle`'s contents must thenceforth be made using the functions given above (`UseMemory`, `UseMemoryRecord`, etc.).
+
+The `mem_globals` parameter must point to the same structure as given to `MemoryAlloc`.
+
+The `rec_size` must contain the record size for the new `memory_ref`, which must be an even multiple of the original `Handle`. If unknown, then make `rec_size = 1`.
+
+It does not matter if `Handle` `h` is locked or unlocked, but it should at least temporarily be unpurgeable.
+
+`MemoryToHandle` performs the reverse: it returns a `Handle` built from `memory_ref` `ref`. Again, once this call is made, `ref` is no longer valid and must not be given to any Allocation Manager functions.
+
+**NOTE**: The term `Handle` is `typedef`ed from the Windows `HANDLE`, so the two terms are synonymous.
+
+**NOTE:** These functions do not perform huge copies. Rather, they convert `Handles` to `memory_ref`s and *vice versa* by appending some special information before and after the data contents, or removing this appendage. So it is generally safe to do `HandleToMemory`, `MemoryToHandle` under fairly tight situations that could not withstand the doubling of a `Handle`'s size.
+
+## 25.18 Debug Mode
+
+There are two compiled versions of OpenPaige software, one for "debug mode" and one or "non-debug" or runtime mode.
+
+In debug mode, `memory_ref`s are checked for validity, including the verification of appropriate access counters, each time they are given to one of the functions listed above. While this significantly reduces the speed of execution, it does aid substantially in locating bugs that would otherwise crash your system.
+
+For example, calling `SetMemorySize` for an allocation that is currently "in use" (access counter nonzero) could fail and/or crash your program. Under debug mode, however, you would be warned immediately if an attempt to change the size of an allocation was made on a locked block.
+
+### Object Code Users (Macintosh)
+
+There are two sets of Macintosh (or Power Mac) object code libraries: one for "debug" and the other for "non-debug." As a general rule, you should use the debug versions to develop your application, then switch to non-debug before release (non-debug runs much faster).
+
+**NOTE:** Object code for "debug" mode is not supported on *Windows*. This is because Windows General Protection Mode can be used instead and is generally superior.
+
+### Source Code Users
+
+Debug/non-debug is controlled by the following `#ifdef` in `CPUDefs.h`:
+
+	#define PG_DEBUG
+
+If that `#define` exists, the source files are compiled in "debug" mode.
+
+To run OpenPaige debug libraries, you must include `pgDebug.c` in your project. When doing so, you can place a source-level debugger break at the location shown below; when the Allocation Manager detects a problem, the code will break at this spot.
+
+	char pgSourceDebugBreak(memory_ref offending_ref, char *debug_str)
+	{
+		mem_rec PG_FAR *bad_mem_rec;	// This gets coerced to examine it
+		char *examine;
+	}
+	
+	/* ****** DEBUG BREAK - MEMORY ERROR! ****** */
+	
+	examine = debug_str;				// <~~ Place debugger break here!
+	bad_mem_rec = (mem_rec PG_FAR*) pgMemoryPtr(offending_ref);
+	pgFreePtr(offending_ref);
+	
+	/* ****** DEBUG BREAK - MEMORY ERROR! ****** */
+
+**NOTE:** The error message string is a pascal string.
+
+### Debug Assert Messages
+
+The debugger `assert` is simply a debugger break with one of the following messages:
+
+* `Out of memory` — Block of requested size cannot be allocated (or block cannot be resized). If virtual memory has been enabled, this will only happen if the block is so huge there is insufficient, contiguous memory available.
+* `Purge file not open` — Memory needs to be purged but "scratch" file doesn't exist or is closed.
+* `Attempt to resize locked memory` — Allocation is locked, yet a `SetMemorySize` has been attempted.
+* `NIL memory_ref` — `memory_ref` is a null pointer and/or an address inside of it is null.
+* `Bogus memory_ref address` — An address in a `memory_ref` is bad (would result in a bus error for Mac).
+* `Internal damage in memory_ref` — `memory_ref`'s address OK but certain characteristics are missing (so it is assumed “damaged" or overwritten).
+* `Overwrite error` — last 1 of 4 bytes beyond the logical size of a `memory_ref` has been overwritten.
+* `Access counter invalid for operation` — access counter is illegal for given function. Examples: 
+	* `SetMemorySize` and `access != 0` (illegal); 
+	* `UnuseMemory` and access counter `== 0` (illegal); 
+	* `DisposeMemory` and access counter `!= 0` (illegal).
+* `Bogus memory_ref` — `memory_ref` given is not a `memory_ref` but some other address.
+* `Operation on disposed memory_ref` — `memory_ref` given has been disposed.
+* `Error in purging` — An allocation was writing to a scratch file and I/O error resulted (such as out of space).
+* `Error in un-purging` — Read error occurred while recovering a purged allocation from scratch file.
+* `Attempt to access record out of range` — `UseMemoryRecord` asking for a record beyond the size of the allocation.
+* `Structure integrity failed` — Structural damage has occurred to the `style_info` or `par_info` run. For example, a style run might (incorrectly) reference a style_info that does not exist.
+
+## 25.19 Writing Your Own Purge Function
+
+The standard purge function is a built-in part of the Allocation Manager that purges (disposes) memory that is not being used to make room for new allocations. The blocks to be purged are saved to a "temp" file so they can be resurrected later when asked to be used by OpenPaige or by the application.
+
+If necessary, you can replace the standard purge function with one of your own. To do so, first declare a function as follows:
+
+	PG_FN_PASCAL pg_error my_purge_proc (memory_ref ref_to_purge, pgm_globals_ptr mem_globals, short verb);
+
+In the `pgm_globals` structure (same one passed to `MemoryAlloc`), the `purge` field contains a pointer to the purge function. What you need to do is place a pointer to your purge function, as defined above, into that field:
+
+	paige_rsrv.mem_globals.purge = my_purge_proc;
+
+The `paige_rsrv` variable is the same structure given to `pgInit`, and `mem_globals` is the Allocation Manager subset (same one given to `MemoryAlloc`).
+
+When the Allocation Manager purges memory, it locates memory `ref`s that are purgeable and passes each of them, one at a time, to the purge function; additionally, when a `memory_ref` needs to be reloaded (unpurged), the purge function is called again to unpurge the data. The standard purge function handles this by saving the contents of the `memory_ref` to a temporary file, then setting the `ref`'s byte size to `sizeof(mem_rec)`; then when unpurging, the allocation is resized to the original size and data is read from the temp file.
+
+The temporary file reference used by the standard purge function is stored in the `purge_ref_con` field in `pgm_globals` (see "Memory globals"<!-- on page 25-464-->).
+
+In addition to purging and unpurging, the purge function is also called to initialize "virtual memory" and to completely dispose an allocation that is currently purged.
+
+Whether the purge function is getting called to purge, unpurge, initialise or dispose an allocation depends on the verb parameter, which will be one of the following:
+
+	typedef enum
+	{
+		purge_init,		// Initialise VM
+		purge_memory,		// Purge the reference
+		unpurge_memory,	// Unpurge the reference
+		dispose_purge		// Purged ref will be disposed
+	};
+
+For each `verb`, the purge function must perform the following:
+
+* `purge_init` — "Virtual Memory" must be set up. When `purge_init` is the reason for the function call, `ref_to_purge` will be `NULL`. The standard function initialises the temporary file (whose file reference will already be contained in `mem_globals > purge_ref_con`).
+* `purge_memory` — The `ref_to_purge` memory must be purged. The Allocation Manager will only call with `purge_memory` if the reference is not yet purged; *i.e.*, it won't try to purge the same reference twice. The standard purge function saves `ref_to_purge`'s data to the temporary file and sets the physical allocation size to `sizeof(mem_rec)`.
+* `unpurge_memory` — The `ref_to_purge` memory must be unpurged. The Allocation Manager will only call with `unpurge_memory` if the reference has been purged; *i.e.*, it won't try to unpurge the same reference twice. The standard purge function resets the physical size of `ref_to_purge` and loads the data from the temporary file.
+* `dispose_purge` — The `ref_to_purge` is already purged but is about to be disposed. *The purge function does not dispose the memory*; rather, it does whatever is necessary knowing that the purged allocation will be disposed forever. The standard purge function "deletes" the saved data on the temp file, and does nothing else.
+
+**FUNCTION RESULT:** The purge function should return `NO_ERROR` (zero) if all was successful; otherwise it should return the appropriate error code per `pgErrors.h`.
+
+### Memory Globals
+
+The following structure is used by the Allocation Manager (and is also a subset of `pg_globals`):
+
+	struct pgm_globals 
+	{
+	short				signature;		/* Used for checking/debugging */
+	pg_short_t			debug_flags;	/* Debug mode, if any */
+	pg_handle			master_handle;	/* HANDLE for master list (Windows only) */
+	pg_handle			spare_tire;		/* Used to free up some memory in tight situations */
+	master_list_ptr		master_list;	/* Contains list of all active memory_refs */
+	size_t				next_master;	/* Next available space in master_list */
+	size_t				total_unpurged;	/* Total # of bytes allocated not purged */
+	size_t				max_memory;		/* Maximum memory (set by app) */
+	size_t				purge_threshold; /* Amount extra to purge */
+	void PG_FAR			*machine_var;	/* Machine-specific generic ptr */
+	mem_debug_proc		debug_proc;		/* Called when a bug is detected */
+	purge_proc			purge;			/* Called to purge/unpurge memory */
+	free_memory_proc	free_memory;	/* Called to free up miscellaneous memory */
+	long				purge_ref_con;	/* Reference for purge proc */
+	memory_ref			purge_info;		/* Machine-based purge information */
+	memory_ref			freemem_info;	/* List of pg_ref(s) for cache feature (2.0) */
+	long				next_mem_id;	/* Used for unique ID's assigned to refs */
+	long				current_id;		/* ID to use for MemoryAlloc's */
+	long				active_id;		/* Which ID to suppress, if any, for purging */
+	long				last_message;	/* Last message in exception handling */
+	pg_fail_info_ptr	top_fail_info;	/* Current exception in linked list */
+	void PG_FAR *		last_ref;		/* Last reference - used by external failure 
+										   processing TRS/OITC */
+	pg_error_handler	last_handler;	/* Last app handler before Paige */
+	pg_error			last_error;		/* Last reported error */
+						#ifdef PG_DEBUG
+	memory_ref			debug_check;	/* Used for special-case debugging */
+	memory_ref			dispose_check;	/* Used for special-case debugging on DisposeMemory */
+	short				debug_access;	/* Used with above field */
+						#endif
+	void PG_FAR			*app_globals;	/* Ptr to globals for PAIGE, etc. */
+	long				creator;		/* For Mac file I/O */
+	long				fileType;		/* For Mac file I/O */
+	};
+
+For more information on `pg_globals`, see "Changing Globals"<!-- on page 3-21-->. For more information on error codes, see "Error Codes"<!-- on page 39-1-->
+
+## 26 EXCEPTION HANDLING
+
+### 26.1 The TRY/CATCH Mechanism
+
+OpenPaige provides a fairly straightforward method of detecting runtime errors (such as disk I/O errors, memory errors, etc.) without the requirement of checking every function result or excessive code.
+
+This is accomplished by using a set of predefined macros: `PG_TRY`, `PG_CATCH`, and `PG_ENDTRY`.
+
+Although this mechanism is patterned after exception handling in C++, you do not need to be using C++ to utilize OpenPaige error detection features (nor are any C++ "header" files or libraries required).
+
+Anywhere in your application that calls an OpenPaige function that can fail for "legitimate" reasons, such as allocating memory or reading/writing files, you simply bracket your code as follows:
+
+	PG_TRY (&mem_rsrv)
+	{
+		/* ... make calls to OpenPaige functions here such as allocating memory, or pgNew, or pgCopy, etc -- anything that can abort from an error. */
+	}
+	
+	PG_CATCH
+	{
+		/* ... if any error causes OpenPaige to abort a function, this part of your code is executed; otherwise this part is not executed. Hence you would do whatever is appropriate here such as an error alert to user. */
+	}
+	
+	PG_ENDTRY;
+	{
+		/* ... code is executed here if no error; also it is executed here if the code under PG_CATCH does nothing to abort the program any further. */
+	}
+
+The above example shows the simplest form of error detection: none of the code under `PG_TRY` is necessarily required to check for errors at all since anything fatal within OpenPaige (such as out of memory or a disk error) will throw CPU execution into the first line of code under `PG_CATCH`. This is done automatically.
+
+The parameter `mem_rsrv` after `PG_TRY` must be a pointer to the global structure given to `pgMemStartup` earlier (see "Software Startup"<!-- on page 2-10--> for information about `pgMemStartup`).
+
+**NOTE:** `PG_TRY`, `PG_CATCH`, and `PG_ENDTRY` macros are automatically available by including `Paige.h` (the actual definitions for these exist in `pgExceps.h` which is `#include`d in `Paige.h`).
+
+## 26.2 Last Error
+
+If your code executes under `PG_CATCH` that means OpenPaige aborted something due to a fatal error. You can learn what the error code was by examining the memory globals (same structure given to `PG_TRY`) as follows:
+
+	mem_rsrv.last_error;
+
+## 26.3 Nested TRY/CATCH
+
+`PG_TRY`, `PG_CATCH`, and `PG_ENDTRY` can be "nested" throughout your application, in as many places as required. What literally occurs is that the CPU gets forced to the `PG_CATCH` that corresponds to the most recent `PG_TRY`; then if the code under `PG_CATCH` decides to abort that section of code, it can force an additional exception using `pgFailure` (given below), in which case the next most recent `PG_CATCH` (from some other place in your program, if any) gets executed. In short, `TRY` and `CATCH` can be effectively "daisy chained" in this fashion so any fatal error can cycle up through any level of nested subroutines - pall without the need to even check for errors!
+
+## 26.4 Refinements
+
+There are many situations where your code might need to "force" an exception after detecting additional errors while executing code between `PG_TRY` and `PG_CATCH`. There are also many situations where your `PG_CATCH` code needs to abort the entire
+subroutine, returning control to some other part of the program. The following functions are available for this purpose:
+
+	(void) pgFailure (pgm_globals_ptr globals, pg_error error, long message);
+
+This function forces unconditional execution to the code under `PG_CATCH` that belongs to the most recent `PG_TRY`. For example, if you use `pgFailure` while executing the code under `PG_TRY`, then the first line under `PG_CATCH` in that section will get executed; if you use `pgFailure` under `PG_CATCH`, then the first line under `PG_CATCH` belonging to the previous `PG_TRY` (somewhere higher up in your program) gets executed. You would most often use pgFailure when executing `PG_CATCH` to completely abort an operation.
+
+The `globals` parameter must be a pointer to `pgm_globals` (same structure given in `pgMemStartup`). The error and message parameters are stored in `globals -> last_error` and `globals -> last_message`, respectively, and can be any value(s) appropriate.
+
+	(void) pgFailNIL (pgm_globals_ptr globals, void PG_FAR *allocation);
+
+This function can be used to force an exception if allocation parameter is a null pointer. The globals parameter must be a pointer to pgm_globals (same structure given in pgMemStartup).
+
+What actually occurs when `pgFailNIL` is called is the following:
+	
+	if (!allocation)
+		pgFailure(globals, NO_MEMORY_ERR, 0);
+		
+	#include "pgSetJmp.h"	// which is included in Paige.h
+	
+	(void) pgFailError(pgm_globals_ptr globals, pg_error error);
+
+This function can be used to force an exception if `error` parameter is non-zero. The `globals` parameter must be a pointer to `pgm_globals` (same structure given in `pgMemStartup`).
+
+What actually occurs when `pgFailError` is called is the following:
+
+	if (error)
+		pgFailure(globals, error, 0);
+			
+	#include "pgSetJmp.h"	// which is included in Paige.h
+	
+	(void) pgFailError(pgm_globals_ptr globals, pg_error acceptable_error, pg_error actual_error);
+
+This function can be used to force an exception if `actual_error` parameter is non-zero and it does not equal `acceptable_error`. The `globals` parameter must be a pointer to `pgm_globals` (same structure given in `pgMemStartup`).
+
+A typical use of this function is to force an exception for file I/O errors unless the error is nonfatal. For example, there might be some code that keeps reading a data file until `end-of-file` error occurs. In such a case, you would want to abort if an error was detected other than `end-of-file` error.
+
+What actually occurs when `pgFailNotError` is called is the following:
+
+	if (error)
+		if (actual_error != acceptable_error)
+			pgFailure(globals, actual_error, 0);
+			
+	#include "pgSetJmp.h"	// which is included in Paige.h
+	
+	(void) pgFailBoolean(pgm_globals_ptr pgm_globals_p, pg_boolean b);
+
+This function can be used to force an exception if `b` is `TRUE`. The `globals` parameter must be a pointer to `pgm_globals` (same structure given in `pgMemStartup`).
+
+What actually occurs when `pgFailBoolean` is called is the following:
+
+	if (b)
+		pgFailure(globals, BOOLEAN_EXCEPTION, 0);
+
+## 26.5 Bridging to C++ Exceptions
+
+If you are using C++ and its `TRY/CATCH` mechanism, you can "bridge" an OpenPaige failure to the standard C++ exception handling by calling "Failure" (defined in C++ headers). Here's an example:
+
+### Code that follows `PG_CATCH`
+
+	Failure(mem_globals.last_error, mem_globals.last_message);
+
+### Creating a `memory_ref`
+
+Let's take a simple but common example of using this method to detect insufficient memory when attempting to create a `memory_ref`. Here's how it would look (the
+`mem_globals` variable is the same structure that you gave to `pgMemStartup` when you initialize OpenPaige):
+
+	{
+		memory_ref SomeAllocation;
+		PG_TRY(&mem_globals)
+		{
+			SomeAllocation = MemoryAlloc(&mem_globals, 1, 100000, 0};
+			
+			/* More code follows, but only gets executed if above allocation was successful. */		}
+		
+		/* If above code succeeded, PG_CATCH does *NOT* get executed. */
+		PG_CATCH
+		{
+			/* If it gets here, your allocation failed! */
+			DisposeFailedMemory(&mem_globals);
+			CautionAlert( ... ) 	/* Alert user that attempt failed or whatevs */
+		}
+		PG_ENDTRY;
+		/* ^^ Must be given to balance PG_TRY statement */
+
+When you execute the above code, by virtue of making the `PG_TRY` statement, OpenPaige now knows that any failure to create memory should invoke the exception handler and jump to your `PG_CATCH` statement. Hence, if `MemoryAlloc` fails, the CPU is immediately forced to the line that contains `PG_CATCH`. At that place in your code you can do whatever to recover or alert the user or raise your own exception, etc.
+
+The above example is the simplest of all cases since it only creates one `memory_ref`, hence, there really is nothing to "recover." It gets slightly more involved when you create, say, multiple `memory_ref`s and you need to dispose the allocations that succeeded. One way to handle this is by setting them all to `NULL` so you know which ones succeeded in `PG_CATCH`:
+
+	{
+		memory_ref allocation1, allocation2, allocation3;
+		allocation1 = allocation2 = allocation3 = MEM_NULL;
+		/* ^^^ set all to zero ^^^ */
+		
+		PG_TRY(&mem_globals)
+		{
+			allocation1 = MemoryAlloc(&mem_globals, 1, 100000, 0);			
+			allocation2 = MemoryAlloc(&mem_globals, 1, 100000, 0);			
+			allocation3 = MemoryAlloc(&mem_globals, 1, 100000, 0);			
+		}
+		/* if ALL above code succeeded, PG_CATCH does not get executed */
+		
+		PG_CATCH
+		{
+		/* if it gets here, ONE of the allocations failed! */
+			if (allocation1)
+				DisposeFailedMemory(allocation1);
+			if (allocation2)
+				DisposeFailedMemory(allocation2);
+			if (allocation3)
+				DisposeFailedMemory(allocation3);
+		}
+		{		
+		PG_ENDTRY;
+		}
+	}
+
+In the above example, `PG_CATCH` gets automatically executed upon the first failure of the three `MemoryAlloc`s. At that time, we dispose only the `memory_ref`s that are non-`NULL` (which means they were successfully created).
+
+**NOTE:** We call `DisposeFailedMemory` instead of `DisposeMemory`. This is a special "dispose" that OpenPaige provides for this case. It disposes the `memory_ref` regardless of its locked or "used" state so it doesn't jump into the low-level debugger.
+
+### Own error checking
+
+The previous examples illustrate where OpenPaige itself, by virtue of `MemoryAlloc`, automatically invokes the exception handler. There will be other cases, however, when you want to cause a similar exception for your own error checking (but you haven't called an OpenPaige function). One example of this would be calling `NewHandle` and having it return NULL (this indicating it failed). Here's how to do that:
+
+	{
+		Handle h;
+		PG_TRY(&mem_globals)
+		{
+			h = NewHandle(100000);
+			pgFailNIL(&mem_globals, h);
+			/* Jump to PG_CATCH if h == nil */
+		}
+		
+		// more code if above succeeds
+		
+		PG_CATCH
+		{
+			/* if it gets here, NewHandle() failed */
+		}
+		
+		PG_ENDTRY;
+	}
+
+In the above, we use `pgFailNIL`, which checks for `h` being a null pointer and if so, throws an exception (causing `PG_CATCH` immediately to execute).
+
+There are other `pgFailxxx` functions to raise an exception in other ways. Using `pgFailure`, for example forces an exception unconditionally (see `pgSetJmp.h` to see the various functions and/or the docs on this).
+
+There is the possibility you might need to recover from a failed `pgNew` (also `pgCopy` would be same thing). You do this the same way as in my second example of creating allocations—except that, for a `pg_ref`, you call a special error-recovery `dispose`:
+
+	{
+		pg_ref MyNewPG;
+		pg_ref = MEM_NULL;
+		PG_TRY(&mem_globals)
+		{
+			MyNewPG = pgNew(.., ..);
+		}
+		
+		/* If ALL above code succeeded, "PG_CATCH" does NOT get executed. */
+
+		PG_CATCH
+		{
+			/* If it gets here, then OpenPaige did not succeed and raised an exception */
+			pgFailureDispose(MyNewPG);
+		}
+		
+		PG_ENDTRY;
+	}
+
+The function `pgFailureDispose` is called for situations like the above when none or only part of the `pg_ref` may have been created.
+
+**NOTE:** `pgFailureDispose` can accept a "null" `pg_ref`, so if you initially set the `pg_ref` to `MEM_NULL` you can pass it to `pgFailureDispose` safely.
+
+### TECH NOTE: Get globals from `pg_ref`, `paige_rec_ptr`, etc.
+
+> So I am buried deep within a bunch of functions and I need to do a `PG_TRY`/`PG_CATCH`.
+> 
+> All I have is a `pg_ref`.
+> 
+> How do I get the globals I need for `PG_TRY`?
+
+The availability of "memory globals" will generally depend on the kind of program you are developing.
+
+In a regular application, you generally keep memory globals around as a static record that is accessible by any module of the program. Hence, the "availability" of globals is merely a matter of design, usually by including the necessary application header file. Example:
+
+	//Inside one of your application headers:
+	extern pg_globals pgm_globals mem_globals;
+
+Hence, `mem_globals` is available anywhere you include the above header.
+
+For certain circumstances where only a `memory_ref` (or a `pg_ref`) is available, however, you can also get the memory globals by calling `GetGlobalsFromRef`.
+
+Suppose, for instance, all you had available is `ref`, where `ref` is a memory ref (or a pg_ref). You can get a copy of memory globals as follows:
+
+	pgm_globals_ptr mem_globals;
+	mem_globals = GetGlobalsFromRef(ref);
+	
+Getting a `pgm_globals_ptr` from a `paige_rec_ptr`:
+
+	pgm_globals_ptr my_pgm_globals = pgp -> globals -> mem_globals;
+	PG_TRY (my_pgm_globals) 
+	{
+		/* ... */	
+	}
+	PG_CATCH
+	{
+		/* ... */
+	}
+	PG_ENDTRY
+	{
+		/* ... */
+	}
