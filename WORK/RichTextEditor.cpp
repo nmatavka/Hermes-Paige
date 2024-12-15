@@ -22,7 +22,6 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
             ReleaseDC((HWND)pg->port.window, hdc);
         }
     }
-}
 
 void InitializeTransColor(pg_globals_ptr globals, HWND hwnd) {
     if (globals) {
@@ -35,7 +34,6 @@ void InitializeTransColor(pg_globals_ptr globals, HWND hwnd) {
             globals->trans_color.blue = GetBValue(windowColor);
         }
     }
-}
 
 void InitPaige(HWND hwnd);
 
@@ -241,12 +239,6 @@ void UpdateScrollbars(paige_rec_ptr doc, HWND hWnd) {
         SetScrollPos(hWnd, SB_HORZ, h_value, TRUE);
     }
 }
-void PasteText();
-void CutText();
-void DeleteText();
-void UndoAction();
-void RedoAction();
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     WNDCLASSEX wcex;
     HWND hWnd;
@@ -323,11 +315,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 
-void CopyText() {
 #define MAX_UNDO_STACK 16
 
 undo_ref undoStack[MAX_UNDO_STACK];
 short undoStackIndex = 0;
+
+void CopyText() {
 
 void PrepareUndo(short verb, long insertSize = 0, long insertPosition = 0) {
     undo_ref newUndoRef = MEM_NULL;
