@@ -23,6 +23,7 @@ public:
         }
     }
 };
+};
 
     void BeginTableImport() override {
         // Prepare structures for table processing
