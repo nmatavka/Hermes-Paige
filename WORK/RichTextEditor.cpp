@@ -695,6 +695,30 @@ void GetScaling(pg_ref pg, pg_scale_ptr scale_factor) {
     }
 }
 
+void ScaleLong(long scale_factor, long origin, long PG_FAR *value) {
+    if (value) {
+        pgScaleLong(scale_factor, origin, value);
+    }
+}
+
+void ScalePt(pg_scale_ptr scale_factor, co_ordinate_ptr amount_offset, co_ordinate_ptr pt) {
+    if (scale_factor && pt) {
+        pgScalePt(scale_factor, amount_offset, pt);
+    }
+}
+
+void ScaleRect(pg_scale_ptr scale_factor, co_ordinate_ptr amount_offset, rectangle_ptr rect) {
+    if (scale_factor && rect) {
+        pgScaleRect(scale_factor, amount_offset, rect);
+    }
+}
+
+void ScaleRectToRect(pg_scale_ptr scale_factor, rectangle_ptr src_rect, rectangle_ptr target_rect, co_ordinate_ptr offset_extra) {
+    if (scale_factor && src_rect && target_rect) {
+        pgScaleRectToRect(scale_factor, src_rect, target_rect, offset_extra);
+    }
+}
+
 void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
     if (pg) {
         UseMemory(pg);
