@@ -21,6 +21,7 @@ pg_boolean SetAttributes(long attributes);
 void CopyText();
 void PasteText();
 void CutText();
+void DeleteText();
 void UndoAction();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
@@ -108,7 +109,15 @@ void CutText() {
     }
 }
 
-void UndoAction() {
+void DeleteText() {
+    if (paigeDoc) {
+        long start, end;
+        pgGetSelection(paigeDoc, &start, &end);
+        if (start != end) {
+            pgDelete(paigeDoc, &start, best_way);
+        }
+    }
+}
     if (paigeDoc) {
         pgPrepareUndo(paigeDoc, undo_undo, NULL);
         pgUndo(paigeDoc, 1, best_way);
@@ -147,6 +156,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             break;
         case ID_EDIT_CUT:
             CutText();
+            break;
+        case ID_EDIT_DELETE:
+            DeleteText();
             break;
         case ID_EDIT_UNDO:
             UndoAction();
