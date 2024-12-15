@@ -303,6 +303,23 @@ void SetParagraphFormat(paige_rec_ptr doc, par_info_ptr info, par_info_ptr mask,
     }
 }
 
+void SetTabBase(paige_rec_ptr doc, long tab_base, pg_boolean redraw) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgSetTabBase(doc, tab_base, &selection, redraw);
+    }
+}
+
+pg_boolean GetTabBase(paige_rec_ptr doc, long* tab_base) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        return pgGetTabBase(doc, tab_base, &selection);
+    }
+    return FALSE;
+}
+
 void SetTab(paige_rec_ptr doc, tab_stop_ptr tab, pg_boolean redraw) {
     if (doc && tab) {
         select_pair selection;
