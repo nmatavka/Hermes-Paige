@@ -267,7 +267,21 @@ void GetShapeAreas(pg_ref pg, shape_ref vis_area, shape_ref page_area, shape_ref
     pgGetAreas(pg, vis_area, page_area, exclude_area);
 }
 
-void GetAreaBounds(pg_ref pg, rectangle_ptr page_bounds, rectangle_ptr vis_bounds) {
+pg_ref ClonePaigeObject(pg_ref pg) {
+    return pgDuplicate(pg);
+}
+
+void SetExtraStruct(pg_ref pg, void* extra_struct, long ref_id) {
+    pgSetExtraStruct(pg, extra_struct, ref_id);
+}
+
+void* GetExtraStruct(pg_ref pg, long ref_id) {
+    return pgGetExtraStruct(pg, ref_id);
+}
+
+long GetUniqueExtraStructID(pg_ref pg) {
+    return pgExtraUniqueID(pg);
+}
     pgAreaBounds(pg, page_bounds, vis_bounds);
 }
     pgSetDevicePalette(pg, (generic_var)hPalette);
