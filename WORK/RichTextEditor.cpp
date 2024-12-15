@@ -4,6 +4,7 @@
 #include "PGHEADER/PGCLIPBD.H"
 #include "PGHEADER/PGSELECT.H"
 #include "pgMemMgr.h"
+#include "pgHLevel.h"
 
 short m_KeyModifiers = 0; // Declare the key modifiers variable
 HINSTANCE hInst;
@@ -14,7 +15,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void InitPaige(HWND hwnd);
 void InitVirtualMemory(pg_globals_ptr globals, int tempFile);
 void UninitVirtualMemory(int tempFile);
-void SetFontStyle(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle);
+void SetTextFormat(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle, long paragraphFormat) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+
+        // Set font
+        pgSetFont(doc, fontName, &selection);
+
+        // Set font size
+        pgSetPointSize(doc, fontSize, &selection);
+
+        // Set font style (e.g., bold, italic)
+        pgSetStyle(doc, fontStyle, &selection);
+
+        // Set paragraph format
+        pgSetParaFormat(doc, paragraphFormat, &selection);
+    }
+}
 void CleanupPaige();
 long GetAttributes();
 pg_boolean SetAttributes(long attributes);
