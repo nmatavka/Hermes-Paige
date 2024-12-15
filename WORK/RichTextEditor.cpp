@@ -633,9 +633,14 @@ void SetExclusionRefCon(pg_ref pg, pg_short_t position, long ref_con) {
 }
 
 void RemoveExclusion(pg_ref pg, pg_short_t position, short draw_mode) {
-    if (pg && position > 0 && position <= pgNumExclusions(pg)) {
-        // Perform any necessary cleanup of refCon here before removal
-        pgRemoveExclusion(pg, position, draw_mode);
+    if (pg) {
+        if (position > 0 && position <= pgNumExclusions(pg)) {
+            // Perform any necessary cleanup of refCon here before removal
+            pgRemoveExclusion(pg, position, draw_mode);
+        } else {
+            // Handle invalid position case
+            // Log or handle the error as needed
+        }
     }
 }
 
@@ -647,8 +652,13 @@ void SwapExclusions(pg_ref pg, pg_short_t exclusion1, pg_short_t exclusion2, sho
 }
 
 void ReplaceExclusion(pg_ref pg, rectangle_ptr exclusion, pg_short_t position, short draw_mode) {
-    if (pg && position >= 1 && position <= pgNumExclusions(pg)) {
-        pgReplaceExclusion(pg, exclusion, position, draw_mode);
+    if (pg) {
+        if (position >= 1 && position <= pgNumExclusions(pg)) {
+            pgReplaceExclusion(pg, exclusion, position, draw_mode);
+        } else {
+            // Handle invalid position case
+            // Log or handle the error as needed
+        }
     }
 }
 
