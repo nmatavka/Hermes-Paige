@@ -37,10 +37,11 @@ void pgDrawPageProc(paige_rec_ptr pg, shape_ptr page_shape, pg_short_t r_qty, pg
             // Draw a rectangle around each page area
             FrameRect(hdc, &rect, (HBRUSH)GetStockObject(GRAY_BRUSH));
 
-            // Example: Draw additional ornaments or floating images here
-            // if (call_order < 0) {
-            //     // Draw floating images or other elements
-            // }
+            // Draw additional ornaments or floating images
+            if (call_order < 0) {
+                // Example: Draw floating images or other elements
+                // Custom drawing logic for floating images
+            }
         }
         ReleaseDC((HWND)pg->port.window, hdc);
     }
