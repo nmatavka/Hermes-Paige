@@ -183,4 +183,17 @@ void EnableLineAndParagraphCounting(pg_ref pg) {
     }
 }
 
+long GetChangeCounter(pg_ref pg) {
+    if (pg) {
+        return pgGetChangeCtr(pg);
+    }
+    return 0;
+}
+
+void SetChangeCounter(pg_ref pg, long ctr) {
+    if (pg) {
+        pgSetChangeCtr(pg, ctr);
+    }
+}
+
 #endif // UTILITIES_H
