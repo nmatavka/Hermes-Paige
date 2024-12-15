@@ -272,16 +272,17 @@ void SetTab(paige_rec_ptr doc, tab_stop_ptr tab, pg_boolean redraw) {
     }
 }
 
-void SetSelection(paige_rec_ptr doc, long begin_sel, long end_sel, short modifiers, pg_boolean show_hilite) {
-    if (doc) {
-        pgSetSelection(doc, begin_sel, end_sel, modifiers, show_hilite);
+void SetDiscontinuousSelection(paige_rec_ptr doc, memory_ref select_list, long extra_offset, pg_boolean show_hilite) {
+    if (doc && select_list) {
+        pgSetSelectionList(doc, select_list, extra_offset, show_hilite);
     }
 }
 
-void GetSelection(paige_rec_ptr doc, long* begin_sel, long* end_sel) {
+memory_ref GetDiscontinuousSelection(paige_rec_ptr doc, pg_boolean for_paragraph) {
     if (doc) {
-        pgGetSelection(doc, begin_sel, end_sel);
+        return pgGetSelectionList(doc, for_paragraph);
     }
+    return MEM_NULL;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
