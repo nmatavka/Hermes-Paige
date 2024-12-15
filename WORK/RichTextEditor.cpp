@@ -24,6 +24,25 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
     }
 }
 
+void pgDrawPageProc(paige_rec_ptr pg, shape_ptr page_shape, pg_short_t r_qty, pg_short_t page_num, co_ordinate_ptr vis_offset, short draw_mode_used, short call_order) {
+    // Example implementation of pgDrawPageProc
+    HDC hdc = GetDC((HWND)pg->port.window);
+    if (hdc) {
+        for (pg_short_t i = 0; i < r_qty; ++i) {
+            // Calculate the actual position of each rectangle
+            RECT rect;
+            rect.left = page_shape[i].left + vis_offset->h;
+            rect.top = page_shape[i].top + vis_offset->v;
+            rect.right = page_shape[i].right + vis_offset->h;
+            rect.bottom = page_shape[i].bottom + vis_offset->v;
+
+            // Draw a rectangle around each page area
+            FrameRect(hdc, &rect, (HBRUSH)GetStockObject(BLACK_BRUSH));
+        }
+        ReleaseDC((HWND)pg->port.window, hdc);
+    }
+}
+
 void PrintDocument(HDC out_dc, pg_ref pg, rectangle_ptr page_rect, double scale_factor) {
     graf_device print_port;
     pgInitDevice(&globals->mem_globals, MEM_NULL, out_dc, &print_port);
