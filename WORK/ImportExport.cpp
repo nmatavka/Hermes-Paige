@@ -73,14 +73,15 @@ public:
 class CustomRTFExportFilter : public PaigeRTFExportFilter {
 public:
     pg_error OutputHeaders() override {
-        // Example: Write a header string
-        pgWriteString("Header: Custom RTF Export", 0, 0);
+        // Write a custom header using WriteCommand
+        short param = 1;
+        WriteCommand((pg_char_ptr)"header ", 1, &param, TRUE);
         return NO_ERROR;
     }
 
     pg_error OutputFooters() override {
-        // Example: Write a footer string
-        pgWriteString("Footer: Custom RTF Export", 0, 0);
+        // Write a custom footer using WriteCommand
+        WriteCommand((pg_char_ptr)"footer ", 1, NULL, TRUE);
         return NO_ERROR;
     }
 
@@ -94,9 +95,20 @@ public:
     }
 
     pg_error OutputCustomParams() override {
-        // Example: Write custom parameters
-        pgWriteString("CustomParam: Value", 0, 0);
+        // Write custom parameters using WriteCommand
+        short param = 42;
+        WriteCommand((pg_char_ptr)"customparam ", 1, &param, TRUE);
         return NO_ERROR;
+    }
+
+    void OutputCR(pg_boolean unconditional) {
+        // Output a carriage return
+        PaigeRTFExportFilter::OutputCR(unconditional);
+    }
+
+    short PointConversion(short value, pg_boolean convert_resolution, pg_boolean x10) {
+        // Convert points using PointConversion
+        return PaigeRTFExportFilter::PointConversion(value, convert_resolution, x10);
     }
 };
 
