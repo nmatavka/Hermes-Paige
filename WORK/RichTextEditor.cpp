@@ -527,8 +527,57 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             EndPaint(hWnd, &ps);
         }
         break;
-    case WM_COMMAND:
-        // Handle menu commands for changing font, style, etc.
+    case WM_HSCROLL:
+        switch (LOWORD(wParam)) {
+            case SB_PAGELEFT:
+                pgScroll(paigeDoc, scroll_page, scroll_none, best_way);
+                break;
+            case SB_LINELEFT:
+                pgScroll(paigeDoc, scroll_unit, scroll_none, best_way);
+                break;
+            case SB_PAGERIGHT:
+                pgScroll(paigeDoc, -scroll_page, scroll_none, best_way);
+                break;
+            case SB_LINERIGHT:
+                pgScroll(paigeDoc, -scroll_unit, scroll_none, best_way);
+                break;
+            case SB_THUMBPOSITION:
+            case SB_THUMBTRACK:
+                short cur_h, cur_v, max_h, max_v;
+                pgGetScrollValues(paigeDoc, &cur_h, &cur_v, &max_h, &max_v);
+                pgSetScrollValues(paigeDoc, LOWORD(lParam), cur_v, TRUE, best_way);
+                break;
+        }
+        UpdateScrollbars(paigeDoc, hWnd);
+        break;
+
+    case WM_VSCROLL:
+        switch (LOWORD(wParam)) {
+            case SB_PAGEDOWN:
+                pgScroll(paigeDoc, scroll_none, scroll_page, best_way);
+                break;
+            case SB_LINEDOWN:
+                pgScroll(paigeDoc, scroll_none, scroll_unit, best_way);
+                break;
+            case SB_PAGEUP:
+                pgScroll(paigeDoc, scroll_none, -scroll_page, best_way);
+                break;
+            case SB_LINEUP:
+                pgScroll(paigeDoc, scroll_none, -scroll_unit, best_way);
+                break;
+            case SB_TOP:
+                pgScroll(paigeDoc, scroll_none, scroll_home, best_way);
+                break;
+            case SB_BOTTOM:
+                pgScroll(paigeDoc, scroll_none, scroll_end, best_way);
+                break;
+            case SB_THUMBPOSITION:
+            case SB_THUMBTRACK:
+                pgGetScrollValues(paigeDoc, &cur_h, &cur_v, &max_h, &max_v);
+                pgSetScrollValues(paigeDoc, cur_h, LOWORD(lParam), TRUE, best_way);
+                break;
+        }
+        UpdateScrollbars(paigeDoc, hWnd);
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
