@@ -13,6 +13,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void InitPaige(HWND hwnd);
 void SetFontStyle(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle);
 void CleanupPaige();
+void CopyText();
+void PasteText();
+void CutText();
+void UndoAction();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     WNDCLASSEX wcex;
@@ -58,6 +62,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     return (int)msg.wParam;
 }
 
+void CopyText() {
+    if (paigeDoc) {
+        pgCopyToClipboard(paigeDoc, NULL, 0, best_way);
+    }
+}
+
+void PasteText() {
+    if (paigeDoc) {
+        pgPasteFromClipboard(paigeDoc, NULL, 0, best_way);
+    }
+}
+
+void CutText() {
+    if (paigeDoc) {
+        pgCutToClipboard(paigeDoc, NULL, 0, best_way);
+    }
+}
+
+void UndoAction() {
+    if (paigeDoc) {
+        pgUndo(paigeDoc, 1, best_way);
+    }
+}
+
 void SetFontStyle(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle) {
     if (doc) {
         style_info style;
@@ -81,7 +109,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     switch (message) {
     case WM_CREATE:
         InitPaige(hWnd);
-        break;
+            break;
+        case ID_EDIT_COPY:
+            CopyText();
+            break;
+        case ID_EDIT_PASTE:
+            PasteText();
+            break;
+        case ID_EDIT_CUT:
+            CutText();
+            break;
+        case ID_EDIT_UNDO:
+            UndoAction();
+            break;
     case WM_DESTROY:
         CleanupPaige();
         PostQuitMessage(0);
