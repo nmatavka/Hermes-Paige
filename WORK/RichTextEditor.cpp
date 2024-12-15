@@ -272,17 +272,20 @@ void SetTab(paige_rec_ptr doc, tab_stop_ptr tab, pg_boolean redraw) {
     }
 }
 
-void SetTabBase(paige_rec_ptr doc, long tab_base) {
-    if (doc) {
-        pgSetTabBase(doc, tab_base);
+void SetIndents(paige_rec_ptr doc, pg_indents_ptr indents, pg_indents_ptr mask, short draw_mode) {
+    if (doc && indents && mask) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgSetIndents(doc, &selection, indents, mask, draw_mode);
     }
 }
 
-long GetTabBase(paige_rec_ptr doc) {
-    if (doc) {
-        return pgGetTabBase(doc);
+void GetIndents(paige_rec_ptr doc, pg_indents_ptr indents, pg_indents_ptr mask, long* left_screen_offset, long* right_screen_offset) {
+    if (doc && indents && mask) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgGetIndents(doc, &selection, indents, mask, left_screen_offset, right_screen_offset);
     }
-    return 0; // Default tab base
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
