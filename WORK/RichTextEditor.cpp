@@ -341,8 +341,20 @@ pg_boolean GetParagraphFormat(paige_rec_ptr doc, par_info_ptr info) {
     return FALSE;
 }
 
+void SetScrollPosition(paige_rec_ptr doc, long h_pos, long v_pos) {
+    if (doc) {
+        UseMemory(doc);
+        doc->scroll_position.h = h_pos;
+        doc->scroll_position.v = v_pos;
+        UnuseMemory(doc);
+    }
+}
+
 void Scroll(paige_rec_ptr doc, short h_verb, short v_verb, short draw_mode) {
     if (doc) {
+        long h_pixels, v_pixels;
+        CalculateScrollPixels(doc, h_verb, v_verb, &h_pixels, &v_pixels);
+        SetScrollPosition(doc, h_pixels, v_pixels);
         pgScroll(doc, h_verb, v_verb, draw_mode);
     }
 }
