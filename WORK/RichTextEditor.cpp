@@ -232,6 +232,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         {
             pg_char the_char = (pg_char)wParam;
             pgInsert(paigeDoc, &the_char, 1, CURRENT_POSITION, key_insert_mode, m_KeyModifiers, best_way);
+            pgInsertPendingKeys(paigeDoc); // Ensure immediate insertion of pending keys
             pgScrollToView(paigeDoc, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or);
         }
         break;
