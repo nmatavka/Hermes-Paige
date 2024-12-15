@@ -11,6 +11,7 @@ paige_rec_ptr paigeDoc;
 // Function prototypes
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void InitPaige(HWND hwnd);
+void SetFontStyle(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle);
 void CleanupPaige();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
@@ -42,6 +43,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     if (!hWnd) {
         return FALSE;
+        SetFontStyle(paigeDoc, "Arial", 12, 0); // Example: Set default font
     }
 
     ShowWindow(hWnd, nCmdShow);
@@ -54,6 +56,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     return (int)msg.wParam;
+}
+
+void SetFontStyle(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle) {
+    if (doc) {
+        style_info style;
+        pgGetStyleInfo(doc, NULL, &style, NULL, best_way);
+
+        // Set font name
+        strncpy(style.font_name, fontName, sizeof(style.font_name) - 1);
+        style.font_name[sizeof(style.font_name) - 1] = '\0';
+
+        // Set font size
+        style.point = fontSize;
+
+        // Set font style (e.g., bold, italic)
+        style.styles = fontStyle;
+
+        pgSetStyleInfo(doc, NULL, &style, best_way);
+    }
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -72,6 +93,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             // Add code to render Paige content here
             EndPaint(hWnd, &ps);
         }
+        break;
+    case WM_COMMAND:
+        // Handle menu commands for changing font, style, etc.
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
