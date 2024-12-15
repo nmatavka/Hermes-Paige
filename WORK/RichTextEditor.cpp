@@ -25,8 +25,6 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
         }
     }
 }
-}
-}
 
 void pgDrawPageProc(paige_rec_ptr pg, shape_ptr page_shape, pg_short_t r_qty, pg_short_t page_num, co_ordinate_ptr vis_offset, short draw_mode_used, short call_order) {
     HDC hdc = GetDC((HWND)pg->port.window);
@@ -484,7 +482,6 @@ void DeleteText() {
             pgDelete(paigeDoc, &start, best_way);
         }
     }
-}
 }
 
 void RedoAction() {
