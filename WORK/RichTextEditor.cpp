@@ -661,6 +661,22 @@ void ReplaceExclusion(pg_ref pg, rectangle_ptr exclusion, pg_short_t position, s
     }
 }
 
+void AttachParExclusion(pg_ref pg, long position, pg_short_t index, short draw_mode) {
+    if (pg && index > 0 && index <= pgNumExclusions(pg)) {
+        pgAttachParExclusion(pg, position, index, draw_mode);
+    } else {
+        // Handle invalid index case
+        // Log or handle the error as needed
+    }
+}
+
+long GetAttachedPar(pg_ref pg, pg_short_t exclusion) {
+    if (pg && exclusion > 0 && exclusion <= pgNumExclusions(pg)) {
+        return pgGetAttachedPar(pg, exclusion);
+    }
+    return -1;
+}
+
 void InsertExclusionShape(pg_ref pg, pg_short_t position, shape_ref exclude_shape, short draw_mode) {
     if (pg) {
         pgInsertExclusionShape(pg, position, exclude_shape, draw_mode);
