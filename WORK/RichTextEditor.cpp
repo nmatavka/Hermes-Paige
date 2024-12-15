@@ -34,10 +34,16 @@ void PrintDocument(HDC out_dc, pg_ref pg, rectangle_ptr page_rect, double scale_
     long starting_position = 0;
     short draw_mode = best_way;
 
+    // Set the print device to match the printer's resolution
+    pgSetPrintDevice(pg, (generic_var)out_dc);
+
     // Print the document
     while (starting_position != -1) {
         starting_position = PrintToPage(pg, &print_port, starting_position, page_rect, draw_mode);
     }
+
+    // Clear the print device after printing
+    pgSetPrintDevice(pg, MEM_NULL);
 }
 }
 }
