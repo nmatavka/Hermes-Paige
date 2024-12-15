@@ -264,6 +264,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 }
 
 void InitPaige(HWND hwnd) {
+    // Initialize Paige globals with custom defaults
+    pg_globals_ptr globals = /* Initialize or retrieve your pg_globals_ptr */;
+    
+    // Set default style
+    globals->def_style.point = 0x00090000; // Example: Set default font size to 9 points
+    strncpy(globals->def_style.font_name, "Arial", sizeof(globals->def_style.font_name) - 1);
+    globals->def_style.font_name[sizeof(globals->def_style.font_name) - 1] = '\0';
+    
+    // Set default paragraph format
+    globals->def_par.def_tab_space = 32; // Example: Set default tab spacing to 32
     // Initialize Paige document
     pg_globals_ptr globals = /* Initialize or retrieve your pg_globals_ptr */;
     HWND hwndFocus = GetFocus();
