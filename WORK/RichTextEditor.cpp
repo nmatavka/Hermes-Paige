@@ -683,6 +683,18 @@ void InsertExclusionShape(pg_ref pg, pg_short_t position, shape_ref exclude_shap
     }
 }
 
+void SetScaling(pg_ref pg, pg_scale_ptr scale_factor, short draw_mode) {
+    if (pg && scale_factor) {
+        pgSetScaling(pg, scale_factor, draw_mode);
+    }
+}
+
+void GetScaling(pg_ref pg, pg_scale_ptr scale_factor) {
+    if (pg && scale_factor) {
+        pgGetScaling(pg, scale_factor);
+    }
+}
+
 void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
     if (pg) {
         UseMemory(pg);
