@@ -22,6 +22,44 @@ public:
         }
     }
 
+    void BeginTableImport() override {
+        // Prepare structures for table processing
+        doing_table = TRUE;
+        // Custom initialization for table processing
+    }
+
+    pg_boolean ProcessTableCommand(short command, short parameter) override {
+        // Handle table commands
+        switch (command) {
+            case table_cell:
+                // Handle table cell
+                break;
+            case cell_setright:
+                // Handle cell set right
+                break;
+            case table_row_end:
+                // Handle table row end
+                break;
+            // Add more cases as needed
+            default:
+                // Default handling
+                break;
+        }
+        return TRUE; // Return TRUE to insert text and formatting into the main document
+    }
+
+    pg_boolean InsertTableText() override {
+        // Process text within a table
+        // Access translator data and formats
+        return TRUE; // Return TRUE to insert text into the main document
+    }
+
+    pg_boolean EndTableImport() override {
+        // Finalize table processing
+        doing_table = FALSE;
+        return TRUE; // Return TRUE to insert any pending text and formatting
+    }
+
     void UnsupportedCommand(pg_char_ptr command, short parameter) override {
         // Implement custom processing for unsupported RTF commands
         if (strcmp(command, "bonus") == 0) {
