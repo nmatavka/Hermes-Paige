@@ -576,6 +576,38 @@ void SetPageModifyProc(pg_ref pg, void (PG_PASCAL *page_modify_proc)(paige_rec_p
     }
 }
 
+pg_short_t NumContainers(pg_ref pg) {
+    if (pg) {
+        return pgNumContainers(pg);
+    }
+    return 0;
+}
+
+void InsertContainer(pg_ref pg, rectangle_ptr container, pg_short_t position, long ref_con, short draw_mode) {
+    if (pg) {
+        pgInsertContainer(pg, container, position, ref_con, draw_mode);
+    }
+}
+
+void GetContainer(pg_ref pg, pg_short_t position, pg_boolean include_scroll, pg_boolean include_scale, rectangle_ptr container) {
+    if (pg) {
+        pgGetContainer(pg, position, include_scroll, include_scale, container);
+    }
+}
+
+long GetContainerRefCon(pg_ref pg, pg_short_t position) {
+    if (pg) {
+        return pgGetContainerRefCon(pg, position);
+    }
+    return 0;
+}
+
+void SetContainerRefCon(pg_ref pg, pg_short_t position, long ref_con) {
+    if (pg) {
+        pgSetContainerRefCon(pg, position, ref_con);
+    }
+}
+
 void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
     if (pg) {
         UseMemory(pg);
