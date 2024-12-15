@@ -77,6 +77,18 @@ void ExtendSelection(paige_rec_ptr doc, long amount_ext, short modifiers, pg_boo
     }
 }
 
+void ShapeToSelections(paige_rec_ptr doc, shape_ref the_shape, memory_ref selections) {
+    if (doc && the_shape && selections) {
+        pgShapeToSelections(doc, the_shape, selections);
+    }
+}
+
+void SelectToShape(paige_rec_ptr doc, memory_ref select_shape, pg_boolean show_hilite) {
+    if (doc && select_shape) {
+        pgSelectToShape(doc, select_shape, show_hilite);
+    }
+}
+
 void SetDiscontinuousSelection(paige_rec_ptr doc, memory_ref select_list, long extra_offset, pg_boolean show_hilite) {
     if (doc && select_list) {
         pgSetSelectionList(doc, select_list, extra_offset, show_hilite);
