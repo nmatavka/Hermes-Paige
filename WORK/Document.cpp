@@ -1,5 +1,6 @@
 #include "Paige.h"
 #include "pgMemMgr.h"
+#include "pghtext.h"
 
 extern paige_rec_ptr paigeDoc;
 
@@ -91,6 +92,28 @@ void UpdateScrollbars(paige_rec_ptr doc, HWND hWnd) {
         SetScrollPos(hWnd, SB_VERT, v_value, TRUE);
         SetScrollPos(hWnd, SB_HORZ, h_value, TRUE);
     }
+}
+
+void SetHypertextLink(paige_rec_ptr doc, const char* url, long start, long end, pg_boolean redraw) {
+    if (doc) {
+        pg_hyperlink link;
+        link.applied_range.begin = start;
+        link.applied_range.end = end;
+        link.url = (pg_char_ptr)url;
+        link.state1_style = pgNewHyperlinkStyle(doc, 0, 0, STYLE_COLOR_INTENSITY, X_UNDERLINE_BIT, FALSE);
+        pgAddHyperlink(doc, &link, redraw);
+    }
+}
+
+pg_boolean GetHypertextLink(paige_rec_ptr doc, long position, char* url, long url_size) {
+    if (doc && url) {
+        pg_hyperlink link;
+        if (pgGetHyperlink(doc, position, &link)) {
+            strncpy(url, (const char*)link.url, url_size);
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 void SetParagraphShading(paige_rec_ptr doc, long shading_color, pg_boolean redraw) {

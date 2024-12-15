@@ -1,6 +1,7 @@
 #include <windows.h>
 #include "Paige.h"
 #include "pgMemMgr.h"
+#include "pghtext.h"
 
 extern paige_rec_ptr paigeDoc;
 
