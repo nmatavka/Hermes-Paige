@@ -100,30 +100,8 @@ private:
             return false;
         }
 
-        PaigeExportObject filter;
-        pg_globals_ptr globals = pgGetGlobals(paigeDoc);
-        pg_error result = NO_ERROR;
+        pg_error result = pgExportFileFromC(paigeDoc, fileType, EXPORT_EVERYTHING_FLAG, 0, NULL, FALSE, fileUnit);
 
-        switch (fileType) {
-            case pg_text_type:
-                filter = new PaigeExportFilter();
-                break;
-            case pg_rtf_type:
-                filter = (PaigeExportObject) new PaigeRTFExportFilter();
-                break;
-            case pg_paige_type:
-                filter = (PaigeExportObject) new PaigeNativeExportFilter();
-                break;
-            default:
-                pgCloseFile(fileUnit);
-                return false;
-        }
-
-        if ((result = filter->pgInitExportFile(globals, fileUnit, MEM_NULL, NULL, 0)) == NO_ERROR) {
-            result = filter->pgExportFile(paigeDoc, NULL, EXPORT_EVERYTHING_FLAG, FALSE);
-        }
-
-        delete filter;
         pgCloseFile(fileUnit);
 
         return result == NO_ERROR;
