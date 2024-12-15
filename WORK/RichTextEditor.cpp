@@ -40,6 +40,24 @@ void InitializeTransColor(pg_globals_ptr globals, HWND hwnd) {
 void InitPaige(HWND hwnd);
 void InitializeTransColor(pg_globals_ptr globals, HWND hwnd);
 
+void SetPageAttributes(pg_ref pg, long attributes) {
+    if (pg) {
+        UseMemory(pg);
+        pg->doc_info.attributes = attributes;
+        UnuseMemory(pg);
+    }
+}
+
+long GetPageAttributes(pg_ref pg) {
+    if (pg) {
+        UseMemory(pg);
+        long attributes = pg->doc_info.attributes;
+        UnuseMemory(pg);
+        return attributes;
+    }
+    return 0;
+}
+
 void SetPageColor(pg_ref pg, color_value_ptr color) {
     pgSetPageColor(pg, color);
 }
@@ -482,6 +500,22 @@ pg_boolean GetParagraphFormat(paige_rec_ptr doc, par_info_ptr info) {
         return pgGetParInfo(doc, &selection, info);
     }
     return FALSE;
+}
+
+void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
+    if (pg) {
+        UseMemory(pg);
+        pg->doc_info.margins = *margins;
+        UnuseMemory(pg);
+    }
+}
+
+void GetPageMargins(pg_ref pg, rectangle_ptr margins) {
+    if (pg) {
+        UseMemory(pg);
+        *margins = pg->doc_info.margins;
+        UnuseMemory(pg);
+    }
 }
 
 void SetScrollPosition(paige_rec_ptr doc, long h_pos, long v_pos) {
