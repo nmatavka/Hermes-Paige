@@ -209,6 +209,28 @@ pg_boolean GetHyperlinkTargetInfo(paige_rec_ptr doc, long position, pg_boolean c
     return FALSE;
 }
 
+void SetTableAttributes(paige_rec_ptr doc, long start, long end, const pg_table& table_attrs, pg_boolean redraw) {
+    if (doc) {
+        select_pair selection = {start, end};
+        par_info info;
+        pgGetParInfo(doc, &selection, &info);
+        info.table = table_attrs;
+        pgSetParInfo(doc, &selection, &info, NULL, redraw);
+    }
+}
+
+pg_boolean GetTableAttributes(paige_rec_ptr doc, long position, pg_table& table_attrs) {
+    if (doc) {
+        select_pair selection = {position, position};
+        par_info info;
+        if (pgGetParInfo(doc, &selection, &info)) {
+            table_attrs = info.table;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
