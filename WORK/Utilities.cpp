@@ -225,4 +225,10 @@ void SetCustomChangeCounter(long ctr) {
     customChangeCounter = ctr;
 }
 
+void GetMaxTextBounds(pg_ref pg, rectangle_ptr bounds, pg_boolean paginate) {
+    if (pg && bounds) {
+        pgMaxTextBounds(pg, bounds, paginate);
+    }
+}
+
 #endif // UTILITIES_H
