@@ -36,7 +36,7 @@ pg_error ImportFile(pg_ref pg, pg_filetype filetype, long feature_flags, long fi
 
     globals = pgGetGlobals(pg);
 
-    switch (filetype) {
+    switch (fileType) {
         case pg_text_type:
             filter = new PaigeImportFilter();
             break;
@@ -49,6 +49,15 @@ pg_error ImportFile(pg_ref pg, pg_filetype filetype, long feature_flags, long fi
         default:
             return (pg_error) BAD_TYPE_ERR;
     }
+
+    // Check for supported features
+    if (!(filter->feature_bits & IMPORT_EMBEDDED_OBJECTS_FEATURE)) {
+        // Alert user if embedded objects are not supported
+        MessageBox(NULL, "Any pictures in document will be lost. Open anyway?", "Warning", MB_OK | MB_ICONWARNING);
+    }
+
+    // Set custom font mapping table if needed
+    filter->font_cross_table = (pg_char_ptr)MyOwnFontTable;
 
     if ((result = filter->pgInitImportFile(globals, f_ref, MEM_NULL, NULL, file_begin, UNKNOWN_POSITION)) == NO_ERROR) {
         result = filter->pgImportFile(pg, CURRENT_POSITION, flags, TRUE, best_way);
