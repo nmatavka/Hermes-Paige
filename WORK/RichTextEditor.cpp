@@ -26,6 +26,50 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
 
 void InitPaige(HWND hwnd);
 
+void OffsetShape(shape_ref the_shape, long h, long v) {
+    pgOffsetShape(the_shape, h, v);
+}
+
+void InsetShape(shape_ref the_shape, long h, long v) {
+    pgInsetShape(the_shape, h, v);
+}
+
+pg_short_t PointInShape(shape_ref the_shape, co_ordinate_ptr point, co_ordinate_ptr offset_extra, co_ordinate_ptr inset_extra, pg_scale_ptr scaling) {
+    return pgPtInShape(the_shape, point, offset_extra, inset_extra, scaling);
+}
+
+pg_short_t SectionRectInShape(shape_ref the_shape, rectangle_ptr rect, rectangle_ptr sect_rect) {
+    return pgSectRectInShape(the_shape, rect, sect_rect);
+}
+
+void ShapeBounds(shape_ref the_shape, rectangle_ptr bounds) {
+    pgShapeBounds(the_shape, bounds);
+}
+
+pg_boolean EmptyShape(shape_ref the_shape) {
+    return pgEmptyShape(the_shape);
+}
+
+pg_boolean EqualShapes(shape_ref shape1, shape_ref shape2) {
+    return pgEqualShapes(shape1, shape2);
+}
+
+pg_boolean SectionShape(shape_ref shape1, shape_ref shape2, shape_ref result_shape) {
+    return pgSectShape(shape1, shape2, result_shape);
+}
+
+void DifferenceShape(shape_ref shape1, shape_ref shape2, shape_ref result_shape) {
+    pgDiffShape(shape1, shape2, result_shape);
+}
+
+void EraseShape(pg_ref pg, shape_ref the_shape, pg_scale_ptr scale_factor, co_ordinate_ptr offset_extra, rectangle_ptr vis_bounds) {
+    pgEraseShape(pg, the_shape, scale_factor, offset_extra, vis_bounds);
+}
+
+void OffsetAreas(pg_ref pg, long h, long v, pg_boolean offset_page, pg_boolean offset_vis, pg_boolean offset_exclude) {
+    pgOffsetAreas(pg, h, v, offset_page, offset_vis, offset_exclude);
+}
+
 shape_ref CreateShape(pg_globals_ptr globals, rectangle_ptr rect) {
     return pgRectToShape(globals, rect);
 }
