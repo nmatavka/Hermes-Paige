@@ -6,7 +6,7 @@ void FindWordBoundaries(pg_ref pg, long offset, long* first_byte, long* last_byt
 
 void FindCtlWordBoundaries(pg_ref pg, long offset, long* first_byte, long* last_byte, short left_side) {
     if (pg) {
-        pgFindCtIWord(pg, offset, first_byte, last_byte, left_side);
+        pgFindCtlWord(pg, offset, first_byte, last_byte, left_side);
     }
 }
 
