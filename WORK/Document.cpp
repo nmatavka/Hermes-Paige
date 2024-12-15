@@ -216,7 +216,6 @@ void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
         pgSetPointSize(doc, point_size, &selection, redraw);
     }
 }
-}
 
 pg_boolean GetPointSize(paige_rec_ptr doc, long* point_size) {
     if (doc) {
