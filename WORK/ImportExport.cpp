@@ -70,8 +70,41 @@ public:
     }
 };
 
-// ExportHandler class definition
-class ExportHandler {
+class CustomExportFilter : public PaigeExportFilter {
+public:
+    pg_char_ptr pgPrepareEmbedData(embed_ref ref, long PG_FAR *byte_count, long PG_FAR *local_storage) override {
+        // Custom logic to prepare embed data for export
+        // Example: Convert embed data to a byte stream
+        *byte_count = GetMemorySize(ref);
+        *local_storage = 0; // Example: Store any necessary state
+        return (pg_char_ptr)UseMemory(ref);
+    }
+
+    void pgReleaseEmbedData(embed_ref ref, long local_storage) override {
+        // Custom logic to release embed data after export
+        UnuseMemory(ref);
+    }
+
+    pg_error pgPrepareExport() override {
+        // Custom preparation logic for export
+        return NO_ERROR;
+    }
+
+    pg_boolean pgWriteNextBlock() override {
+        // Custom logic to write the next block of text
+        // Example: Write data from translator.data
+        if (translator.bytes_transferred > 0) {
+            // Write data logic here
+            return TRUE; // Continue exporting
+        }
+        return FALSE; // Stop exporting
+    }
+
+    pg_error pgExportDone() override {
+        // Custom cleanup logic after export
+        return NO_ERROR;
+    }
+};
 public:
     ExportHandler(pg_ref pg) : paigeDoc(pg) {}
 
