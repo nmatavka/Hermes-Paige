@@ -4,7 +4,7 @@
 #include "PGHEADER/PGCLIPBD.H"
 #include "PGHEADER/PGSELECT.H"
 
-// Global variables
+short m_KeyModifiers = 0; // Declare the key modifiers variable
 HINSTANCE hInst;
 paige_rec_ptr paigeDoc;
 
@@ -129,7 +129,112 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         case ID_EDIT_UNDO:
             UndoAction();
             break;
-    case WM_DESTROY:
+    case WM_KEYDOWN:
+        {
+            pg_globals globals = /* Retrieve your pg_globals */;
+            pg_short_t verb;
+
+            switch (wParam) {
+                case VK_SHIFT:
+                    m_KeyModifiers |= EXTEND_MOD_BIT;
+                    break;
+                case VK_CONTROL:
+                    m_KeyModifiers |= CONTROL_MOD_BIT;
+                    break;
+                case VK_LEFT:
+                    SendMessage(hWnd, WM_CHAR, globals->left_arrow_char, 0);
+                    break;
+                case VK_UP:
+                    SendMessage(hWnd, WM_CHAR, globals->up_arrow_char, 0);
+                    break;
+                case VK_RIGHT:
+                    SendMessage(hWnd, WM_CHAR, globals->right_arrow_char, 0);
+                    break;
+                case VK_DOWN:
+                    SendMessage(hWnd, WM_CHAR, globals->down_arrow_char, 0);
+                    break;
+                case VK_HOME:
+                    verb = (m_KeyModifiers & CONTROL_MOD_BIT) ? home_caret : begin_line_caret;
+                    if (m_KeyModifiers & EXTEND_MOD_BIT) verb |= EXTEND_CARET_FLAG;
+                    pgSetCaretPosition(paigeDoc, verb, TRUE);
+                    pgScrollToView(paigeDoc, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or);
+                    break;
+                case VK_END:
+                    verb = (m_KeyModifiers & CONTROL_MOD_BIT) ? doc_bottom_caret : end_line_caret;
+                    if (m_KeyModifiers & EXTEND_MOD_BIT) verb |= EXTEND_CARET_FLAG;
+                    pgSetCaretPosition(paigeDoc, verb, TRUE);
+                    pgScrollToView(paigeDoc, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or);
+                    break;
+                case VK_PRIOR:
+                    SendMessage(hWnd, WM_VSCROLL, SB_PAGEUP, 0);
+                    break;
+                case VK_NEXT:
+                    SendMessage(hWnd, WM_VSCROLL, SB_PAGEDOWN, 0);
+                    break;
+                case VK_DELETE:
+                    if (m_KeyModifiers & EXTEND_MOD_BIT) {
+                        long start, end;
+                        pg_ref scrap;
+                        pgGetSelection(paigeDoc, &start, &end);
+                        if (start != end) {
+                            scrap = pgCut(paigeDoc, &start, &end);
+                            if (scrap) {
+                                OpenClipboard();
+                                pgPutScrap(scrap, 0, pg_void_scrap);
+                                CloseClipboard();
+                                pgDispose(scrap);
+                            }
+                        }
+                    } else {
+                        SendMessage(hWnd, WM_CHAR, globals->fwd_delete_char, 0);
+                    }
+                    break;
+                case VK_INSERT:
+                    if (m_KeyModifiers & CONTROL_MOD_BIT) {
+                        long start, end;
+                        pg_ref scrap;
+                        pgGetSelection(paigeDoc, &start, &end);
+                        if (start != end) {
+                            scrap = pgCopy(paigeDoc, NULL);
+                            if (scrap) {
+                                OpenClipboard();
+                                pgPutScrap(scrap, 0, pg_void_scrap);
+                                CloseClipboard();
+                                pgDispose(scrap);
+                            }
+                        }
+                    } else if (m_KeyModifiers & EXTEND_MOD_BIT) {
+                        pg_ref scrap = MEM_NULL;
+                        OpenClipboard();
+                        scrap = pgGetScrap(globals, 0, HookEmbedProc);
+                        CloseClipboard();
+                        if (scrap) {
+                            pgPaste(paigeDoc, scrap, CURRENT_POSITION, false, best_way);
+                            pgDispose(scrap);
+                        }
+                    }
+                    pgScrollToView(paigeDoc, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or);
+                    break;
+            }
+        }
+        break;
+    case WM_KEYUP:
+        switch (wParam) {
+            case VK_SHIFT:
+                m_KeyModifiers &= (~EXTEND_MOD_BIT);
+                break;
+            case VK_CONTROL:
+                m_KeyModifiers &= (~CONTROL_MOD_BIT);
+                break;
+        }
+        break;
+    case WM_CHAR:
+        {
+            pg_char the_char = (pg_char)wParam;
+            pgInsert(paigeDoc, &the_char, 1, CURRENT_POSITION, key_insert_mode, m_KeyModifiers, best_way);
+            pgScrollToView(paigeDoc, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or);
+        }
+        break;
         CleanupPaige();
         PostQuitMessage(0);
         break;
