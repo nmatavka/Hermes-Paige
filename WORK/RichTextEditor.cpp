@@ -150,15 +150,14 @@ void UndoAction() {
 
 void PasteText() {
     if (paigeDoc) {
-        OpenClipboard(NULL);
-        if (pgScrapAvail(RegisterClipboardFormat("HERMES Paige"))) {
+        if (OpenClipboard(NULL)) {
             pg_ref scrap = pgGetScrap(&globals->mem_globals, RegisterClipboardFormat("HERMES Paige"), NULL);
             if (scrap) {
                 pgPaste(paigeDoc, scrap, CURRENT_POSITION, false, best_way);
                 pgDispose(scrap);
             }
+            CloseClipboard();
         }
-        CloseClipboard();
     }
     if (paigeDoc) {
         pg_ref scrap = pgNewScrap();
