@@ -70,6 +70,32 @@ public:
     }
 };
 
+class CustomRTFExportFilter : public PaigeRTFExportFilter {
+public:
+    pg_error OutputHeaders() override {
+        // Custom logic to export document headers
+        return NO_ERROR;
+    }
+
+    pg_error OutputFooters() override {
+        // Custom logic to export document footers
+        return NO_ERROR;
+    }
+
+    pg_error OutputEmbed() override {
+        // Custom logic to export embed_ref
+        if (this->translator.format.embed_object) {
+            // Handle custom embed types
+        }
+        return PaigeRTFExportFilter::OutputEmbed(); // Call base class for default handling
+    }
+
+    pg_error OutputCustomParams() override {
+        // Custom logic to output additional formatting information
+        return NO_ERROR;
+    }
+};
+
 class CustomExportFilter : public PaigeExportFilter {
 public:
     pg_char_ptr pgPrepareEmbedData(embed_ref ref, long PG_FAR *byte_count, long PG_FAR *local_storage) override {
