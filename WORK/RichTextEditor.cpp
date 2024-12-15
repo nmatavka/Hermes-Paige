@@ -15,23 +15,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void InitPaige(HWND hwnd);
 void InitVirtualMemory(pg_globals_ptr globals, int tempFile);
 void UninitVirtualMemory(int tempFile);
-void SetTextFormat(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle, long paragraphFormat) {
+void SetFontByName(paige_rec_ptr doc, const char* fontName, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
         pgGetSelection(doc, &selection.begin, &selection.end);
-
-        // Set font
-        pgSetFont(doc, fontName, &selection);
-
-        // Set font size
-        pgSetPointSize(doc, fontSize, &selection);
-
-        // Set font style (e.g., bold, italic)
-        pgSetStyle(doc, fontStyle, &selection);
-
-        // Set paragraph format
-        pgSetParaFormat(doc, paragraphFormat, &selection);
+        pgSetFontByName(doc, (LPSTR)fontName, &selection, redraw);
     }
+}
+
+pg_boolean GetFontByName(paige_rec_ptr doc, char* fontName) {
+    if (doc) {
+        return pgGetFontByName(doc, (LPSTR)fontName);
+    }
+    return FALSE;
+}
+
+void SetPointSize(paige_rec_ptr doc, short pointSize, pg_boolean redraw) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgSetPointSize(doc, pointSize, &selection, redraw);
+    }
+}
+
+pg_boolean GetPointSize(paige_rec_ptr doc, short* pointSize) {
+    if (doc) {
+        return pgGetPointsize(doc, pointSize);
+    }
+    return FALSE;
 }
 void CleanupPaige();
 long GetAttributes();
