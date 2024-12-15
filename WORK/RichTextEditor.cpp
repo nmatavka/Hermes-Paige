@@ -24,7 +24,7 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
             ReleaseDC((HWND)pg->port.window, hdc);
         }
     }
-pg_error ImportFile(pg_ref pg, pg_filetype filetype, long feature_flags, long file_begin, pg_file_unit f_ref) {
+pg_error pgImportFileFromC(pg_ref pg, pg_filetype filetype, long feature_flags, long file_begin, pg_file_unit f_ref) {
     pg_filetype fileType = pgDetermineFileType(f_ref, NULL, file_begin);
     PaigeImportObject filter;
     pg_globals_ptr globals;
@@ -56,8 +56,8 @@ pg_error ImportFile(pg_ref pg, pg_filetype filetype, long feature_flags, long fi
         MessageBox(NULL, "Any pictures in document will be lost. Open anyway?", "Warning", MB_OK | MB_ICONWARNING);
     }
 
-    // Set custom font mapping table if needed
-    filter->font_cross_table = (pg_char_ptr)MyOwnFontTable;
+    // Set custom character mapping table if needed
+    filter->character_table = (pg_char_ptr)MyOwnCharTable;
 
     if ((result = filter->pgInitImportFile(globals, f_ref, MEM_NULL, NULL, file_begin, UNKNOWN_POSITION)) == NO_ERROR) {
         result = filter->pgImportFile(pg, CURRENT_POSITION, flags, TRUE, best_way);
