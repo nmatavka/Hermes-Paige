@@ -118,7 +118,8 @@ void PrepareUndo(short verb, long insertSize = 0, long insertPosition = 0) {
     } else if (verb == undo_app_insert) {
         long insertParams[2] = {insertPosition, insertSize};
         newUndoRef = pgPrepareUndo(paigeDoc, verb, (void PG_FAR *)insertParams);
-    } else {
+    } else if (verb == undo_page_change || verb == undo_vis_change || verb == undo_exclude_change || verb == undo_doc_info || verb == undo_embed_insert) {
+        newUndoRef = pgPrepareUndo(paigeDoc, verb, NULL);
         newUndoRef = pgPrepareUndo(paigeDoc, verb, NULL);
     }
 
