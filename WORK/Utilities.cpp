@@ -215,4 +215,14 @@ long PointToCharacterOffset(pg_ref pg, co_ordinate_ptr point, co_ordinate_ptr of
     return -1;
 }
 
+static long customChangeCounter = 0;
+
+long GetCustomChangeCounter() {
+    return customChangeCounter;
+}
+
+void SetCustomChangeCounter(long ctr) {
+    customChangeCounter = ctr;
+}
+
 #endif // UTILITIES_H
