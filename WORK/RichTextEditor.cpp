@@ -699,6 +699,37 @@ void InsertExclusion(pg_ref pg, rectangle_ptr exclusion, pg_short_t position, lo
     }
 }
 
+void GetExclusion(pg_ref pg, pg_short_t position, pg_boolean include_scroll, pg_boolean include_scale, rectangle_ptr exclusion) {
+    if (pg && position > 0 && position <= pgNumExclusions(pg)) {
+        pgGetExclusion(pg, position, include_scroll, include_scale, exclusion);
+    }
+}
+
+long GetExclusionRefCon(pg_ref pg, pg_short_t position) {
+    if (pg && position > 0 && position <= pgNumExclusions(pg)) {
+        return pgGetExclusionRefCon(pg, position);
+    }
+    return 0;
+}
+
+void SetExclusionRefCon(pg_ref pg, pg_short_t position, long ref_con) {
+    if (pg && position > 0 && position <= pgNumExclusions(pg)) {
+        pgSetExclusionRefCon(pg, position, ref_con);
+    }
+}
+
+void RemoveExclusion(pg_ref pg, pg_short_t position, short draw_mode) {
+    if (pg && position > 0 && position <= pgNumExclusions(pg)) {
+        pgRemoveExclusion(pg, position, draw_mode);
+    }
+}
+
+void ReplaceExclusion(pg_ref pg, rectangle_ptr exclusion, pg_short_t position, short draw_mode) {
+    if (pg && position > 0 && position <= pgNumExclusions(pg)) {
+        pgReplaceExclusion(pg, exclusion, position, draw_mode);
+    }
+}
+
 void InsertExclusionShape(pg_ref pg, pg_short_t position, shape_ref exclude_shape, short draw_mode) {
     if (pg) {
         pgInsertExclusionShape(pg, position, exclude_shape, draw_mode);
