@@ -64,6 +64,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 void CopyText() {
     if (paigeDoc) {
+        pgPrepareUndo(paigeDoc, undo_undo, NULL);
+        pgPrepareUndo(paigeDoc, undo_cut, NULL);
         pgCopyToClipboard(paigeDoc, NULL, 0, best_way);
     }
 }
