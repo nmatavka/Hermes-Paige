@@ -239,7 +239,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         CleanupPaige();
         PostQuitMessage(0);
         break;
-    case WM_PAINT:
+    case WM_SETFOCUS:
+        pgSetHiliteStates(paigeDoc, activate_verb, no_change_verb, TRUE);
+        break;
+    case WM_KILLFOCUS:
+        pgSetHiliteStates(paigeDoc, deactivate_verb, no_change_verb, TRUE);
+        break;
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
