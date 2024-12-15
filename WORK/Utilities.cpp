@@ -208,4 +208,11 @@ void GetCharacterRectangle(pg_ref pg, long position, short want_scrolled, short 
     }
 }
 
+long PointToCharacterOffset(pg_ref pg, co_ordinate_ptr point, co_ordinate_ptr offset_extra) {
+    if (pg) {
+        return pgPtToChar(pg, point, offset_extra);
+    }
+    return -1;
+}
+
 #endif // UTILITIES_H
