@@ -89,6 +89,66 @@ void SetHyperlinkTargetState(paige_rec_ptr doc, long position, short state, pg_b
     }
 }
 
+void SetHyperlinkCallback(paige_rec_ptr doc, ht_callback source_callback, ht_callback target_callback) {
+    if (doc) {
+        pgSetHyperlinkCallback(doc, source_callback, target_callback);
+    }
+}
+
+void DeleteHyperlinkSource(paige_rec_ptr doc, long position, pg_boolean redraw) {
+    if (doc) {
+        pgDeleteHyperlinkSource(doc, position, redraw);
+    }
+}
+
+void DeleteHyperlinkTarget(paige_rec_ptr doc, long position, pg_boolean redraw) {
+    if (doc) {
+        pgDeleteHyperlinkTarget(doc, position, redraw);
+    }
+}
+
+pg_boolean GetSourceURL(paige_rec_ptr doc, long position, char* url, short max_size) {
+    if (doc) {
+        return pgGetSourceURL(doc, position, (pg_char_ptr)url, max_size);
+    }
+    return FALSE;
+}
+
+pg_boolean GetTargetURL(paige_rec_ptr doc, long position, char* url, short max_size) {
+    if (doc) {
+        return pgGetTargetURL(doc, position, (pg_char_ptr)url, max_size);
+    }
+    return FALSE;
+}
+
+long GetSourceID(paige_rec_ptr doc, long position) {
+    if (doc) {
+        return pgGetSourceID(doc, position);
+    }
+    return 0;
+}
+
+long GetTargetID(paige_rec_ptr doc, long position) {
+    if (doc) {
+        return pgGetTargetID(doc, position);
+    }
+    return 0;
+}
+
+pg_boolean GetHyperlinkSourceInfo(paige_rec_ptr doc, long position, pg_boolean closest_one, pg_hyperlink_ptr hyperlink) {
+    if (doc) {
+        return pgGetHyperlinkSourceInfo(doc, position, closest_one, hyperlink);
+    }
+    return FALSE;
+}
+
+pg_boolean GetHyperlinkTargetInfo(paige_rec_ptr doc, long position, pg_boolean closest_one, pg_hyperlink_ptr hyperlink) {
+    if (doc) {
+        return pgGetHyperlinkTargetInfo(doc, position, closest_one, hyperlink);
+    }
+    return FALSE;
+}
+
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
