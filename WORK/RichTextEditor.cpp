@@ -719,6 +719,13 @@ void ScaleRectToRect(pg_scale_ptr scale_factor, rectangle_ptr src_rect, rectangl
     }
 }
 
+long PrintToPage(pg_ref pg, graf_device_ptr target, long starting_position, rectangle_ptr page_rect, short draw_mode) {
+    if (pg && page_rect) {
+        return pgPrintToPage(pg, target, starting_position, page_rect, draw_mode);
+    }
+    return 0;
+}
+
 void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
     if (pg) {
         UseMemory(pg);
