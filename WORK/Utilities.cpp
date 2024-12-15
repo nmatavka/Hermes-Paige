@@ -231,4 +231,14 @@ void GetMaxTextBounds(pg_ref pg, rectangle_ptr bounds, pg_boolean paginate) {
     }
 }
 
+long CheckOverflow(pg_ref pg) {
+    if (pg) {
+        paige_rec_ptr pg_rec = UseMemory(pg);
+        long overflow_amt = pg_rec->overflow_size;
+        UnuseMemory(pg);
+        return overflow_amt;
+    }
+    return 0;
+}
+
 #endif // UTILITIES_H
