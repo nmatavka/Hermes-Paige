@@ -34,8 +34,24 @@ void GetPageColor(pg_ref pg, color_value_ptr color) {
     pgGetPageColor(pg, color);
 }
 
+void SetTransparentColor(pg_globals_ptr globals, color_value trans_color) {
+    globals->trans_color = trans_color;
+}
+
+color_value GetTransparentColor(pg_globals_ptr globals) {
+    return globals->trans_color;
+}
+
 void ErasePageArea(pg_ref pg, shape_ref vis_area) {
     pgErasePageArea(pg, vis_area);
+}
+
+void FillPageAreaWithBackground(pg_ref pg, shape_ref vis_area) {
+    if (pg) {
+        color_value current_color;
+        GetPageColor(pg, &current_color);
+        pgErasePageArea(pg, vis_area);
+    }
 }
 
 void OffsetShape(shape_ref the_shape, long h, long v) {
