@@ -332,6 +332,43 @@ long NumRows(paige_rec_ptr doc, long position) {
     return 0;
 }
 
+void SaveDocument(paige_rec_ptr doc, const char* file_path) {
+    if (doc) {
+        int file_ref = _lcreat(file_path, 0);
+        if (file_ref != -1) {
+            memory_ref file_map = MemoryAlloc(&globals->mem_globals, sizeof(int), 1, 0);
+            int* f_ptr = (int*)UseMemory(file_map);
+            *f_ptr = file_ref;
+            UnuseMemory(file_map);
+            long position = 0;
+            pgSaveDoc(doc, &position, NULL, 0, NULL, file_map, 0);
+            DisposeMemory(file_map);
+            _lclose(file_ref);
+        }
+    }
+}
+
+pg_ref LoadDocument(const char* file_path) {
+    int file_ref = _lopen(file_path, OF_READ);
+    if (file_ref != -1) {
+        memory_ref file_map = MemoryAlloc(&globals->mem_globals, sizeof(int), 1, 0);
+        int* f_ptr = (int*)UseMemory(file_map);
+        *f_ptr = file_ref;
+        UnuseMemory(file_map);
+        long position = 0;
+        pg_ref doc = pgNewShell(&globals->mem_globals);
+        pg_error error = pgReadDoc(doc, &position, NULL, 0, NULL, file_map);
+        DisposeMemory(file_map);
+        _lclose(file_ref);
+        if (error != NO_ERROR) {
+            pgDispose(doc);
+            return NULL;
+        }
+        return doc;
+    }
+    return NULL;
+}
+
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
