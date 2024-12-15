@@ -724,6 +724,13 @@ void RemoveExclusion(pg_ref pg, pg_short_t position, short draw_mode) {
     }
 }
 
+void SwapExclusions(pg_ref pg, pg_short_t exclusion1, pg_short_t exclusion2, short draw_mode) {
+    if (pg && exclusion1 > 0 && exclusion1 <= pgNumExclusions(pg) &&
+        exclusion2 > 0 && exclusion2 <= pgNumExclusions(pg)) {
+        pgSwapExclusions(pg, exclusion1, exclusion2, draw_mode);
+    }
+}
+
 void ReplaceExclusion(pg_ref pg, rectangle_ptr exclusion, pg_short_t position, short draw_mode) {
     if (pg && position > 0 && position <= pgNumExclusions(pg)) {
         pgReplaceExclusion(pg, exclusion, position, draw_mode);
