@@ -514,6 +514,60 @@ void SetDocumentInfo(pg_ref pg, pg_doc_ptr doc_info, pg_boolean inval_text, shor
     }
 }
 
+void SetRepeatOffset(pg_ref pg, co_ordinate repeat_offset) {
+    if (pg) {
+        UseMemory(pg);
+        pg->doc_info.repeat_offset = repeat_offset;
+        UnuseMemory(pg);
+    }
+}
+
+co_ordinate GetRepeatOffset(pg_ref pg) {
+    if (pg) {
+        UseMemory(pg);
+        co_ordinate offset = pg->doc_info.repeat_offset;
+        UnuseMemory(pg);
+        return offset;
+    }
+    return {0, 0};
+}
+
+void SetRepeatSlop(pg_ref pg, long repeat_slop) {
+    if (pg) {
+        UseMemory(pg);
+        pg->doc_info.repeat_slop = repeat_slop;
+        UnuseMemory(pg);
+    }
+}
+
+long GetRepeatSlop(pg_ref pg) {
+    if (pg) {
+        UseMemory(pg);
+        long slop = pg->doc_info.repeat_slop;
+        UnuseMemory(pg);
+        return slop;
+    }
+    return 0;
+}
+
+void SetRepeatStop(pg_ref pg, long repeat_stop) {
+    if (pg) {
+        UseMemory(pg);
+        pg->doc_info.repeat_stop = repeat_stop;
+        UnuseMemory(pg);
+    }
+}
+
+long GetRepeatStop(pg_ref pg) {
+    if (pg) {
+        UseMemory(pg);
+        long stop = pg->doc_info.repeat_stop;
+        UnuseMemory(pg);
+        return stop;
+    }
+    return 0;
+}
+
 void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
     if (pg) {
         UseMemory(pg);
