@@ -634,6 +634,9 @@ HPALETTE GetDevicePalette(pg_ref pg) {
     paigeDoc = pgNew(globals, (generic_var)hwndFocus, vis_area, page_area, MEM_NULL, 0);
     if (paigeDoc) {
         // Set up Paige document properties here
+
+        // Set scroll parameters: horizontal unit = 32, vertical unit = 0 (variable), no extra space
+        pgSetScrollParams(paigeDoc, 32, 0, 0, 32);
     }
 
     pgDisposeShape(vis_area);
