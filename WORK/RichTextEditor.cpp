@@ -222,7 +222,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     hInst = hInstance;
 
-    // Register window class
+    // Define menu structure
+    HMENU hMenu = CreateMenu();
+    HMENU hFileMenu = CreatePopupMenu();
+    HMENU hEditMenu = CreatePopupMenu();
+
+    AppendMenu(hFileMenu, MF_STRING, ID_FILE_NEW, "New");
+    AppendMenu(hFileMenu, MF_STRING, ID_FILE_OPEN, "Open");
+    AppendMenu(hFileMenu, MF_STRING, ID_FILE_SAVE, "Save");
+    AppendMenu(hFileMenu, MF_SEPARATOR, 0, NULL);
+    AppendMenu(hFileMenu, MF_STRING, ID_FILE_EXIT, "Exit");
+
+    AppendMenu(hEditMenu, MF_STRING, ID_EDIT_UNDO, "Undo");
+    AppendMenu(hEditMenu, MF_STRING, ID_EDIT_REDO, "Redo");
+    AppendMenu(hEditMenu, MF_SEPARATOR, 0, NULL);
+    AppendMenu(hEditMenu, MF_STRING, ID_EDIT_CUT, "Cut");
+    AppendMenu(hEditMenu, MF_STRING, ID_EDIT_COPY, "Copy");
+    AppendMenu(hEditMenu, MF_STRING, ID_EDIT_PASTE, "Paste");
+    AppendMenu(hEditMenu, MF_STRING, ID_EDIT_DELETE, "Delete");
+
+    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hFileMenu, "File");
+    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hEditMenu, "Edit");
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = WndProc;
@@ -240,7 +260,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Create window
     hWnd = CreateWindow("RichTextEditor", "Basic Rich Text Editor", WS_OVERLAPPEDWINDOW,
-                        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
+                        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, hMenu, hInstance, NULL);
 
     if (!hWnd) {
         return FALSE;
