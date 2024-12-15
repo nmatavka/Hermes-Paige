@@ -263,7 +263,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     return 0;
 }
 
-void InitPaige(HWND hwnd) {
+void SetDevicePalette(pg_ref pg, HPALETTE hPalette) {
+    pgSetDevicePalette(pg, (generic_var)hPalette);
+}
+
+HPALETTE GetDevicePalette(pg_ref pg) {
+    return (HPALETTE)pgGetDevicePalette(pg);
+}
     // Initialize Paige globals with custom defaults
     pg_globals_ptr globals = /* Initialize or retrieve your pg_globals_ptr */;
     
