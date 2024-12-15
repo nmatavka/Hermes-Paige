@@ -71,6 +71,12 @@ void GetIndents(paige_rec_ptr doc, long* left_indent, long* right_indent, long* 
     }
 }
 
+void ExtendSelection(paige_rec_ptr doc, long amount_ext, short modifiers, pg_boolean show_hilite) {
+    if (doc) {
+        pgExtendSelection(doc, amount_ext, modifiers, show_hilite);
+    }
+}
+
 void SetDiscontinuousSelection(paige_rec_ptr doc, memory_ref select_list, long extra_offset, pg_boolean show_hilite) {
     if (doc && select_list) {
         pgSetSelectionList(doc, select_list, extra_offset, show_hilite);
