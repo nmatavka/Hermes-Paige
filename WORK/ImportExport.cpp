@@ -5,8 +5,37 @@
 extern paige_rec_ptr paigeDoc;
 
 // Custom import filter class
-class CustomImportFilter : public PaigeRTFImportFilter {
+class CustomImportFilter : public PaigeImportFilter {
 public:
+    pg_error pgVerifySignature() override {
+        // Implement signature verification logic
+        return NO_ERROR;
+    }
+
+    pg_error pgPrepareImport() override {
+        // Implement preparation logic for import
+        return NO_ERROR;
+    }
+
+    pg_boolean pgReadNextBlock() override {
+        // Implement logic to read the next block of text
+        return FALSE;
+    }
+
+    pg_error pgImportDone() override {
+        // Implement cleanup logic after import
+        return NO_ERROR;
+    }
+
+    void PG_FAR * pgProcessEmbedData(memory_ref ref, long embed_type) override {
+        // Implement processing of embedded data
+        return ref;
+    }
+
+    void pgMapFont(font_info_ptr font, long importing_os, long current_os) override {
+        // Implement font mapping logic
+    }
+
     void pgMapChars(pg_char_ptr chars, long num_chars, long file_os, long current_os) override {
         // Custom character mapping logic
         for (long i = 0; i < num_chars; ++i) {
@@ -16,6 +45,7 @@ public:
             }
         }
     }
+};
 };
 
 // Custom character mapping table
