@@ -12,6 +12,15 @@ paige_rec_ptr paigeDoc;
 
 // Function prototypes
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr scroll_pos, pg_boolean post_call) {
+    if (pg && pg->port.scroll_rgn) {
+        // Use the platform-specific scroll region to repaint the uncovered area
+        HDC hdc = GetDC((HWND)pg->port.window);
+        FillRgn(hdc, (HRGN)pg->port.scroll_rgn, (HBRUSH)(COLOR_WINDOW + 1));
+        ReleaseDC((HWND)pg->port.window, hdc);
+    }
+}
+
 void InitPaige(HWND hwnd);
 void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr scroll_pos, pg_boolean post_call);
 void InitVirtualMemory(pg_globals_ptr globals, int tempFile);
