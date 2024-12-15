@@ -38,7 +38,6 @@ void InitializeTransColor(pg_globals_ptr globals, HWND hwnd) {
 }
 
 void InitPaige(HWND hwnd);
-void InitializeTransColor(pg_globals_ptr globals, HWND hwnd);
 
 void SetPageAttributes(pg_ref pg, long attributes) {
     if (pg) {
@@ -229,18 +228,6 @@ void SelectToShape(paige_rec_ptr doc, memory_ref select_shape, pg_boolean show_h
     }
 }
 
-void SetDiscontinuousSelection(paige_rec_ptr doc, memory_ref select_list, long extra_offset, pg_boolean show_hilite) {
-    if (doc && select_list) {
-        pgSetSelectionList(doc, select_list, extra_offset, show_hilite);
-    }
-}
-
-memory_ref GetDiscontinuousSelection(paige_rec_ptr doc, pg_boolean for_paragraph) {
-    if (doc) {
-        return pgGetSelectionList(doc, for_paragraph);
-    }
-    return MEM_NULL;
-}
 void CalculateScrollPixels(paige_rec_ptr doc, short h_verb, short v_verb, long* h_pixels, long* v_pixels) {
     pgScrollUnitsToPixels(doc, h_verb, v_verb, TRUE, FALSE, h_pixels, v_pixels);
 }
@@ -923,18 +910,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         CleanupPaige();
         PostQuitMessage(0);
         break;
+        PostQuitMessage(0);
+        break;
     case WM_SETFOCUS:
         pgSetHiliteStates(paigeDoc, activate_verb, no_change_verb, TRUE);
         break;
     case WM_KILLFOCUS:
         pgSetHiliteStates(paigeDoc, deactivate_verb, no_change_verb, TRUE);
         break;
+    case WM_PAINT:
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
             pgDisplay(paigeDoc, NULL, MEM_NULL, MEM_NULL, NULL, direct_or);
             EndPaint(hWnd, &ps);
         }
+        break;
         break;
     case WM_HSCROLL:
         long h_pixels, v_pixels;
@@ -1042,7 +1033,4 @@ pg_boolean SetAttributes(long attributes) {
     }
     return FALSE;
 }
-    if (paigeDoc) {
-        pgDisposeDoc(paigeDoc);
-    }
 }
