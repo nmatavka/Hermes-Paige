@@ -1,58 +1,76 @@
-#include "Paige.h"
-#include "pgMemMgr.h"
-#include "pgText.h"
-#include "defprocs.h" // Required for CommandCharInfo
-
-extern paige_rec_ptr paigeDoc;
-
-void ApplyLogFontStyles(paige_rec_ptr doc, LOGFONT logFont) {
-    if (doc) {
-        // Set font by name
-        pgSetFontByName(doc, logFont.lfFaceName, NULL, FALSE);
-
-        // Set point size
-        pgSetPointSize(doc, abs(logFont.lfHeight), NULL, FALSE);
-
-        // Set style attributes
-        long styleBits = 0;
-        if (logFont.lfWeight == FW_BOLD) styleBits |= X_BOLD_BIT;
-        if (logFont.lfItalic) styleBits |= X_ITALIC_BIT;
-        if (logFont.lfUnderline) styleBits |= X_UNDERLINE_BIT;
-        if (logFont.lfStrikeOut) styleBits |= X_STRIKEOUT_BIT;
-
-        long setBits = (styleBits == X_PLAIN_TEXT) ? X_ALL_STYLES : styleBits;
-
-        // Apply styles and redraw
-        pgSetStyleBits(doc, styleBits, setBits, NULL, TRUE);
+void FindWordBoundaries(pg_ref pg, long offset, long* first_byte, long* last_byte, pg_boolean left_side, pg_boolean smart_select) {
+    if (pg) {
+        pgFindWord(pg, offset, first_byte, last_byte, left_side, smart_select);
     }
 }
 
-#include "Paige.h"
-#include "pgMemMgr.h"
-#include "pgText.h"
-#include "defprocs.h" // Required for CommandCharInfo
+void FindCtlWordBoundaries(pg_ref pg, long offset, long* first_byte, long* last_byte, short left_side) {
+    if (pg) {
+        pgFindCtIWord(pg, offset, first_byte, last_byte, left_side);
+    }
+}
 
-extern paige_rec_ptr paigeDoc;
+void FindParagraphBoundaries(pg_ref pg, long offset, long* first_byte, long* last_byte) {
+    if (pg) {
+        pgFindPar(pg, offset, first_byte, last_byte);
+    }
+}
 
-void ApplyLogFontStyles(paige_rec_ptr doc, LOGFONT logFont) {
-    if (doc) {
-        // Set font by name
-        pgSetFontByName(doc, logFont.lfFaceName, NULL, FALSE);
+void FindLineBoundaries(pg_ref pg, long offset, long* first_byte, long* last_byte) {
+    if (pg) {
+        pgFindLine(pg, offset, first_byte, last_byte);
+    }
+}
 
-        // Set point size
-        pgSetPointSize(doc, abs(logFont.lfHeight), NULL, FALSE);
+long GetNumberOfLines(pg_ref pg) {
+    if (pg) {
+        return pgNumLines(pg);
+    }
+    return 0;
+}
 
-        // Set style attributes
-        long styleBits = 0;
-        if (logFont.lfWeight == FW_BOLD) styleBits |= X_BOLD_BIT;
-        if (logFont.lfItalic) styleBits |= X_ITALIC_BIT;
-        if (logFont.lfUnderline) styleBits |= X_UNDERLINE_BIT;
-        if (logFont.lfStrikeOut) styleBits |= X_STRIKEOUT_BIT;
+long OffsetToLineNumber(pg_ref pg, long offset, pg_boolean line_end_has_precedence) {
+    if (pg) {
+        return pgOffsetToLineNum(pg, offset, line_end_has_precedence);
+    }
+    return 0;
+}
 
-        long setBits = (styleBits == X_PLAIN_TEXT) ? X_ALL_STYLES : styleBits;
+void LineNumberToOffset(pg_ref pg, long line_num, long* begin_offset, long* end_offset) {
+    if (pg) {
+        pgLineNumToOffset(pg, line_num, begin_offset, end_offset);
+    }
+}
 
-        // Apply styles and redraw
-        pgSetStyleBits(doc, styleBits, setBits, NULL, TRUE);
+long GetNumberOfParagraphs(pg_ref pg) {
+    if (pg) {
+        return pgNumPars(pg);
+    }
+    return 0;
+}
+
+long OffsetToParagraphNumber(pg_ref pg, long offset) {
+    if (pg) {
+        return pgOffsetToParNum(pg, offset);
+    }
+    return 0;
+}
+
+void ParagraphNumberToOffset(pg_ref pg, long par_num, long* begin_offset, long* end_offset) {
+    if (pg) {
+        pgParNumToOffset(pg, par_num, begin_offset, end_offset);
+    }
+}
+
+void LineNumberToBounds(pg_ref pg, long line_num, pg_boolean want_scrolled, pg_boolean want_scaled, pg_boolean line_end_has_precedence, rectangle_ptr bounds) {
+    if (pg) {
+        pgLineNumToBounds(pg, line_num, want_scrolled, want_scaled, line_end_has_precedence, bounds);
+    }
+}
+
+void ParagraphNumberToBounds(pg_ref pg, long par_num, pg_boolean want_scrolled, pg_boolean want_scaled, rectangle_ptr bounds) {
+    if (pg) {
+        pgParNumToBounds(pg, par_num, want_scrolled, want_scaled, bounds);
     }
 }
 
