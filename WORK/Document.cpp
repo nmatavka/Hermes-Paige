@@ -372,7 +372,21 @@ pg_ref LoadDocument(const char* file_path) {
     return NULL;
 }
 
-void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
+pg_error VerifyPaigeFile(const char* file_path) {
+    int file_ref = _lopen(file_path, OF_READ);
+    if (file_ref != -1) {
+        memory_ref file_map = MemoryAlloc(&globals->mem_globals, sizeof(int), 1, 0);
+        int* f_ptr = (int*)UseMemory(file_map);
+        *f_ptr = file_ref;
+        UnuseMemory(file_map);
+        long position = 0;
+        pg_error error = pgVerifyFile(file_map, NULL, position);
+        DisposeMemory(file_map);
+        _lclose(file_ref);
+        return error;
+    }
+    return BAD_TYPE_ERR;
+}
     if (doc) {
         select_pair selection;
         pgGetSelection(doc, &selection.begin, &selection.end);
