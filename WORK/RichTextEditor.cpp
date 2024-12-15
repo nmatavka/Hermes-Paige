@@ -352,6 +352,14 @@ pg_boolean GetTabBase(paige_rec_ptr doc, long* tab_base) {
     return FALSE;
 }
 
+void SetTab(paige_rec_ptr doc, long tab_value, pg_boolean redraw) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgSetTabs(doc, tab_value, &selection, redraw);
+    }
+}
+
 void SetTabBase(paige_rec_ptr doc, long tab_base, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
