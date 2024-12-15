@@ -686,6 +686,25 @@ long ContainerToChar(pg_ref pg, pg_short_t position) {
     return -1;
 }
 
+pg_short_t NumExclusions(pg_ref pg) {
+    if (pg) {
+        return pgNumExclusions(pg);
+    }
+    return 0;
+}
+
+void InsertExclusion(pg_ref pg, rectangle_ptr exclusion, pg_short_t position, long ref_con, short draw_mode) {
+    if (pg) {
+        pgInsertExclusion(pg, exclusion, position, ref_con, draw_mode);
+    }
+}
+
+void InsertExclusionShape(pg_ref pg, pg_short_t position, shape_ref exclude_shape, short draw_mode) {
+    if (pg) {
+        pgInsertExclusionShape(pg, position, exclude_shape, draw_mode);
+    }
+}
+
 void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
     if (pg) {
         UseMemory(pg);
