@@ -25,6 +25,19 @@ void ApplyLogFontStyles(paige_rec_ptr doc, LOGFONT logFont) {
     }
 }
 
+void InvalidateSelection(pg_ref pg, long select_from, long select_to) {
+    if (pg) {
+        pgInvalSelect(pg, select_from, select_to);
+    }
+}
+
+pg_boolean GetHighlightRegion(pg_ref pg, select_pair_ptr range, memory_ref select_list, shape_ref rgn) {
+    if (pg && rgn) {
+        return pgGetHiliteRgn(pg, range, select_list, rgn);
+    }
+    return FALSE;
+}
+
 void GetShapeAreas(pg_ref pg, shape_ref vis_area, shape_ref page_area, shape_ref exclude_area) {
     pgGetAreas(pg, vis_area, page_area, exclude_area);
 }
