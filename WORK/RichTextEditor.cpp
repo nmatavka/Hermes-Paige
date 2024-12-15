@@ -101,6 +101,10 @@ memory_ref GetDiscontinuousSelection(paige_rec_ptr doc, pg_boolean for_paragraph
     }
     return MEM_NULL;
 }
+void CalculateScrollPixels(paige_rec_ptr doc, short h_verb, short v_verb, long* h_pixels, long* v_pixels) {
+    pgScrollUnitsToPixels(doc, h_verb, v_verb, TRUE, FALSE, h_pixels, v_pixels);
+}
+
 void UpdateScrollbars(paige_rec_ptr doc, HWND hWnd) {
     short h_value, v_value, max_h, max_v;
 
@@ -535,17 +539,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         }
         break;
     case WM_HSCROLL:
+        long h_pixels, v_pixels;
         switch (LOWORD(wParam)) {
             case SB_PAGELEFT:
+                CalculateScrollPixels(paigeDoc, scroll_page, scroll_none, &h_pixels, &v_pixels);
                 pgScroll(paigeDoc, scroll_page, scroll_none, best_way);
                 break;
             case SB_LINELEFT:
+                CalculateScrollPixels(paigeDoc, scroll_unit, scroll_none, &h_pixels, &v_pixels);
                 pgScroll(paigeDoc, scroll_unit, scroll_none, best_way);
                 break;
             case SB_PAGERIGHT:
+                CalculateScrollPixels(paigeDoc, -scroll_page, scroll_none, &h_pixels, &v_pixels);
                 pgScroll(paigeDoc, -scroll_page, scroll_none, best_way);
                 break;
             case SB_LINERIGHT:
+                CalculateScrollPixels(paigeDoc, -scroll_unit, scroll_none, &h_pixels, &v_pixels);
                 pgScroll(paigeDoc, -scroll_unit, scroll_none, best_way);
                 break;
             case SB_THUMBPOSITION:

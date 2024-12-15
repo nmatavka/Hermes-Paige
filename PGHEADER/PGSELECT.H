@@ -53,6 +53,7 @@ extern PG_PASCAL (pg_boolean) pgPtInPageArea (paige_rec_ptr pg, co_ordinate_ptr 
 		co_ordinate_ptr offset_extra, short PG_FAR *view_flags );
 extern PG_PASCAL (void) pgBuildHiliteRgn (paige_rec_ptr pg, t_select_ptr selections,
 		pg_short_t select_qty, shape_ref rgn);
+extern PG_PASCAL (void) pgScrollUnitsToPixels (pg_ref pg, short h_verb, short v_verb, pg_boolean add_to_position, pg_boolean window_origin_changes, long PG_FAR *h_pixels, long PG_FAR *v_pixels);
 extern PG_PASCAL (pg_boolean) pgAlignSelection (paige_rec_ptr pg, short align_verb, size_t PG_FAR *select_offset);
 extern PG_PASCAL (pg_short_t) pgFindEmptyHilite (paige_rec_ptr pg, pg_short_t PG_FAR *rec);
 extern PG_PASCAL (void) pgInvalTextMeasure (paige_rec_ptr pg_rec, long select_from,
