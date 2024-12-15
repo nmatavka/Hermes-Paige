@@ -5,6 +5,7 @@
 #include "PGHEADER/PGSELECT.H"
 #include "pgMemMgr.h"
 #include "pgTraps.h"
+#include "pgTxrCPP.h"
 #include "pgHLevel.h"
 
 short m_KeyModifiers = 0; // Declare the key modifiers variable
@@ -22,6 +23,37 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
             ReleaseDC((HWND)pg->port.window, hdc);
         }
     }
+pg_error ImportFile(pg_ref pg, pg_filetype filetype, long feature_flags, long file_begin, pg_file_unit f_ref) {
+    PaigeImportObject filter;
+    pg_globals_ptr globals;
+    long flags;
+    pg_error result = NO_ERROR;
+
+    if (!(flags = feature_flags))
+        flags = IMPORT_EVERYTHING_FLAG;
+
+    globals = pgGetGlobals(pg);
+
+    switch (filetype) {
+        case pg_text_type:
+            filter = new PaigeImportFilter();
+            break;
+        case pg_rtf_type:
+            filter = (PaigeImportObject) new PaigeRTFImportFilter();
+            break;
+        case pg_paige_type:
+            filter = (PaigeImportObject) new PaigeNativeImportFilter();
+            break;
+        default:
+            return (pg_error) BAD_TYPE_ERR;
+    }
+
+    if ((result = filter->pgInitImportFile(globals, f_ref, MEM_NULL, NULL, file_begin, UNKNOWN_POSITION)) == NO_ERROR) {
+        result = filter->pgImportFile(pg, CURRENT_POSITION, flags, TRUE, best_way);
+    }
+
+    delete filter;
+    return result;
 }
 
 void pgDrawPageProc(paige_rec_ptr pg, shape_ptr page_shape, pg_short_t r_qty, pg_short_t page_num, co_ordinate_ptr vis_offset, short draw_mode_used, short call_order) {
