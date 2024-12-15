@@ -234,22 +234,17 @@ void RedoAction() {
 }
 }
 
-void SetFontStyle(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle) {
+void SetTextStyle(paige_rec_ptr doc, long styleBits, long setWhichBits, pg_boolean redraw) {
     if (doc) {
-        style_info style;
-        pgGetStyleInfo(doc, NULL, &style, NULL, best_way);
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgSetStyleBits(doc, styleBits, setWhichBits, &selection, redraw);
+    }
+}
 
-        // Set font name
-        strncpy(style.font_name, fontName, sizeof(style.font_name) - 1);
-        style.font_name[sizeof(style.font_name) - 1] = '\0';
-
-        // Set font size
-        style.point = fontSize;
-
-        // Set font style (e.g., bold, italic)
-        style.styles = fontStyle;
-
-        pgSetStyleInfo(doc, NULL, &style, best_way);
+void GetTextStyle(paige_rec_ptr doc, long* styleBits, long* consistentBits) {
+    if (doc && styleBits && consistentBits) {
+        pgGetStyleBits(doc, styleBits, consistentBits);
     }
 }
 
