@@ -64,26 +64,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 void CopyText() {
     if (paigeDoc) {
-        pgPrepareUndo(paigeDoc, undo_undo, NULL);
-        pgPrepareUndo(paigeDoc, undo_cut, NULL);
+        pgPrepareUndo(paigeDoc, undo_copy, NULL);
         pgCopyToClipboard(paigeDoc, NULL, 0, best_way);
     }
 }
 
 void PasteText() {
     if (paigeDoc) {
+        pgPrepareUndo(paigeDoc, undo_paste, NULL);
         pgPasteFromClipboard(paigeDoc, NULL, 0, best_way);
     }
 }
 
 void CutText() {
     if (paigeDoc) {
+        pgPrepareUndo(paigeDoc, undo_cut, NULL);
         pgCutToClipboard(paigeDoc, NULL, 0, best_way);
     }
 }
 
 void UndoAction() {
     if (paigeDoc) {
+        pgPrepareUndo(paigeDoc, undo_undo, NULL);
         pgUndo(paigeDoc, 1, best_way);
     }
 }
