@@ -161,9 +161,10 @@ long GetAttributes() {
 }
 
 pg_boolean SetAttributes(long attributes) {
-#endif // UTILITIES_H
     if (paigeDoc) {
         return pgSetAttributes(paigeDoc, attributes);
     }
     return FALSE;
 }
+
+#endif // UTILITIES_H

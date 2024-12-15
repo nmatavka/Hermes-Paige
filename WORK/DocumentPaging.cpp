@@ -5,9 +5,9 @@
 #include "pgMemMgr.h"
 #include <sys/stat.h>
 
-#endif // DOCUMENTPAGING_H
-
 extern paige_rec_ptr paigeDoc;
+
+#endif // DOCUMENTPAGING_H
 
 pg_ref LoadDocument(const char* file_path) {
     struct stat file_stat;

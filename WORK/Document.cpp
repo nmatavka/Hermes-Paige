@@ -5,9 +5,9 @@
 #include "pgMemMgr.h"
 #include "pghtext.h"
 
-#endif // DOCUMENT_H
-
 extern paige_rec_ptr paigeDoc;
+
+#endif // DOCUMENT_H
 
 PG_PASCAL void HyperlinkCallback(paige_rec_ptr pg, pg_hyperlink_ptr hypertext, short command, short modifiers, long position, pg_char_ptr URL) {
     // Call the standard callback first to get default behaviour:
