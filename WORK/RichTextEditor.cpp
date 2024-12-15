@@ -101,10 +101,17 @@ memory_ref GetDiscontinuousSelection(paige_rec_ptr doc, pg_boolean for_paragraph
     }
     return MEM_NULL;
 }
-void CleanupPaige();
-long GetAttributes();
-pg_boolean SetAttributes(long attributes);
-void CopyText();
+void UpdateScrollbars(paige_rec_ptr doc, HWND hWnd) {
+    short h_value, v_value, max_h, max_v;
+
+    if (pgGetScrollValues(doc, &h_value, &v_value, &max_h, &max_v)) {
+        if (max_v < 1) max_v = 1; // Ensure scrollbar doesn't disappear
+        SetScrollRange(hWnd, SB_VERT, 0, max_v, FALSE);
+        SetScrollRange(hWnd, SB_HORZ, 0, max_h, FALSE);
+        SetScrollPos(hWnd, SB_VERT, v_value, TRUE);
+        SetScrollPos(hWnd, SB_HORZ, h_value, TRUE);
+    }
+}
 void PasteText();
 void CutText();
 void DeleteText();
