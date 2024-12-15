@@ -137,7 +137,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
-            // Add code to render Paige content here
+            pgDisplay(paigeDoc, NULL, MEM_NULL, MEM_NULL, NULL, direct_or);
             EndPaint(hWnd, &ps);
         }
         break;
