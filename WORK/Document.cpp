@@ -93,24 +93,24 @@ void UpdateScrollbars(paige_rec_ptr doc, HWND hWnd) {
     }
 }
 
-void SetParagraphBorders(paige_rec_ptr doc, long border_info, pg_boolean redraw) {
+void SetParagraphShading(paige_rec_ptr doc, long shading_color, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
         pgGetSelection(doc, &selection.begin, &selection.end);
         par_info info;
         pgGetParInfo(doc, &selection, &info);
-        info.table.border_info = border_info;
+        info.table.border_shading = shading_color;
         pgSetParInfo(doc, &selection, &info, NULL, redraw);
     }
 }
 
-pg_boolean GetParagraphBorders(paige_rec_ptr doc, long* border_info) {
-    if (doc && border_info) {
+pg_boolean GetParagraphShading(paige_rec_ptr doc, long* shading_color) {
+    if (doc && shading_color) {
         select_pair selection;
         pgGetSelection(doc, &selection.begin, &selection.end);
         par_info info;
         if (pgGetParInfo(doc, &selection, &info)) {
-            *border_info = info.table.border_info;
+            *shading_color = info.table.border_shading;
             return TRUE;
         }
     }
