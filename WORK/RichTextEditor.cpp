@@ -382,6 +382,8 @@ undo_ref undoStack[MAX_UNDO_STACK];
 short undoStackIndex = 0;
 
 void CopyText() {
+    // Implementation needed
+}
 
 void PrepareUndo(short verb, long insertSize = 0, long insertPosition = 0) {
     undo_ref newUndoRef = MEM_NULL;
