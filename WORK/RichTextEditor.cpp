@@ -122,7 +122,7 @@ void PrepareUndo(short verb, long insertSize = 0, long insertPosition = 0) {
         newUndoRef = pgPrepareUndo(paigeDoc, verb, NULL);
     }
 
-    if (newUndoRef != previousUndoRef) {
+    if (!previousUndoRef || newUndoRef != previousUndoRef) {
         pgSetUndoRefCon(newUndoRef, 12345); // Example: Set a custom reference value
         if (undoStackIndex < MAX_UNDO_STACK) {
             undoStack[undoStackIndex++] = newUndoRef;
