@@ -30,19 +30,29 @@ pg_boolean GetFontByName(paige_rec_ptr doc, char* fontName) {
     return FALSE;
 }
 
-void SetPointSize(paige_rec_ptr doc, short pointSize, pg_boolean redraw) {
+void SetSelection(paige_rec_ptr doc, long begin_sel, long end_sel, short modifiers, pg_boolean show_hilite) {
     if (doc) {
-        select_pair selection;
-        pgGetSelection(doc, &selection.begin, &selection.end);
-        pgSetPointSize(doc, pointSize, &selection, redraw);
+        pgSetSelection(doc, begin_sel, end_sel, modifiers, show_hilite);
     }
 }
 
-pg_boolean GetPointSize(paige_rec_ptr doc, short* pointSize) {
+void GetSelection(paige_rec_ptr doc, long* begin_sel, long* end_sel) {
     if (doc) {
-        return pgGetPointsize(doc, pointSize);
+        pgGetSelection(doc, begin_sel, end_sel);
     }
-    return FALSE;
+}
+
+void SetDiscontinuousSelection(paige_rec_ptr doc, memory_ref select_list, long extra_offset, pg_boolean show_hilite) {
+    if (doc && select_list) {
+        pgSetSelectionList(doc, select_list, extra_offset, show_hilite);
+    }
+}
+
+memory_ref GetDiscontinuousSelection(paige_rec_ptr doc, pg_boolean for_paragraph) {
+    if (doc) {
+        return pgGetSelectionList(doc, for_paragraph);
+    }
+    return MEM_NULL;
 }
 void CleanupPaige();
 long GetAttributes();
