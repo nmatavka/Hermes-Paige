@@ -24,7 +24,7 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
             ReleaseDC((HWND)pg->port.window, hdc);
         }
     }
-    return ImportFile(pg, filetype, feature_flags, file_begin, f_ref);
+}
 }
 
 void pgDrawPageProc(paige_rec_ptr pg, shape_ptr page_shape, pg_short_t r_qty, pg_short_t page_num, co_ordinate_ptr vis_offset, short draw_mode_used, short call_order) {
@@ -70,9 +70,6 @@ void PrintDocument(HDC out_dc, pg_ref pg, rectangle_ptr page_rect, double scale_
 
     // Clear the print device after printing
     pgSetPrintDevice(pg, MEM_NULL);
-}
-}
-}
 }
 
 void InitializeTransColor(pg_globals_ptr globals, HWND hwnd) {
