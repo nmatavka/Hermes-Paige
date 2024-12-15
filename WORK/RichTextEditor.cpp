@@ -22,6 +22,10 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
             ReleaseDC((HWND)pg->port.window, hdc);
         }
     }
+}
+}
+}
+}
 
 void InitializeTransColor(pg_globals_ptr globals, HWND hwnd) {
     if (globals) {
