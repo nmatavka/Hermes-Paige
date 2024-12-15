@@ -4,7 +4,33 @@
 
 extern paige_rec_ptr paigeDoc;
 
-// Custom import filter class
+class CustomRTFImportFilter : public PaigeRTFImportFilter {
+public:
+    void ProcessInfoCommand(short command, short parameter) override {
+        // Implement custom processing for unsupported document information commands
+        switch (command) {
+            case 1: // author
+                // Handle author command
+                break;
+            case 2: // buptim
+                // Handle buptim command
+                break;
+            // Add more cases as needed
+            default:
+                // Default handling
+                break;
+        }
+    }
+
+    void UnsupportedCommand(pg_char_ptr command, short parameter) override {
+        // Implement custom processing for unsupported RTF commands
+        if (strcmp(command, "bonus") == 0) {
+            // Handle bonus command
+        }
+        // Add more custom command handling as needed
+    }
+};
+
 class CustomImportFilter : public PaigeImportFilter {
 public:
     pg_error pgVerifySignature() override {
