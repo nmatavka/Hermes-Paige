@@ -15,17 +15,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         case WM_PAINT:
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
-            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1)); // Clear the window
             EndPaint(hwnd, &ps);
             break;
         case WM_KEYDOWN:
-            char text[256];
-            int length = GetWindowTextLength(hwnd);
-            if (length < 255) {
+            if (wParam >= ' ' && wParam <= '~') { // Check for printable characters
+                char text[256];
+                int length = GetWindowTextLength(hwnd);
+                if (length < 255) {
                 GetWindowText(hwnd, text, sizeof(text));
-                text[length] = (char)wParam; // Append the new character
-                text[length + 1] = '\0'; // Null-terminate the string
-                SetWindowText(hwnd, text); // Update the window text
+                    text[length] = (char)wParam; // Append the new character
+                    text[length + 1] = '\0'; // Null-terminate the string
+                    SetWindowText(hwnd, text); // Update the window text
+                }
             }
             break;
     }
