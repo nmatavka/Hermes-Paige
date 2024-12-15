@@ -254,4 +254,32 @@ void FillBlock(void PG_FAR *block, long block_size, pg_char value) {
     }
 }
 
+short GetLowWord(long value) {
+    return pgLoWord(value);
+}
+
+short GetHighWord(long value) {
+    return pgHiWord(value);
+}
+
+long AbsoluteValue(long value) {
+    return pgAbsoluteValue(value);
+}
+
+pg_fixed RoundFixed(pg_fixed fix) {
+    return pgRoundFixed(fix);
+}
+
+pg_fixed MultiplyFixed(pg_fixed fix1, pg_fixed fix2) {
+    return pgMultiplyFixed(fix1, fix2);
+}
+
+pg_fixed DivideFixed(pg_fixed fix1, pg_fixed fix2) {
+    return pgDivideFixed(fix1, fix2);
+}
+
+pg_fixed FixedRatio(short n, short d) {
+    return pgFixedRatio(n, d);
+}
+
 #endif // UTILITIES_H
