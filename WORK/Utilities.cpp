@@ -84,6 +84,14 @@ long GetCharacterType(pg_ref pg, long offset, long mask_bits) {
     return 0;
 }
 
+long FindCharacterType(pg_ref pg, long char_info, long* offset, pg_char_ptr the_byte) {
+    if (pg && offset) {
+        long result = pgFindCharType(pg, char_info, offset, the_byte);
+        return result;
+    }
+    return 0;
+}
+
 pg_short_t GetCharacterBytes(pg_ref pg, long offset, pg_char_ptr char_bytes) {
     if (pg) {
         return pgCharByte(pg, offset, char_bytes);
