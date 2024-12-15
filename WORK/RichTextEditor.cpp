@@ -234,11 +234,25 @@ void RedoAction() {
 }
 }
 
-void SetTextStyle(paige_rec_ptr doc, long styleBits, long setWhichBits, pg_boolean redraw) {
+void ApplyLogFontStyles(paige_rec_ptr doc, LOGFONT logFont) {
     if (doc) {
-        select_pair selection;
-        pgGetSelection(doc, &selection.begin, &selection.end);
-        pgSetStyleBits(doc, styleBits, setWhichBits, &selection, redraw);
+        // Set font by name
+        pgSetFontByName(doc, logFont.lfFaceName, NULL, FALSE);
+
+        // Set point size
+        pgSetPointSize(doc, abs(logFont.lfHeight), NULL, FALSE);
+
+        // Set style attributes
+        long styleBits = 0;
+        if (logFont.lfWeight == FW_BOLD) styleBits |= X_BOLD_BIT;
+        if (logFont.lfItalic) styleBits |= X_ITALIC_BIT;
+        if (logFont.lfUnderline) styleBits |= X_UNDERLINE_BIT;
+        if (logFont.lfStrikeOut) styleBits |= X_STRIKEOUT_BIT;
+
+        long setBits = (styleBits == X_PLAIN_TEXT) ? X_ALL_STYLES : styleBits;
+
+        // Apply styles and redraw
+        pgSetStyleBits(doc, styleBits, setBits, NULL, TRUE);
     }
 }
 
