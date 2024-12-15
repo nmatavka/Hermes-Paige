@@ -332,7 +332,7 @@ long NumRows(paige_rec_ptr doc, long position) {
     return 0;
 }
 
-void SaveDocument(paige_rec_ptr doc, const char* file_path, bool terminate_file = true) {
+void SaveCustomData(paige_rec_ptr doc, const char* file_path, void* custom_data, long data_size, pg_file_key file_key) {
     if (doc) {
         int file_ref = _lcreat(file_path, 0);
         if (file_ref != -1) {
@@ -342,13 +342,16 @@ void SaveDocument(paige_rec_ptr doc, const char* file_path, bool terminate_file 
             UnuseMemory(file_map);
             long position = 0;
             pgSaveDoc(doc, &position, NULL, 0, NULL, file_map, 0);
-            if (terminate_file) {
-                pgTerminateFile(doc, &position, NULL, file_map);
-            }
+            pgWriteKeyData(doc, file_key, custom_data, data_size, 0, NULL, &position, file_map);
+            pgTerminateFile(doc, &position, NULL, file_map);
             DisposeMemory(file_map);
             _lclose(file_ref);
         }
     }
+}
+
+void SetCustomDataReadHandler(pg_file_key file_key, pg_read_handler read_handler) {
+    pgSetHandler(&globals->mem_globals, file_key, read_handler, NULL, NULL, NULL, NULL);
 }
 
 pg_ref LoadDocument(const char* file_path) {
