@@ -350,6 +350,12 @@ void SetScrollPosition(paige_rec_ptr doc, long h_pos, long v_pos) {
     }
 }
 
+void HandleWindowOriginChange(paige_rec_ptr doc, co_ordinate_ptr original_origin, co_ordinate_ptr new_origin) {
+    if (doc) {
+        pgWindowOriginChanged(doc, original_origin, new_origin);
+    }
+}
+
 void Scroll(paige_rec_ptr doc, short h_verb, short v_verb, short draw_mode) {
     if (doc) {
         long h_pixels, v_pixels;
@@ -659,7 +665,7 @@ HPALETTE GetDevicePalette(pg_ref pg) {
     shape_ref vis_area = pgRectToShape(globals, &visRect);
     shape_ref page_area = pgRectToShape(globals, &visRect);
 
-    paigeDoc = pgNew(globals, (generic_var)hwndFocus, vis_area, page_area, MEM_NULL, 0);
+    paigeDoc = pgNew(globals, (generic_var)hwndFocus, vis_area, page_area, MEM_NULL, EXTERNAL_SCROLL_BIT);
     if (paigeDoc) {
         // Set up Paige document properties here
 
