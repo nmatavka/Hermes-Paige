@@ -3,6 +3,7 @@
 #include "PGHEADER/PGBASICS.H"
 #include "PGHEADER/PGCLIPBD.H"
 #include "PGHEADER/PGSELECT.H"
+#include "pgMemMgr.h"
 
 short m_KeyModifiers = 0; // Declare the key modifiers variable
 HINSTANCE hInst;
@@ -11,6 +12,8 @@ paige_rec_ptr paigeDoc;
 // Function prototypes
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void InitPaige(HWND hwnd);
+void InitVirtualMemory(pg_globals_ptr globals, int tempFile);
+void UninitVirtualMemory(int tempFile);
 void SetFontStyle(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle);
 void CleanupPaige();
 long GetAttributes();
@@ -57,13 +60,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
-    // Main message loop
+    // Initialize virtual memory
+    int tempFile = _open("tempfile.tmp", _O_RDWR | _O_CREAT | _O_TEMPORARY, _S_IREAD | _S_IWRITE);
+    if (tempFile != -1) {
+        InitVirtualMemory(&globals->mem_globals, tempFile);
+    }
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
+    // Uninitialize virtual memory
+    if (tempFile != -1) {
+        UninitVirtualMemory(tempFile);
+    }
+
     return (int)msg.wParam;
+}
+
+void InitVirtualMemory(pg_globals_ptr globals, int tempFile) {
+    InitVirtualMemory(globals, NULL, tempFile);
+}
+
+void UninitVirtualMemory(int tempFile) {
+    _close(tempFile);
 }
 
 void CopyText() {
