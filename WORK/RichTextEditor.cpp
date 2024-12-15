@@ -120,10 +120,10 @@ void PrepareUndo(short verb, long insertSize = 0, long insertPosition = 0) {
         newUndoRef = pgPrepareUndo(paigeDoc, verb, (void PG_FAR *)insertParams);
     } else if (verb == undo_page_change || verb == undo_vis_change || verb == undo_exclude_change || verb == undo_doc_info || verb == undo_embed_insert) {
         newUndoRef = pgPrepareUndo(paigeDoc, verb, NULL);
-        newUndoRef = pgPrepareUndo(paigeDoc, verb, NULL);
     }
 
     if (newUndoRef != previousUndoRef) {
+        pgSetUndoRefCon(newUndoRef, 12345); // Example: Set a custom reference value
         if (undoStackIndex < MAX_UNDO_STACK) {
             undoStack[undoStackIndex++] = newUndoRef;
         } else {
@@ -137,6 +137,8 @@ void PrepareUndo(short verb, long insertSize = 0, long insertPosition = 0) {
 void UndoAction() {
     if (paigeDoc && undoStackIndex > 0) {
         undo_ref lastUndoRef = undoStack[--undoStackIndex];
+        short undoType = pgUndoType(lastUndoRef);
+        // Optionally, use undoType to update UI or log the action
         undo_ref redoRef = pgUndo(paigeDoc, lastUndoRef, TRUE, best_way);
         pgDisposeUndo(lastUndoRef);
         if (undoStackIndex < MAX_UNDO_STACK) {
