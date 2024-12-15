@@ -248,7 +248,7 @@ long GetUniqueID(pg_ref pg) {
     return 0;
 }
 
-void FillBlock(void PG_FAR *block, long block_size, pg_char value) {
+void FillBlock(void* block, long block_size, pg_char value) {
     if (block) {
         pgFillBlock(block, block_size, value);
     }
