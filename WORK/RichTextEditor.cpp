@@ -89,10 +89,39 @@ void UninitVirtualMemory(int tempFile) {
 }
 
 void CopyText() {
-undo_ref lastUndoRef = MEM_NULL; // Global variable to store the last undo reference
-undo_ref lastRedoRef = MEM_NULL; // Global variable to store the last redo reference
+#define MAX_UNDO_STACK 16
+
+undo_ref undoStack[MAX_UNDO_STACK];
+short undoStackIndex = 0;
+
+void PrepareUndo(short verb) {
+    undo_ref newUndoRef = MEM_NULL;
+    undo_ref previousUndoRef = (undoStackIndex > 0) ? undoStack[undoStackIndex - 1] : MEM_NULL;
+
+    if (verb == undo_typing || verb == undo_fwd_delete || verb == undo_backspace) {
+        if (previousUndoRef && pgUndoType(previousUndoRef) == verb) {
+            newUndoRef = pgPrepareUndo(paigeDoc, verb, (void PG_FAR *)previousUndoRef);
+        } else {
+            newUndoRef = pgPrepareUndo(paigeDoc, verb, NULL);
+        }
+    } else {
+        newUndoRef = pgPrepareUndo(paigeDoc, verb, NULL);
+    }
+
+    if (newUndoRef != previousUndoRef) {
+        if (undoStackIndex < MAX_UNDO_STACK) {
+            undoStack[undoStackIndex++] = newUndoRef;
+        } else {
+            pgDisposeUndo(undoStack[0]);
+            memmove(undoStack, undoStack + 1, (MAX_UNDO_STACK - 1) * sizeof(undo_ref));
+            undoStack[MAX_UNDO_STACK - 1] = newUndoRef;
+        }
+    }
+}
 
 void UndoAction() {
+    if (paigeDoc && undoStackIndex > 0) {
+        undo_ref lastUndoRef = undoStack[--undoStackIndex];
         pgPrepareUndo(paigeDoc, undo_copy, NULL);
         pgCopyToClipboard(paigeDoc, NULL, 0, best_way);
     }
@@ -123,18 +152,22 @@ void DeleteText() {
     }
 }
     if (paigeDoc) {
-    if (paigeDoc && lastUndoRef) {
-        lastRedoRef = pgUndo(paigeDoc, lastUndoRef, TRUE, best_way);
+        undo_ref redoRef = pgUndo(paigeDoc, lastUndoRef, TRUE, best_way);
         pgDisposeUndo(lastUndoRef);
-        lastUndoRef = MEM_NULL;
+        if (undoStackIndex < MAX_UNDO_STACK) {
+            undoStack[undoStackIndex++] = redoRef;
+        }
     }
 }
 
 void RedoAction() {
-    if (paigeDoc && lastRedoRef) {
-        lastUndoRef = pgUndo(paigeDoc, lastRedoRef, TRUE, best_way);
+    if (paigeDoc && undoStackIndex > 0) {
+        undo_ref lastRedoRef = undoStack[--undoStackIndex];
+        undo_ref undoRef = pgUndo(paigeDoc, lastRedoRef, TRUE, best_way);
         pgDisposeUndo(lastRedoRef);
-        lastRedoRef = MEM_NULL;
+        if (undoStackIndex < MAX_UNDO_STACK) {
+            undoStack[undoStackIndex++] = undoRef;
+        }
     }
     }
 }
