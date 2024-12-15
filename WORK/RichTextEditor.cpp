@@ -154,8 +154,11 @@ void InitPaige(HWND hwnd) {
     // Initialize Paige document
     pg_globals_ptr globals = /* Initialize or retrieve your pg_globals_ptr */;
     HWND hwndFocus = GetFocus();
-    shape_ref vis_area = pgRectToShape(globals, /* Define your visible area rectangle */);
-    shape_ref page_area = pgRectToShape(globals, /* Define your page area rectangle */);
+    RECT clientRect;
+    GetClientRect(hwnd, &clientRect);
+    rectangle visRect = {{clientRect.top, clientRect.left}, {clientRect.bottom, clientRect.right}};
+    shape_ref vis_area = pgRectToShape(globals, &visRect);
+    shape_ref page_area = pgRectToShape(globals, &visRect);
 
     paigeDoc = pgNew(globals, (generic_var)hwndFocus, vis_area, page_area, MEM_NULL, 0);
     if (paigeDoc) {
