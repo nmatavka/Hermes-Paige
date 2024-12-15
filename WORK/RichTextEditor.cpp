@@ -1028,7 +1028,6 @@ void SetDevicePalette(pg_ref pg, HPALETTE hPalette) {
 HPALETTE GetDevicePalette(pg_ref pg) {
     return (HPALETTE)pgGetDevicePalette(pg);
 }
-}
 
 long GetAttributes() {
     if (paigeDoc) {
