@@ -24,47 +24,7 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
             ReleaseDC((HWND)pg->port.window, hdc);
         }
     }
-pg_error pgImportFileFromC(pg_ref pg, pg_filetype filetype, long feature_flags, long file_begin, pg_file_unit f_ref) {
-    pg_filetype fileType = pgDetermineFileType(f_ref, NULL, file_begin);
-    PaigeImportObject filter;
-    pg_globals_ptr globals;
-    long flags;
-    pg_error result = NO_ERROR;
-
-    if (!(flags = feature_flags))
-        flags = IMPORT_EVERYTHING_FLAG;
-
-    globals = pgGetGlobals(pg);
-
-    switch (fileType) {
-        case pg_text_type:
-            filter = new PaigeImportFilter();
-            break;
-        case pg_rtf_type:
-            filter = (PaigeImportObject) new PaigeRTFImportFilter();
-            break;
-        case pg_paige_type:
-            filter = (PaigeImportObject) new PaigeNativeImportFilter();
-            break;
-        default:
-            return (pg_error) BAD_TYPE_ERR;
-    }
-
-    // Check for supported features
-    if (!(filter->feature_bits & IMPORT_EMBEDDED_OBJECTS_FEATURE)) {
-        // Alert user if embedded objects are not supported
-        MessageBox(NULL, "Any pictures in document will be lost. Open anyway?", "Warning", MB_OK | MB_ICONWARNING);
-    }
-
-    // Set custom character mapping table if needed
-    filter->character_table = (pg_char_ptr)MyOwnCharTable;
-
-    if ((result = filter->pgInitImportFile(globals, f_ref, MEM_NULL, NULL, file_begin, UNKNOWN_POSITION)) == NO_ERROR) {
-        result = filter->pgImportFile(pg, CURRENT_POSITION, flags, TRUE, best_way);
-    }
-
-    delete filter;
-    return result;
+    return ImportFile(pg, filetype, feature_flags, file_begin, f_ref);
 }
 
 void pgDrawPageProc(paige_rec_ptr pg, shape_ptr page_shape, pg_short_t r_qty, pg_short_t page_num, co_ordinate_ptr vis_offset, short draw_mode_used, short call_order) {
