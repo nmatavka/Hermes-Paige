@@ -9,6 +9,8 @@ extern paige_rec_ptr paigeDoc;
 
 #endif // DOCUMENT_H
 
+#endif // DOCUMENT_H
+
 // Hyperlink Management Functions
 PG_PASCAL void HyperlinkCallback(paige_rec_ptr pg, pg_hyperlink_ptr hypertext, short command, short modifiers, long position, pg_char_ptr URL) {
     // Call the standard callback first to get default behaviour:
@@ -27,6 +29,92 @@ PG_PASCAL void HyperlinkCallback(paige_rec_ptr pg, pg_hyperlink_ptr hypertext, s
             // Handle link deletion
             break;
     }
+}
+
+// Printing Functions
+void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
+    if (pg) {
+        UseMemory(pg);
+        pg->doc_info.margins = *margins;
+        UnuseMemory(pg);
+    }
+}
+
+void GetPageMargins(pg_ref pg, rectangle_ptr margins) {
+    if (pg) {
+        UseMemory(pg);
+        *margins = pg->doc_info.margins;
+        UnuseMemory(pg);
+    }
+}
+
+void SetScrollPosition(paige_rec_ptr doc, long h_pos, long v_pos) {
+    if (doc) {
+        UseMemory(doc);
+        doc->scroll_position.h = h_pos;
+        doc->scroll_position.v = v_pos;
+        UnuseMemory(doc);
+    }
+}
+
+void HandleWindowOriginChange(paige_rec_ptr doc, co_ordinate_ptr original_origin, co_ordinate_ptr new_origin) {
+    if (doc) {
+        pgWindowOriginChanged(doc, original_origin, new_origin);
+    }
+}
+
+void Scroll(paige_rec_ptr doc, short h_verb, short v_verb, short draw_mode) {
+    if (doc) {
+        long h_pixels, v_pixels;
+        CalculateScrollPixels(doc, h_verb, v_verb, &h_pixels, &v_pixels);
+        SetScrollPosition(doc, h_pixels, v_pixels);
+        pgScroll(doc, h_verb, v_verb, draw_mode);
+    }
+}
+
+pg_boolean ScrollToView(paige_rec_ptr doc, long text_offset, short h_extra, short v_extra, short align_line, short draw_mode) {
+    if (doc) {
+        return pgScrollToView(doc, text_offset, h_extra, v_extra, align_line, draw_mode);
+    }
+    return FALSE;
+}
+
+pg_boolean GetTabBase(paige_rec_ptr doc, long* tab_base) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        return pgGetTabBase(doc, tab_base, &selection);
+    }
+    return FALSE;
+}
+
+void SetTab(paige_rec_ptr doc, long tab_value, pg_boolean redraw) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgSetTabs(doc, tab_value, &selection, redraw);
+    }
+}
+
+void SetTabBase(paige_rec_ptr doc, long tab_base, pg_boolean redraw) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgSetTabBase(doc, tab_base, &selection, redraw);
+    }
+}
+
+void SetDiscontinuousSelection(paige_rec_ptr doc, memory_ref select_list, long extra_offset, pg_boolean show_hilite) {
+    if (doc && select_list) {
+        pgSetSelectionList(doc, select_list, extra_offset, show_hilite);
+    }
+}
+
+memory_ref GetDiscontinuousSelection(paige_rec_ptr doc, pg_boolean for_paragraph) {
+    if (doc) {
+        return pgGetSelectionList(doc, for_paragraph);
+    }
+    return MEM_NULL;
 }
 
 long FindHyperlinkSourceByURL(paige_rec_ptr doc, long start_pos, long* end_pos, const char* url, pg_boolean partial_ok, pg_boolean case_insensitive, pg_boolean scroll_to) {
@@ -220,7 +308,7 @@ pg_error VerifyPaigeFile(const char* file_path) {
 }
 }
 
-// Text and Selection Functions
+// Text Formatting Functions
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
@@ -452,7 +540,7 @@ void SetPageModifyProc(pg_ref pg, void (PG_PASCAL *page_modify_proc)(paige_rec_p
 
 }
 
-// Container and Exclusion Management Functions
+// Container Management Functions
 pg_short_t NumContainers(pg_ref pg) {
     if (pg) {
         return pgNumContainers(pg);
@@ -610,7 +698,91 @@ void InsertExclusionShape(pg_ref pg, pg_short_t position, shape_ref exclude_shap
 
 }
 
-// Scaling and Printing Functions
+// Exclusion Management Functions
+pg_short_t NumExclusions(pg_ref pg) {
+    if (pg) {
+        return pgNumExclusions(pg);
+    }
+    return 0;
+}
+
+void InsertExclusion(pg_ref pg, rectangle_ptr exclusion, pg_short_t position, long ref_con, short draw_mode) {
+    if (pg) {
+        pgInsertExclusion(pg, exclusion, position, ref_con, draw_mode);
+    }
+}
+
+void GetExclusion(pg_ref pg, pg_short_t position, pg_boolean include_scroll, pg_boolean include_scale, rectangle_ptr exclusion) {
+    if (pg && position > 0 && position <= pgNumExclusions(pg)) {
+        pgGetExclusion(pg, position, include_scroll, include_scale, exclusion);
+    }
+}
+
+long GetExclusionRefCon(pg_ref pg, pg_short_t position) {
+    if (pg && position > 0 && position <= pgNumExclusions(pg)) {
+        return pgGetExclusionRefCon(pg, position);
+    }
+    return 0;
+}
+
+void SetExclusionRefCon(pg_ref pg, pg_short_t position, long ref_con) {
+    if (pg && position > 0 && position <= pgNumExclusions(pg)) {
+        pgSetExclusionRefCon(pg, position, ref_con);
+    }
+}
+
+void RemoveExclusion(pg_ref pg, pg_short_t position, short draw_mode) {
+    if (pg && position > 0 && position <= pgNumExclusions(pg)) {
+        // Perform any necessary cleanup of refCon here before removal
+        pgRemoveExclusion(pg, position, draw_mode);
+    } else {
+        // Handle invalid position case
+        // Log or handle the error as needed
+    }
+}
+
+void SwapExclusions(pg_ref pg, pg_short_t exclusion1, pg_short_t exclusion2, short draw_mode) {
+    if (pg && exclusion1 > 0 && exclusion1 <= pgNumExclusions(pg) &&
+        exclusion2 > 0 && exclusion2 <= pgNumExclusions(pg)) {
+        pgSwapExclusions(pg, exclusion1, exclusion2, draw_mode);
+    } else {
+        // Handle invalid exclusion case
+        // Log or handle the error as needed
+    }
+}
+
+void ReplaceExclusion(pg_ref pg, rectangle_ptr exclusion, pg_short_t position, short draw_mode) {
+    if (pg && position >= 1 && position <= pgNumExclusions(pg)) {
+        pgReplaceExclusion(pg, exclusion, position, draw_mode);
+    } else {
+        // Handle invalid position case
+        // Log or handle the error as needed
+    }
+}
+
+void AttachParExclusion(pg_ref pg, long position, pg_short_t index, short draw_mode) {
+    if (pg && index > 0 && index <= pgNumExclusions(pg)) {
+        pgAttachParExclusion(pg, position, index, draw_mode);
+    } else {
+        // Handle invalid index case
+        // Log or handle the error as needed
+    }
+}
+
+long GetAttachedPar(pg_ref pg, pg_short_t exclusion) {
+    if (pg && exclusion > 0 && exclusion <= pgNumExclusions(pg)) {
+        return pgGetAttachedPar(pg, exclusion);
+    }
+    return -1;
+}
+
+void InsertExclusionShape(pg_ref pg, pg_short_t position, shape_ref exclude_shape, short draw_mode) {
+    if (pg) {
+        pgInsertExclusionShape(pg, position, exclude_shape, draw_mode);
+    }
+}
+
+// Scaling Functions
 void SetScaling(pg_ref pg, pg_scale_ptr scale_factor, short draw_mode) {
     if (pg && scale_factor) {
         pgSetScaling(pg, scale_factor, draw_mode);
