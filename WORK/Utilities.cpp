@@ -196,4 +196,16 @@ void SetChangeCounter(pg_ref pg, long ctr) {
     }
 }
 
+void GetTextRectangle(pg_ref pg, select_pair_ptr range, pg_boolean want_scroll, pg_boolean want_scaled, rectangle_ptr rect) {
+    if (pg && rect) {
+        pgTextRect(pg, range, want_scroll, want_scaled, rect);
+    }
+}
+
+void GetCharacterRectangle(pg_ref pg, long position, short want_scrolled, short want_scaled, rectangle_ptr rect) {
+    if (pg && rect) {
+        pgCharacterRect(pg, position, want_scrolled, want_scaled, rect);
+    }
+}
+
 #endif // UTILITIES_H
