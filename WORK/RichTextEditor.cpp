@@ -568,6 +568,14 @@ long GetRepeatStop(pg_ref pg) {
     return 0;
 }
 
+void SetPageModifyProc(pg_ref pg, void (PG_PASCAL *page_modify_proc)(paige_rec_ptr, long, rectangle_ptr)) {
+    if (pg) {
+        UseMemory(pg);
+        pg->page_modify_proc = page_modify_proc;
+        UnuseMemory(pg);
+    }
+}
+
 void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
     if (pg) {
         UseMemory(pg);
