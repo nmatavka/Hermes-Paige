@@ -241,4 +241,17 @@ long CheckOverflow(pg_ref pg) {
     return 0;
 }
 
+long GetUniqueID(pg_ref pg) {
+    if (pg) {
+        return pgUniqueID(pg);
+    }
+    return 0;
+}
+
+void FillBlock(void PG_FAR *block, long block_size, pg_char value) {
+    if (block) {
+        pgFillBlock(block, block_size, value);
+    }
+}
+
 #endif // UTILITIES_H
