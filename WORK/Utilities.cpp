@@ -1,6 +1,7 @@
 #include "Paige.h"
 #include "pgMemMgr.h"
 #include "pgText.h"
+#include "defprocs.h" // Required for CommandCharInfo
 
 extern paige_rec_ptr paigeDoc;
 
@@ -24,6 +25,20 @@ void ApplyLogFontStyles(paige_rec_ptr doc, LOGFONT logFont) {
         // Apply styles and redraw
         pgSetStyleBits(doc, styleBits, setBits, NULL, TRUE);
     }
+}
+
+long GetCharacterType(pg_ref pg, long offset, long mask_bits) {
+    if (pg) {
+        return pgCharType(pg, offset, mask_bits);
+    }
+    return 0;
+}
+
+pg_short_t GetCharacterBytes(pg_ref pg, long offset, pg_char_ptr char_bytes) {
+    if (pg) {
+        return pgCharByte(pg, offset, char_bytes);
+    }
+    return 0;
 }
 
 void PaginateNow(pg_ref pg, long paginate_to, short use_best_guess) {
