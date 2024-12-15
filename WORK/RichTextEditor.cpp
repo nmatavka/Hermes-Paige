@@ -330,12 +330,17 @@ pg_boolean GetParagraphFormat(paige_rec_ptr doc, par_info_ptr info) {
     return FALSE;
 }
 
-void SetTabBase(paige_rec_ptr doc, long tab_base, pg_boolean redraw) {
+void Scroll(paige_rec_ptr doc, short h_verb, short v_verb, short draw_mode) {
     if (doc) {
-        select_pair selection;
-        pgGetSelection(doc, &selection.begin, &selection.end);
-        pgSetTabBase(doc, tab_base, &selection, redraw);
+        pgScroll(doc, h_verb, v_verb, draw_mode);
     }
+}
+
+pg_boolean ScrollToView(paige_rec_ptr doc, long text_offset, short h_extra, short v_extra, short align_line, short draw_mode) {
+    if (doc) {
+        return pgScrollToView(doc, text_offset, h_extra, v_extra, align_line, draw_mode);
+    }
+    return FALSE;
 }
 
 pg_boolean GetTabBase(paige_rec_ptr doc, long* tab_base) {
