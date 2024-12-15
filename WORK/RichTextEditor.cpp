@@ -103,7 +103,7 @@ void CopyText() {
 undo_ref undoStack[MAX_UNDO_STACK];
 short undoStackIndex = 0;
 
-void PrepareUndo(short verb) {
+void PrepareUndo(short verb, long insertSize = 0, long insertPosition = 0) {
     undo_ref newUndoRef = MEM_NULL;
     undo_ref previousUndoRef = (undoStackIndex > 0) ? undoStack[undoStackIndex - 1] : MEM_NULL;
 
@@ -113,6 +113,11 @@ void PrepareUndo(short verb) {
         } else {
             newUndoRef = pgPrepareUndo(paigeDoc, verb, NULL);
         }
+    } else if (verb == undo_insert) {
+        newUndoRef = pgPrepareUndo(paigeDoc, verb, (void PG_FAR *)&insertSize);
+    } else if (verb == undo_app_insert) {
+        long insertParams[2] = {insertPosition, insertSize};
+        newUndoRef = pgPrepareUndo(paigeDoc, verb, (void PG_FAR *)insertParams);
     } else {
         newUndoRef = pgPrepareUndo(paigeDoc, verb, NULL);
     }
