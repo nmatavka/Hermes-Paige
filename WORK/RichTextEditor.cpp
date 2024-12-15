@@ -90,13 +90,14 @@ void UninitVirtualMemory(int tempFile) {
 
 void CopyText() {
     if (paigeDoc) {
-        OpenClipboard(NULL);
-        pg_ref scrap = pgCopy(paigeDoc, NULL);
-        if (scrap) {
-            pgPutScrap(scrap, RegisterClipboardFormat("HERMES Paige"), pg_void_scrap);
-            pgDispose(scrap);
+        if (OpenClipboard(NULL)) {
+            pg_ref scrap = pgCopy(paigeDoc, NULL);
+            if (scrap) {
+                pgPutScrap(scrap, RegisterClipboardFormat("HERMES Paige"), pg_void_scrap);
+                pgDispose(scrap);
+            }
+            CloseClipboard();
         }
-        CloseClipboard();
     }
 #define MAX_UNDO_STACK 16
 
