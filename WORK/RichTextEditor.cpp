@@ -152,10 +152,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 
 void InitPaige(HWND hwnd) {
     // Initialize Paige document
-    paigeDoc = pgNewDoc(NULL, 0, 0, 0, 0);
+    pg_globals_ptr globals = /* Initialize or retrieve your pg_globals_ptr */;
+    HWND hwndFocus = GetFocus();
+    shape_ref vis_area = pgRectToShape(globals, /* Define your visible area rectangle */);
+    shape_ref page_area = pgRectToShape(globals, /* Define your page area rectangle */);
+
+    paigeDoc = pgNew(globals, (generic_var)hwndFocus, vis_area, page_area, MEM_NULL, 0);
     if (paigeDoc) {
         // Set up Paige document properties here
     }
+
+    pgDisposeShape(vis_area);
+    pgDisposeShape(page_area);
 }
 
 void CleanupPaige() {
