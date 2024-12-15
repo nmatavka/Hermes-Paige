@@ -21,7 +21,6 @@ public:
                 // Default handling
                 break;
         }
-    }
 
     void BeginTableImport() override {
         // Prepare structures for table processing
@@ -238,7 +237,7 @@ public:
         return NO_ERROR;
     }
 
-    void PG_FAR * pgProcessEmbedData(memory_ref ref, long embed_type) override {
+    void* PG_FAR pgProcessEmbedData(memory_ref ref, long embed_type) override {
         // Implement processing of embedded data
         return ref;
     }
