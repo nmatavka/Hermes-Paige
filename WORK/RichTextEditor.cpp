@@ -152,8 +152,6 @@ void ConvertRectToRectangle(Rect PG_FAR *r, rectangle_ptr pg_rect) {
 void ConvertRectangleToRect(rectangle_ptr pg_rect, co_ordinate_ptr offset, Rect PG_FAR *r) {
     RectangleToRect(pg_rect, offset, r);
 }
-void InitVirtualMemory(pg_globals_ptr globals, int tempFile);
-void UninitVirtualMemory(int tempFile);
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
@@ -405,11 +403,6 @@ void PasteText() {
             CloseClipboard();
         }
     }
-    if (paigeDoc) {
-        pg_ref scrap = pgNewScrap();
-        pgPrepareUndo(paigeDoc, undo_paste, scrap);
-        pgPasteFromClipboard(paigeDoc, NULL, 0, best_way);
-    }
 }
 
 void CutText() {
@@ -428,13 +421,6 @@ void DeleteText() {
         }
     }
 }
-    if (paigeDoc) {
-        undo_ref redoRef = pgUndo(paigeDoc, lastUndoRef, TRUE, best_way);
-        pgDisposeUndo(lastUndoRef);
-        if (undoStackIndex < MAX_UNDO_STACK) {
-            undoStack[undoStackIndex++] = redoRef;
-        }
-    }
 }
 
 void RedoAction() {
@@ -907,9 +893,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             pgScrollToView(paigeDoc, CURRENT_POSITION, 0, 0, TRUE, bits_emulate_or);
         }
         break;
+    case WM_DESTROY:
         CleanupPaige();
-        PostQuitMessage(0);
-        break;
         PostQuitMessage(0);
         break;
     case WM_SETFOCUS:
@@ -1009,7 +994,6 @@ void* GetExtraStruct(pg_ref pg, long ref_id) {
 long GetUniqueExtraStructID(pg_ref pg) {
     return pgExtraUniqueID(pg);
 }
-    pgAreaBounds(pg, page_bounds, vis_bounds);
 }
 
 void SetDevicePalette(pg_ref pg, HPALETTE hPalette) {
