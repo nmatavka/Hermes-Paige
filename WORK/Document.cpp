@@ -51,6 +51,44 @@ long FindHyperlinkTargetByID(paige_rec_ptr doc, long start_pos, long* end_pos, l
     return -1;
 }
 
+void ChangeHyperlinkSource(paige_rec_ptr doc, long position, select_pair_ptr selection, const char* url, ht_callback callback, short display_style, short draw_mode) {
+    if (doc) {
+        pgChangeHyperlinkSource(doc, position, selection, (pg_char_ptr)url, callback, display_style, draw_mode);
+    }
+}
+
+void ChangeHyperlinkTarget(paige_rec_ptr doc, long position, select_pair_ptr selection, const char* url, ht_callback callback, short display_style, short draw_mode) {
+    if (doc) {
+        pgChangeHyperlinkTarget(doc, position, selection, (pg_char_ptr)url, callback, display_style, draw_mode);
+    }
+}
+
+long PointInHyperlinkSource(paige_rec_ptr doc, co_ordinate_ptr point) {
+    if (doc) {
+        return pgPtInHyperlinkSource(doc, point);
+    }
+    return -1;
+}
+
+long PointInHyperlinkTarget(paige_rec_ptr doc, co_ordinate_ptr point) {
+    if (doc) {
+        return pgPtInHyperlinkTarget(doc, point);
+    }
+    return -1;
+}
+
+void SetHyperlinkSourceState(paige_rec_ptr doc, long position, short state, pg_boolean redraw) {
+    if (doc) {
+        pgSetHyperlinkSourceState(doc, position, state, redraw);
+    }
+}
+
+void SetHyperlinkTargetState(paige_rec_ptr doc, long position, short state, pg_boolean redraw) {
+    if (doc) {
+        pgSetHyperlinkTargetState(doc, position, state, redraw);
+    }
+}
+
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
