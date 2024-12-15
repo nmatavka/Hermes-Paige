@@ -272,12 +272,17 @@ void SetTab(paige_rec_ptr doc, tab_stop_ptr tab, pg_boolean redraw) {
     }
 }
 
-void GetTabList(paige_rec_ptr doc, tab_ref tabs, memory_ref tab_mask, long* screen_offset) {
-    if (doc && tabs) {
-        select_pair selection;
-        pgGetSelection(doc, &selection.begin, &selection.end);
-        pgGetTabList(doc, &selection, tabs, tab_mask, screen_offset);
+void SetTabBase(paige_rec_ptr doc, long tab_base) {
+    if (doc) {
+        pgSetTabBase(doc, tab_base);
     }
+}
+
+long GetTabBase(paige_rec_ptr doc) {
+    if (doc) {
+        return pgGetTabBase(doc);
+    }
+    return 0; // Default tab base
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
