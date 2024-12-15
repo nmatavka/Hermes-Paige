@@ -89,6 +89,15 @@ void UninitVirtualMemory(int tempFile) {
 }
 
 void CopyText() {
+    if (paigeDoc) {
+        OpenClipboard(NULL);
+        pg_ref scrap = pgCopy(paigeDoc, NULL);
+        if (scrap) {
+            pgPutScrap(scrap, RegisterClipboardFormat("HERMES Paige"), pg_void_scrap);
+            pgDispose(scrap);
+        }
+        CloseClipboard();
+    }
 #define MAX_UNDO_STACK 16
 
 undo_ref undoStack[MAX_UNDO_STACK];
@@ -128,6 +137,17 @@ void UndoAction() {
 }
 
 void PasteText() {
+    if (paigeDoc) {
+        OpenClipboard(NULL);
+        if (pgScrapAvail(RegisterClipboardFormat("HERMES Paige"))) {
+            pg_ref scrap = pgGetScrap(&globals->mem_globals, RegisterClipboardFormat("HERMES Paige"), NULL);
+            if (scrap) {
+                pgPaste(paigeDoc, scrap, CURRENT_POSITION, false, best_way);
+                pgDispose(scrap);
+            }
+        }
+        CloseClipboard();
+    }
     if (paigeDoc) {
         pg_ref scrap = pgNewScrap();
         pgPrepareUndo(paigeDoc, undo_paste, scrap);
