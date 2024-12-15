@@ -647,6 +647,45 @@ long ContainerToChar(pg_ref pg, pg_short_t position) {
     return -1;
 }
 
+void RemoveContainer(pg_ref pg, pg_short_t position, short draw_mode) {
+    if (pg && position > 1) { // Ensure not to remove the last container
+        pgRemoveContainer(pg, position, draw_mode);
+    }
+}
+
+void ReplaceContainer(pg_ref pg, rectangle_ptr container, pg_short_t position, short draw_mode) {
+    if (pg) {
+        pgReplaceContainer(pg, container, position, draw_mode);
+    }
+}
+
+void SwapContainers(pg_ref pg, pg_short_t container1, pg_short_t container2, short draw_mode) {
+    if (pg) {
+        pgSwapContainers(pg, container1, container2, draw_mode);
+    }
+}
+
+pg_short_t PointInContainer(pg_ref pg, co_ordinate_ptr point, co_ordinate_ptr inset_extra) {
+    if (pg) {
+        return pgPtInContainer(pg, point, inset_extra);
+    }
+    return 0;
+}
+
+pg_short_t CharToContainer(pg_ref pg, long offset) {
+    if (pg) {
+        return pgCharToContainer(pg, offset);
+    }
+    return 0;
+}
+
+long ContainerToChar(pg_ref pg, pg_short_t position) {
+    if (pg) {
+        return pgContainerToChar(pg, position);
+    }
+    return -1;
+}
+
 void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
     if (pg) {
         UseMemory(pg);
