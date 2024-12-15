@@ -7,6 +7,7 @@
 #include "pgTraps.h"
 #include "pgTxrCPP.h"
 #include "pgHLevel.h"
+#include "pgTxr.h"
 
 short m_KeyModifiers = 0; // Declare the key modifiers variable
 HINSTANCE hInst;
@@ -24,6 +25,7 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
         }
     }
 pg_error ImportFile(pg_ref pg, pg_filetype filetype, long feature_flags, long file_begin, pg_file_unit f_ref) {
+    pg_filetype fileType = pgDetermineFileType(f_ref, NULL, file_begin);
     PaigeImportObject filter;
     pg_globals_ptr globals;
     long flags;
