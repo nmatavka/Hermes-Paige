@@ -332,7 +332,7 @@ long NumRows(paige_rec_ptr doc, long position) {
     return 0;
 }
 
-void SaveDocument(paige_rec_ptr doc, const char* file_path) {
+void SaveDocument(paige_rec_ptr doc, const char* file_path, bool terminate_file = true) {
     if (doc) {
         int file_ref = _lcreat(file_path, 0);
         if (file_ref != -1) {
@@ -342,6 +342,9 @@ void SaveDocument(paige_rec_ptr doc, const char* file_path) {
             UnuseMemory(file_map);
             long position = 0;
             pgSaveDoc(doc, &position, NULL, 0, NULL, file_map, 0);
+            if (terminate_file) {
+                pgTerminateFile(doc, &position, NULL, file_map);
+            }
             DisposeMemory(file_map);
             _lclose(file_ref);
         }
