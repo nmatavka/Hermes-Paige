@@ -48,6 +48,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (!hWnd) {
         return FALSE;
         SetFontStyle(paigeDoc, "Arial", 12, 0); // Example: Set default font
+        pgShutdown(&m_Globals);
+        pgMemShutdown(m_MemoryGlobals);
     }
 
     ShowWindow(hWnd, nCmdShow);
