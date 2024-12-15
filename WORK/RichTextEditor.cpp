@@ -264,11 +264,19 @@ void SetParagraphFormat(paige_rec_ptr doc, par_info_ptr info, par_info_ptr mask,
     }
 }
 
-void GetParagraphFormat(paige_rec_ptr doc, par_info_ptr info, par_info_ptr mask, pg_boolean setAnyMatch) {
-    if (doc && info && mask) {
+void SetTab(paige_rec_ptr doc, tab_stop_ptr tab, pg_boolean redraw) {
+    if (doc && tab) {
         select_pair selection;
         pgGetSelection(doc, &selection.begin, &selection.end);
-        pgGetParInfo(doc, &selection, setAnyMatch, info, mask);
+        pgSetTab(doc, &selection, tab, redraw);
+    }
+}
+
+void GetTabList(paige_rec_ptr doc, tab_ref tabs, memory_ref tab_mask, long* screen_offset) {
+    if (doc && tabs) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgGetTabList(doc, &selection, tabs, tab_mask, screen_offset);
     }
 }
 
