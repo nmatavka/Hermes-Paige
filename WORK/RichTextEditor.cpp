@@ -15,6 +15,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void InitPaige(HWND hwnd);
 void InitVirtualMemory(pg_globals_ptr globals, int tempFile);
 void UninitVirtualMemory(int tempFile);
+void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgSetPointSize(doc, point_size, &selection, redraw);
+    }
+}
+
+pg_boolean GetPointSize(paige_rec_ptr doc, long* point_size) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        return pgGetPointSize(doc, point_size, &selection);
+    }
+    return FALSE;
+}
+
 void SetFontByName(paige_rec_ptr doc, const char* fontName, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
