@@ -502,6 +502,18 @@ pg_boolean GetParagraphFormat(paige_rec_ptr doc, par_info_ptr info) {
     return FALSE;
 }
 
+void GetDocumentInfo(pg_ref pg, pg_doc_ptr doc_info) {
+    if (pg && doc_info) {
+        pgGetDocInfo(pg, doc_info);
+    }
+}
+
+void SetDocumentInfo(pg_ref pg, pg_doc_ptr doc_info, pg_boolean inval_text, short draw_mode) {
+    if (pg && doc_info) {
+        pgSetDocInfo(pg, doc_info, inval_text, draw_mode);
+    }
+}
+
 void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
     if (pg) {
         UseMemory(pg);
