@@ -94,6 +94,22 @@ void UpdateScrollbars(paige_rec_ptr doc, HWND hWnd) {
     }
 }
 
+long SetHyperlinkSource(paige_rec_ptr doc, const char* url, const char* keyword_display, long start, long end, ht_callback callback, long type, long id_num, short state1_style, short state2_style, short state3_style, short draw_mode) {
+    if (doc) {
+        select_pair selection = {start, end};
+        return pgSetHyperlinkSource(doc, &selection, (pg_char_ptr)url, (pg_char_ptr)keyword_display, callback, type, id_num, state1_style, state2_style, state3_style, draw_mode);
+    }
+    return 0;
+}
+
+long SetHyperlinkTarget(paige_rec_ptr doc, const char* url, long start, long end, ht_callback callback, long type, long id_num, short display_style, short draw_mode) {
+    if (doc) {
+        select_pair selection = {start, end};
+        return pgSetHyperlinkTarget(doc, &selection, (pg_char_ptr)url, callback, type, id_num, display_style, draw_mode);
+    }
+    return 0;
+}
+
 void SetHypertextLink(paige_rec_ptr doc, const char* url, long start, long end, pg_boolean redraw) {
     if (doc) {
         pg_hyperlink link;
