@@ -71,7 +71,8 @@ void CopyText() {
 
 void PasteText() {
     if (paigeDoc) {
-        pgPrepareUndo(paigeDoc, undo_paste, NULL);
+        pg_ref scrap = pgNewScrap();
+        pgPrepareUndo(paigeDoc, undo_paste, scrap);
         pgPasteFromClipboard(paigeDoc, NULL, 0, best_way);
     }
 }
