@@ -256,9 +256,19 @@ void ApplyLogFontStyles(paige_rec_ptr doc, LOGFONT logFont) {
     }
 }
 
-void GetTextStyle(paige_rec_ptr doc, long* styleBits, long* consistentBits) {
-    if (doc && styleBits && consistentBits) {
-        pgGetStyleBits(doc, styleBits, consistentBits);
+void SetParagraphFormat(paige_rec_ptr doc, par_info_ptr info, par_info_ptr mask, pg_boolean redraw) {
+    if (doc) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgSetParInfo(doc, &selection, info, mask, redraw);
+    }
+}
+
+void GetParagraphFormat(paige_rec_ptr doc, par_info_ptr info, par_info_ptr mask, pg_boolean setAnyMatch) {
+    if (doc && info && mask) {
+        select_pair selection;
+        pgGetSelection(doc, &selection.begin, &selection.end);
+        pgGetParInfo(doc, &selection, setAnyMatch, info, mask);
     }
 }
 
