@@ -24,7 +24,21 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
     }
 }
 
+void InitializeTransColor(pg_globals_ptr globals, HWND hwnd) {
+    if (globals) {
+        HDC hdc = GetDC(hwnd);
+        if (hdc) {
+            COLORREF windowColor = GetBkColor(hdc);
+            ReleaseDC(hwnd, hdc);
+            globals->trans_color.red = GetRValue(windowColor);
+            globals->trans_color.green = GetGValue(windowColor);
+            globals->trans_color.blue = GetBValue(windowColor);
+        }
+    }
+}
+
 void InitPaige(HWND hwnd);
+void InitializeTransColor(pg_globals_ptr globals, HWND hwnd);
 
 void SetPageColor(pg_ref pg, color_value_ptr color) {
     pgSetPageColor(pg, color);
@@ -785,6 +799,9 @@ HPALETTE GetDevicePalette(pg_ref pg) {
     
     // Set default paragraph format
     globals->def_par.def_tab_space = 32; // Example: Set default tab spacing to 32
+    // Initialize trans_color to match the window's background color
+    InitializeTransColor(globals, hwnd);
+    
     // Initialize Paige document
     pg_globals_ptr globals = /* Initialize or retrieve your pg_globals_ptr */;
     HWND hwndFocus = GetFocus();
