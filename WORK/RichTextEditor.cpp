@@ -322,13 +322,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     return (int)msg.wParam;
 }
 
-void InitVirtualMemory(pg_globals_ptr globals, int tempFile) {
-    InitVirtualMemory(globals, NULL, tempFile);
-}
-
-void UninitVirtualMemory(int tempFile) {
-    _close(tempFile);
-}
 
 void CopyText() {
 #define MAX_UNDO_STACK 16
@@ -901,7 +894,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             EndPaint(hWnd, &ps);
         }
         break;
-        break;
     case WM_HSCROLL:
         long h_pixels, v_pixels;
         switch (LOWORD(wParam)) {
@@ -962,7 +954,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
-    return 0;
 }
 
 void GetShapeAreas(pg_ref pg, shape_ref vis_area, shape_ref page_area, shape_ref exclude_area) {
