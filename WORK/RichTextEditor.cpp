@@ -26,6 +26,18 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
 
 void InitPaige(HWND hwnd);
 
+void SetPageColor(pg_ref pg, color_value_ptr color) {
+    pgSetPageColor(pg, color);
+}
+
+void GetPageColor(pg_ref pg, color_value_ptr color) {
+    pgGetPageColor(pg, color);
+}
+
+void ErasePageArea(pg_ref pg, shape_ref vis_area) {
+    pgErasePageArea(pg, vis_area);
+}
+
 void OffsetShape(shape_ref the_shape, long h, long v) {
     pgOffsetShape(the_shape, h, v);
 }
