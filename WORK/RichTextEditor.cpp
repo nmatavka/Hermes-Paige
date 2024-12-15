@@ -30,6 +30,12 @@ pg_boolean GetFontByName(paige_rec_ptr doc, char* fontName) {
     return FALSE;
 }
 
+void SetIndents(paige_rec_ptr doc, long left_indent, long right_indent, long first_line_indent) {
+    if (doc) {
+        pgSetIndents(doc, left_indent, right_indent, first_line_indent);
+    }
+}
+
 void SetSelection(paige_rec_ptr doc, long begin_sel, long end_sel, short modifiers, pg_boolean show_hilite) {
     if (doc) {
         pgSetSelection(doc, begin_sel, end_sel, modifiers, show_hilite);
