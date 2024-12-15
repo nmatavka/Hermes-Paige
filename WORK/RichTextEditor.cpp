@@ -23,6 +23,7 @@ void PasteText();
 void CutText();
 void DeleteText();
 void UndoAction();
+void RedoAction();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     WNDCLASSEX wcex;
@@ -88,7 +89,10 @@ void UninitVirtualMemory(int tempFile) {
 }
 
 void CopyText() {
-    if (paigeDoc) {
+undo_ref lastUndoRef = MEM_NULL; // Global variable to store the last undo reference
+undo_ref lastRedoRef = MEM_NULL; // Global variable to store the last redo reference
+
+void UndoAction() {
         pgPrepareUndo(paigeDoc, undo_copy, NULL);
         pgCopyToClipboard(paigeDoc, NULL, 0, best_way);
     }
@@ -119,8 +123,19 @@ void DeleteText() {
     }
 }
     if (paigeDoc) {
-        pgPrepareUndo(paigeDoc, undo_undo, NULL);
-        pgUndo(paigeDoc, 1, best_way);
+    if (paigeDoc && lastUndoRef) {
+        lastRedoRef = pgUndo(paigeDoc, lastUndoRef, TRUE, best_way);
+        pgDisposeUndo(lastUndoRef);
+        lastUndoRef = MEM_NULL;
+    }
+}
+
+void RedoAction() {
+    if (paigeDoc && lastRedoRef) {
+        lastUndoRef = pgUndo(paigeDoc, lastRedoRef, TRUE, best_way);
+        pgDisposeUndo(lastRedoRef);
+        lastRedoRef = MEM_NULL;
+    }
     }
 }
 
@@ -159,6 +174,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             break;
         case ID_EDIT_DELETE:
             DeleteText();
+            break;
+        case ID_EDIT_REDO:
+            RedoAction();
             break;
         case ID_EDIT_UNDO:
             UndoAction();
