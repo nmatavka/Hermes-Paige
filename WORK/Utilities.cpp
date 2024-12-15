@@ -167,4 +167,12 @@ pg_boolean SetAttributes(long attributes) {
     return FALSE;
 }
 
+void EnableLineAndParagraphCounting(pg_ref pg) {
+    if (pg) {
+        long attributes = pgGetAttributes(pg);
+        attributes |= COUNT_LINES_BIT;
+        pgSetAttributes(pg, attributes);
+    }
+}
+
 #endif // UTILITIES_H
