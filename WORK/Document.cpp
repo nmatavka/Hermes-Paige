@@ -9,6 +9,7 @@ extern paige_rec_ptr paigeDoc;
 
 #endif // DOCUMENT_H
 
+// Hyperlink Management Functions
 PG_PASCAL void HyperlinkCallback(paige_rec_ptr pg, pg_hyperlink_ptr hypertext, short command, short modifiers, long position, pg_char_ptr URL) {
     // Call the standard callback first to get default behaviour:
     pgStandardSourceCallback(pg, hypertext, command, modifiers, position, URL);
@@ -156,6 +157,9 @@ pg_boolean GetHyperlinkTargetInfo(paige_rec_ptr doc, long position, pg_boolean c
 }
 
 
+}
+
+// Document Loading and Saving Functions
 void SaveCustomData(paige_rec_ptr doc, const char* file_path, void* custom_data, long data_size, pg_file_key file_key) {
     if (doc) {
         int file_ref = _lcreat(file_path, 0);
@@ -214,6 +218,9 @@ pg_error VerifyPaigeFile(const char* file_path) {
     }
     return BAD_TYPE_ERR;
 }
+}
+
+// Text and Selection Functions
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
@@ -288,6 +295,9 @@ void SelectToShape(paige_rec_ptr doc, memory_ref select_shape, pg_boolean show_h
     }
 }
 
+}
+
+// Scrolling and View Functions
 void CalculateScrollPixels(paige_rec_ptr doc, short h_verb, short v_verb, long* h_pixels, long* v_pixels) {
     pgScrollUnitsToPixels(doc, h_verb, v_verb, TRUE, FALSE, h_pixels, v_pixels);
 }
@@ -440,6 +450,9 @@ void SetPageModifyProc(pg_ref pg, void (PG_PASCAL *page_modify_proc)(paige_rec_p
     }
 }
 
+}
+
+// Container and Exclusion Management Functions
 pg_short_t NumContainers(pg_ref pg) {
     if (pg) {
         return pgNumContainers(pg);
@@ -595,6 +608,9 @@ void InsertExclusionShape(pg_ref pg, pg_short_t position, shape_ref exclude_shap
     }
 }
 
+}
+
+// Scaling and Printing Functions
 void SetScaling(pg_ref pg, pg_scale_ptr scale_factor, short draw_mode) {
     if (pg && scale_factor) {
         pgSetScaling(pg, scale_factor, draw_mode);
