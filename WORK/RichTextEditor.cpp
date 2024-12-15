@@ -272,19 +272,15 @@ void SetTab(paige_rec_ptr doc, tab_stop_ptr tab, pg_boolean redraw) {
     }
 }
 
-void SetIndents(paige_rec_ptr doc, pg_indents_ptr indents, pg_indents_ptr mask, short draw_mode) {
-    if (doc && indents && mask) {
-        select_pair selection;
-        pgGetSelection(doc, &selection.begin, &selection.end);
-        pgSetIndents(doc, &selection, indents, mask, draw_mode);
+void SetSelection(paige_rec_ptr doc, long begin_sel, long end_sel, short modifiers, pg_boolean show_hilite) {
+    if (doc) {
+        pgSetSelection(doc, begin_sel, end_sel, modifiers, show_hilite);
     }
 }
 
-void GetIndents(paige_rec_ptr doc, pg_indents_ptr indents, pg_indents_ptr mask, long* left_screen_offset, long* right_screen_offset) {
-    if (doc && indents && mask) {
-        select_pair selection;
-        pgGetSelection(doc, &selection.begin, &selection.end);
-        pgGetIndents(doc, &selection, indents, mask, left_screen_offset, right_screen_offset);
+void GetSelection(paige_rec_ptr doc, long* begin_sel, long* end_sel) {
+    if (doc) {
+        pgGetSelection(doc, begin_sel, end_sel);
     }
 }
 
