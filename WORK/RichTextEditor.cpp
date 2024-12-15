@@ -137,8 +137,11 @@ void PrepareUndo(short verb, long insertSize = 0, long insertPosition = 0) {
 void UndoAction() {
     if (paigeDoc && undoStackIndex > 0) {
         undo_ref lastUndoRef = undoStack[--undoStackIndex];
-        pgPrepareUndo(paigeDoc, undo_copy, NULL);
-        pgCopyToClipboard(paigeDoc, NULL, 0, best_way);
+        undo_ref redoRef = pgUndo(paigeDoc, lastUndoRef, TRUE, best_way);
+        pgDisposeUndo(lastUndoRef);
+        if (undoStackIndex < MAX_UNDO_STACK) {
+            undoStack[undoStackIndex++] = redoRef;
+        }
     }
 }
 
@@ -195,7 +198,7 @@ void RedoAction() {
             undoStack[undoStackIndex++] = undoRef;
         }
     }
-    }
+}
 }
 
 void SetFontStyle(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle) {
