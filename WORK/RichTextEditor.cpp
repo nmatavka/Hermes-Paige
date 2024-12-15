@@ -4,6 +4,7 @@
 #include "PGHEADER/PGCLIPBD.H"
 #include "PGHEADER/PGSELECT.H"
 #include "pgMemMgr.h"
+#include "pgTraps.h"
 #include "pgHLevel.h"
 
 short m_KeyModifiers = 0; // Declare the key modifiers variable
@@ -24,6 +25,30 @@ void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr sc
 }
 
 void InitPaige(HWND hwnd);
+
+shape_ref CreateShape(pg_globals_ptr globals, rectangle_ptr rect) {
+    return pgRectToShape(globals, rect);
+}
+
+void SetShapeToRectangle(shape_ref the_shape, rectangle_ptr rect) {
+    pgSetShapeRect(the_shape, rect);
+}
+
+void AddRectangleToShape(shape_ref the_shape, rectangle_ptr rect) {
+    pgAddRectToShape(the_shape, rect);
+}
+
+void DisposeShape(shape_ref the_shape) {
+    pgDisposeShape(the_shape);
+}
+
+void ConvertRectToRectangle(Rect PG_FAR *r, rectangle_ptr pg_rect) {
+    RectToRectangle(r, pg_rect);
+}
+
+void ConvertRectangleToRect(rectangle_ptr pg_rect, co_ordinate_ptr offset, Rect PG_FAR *r) {
+    RectangleToRect(pg_rect, offset, r);
+}
 void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr scroll_pos, pg_boolean post_call);
 void InitVirtualMemory(pg_globals_ptr globals, int tempFile);
 void UninitVirtualMemory(int tempFile);
