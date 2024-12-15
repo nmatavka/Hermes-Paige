@@ -153,7 +153,6 @@ void ConvertRectToRectangle(Rect PG_FAR *r, rectangle_ptr pg_rect) {
 void ConvertRectangleToRect(rectangle_ptr pg_rect, co_ordinate_ptr offset, Rect PG_FAR *r) {
     RectangleToRect(pg_rect, offset, r);
 }
-void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr scroll_pos, pg_boolean post_call);
 void InitVirtualMemory(pg_globals_ptr globals, int tempFile);
 void UninitVirtualMemory(int tempFile);
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
@@ -647,44 +646,6 @@ long ContainerToChar(pg_ref pg, pg_short_t position) {
     return -1;
 }
 
-void RemoveContainer(pg_ref pg, pg_short_t position, short draw_mode) {
-    if (pg && position > 1) { // Ensure not to remove the last container
-        pgRemoveContainer(pg, position, draw_mode);
-    }
-}
-
-void ReplaceContainer(pg_ref pg, rectangle_ptr container, pg_short_t position, short draw_mode) {
-    if (pg) {
-        pgReplaceContainer(pg, container, position, draw_mode);
-    }
-}
-
-void SwapContainers(pg_ref pg, pg_short_t container1, pg_short_t container2, short draw_mode) {
-    if (pg) {
-        pgSwapContainers(pg, container1, container2, draw_mode);
-    }
-}
-
-pg_short_t PointInContainer(pg_ref pg, co_ordinate_ptr point, co_ordinate_ptr inset_extra) {
-    if (pg) {
-        return pgPtInContainer(pg, point, inset_extra);
-    }
-    return 0;
-}
-
-pg_short_t CharToContainer(pg_ref pg, long offset) {
-    if (pg) {
-        return pgCharToContainer(pg, offset);
-    }
-    return 0;
-}
-
-long ContainerToChar(pg_ref pg, pg_short_t position) {
-    if (pg) {
-        return pgContainerToChar(pg, position);
-    }
-    return -1;
-}
 
 pg_short_t NumExclusions(pg_ref pg) {
     if (pg) {
@@ -1059,44 +1020,14 @@ long GetUniqueExtraStructID(pg_ref pg) {
 }
     pgAreaBounds(pg, page_bounds, vis_bounds);
 }
+
+void SetDevicePalette(pg_ref pg, HPALETTE hPalette) {
     pgSetDevicePalette(pg, (generic_var)hPalette);
 }
 
 HPALETTE GetDevicePalette(pg_ref pg) {
     return (HPALETTE)pgGetDevicePalette(pg);
 }
-    // Initialize Paige globals with custom defaults
-    pg_globals_ptr globals = /* Initialize or retrieve your pg_globals_ptr */;
-    
-    // Set default style
-    globals->def_style.point = 0x00090000; // Example: Set default font size to 9 points
-    strncpy(globals->def_style.font_name, "Arial", sizeof(globals->def_style.font_name) - 1);
-    globals->def_style.font_name[sizeof(globals->def_style.font_name) - 1] = '\0';
-    
-    // Set default paragraph format
-    globals->def_par.def_tab_space = 32; // Example: Set default tab spacing to 32
-    // Initialize trans_color to match the window's background color
-    InitializeTransColor(globals, hwnd);
-    
-    // Initialize Paige document
-    pg_globals_ptr globals = /* Initialize or retrieve your pg_globals_ptr */;
-    HWND hwndFocus = GetFocus();
-    RECT clientRect;
-    GetClientRect(hwnd, &clientRect);
-    rectangle visRect = {{clientRect.top, clientRect.left}, {clientRect.bottom, clientRect.right}};
-    shape_ref vis_area = pgRectToShape(globals, &visRect);
-    shape_ref page_area = pgRectToShape(globals, &visRect);
-
-    paigeDoc = pgNew(globals, (generic_var)hwndFocus, vis_area, page_area, MEM_NULL, EXTERNAL_SCROLL_BIT);
-    if (paigeDoc) {
-        // Set up Paige document properties here
-
-        // Set scroll parameters: horizontal unit = 32, vertical unit = 0 (variable), no extra space
-        pgSetScrollParams(paigeDoc, 32, 0, 0, 32);
-    }
-
-    pgDisposeShape(vis_area);
-    pgDisposeShape(page_area);
 }
 
 long GetAttributes() {
