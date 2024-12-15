@@ -282,4 +282,3 @@ pg_fixed FixedRatio(short n, short d) {
     return pgFixedRatio(n, d);
 }
 
-#endif // UTILITIES_H

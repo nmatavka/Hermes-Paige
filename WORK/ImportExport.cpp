@@ -147,6 +147,8 @@ public:
         return NO_ERROR;
     }
 };
+
+class ExportHandler {
 public:
     ExportHandler(pg_ref pg) : paigeDoc(pg) {}
 
@@ -209,6 +211,8 @@ private:
         pgCloseFile(fileUnit);
 
         return result == NO_ERROR;
+    }
+};
     }
 };
 
