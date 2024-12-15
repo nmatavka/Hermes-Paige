@@ -23,6 +23,34 @@ PG_PASCAL void HyperlinkCallback(paige_rec_ptr pg, pg_hyperlink_ptr hypertext, s
     }
 }
 
+long FindHyperlinkSourceByURL(paige_rec_ptr doc, long start_pos, long* end_pos, const char* url, pg_boolean partial_ok, pg_boolean case_insensitive, pg_boolean scroll_to) {
+    if (doc) {
+        return pgFindHyperlinkSource(doc, start_pos, end_pos, (pg_char_ptr)url, partial_ok, case_insensitive, scroll_to);
+    }
+    return -1;
+}
+
+long FindHyperlinkTargetByURL(paige_rec_ptr doc, long start_pos, long* end_pos, const char* url, pg_boolean partial_ok, pg_boolean case_insensitive, pg_boolean scroll_to) {
+    if (doc) {
+        return pgFindHyperlinkTarget(doc, start_pos, end_pos, (pg_char_ptr)url, partial_ok, case_insensitive, scroll_to);
+    }
+    return -1;
+}
+
+long FindHyperlinkSourceByID(paige_rec_ptr doc, long start_pos, long* end_pos, long id_num, pg_boolean scroll_to) {
+    if (doc) {
+        return pgFindHyperlinkSourceByID(doc, start_pos, end_pos, id_num, scroll_to);
+    }
+    return -1;
+}
+
+long FindHyperlinkTargetByID(paige_rec_ptr doc, long start_pos, long* end_pos, long id_num, pg_boolean scroll_to) {
+    if (doc) {
+        return pgFindHyperlinkTargetByID(doc, start_pos, end_pos, id_num, scroll_to);
+    }
+    return -1;
+}
+
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
