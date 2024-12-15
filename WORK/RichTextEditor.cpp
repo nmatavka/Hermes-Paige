@@ -263,7 +263,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     return 0;
 }
 
-void SetDevicePalette(pg_ref pg, HPALETTE hPalette) {
+void GetShapeAreas(pg_ref pg, shape_ref vis_area, shape_ref page_area, shape_ref exclude_area) {
+    pgGetAreas(pg, vis_area, page_area, exclude_area);
+}
+
+void GetAreaBounds(pg_ref pg, rectangle_ptr page_bounds, rectangle_ptr vis_bounds) {
+    pgAreaBounds(pg, page_bounds, vis_bounds);
+}
     pgSetDevicePalette(pg, (generic_var)hPalette);
 }
 
