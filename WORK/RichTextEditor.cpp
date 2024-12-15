@@ -13,6 +13,7 @@ paige_rec_ptr paigeDoc;
 // Function prototypes
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void InitPaige(HWND hwnd);
+void pgDrawScrollProc(paige_rec_ptr pg, shape_ref update_rgn, co_ordinate_ptr scroll_pos, pg_boolean post_call);
 void InitVirtualMemory(pg_globals_ptr globals, int tempFile);
 void UninitVirtualMemory(int tempFile);
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
