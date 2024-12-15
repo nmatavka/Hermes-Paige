@@ -31,8 +31,13 @@ void ImportToPaigeControl(HWND hwnd, pg_file_unit f_ref, long feature_flags, lon
         CustomImportFilter* filter = new CustomImportFilter();
         filter->character_table = (pg_char_ptr)customCharTable;
 
-        pg_error result = pgImportFileFromC(pg, pgDetermineFileType(f_ref, NULL, file_begin), feature_flags, file_begin, f_ref);
+        // Determine the file type
+        pg_filetype filetype = pgDetermineFileType(f_ref, NULL, file_begin);
+
+        // Import the file using pgImportFileFromC
+        pg_error result = pgImportFileFromC(pg, filetype, feature_flags, file_begin, f_ref);
         if (result == NO_ERROR) {
+            // Notify the control to realize the import
             SendMessage(hwnd, PG_REALIZEIMPORT, TRUE, 0);
         } else {
             MessageBox(hwnd, "Failed to import file.", "Error", MB_OK | MB_ICONERROR);
