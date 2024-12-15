@@ -726,6 +726,20 @@ long PrintToPage(pg_ref pg, graf_device_ptr target, long starting_position, rect
     return 0;
 }
 
+short NumPages(pg_ref pg, rectangle_ptr page_rect) {
+    if (pg && page_rect) {
+        return pgNumPages(pg, page_rect);
+    }
+    return 0;
+}
+
+long FindPage(pg_ref pg, short page_num, rectangle_ptr page_rect) {
+    if (pg && page_rect) {
+        return pgFindPage(pg, page_num, page_rect);
+    }
+    return 0;
+}
+
 void SetPageMargins(pg_ref pg, rectangle_ptr margins) {
     if (pg) {
         UseMemory(pg);
