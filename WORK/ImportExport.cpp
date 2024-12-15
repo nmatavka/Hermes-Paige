@@ -21,6 +21,7 @@ public:
                 // Default handling
                 break;
         }
+    }
 
     void BeginTableImport() override {
         // Prepare structures for table processing
@@ -67,7 +68,6 @@ public:
         }
         // Add more custom command handling as needed
     }
-};
 
 class CustomRTFExportFilter : public PaigeRTFExportFilter {
 public:
