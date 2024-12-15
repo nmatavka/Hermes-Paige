@@ -73,25 +73,29 @@ public:
 class CustomRTFExportFilter : public PaigeRTFExportFilter {
 public:
     pg_error OutputHeaders() override {
-        // Custom logic to export document headers
+        // Example: Write a header string
+        pgWriteString("Header: Custom RTF Export", 0, 0);
         return NO_ERROR;
     }
 
     pg_error OutputFooters() override {
-        // Custom logic to export document footers
+        // Example: Write a footer string
+        pgWriteString("Footer: Custom RTF Export", 0, 0);
         return NO_ERROR;
     }
 
     pg_error OutputEmbed() override {
         // Custom logic to export embed_ref
         if (this->translator.format.embed_object) {
-            // Handle custom embed types
+            // Example: Write embed data as hex
+            pgWriteHexByte(0xAB);
         }
         return PaigeRTFExportFilter::OutputEmbed(); // Call base class for default handling
     }
 
     pg_error OutputCustomParams() override {
-        // Custom logic to output additional formatting information
+        // Example: Write custom parameters
+        pgWriteString("CustomParam: Value", 0, 0);
         return NO_ERROR;
     }
 };
