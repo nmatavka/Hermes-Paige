@@ -13,6 +13,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void InitPaige(HWND hwnd);
 void SetFontStyle(paige_rec_ptr doc, const char* fontName, short fontSize, short fontStyle);
 void CleanupPaige();
+long GetAttributes();
+pg_boolean SetAttributes(long attributes);
 void CopyText();
 void PasteText();
 void CutText();
@@ -280,7 +282,19 @@ void InitPaige(HWND hwnd) {
     pgDisposeShape(page_area);
 }
 
-void CleanupPaige() {
+long GetAttributes() {
+    if (paigeDoc) {
+        return pgGetAttributes(paigeDoc);
+    }
+    return 0;
+}
+
+pg_boolean SetAttributes(long attributes) {
+    if (paigeDoc) {
+        return pgSetAttributes(paigeDoc, attributes);
+    }
+    return FALSE;
+}
     if (paigeDoc) {
         pgDisposeDoc(paigeDoc);
     }
