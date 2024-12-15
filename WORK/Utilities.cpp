@@ -1,3 +1,6 @@
+#ifndef UTILITIES_H
+#define UTILITIES_H
+
 void FindWordBoundaries(pg_ref pg, long offset, long* first_byte, long* last_byte, pg_boolean left_side, pg_boolean smart_select) {
     if (pg) {
         pgFindWord(pg, offset, first_byte, last_byte, left_side, smart_select);
@@ -158,6 +161,7 @@ long GetAttributes() {
 }
 
 pg_boolean SetAttributes(long attributes) {
+#endif // UTILITIES_H
     if (paigeDoc) {
         return pgSetAttributes(paigeDoc, attributes);
     }

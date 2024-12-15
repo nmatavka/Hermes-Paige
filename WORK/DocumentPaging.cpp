@@ -1,6 +1,11 @@
+#ifndef DOCUMENTPAGING_H
+#define DOCUMENTPAGING_H
+
 #include "Paige.h"
 #include "pgMemMgr.h"
 #include <sys/stat.h>
+
+#endif // DOCUMENTPAGING_H
 
 extern paige_rec_ptr paigeDoc;
 

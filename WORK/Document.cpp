@@ -1,6 +1,11 @@
+#ifndef DOCUMENT_H
+#define DOCUMENT_H
+
 #include "Paige.h"
 #include "pgMemMgr.h"
 #include "pghtext.h"
+
+#endif // DOCUMENT_H
 
 extern paige_rec_ptr paigeDoc;
 
