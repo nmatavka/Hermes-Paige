@@ -1,5 +1,6 @@
 #include "Paige.h"
 #include "pgMemMgr.h"
+#include "pgText.h"
 
 extern paige_rec_ptr paigeDoc;
 
@@ -23,6 +24,26 @@ void ApplyLogFontStyles(paige_rec_ptr doc, LOGFONT logFont) {
         // Apply styles and redraw
         pgSetStyleBits(doc, styleBits, setBits, NULL, TRUE);
     }
+}
+
+void PaginateNow(pg_ref pg, long paginate_to, short use_best_guess) {
+    if (pg) {
+        pgPaginateNow(pg, paginate_to, use_best_guess);
+    }
+}
+
+pg_boolean FindStyleInfo(pg_ref pg, long* begin_position, long* end_position, style_info_ptr match_style, style_info_ptr mask, style_info_ptr AND_mask) {
+    if (pg) {
+        return pgFindStyleInfo(pg, begin_position, end_position, match_style, mask, AND_mask);
+    }
+    return FALSE;
+}
+
+pg_char_ptr ExamineText(pg_ref pg, long offset, text_ref* text, long* length) {
+    if (pg) {
+        return pgExamineText(pg, offset, text, length);
+    }
+    return NULL;
 }
 
 void InvalidateSelection(pg_ref pg, long select_from, long select_to) {
