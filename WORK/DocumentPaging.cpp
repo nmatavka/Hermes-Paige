@@ -36,3 +36,34 @@ pg_ref LoadDocument(const char* file_path) {
     }
     return NULL;
 }
+
+file_ref GetCacheFileRef(pg_ref doc) {
+    if (doc) {
+        return pgGetCacheFileRef(doc);
+    }
+    return NULL;
+}
+
+pg_error SaveDocumentWithPaging(pg_ref doc, const char* file_path, const pg_file_key_ptr keys, pg_short_t num_keys, file_io_proc write_proc, long doc_element_info) {
+    if (!doc) {
+        return BAD_TYPE_ERR;
+    }
+
+    int file_ref = _lcreat(file_path, 0);
+    if (file_ref == -1) {
+        return FILE_NOT_FOUND_ERR;
+    }
+
+    memory_ref file_map = MemoryAlloc(&globals->mem_globals, sizeof(int), 1, 0);
+    int* f_ptr = (int*)UseMemory(file_map);
+    *f_ptr = file_ref;
+    UnuseMemory(file_map);
+
+    long position = 0;
+    pg_error error = pgCacheSaveDoc(doc, &position, keys, num_keys, write_proc, file_map, doc_element_info);
+
+    DisposeMemory(file_map);
+    _lclose(file_ref);
+
+    return error;
+}
