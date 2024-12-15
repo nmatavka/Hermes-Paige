@@ -13,10 +13,20 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
             PostQuitMessage(0);
             return 0;
         case WM_PAINT:
-            // Handle painting here
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
+            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+            EndPaint(hwnd, &ps);
             break;
         case WM_KEYDOWN:
-            // Handle key events for text input
+            char text[256];
+            int length = GetWindowTextLength(hwnd);
+            if (length < 255) {
+                GetWindowText(hwnd, text, sizeof(text));
+                text[length] = (char)wParam; // Append the new character
+                text[length + 1] = '\0'; // Null-terminate the string
+                SetWindowText(hwnd, text); // Update the window text
+            }
             break;
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
