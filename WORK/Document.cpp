@@ -4,6 +4,25 @@
 
 extern paige_rec_ptr paigeDoc;
 
+PG_PASCAL void HyperlinkCallback(paige_rec_ptr pg, pg_hyperlink_ptr hypertext, short command, short modifiers, long position, pg_char_ptr URL) {
+    // Call the standard callback first to get default behaviour:
+    pgStandardSourceCallback(pg, hypertext, command, modifiers, position, URL);
+    switch(command) {
+        case hyperlink_mousedown_verb:
+            // Handle mouse down event
+            break;
+        case hyperlink_doubleclick_verb:
+            // Handle double click event
+            break;
+        case hyperlink_mouseup_verb:
+            // Handle mouse up event
+            break;
+        case hyperlink_delete_verb:
+            // Handle link deletion
+            break;
+    }
+}
+
 void SetPointSize(paige_rec_ptr doc, long point_size, pg_boolean redraw) {
     if (doc) {
         select_pair selection;
