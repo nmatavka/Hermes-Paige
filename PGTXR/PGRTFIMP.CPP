@@ -5,19 +5,19 @@ This source file contains all the member functions for the RTF import class (der
 from the PaigeImportFilter class. */
 
 
-#include "Paige.h"
-#include "pgTraps.h"
-#include "pgUtils.h"
-#include "pgTxrCPP.h"
-#include "defprocs.h"
-#include "pgErrors.h"
-#include "pgDefStl.h"
-#include "pgRTFDef.h"
-#include "pgEmbed.h"
-#include "pgdeftbl.h"
-#include "machine.h"
-#include "pgTables.h"
-#include "pgHText.h"
+#include "PAIGE.H"
+#include "PGTRAPS.H"
+#include "PGUTILS.H"
+#include "PGTXRCPP.H"
+#include "DEFPROCS.H"
+#include "PGERRORS.H"
+#include "PGDEFSTL.H"
+#include "PGRTFDEF.H"
+#include "PGEMBED.H"
+#include "PGDEFTBL.H"
+#include "MACHINE.H"
+#include "PGTABLES.H"
+#include "PGHTEXT.H"
 
 static short rtf_command (pg_char_ptr table, pg_char_ptr argument, pg_short_t arg_size,
 		short PG_FAR *param, pg_boolean PG_FAR *had_parameter);
@@ -159,8 +159,10 @@ pg_boolean PaigeRTFImportFilter::pgReadNextBlock (void)
 // Zero-out embed_ref stuff from possible previous embedded insertion.
 
 		current_style.procs = paige_globals->def_style.procs;
-		current_style.embed_entry = current_style.embed_style_refcon
-				= current_style.embed_refcon = current_style.embed_id = 0;
+		current_style.embed_entry = NULL;
+		current_style.embed_style_refcon = 0;
+		current_style.embed_refcon = 0;
+		current_style.embed_id = 0;
 		current_style.embed_object = MEM_NULL;
 		current_style.char_bytes = 0;
 		current_style.class_bits = 0;
@@ -1107,7 +1109,7 @@ pg_boolean PaigeRTFImportFilter::DoParagraphCommand (short command, short parame
 			if (double_borders) {
 				pg_fixed		twips_mod;
 				
-				(twips_mod = pgFixedRatio(parameter, 20)) & 0x00008000;
+				twips_mod = pgFixedRatio(parameter, 20) & 0x00008000;
 				
 				if (twips_mod)
 					parameter += 20;
@@ -2419,4 +2421,3 @@ static short convert_twips (paige_rec_ptr pg, short twipsvalue)
 	
 	return	(short)result;
 }
-

@@ -10,21 +10,21 @@ Software, Inc.  All rights reserved. Software by "Gar."  */
 
 //MAC NOTE: Need to change ControlRef to ControlHandle for Universal Interfaces before 2.0a3  ETO #16 TRS/OITC
 
-#include "Paige.h"
-#include "pgTraps.h"
-#include "defprocs.h"
-#include "pgUtils.h"
-#include "pgDefStl.h"
-#include "pgSelect.h"
-#include "pgText.h"
-#include "pgBasics.h"
-#include "machine.h"
-#include "pgFiles.h"
-#include "pgEmbed.h"
-#include "pgExceps.h"
-#include "pgOSUtl.h"
-#include "pgEdit.h"
-#include "pgFrame.h"
+#include "PAIGE.H"
+#include "PGTRAPS.H"
+#include "DEFPROCS.H"
+#include "PGUTILS.H"
+#include "PGDEFSTL.H"
+#include "PGSELECT.H"
+#include "PGTEXT.H"
+#include "PGBASICS.H"
+#include "MACHINE.H"
+#include "PGFILES.H"
+#include "PGEMBED.H"
+#include "PGEXCEPS.H"
+#include "PGOSUTL.H"
+#include "PGEDIT.H"
+#include "PGFRAME.H"
 
 #ifdef USING_GIF
 #include "pgGIF.h"
@@ -439,7 +439,7 @@ PG_PASCAL (void) pgSetEmbedRef (pg_ref pg, embed_ref ref, select_pair_ptr select
    
    UnuseMemory(pg);
    
-   if (new_style.char_bytes = (short)(change_range.end - change_range.begin))
+   if ((new_style.char_bytes = (short)(change_range.end - change_range.begin)))
       --new_style.char_bytes;
 
    new_style.class_bits |= EMBED_APPLIED_BIT;
@@ -539,7 +539,7 @@ PG_PASCAL (long) pgNumEmbeds (pg_ref pg, select_pair_ptr selection)
       use_to_init.end = pg_rec->t_length;
    }
 
-   if (select_ref = pgSetupOffsetRun(pg_rec, &use_to_init, FALSE, FALSE)) {
+   if ((select_ref = pgSetupOffsetRun(pg_rec, &use_to_init, FALSE, FALSE))) {
       
       num_selects = GetMemorySize(select_ref);
       selections = (select_pair_ptr) UseMemory(select_ref);
@@ -605,7 +605,7 @@ PG_PASCAL (embed_ref) pgGetIndEmbed (pg_ref pg, select_pair_ptr selection, size_
    result = MEM_NULL;
    index_ctr = 0;
 
-   if (select_ref = pgSetupOffsetRun(pg_rec, selection, FALSE, FALSE)) {
+   if ((select_ref = pgSetupOffsetRun(pg_rec, selection, FALSE, FALSE))) {
       
       num_selects = GetMemorySize(select_ref);
       selections = (select_pair_ptr) UseMemory(select_ref);
@@ -656,7 +656,7 @@ PG_PASCAL (embed_ref) pgGetIndEmbed (pg_ref pg, select_pair_ptr selection, size_
       
          pgGetStyleInfo(pg, NULL, FALSE, &single_style, &mask);
          
-         if (result = single_style.embed_object) {
+         if ((result = single_style.embed_object)) {
 
             if (text_position)
                *text_position = pgCurrentInsertion(pg_rec);
@@ -694,7 +694,7 @@ PG_PASCAL (embed_ref) pgPtInEmbed (pg_ref pg, co_ordinate_ptr point, long PG_FAR
 
    pgPtToStyleInfo(pg, point, NO_BYTE_ALIGN | NO_HALFCHARS, &the_style, &the_range);
    
-   if (ref = (embed_ref)the_style.embed_object) {
+   if ((ref = (embed_ref)the_style.embed_object)) {
       
       result = ref;
       
@@ -829,7 +829,7 @@ PG_PASCAL (long) pgGetEmbedBounds (pg_ref pg, long index, select_pair_ptr index_
 
    result = -1;
 
-   if (ref = pgGetIndEmbed(pg, index_range, index, &style_range.begin, &style)) {
+   if ((ref = pgGetIndEmbed(pg, index_range, index, &style_range.begin, &style))) {
 
       pg_rec = (paige_rec_ptr) UseMemory(pg);
       embed_ptr = (pg_embed_ptr) UseMemory(ref);
@@ -868,7 +868,7 @@ PG_PASCAL (void) pgSetEmbedBounds (pg_ref pg, long index, select_pair_ptr index_
    size_t                    position, new_width, new_height, new_descent;
    embed_ref               ref;
 
-   if (ref = pgGetIndEmbed(pg, index_range, index, &position, &associated_style)) {
+   if ((ref = pgGetIndEmbed(pg, index_range, index, &position, &associated_style))) {
 
      pg_rec = (paige_rec_ptr) UseMemory(pg);
      embed_ptr = (pg_embed_ptr) UseMemory(ref);
@@ -1175,7 +1175,7 @@ PG_PASCAL (pg_boolean) pgEmbedReadHandler (paige_rec_ptr pg, pg_file_key key, me
          styles->procs.duplicate = embed_copy;
          styles->procs.delete_style = embed_delete;
          styles->procs.track_ctl = track_embed_ctl;
-         styles->embed_entry = callback;
+         styles->embed_entry = reinterpret_cast<void *>(callback);
 
          embed_ptr->style = styles;
          embed_ptr->style_refcon = styles->embed_style_refcon;
@@ -1537,7 +1537,7 @@ PG_PASCAL (pg_error) pgSaveAllEmbedRefs (pg_ref pg, file_io_proc io_proc, file_i
 
    for (index = 0; index < num_styles; ++index) {
       
-      if (ref = styles[index].embed_object)
+      if ((ref = styles[index].embed_object))
          if (!have_saved_ref(styles, (short)index)) {
          
          fake_id = 0;
@@ -1768,7 +1768,7 @@ PG_PASCAL (long) pgInitEmbedStyleInfo (paige_rec_ptr pg, long position, embed_re
    style->procs.delete_style = embed_delete;
    style->procs.track_ctl = track_embed_ctl;
 
-   style->embed_entry = use_callback;
+   style->embed_entry = reinterpret_cast<void *>(use_callback);
    style->embed_object = ref;
    style->embed_refcon = new_embed->user_refcon;
    style->embed_style_refcon = callback_refcon;
@@ -2579,7 +2579,7 @@ STATIC_PASCAL (void) embed_copy (paige_rec_ptr src_pg, paige_rec_ptr target_pg,
       embed_ptr->used_ctr = 0;
       callback = (embed_callback) style->embed_entry;
       callback(pg_for_id, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK, EMBED_COPY,
-               style->embed_style_refcon, (void*)reason_verb, 0);
+               style->embed_style_refcon, (void*)(size_t)reason_verb, 0);
    }
 
    ++embed_ptr->used_ctr;
@@ -2610,7 +2610,7 @@ STATIC_PASCAL (void) embed_delete (paige_rec_ptr pg, pg_globals_ptr globals,
       callback = (embed_callback)style->embed_entry;
       embed_ptr->style = style;
       callback(pg, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK, EMBED_DESTROY,
-               style->embed_style_refcon, (void*)reason_verb, 0);
+               style->embed_style_refcon, (void*)(size_t)reason_verb, 0);
       embed_ptr->style = NULL;
       UnuseAndDispose(style->embed_object);
    }
@@ -3144,7 +3144,7 @@ static void standard_embed_dispose (pg_embed_ptr item, long the_type)
 
       case embed_qt_movie:
       case embed_qt_flat_movie:
-      //¥¥
+      //ï¿½ï¿½
             break;
 
       case embed_time:
@@ -3218,7 +3218,7 @@ static void standard_embed_copy (pg_embed_ptr item, long the_type)
 
       case embed_qt_movie:
       case embed_qt_flat_movie:
-      //¥¥
+      //ï¿½ï¿½
             break;
 
       case embed_time:
@@ -3715,7 +3715,7 @@ static void custom_data_callback (paige_rec_ptr pg, pack_walk_ptr walker, pg_emb
    callback(pg, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK, EMBED_WRITE_DATA,
          embed_ptr->user_refcon, (void*)buffer_ref, 0);
    
-   if (saved_size = GetMemorySize(buffer_ref)) {
+   if ((saved_size = GetMemorySize(buffer_ref))) {
 
       pgPackBytes(walker, (pg_bits8_ptr) UseMemory(buffer_ref), saved_size);
       UnuseMemory(buffer_ref);
@@ -3990,6 +3990,40 @@ static void unpack_altsize_text (paige_rec_ptr pg, pack_walk_ptr walker, pg_char
 }
 
 
+
+/************************** POSIX-specific graphics packing **************************/
+
+#ifdef POSIX_PLATFORM
+
+static void PG_FAR * pack_graphics (pack_walk_ptr walker, short the_type, void PG_FAR *data)
+{
+   memory_ref ref = (memory_ref)data;
+   (void)the_type;
+
+   if (ref) {
+      pgPackBytes(walker, (pg_bits8_ptr)UseMemory(ref), GetByteSize(ref));
+      UnuseMemory(ref);
+   }
+
+   return data;
+}
+
+static generic_var unpack_graphics (pgm_globals_ptr mem_globals, pack_walk_ptr walker, long type)
+{
+   generic_var result;
+   long input_byte_size = 0;
+   (void)type;
+
+   pgGetUnpackedPtr(walker, &input_byte_size);
+   result = (generic_var)MemoryAlloc(mem_globals, 1, input_byte_size, 0);
+   if (input_byte_size)
+      pgUnpackBytes(walker, (memory_ref)result);
+
+   return result;
+}
+
+#endif
+
 /************************** Windows-specific functions **************************/
 
 #ifdef WINDOWS_PLATFORM
@@ -4242,5 +4276,4 @@ static void detach_control_from_window (ControlHandle ctl)
 
 #endif
 // End of Mac-specific functions
-
 

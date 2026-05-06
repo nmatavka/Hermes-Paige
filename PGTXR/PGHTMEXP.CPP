@@ -5,20 +5,20 @@ This source file contains all the member functions for the HTML export class (de
 from the PaigeExportFilter class. */
 
 
-#include "Paige.h"
-#include "pgTraps.h"
-#include "pgExceps.h"
-#include "machine.h"
-#include "pgUtils.h"
-#include "pgTxrCPP.h"
-#include "defprocs.h"
-#include "pgErrors.h"
-#include "pgDefStl.h"
-#include "pgHTMDef.h"
-#include "pgEmbed.h"
-#include "pgdeftbl.h"
-#include "pgHText.h"
-#include "pgOSUtl.h"
+#include "PAIGE.H"
+#include "PGTRAPS.H"
+#include "PGEXCEPS.H"
+#include "MACHINE.H"
+#include "PGUTILS.H"
+#include "PGTXRCPP.H"
+#include "DEFPROCS.H"
+#include "PGERRORS.H"
+#include "PGDEFSTL.H"
+#include "PGHTMDEF.H"
+#include "PGEMBED.H"
+#include "PGDEFTBL.H"
+#include "PGHTEXT.H"
+#include "PGOSUTL.H"
 
 #define LIST_TAB_DIVIDE		8
 
@@ -713,7 +713,7 @@ void PaigeHTMLExportFilter::OutputImage (memory_ref embed, embed_callback callba
 	}
 	
 	callback(export_pg_rec, embed_ptr, embed_url_image, EMBED_SAVE_IMAGE, embed_ptr->user_refcon,
-			(long)&image, image_ctr);
+			(void PG_FAR *)&image, (void PG_FAR *)(intptr_t)image_ctr);
 	
 	if (image.URL[0]) {
 		
@@ -1926,4 +1926,3 @@ static pg_boolean has_colons (pg_char_ptr URL)
 	
 	return	FALSE;
 }
-

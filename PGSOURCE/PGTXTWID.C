@@ -1,20 +1,20 @@
 /* This file handles text_block records in a Paige struct. */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgbasic2
 #endif
 
-#include "machine.h"
-#include "defprocs.h"
-#include "pgDefStl.h"
-#include "pgUtils.h"
-#include "pgText.h"
-#include "pgTxtWid.h"
-#include "pgSubref.h"
-#include "pgShapes.h"
-#include "pgScript.h"
+#include "MACHINE.H"
+#include "DEFPROCS.H"
+#include "PGDEFSTL.H"
+#include "PGUTILS.H"
+#include "PGTEXT.H"
+#include "PGTXTWID.H"
+#include "PGSUBREF.H"
+#include "PGSHAPES.H"
+#include "PGSCRIPT.H"
 
 static void measure_hidden_text (long PG_FAR *positions, short PG_FAR *chartypes,
 		size_t measure_size);
@@ -360,8 +360,8 @@ PG_PASCAL (void) pgAcceptEmptyLine (paige_rec_ptr pg, point_start_ptr the_start,
 	else
 		minimum_bounds.bot_right.h = minimum_bounds.top_left.h + minimum_width;
 	
-	if (exclusions = pgExcludeRectInShape(pg, &minimum_bounds,
-			minimum_width, &lowest_exclude, global_offset, line_info->exclude_ref)) {
+	if ((exclusions = pgExcludeRectInShape(pg, &minimum_bounds,
+			minimum_width, &lowest_exclude, global_offset, line_info->exclude_ref))) {
 		rectangle_ptr		exclude_ptr;
 
 		adjust_h = 0;
@@ -761,7 +761,7 @@ PG_PASCAL (memory_ref) pgGetSpecialLocs (paige_rec_ptr pg_rec, text_block_ptr bl
 		}
 	}
 
-	if (unresolved_chars = text_size - non_blank_size) {
+	if ((unresolved_chars = text_size - non_blank_size)) {
 		
 		for (positions += non_blank_size; unresolved_chars; ++positions, --unresolved_chars)
 			positions[1] = *positions;
@@ -1323,7 +1323,7 @@ static void measure_hidden_text (long PG_FAR *positions, short PG_FAR *chartypes
 static pg_short_t maximum_measure_size (paige_rec_ptr pg_rec, style_walk_ptr walker)
 {
 #ifdef UNICODE
-	pg_char			test_char[] = {L"W"};
+	pg_char			test_char[] = {(pg_char)'W', 0};
 #else
 	pg_char			test_char[] = {"W"};
 #endif
@@ -1437,4 +1437,3 @@ static long measure_subref_char (paige_rec_ptr pg, text_block_ptr block, short s
 	
 	return		width;
 }
-

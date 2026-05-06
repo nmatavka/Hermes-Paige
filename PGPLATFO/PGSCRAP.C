@@ -1,13 +1,22 @@
 /* This source file handles machine-specific clipboard operations. Copyright 1996, DataPak
 Software, Inc.  Software by Gar. */
 
-#include "Paige.h"
-#include "defprocs.h"
-#include "pgtraps.h"
-#include "machine.h"
-#include "pgutils.h"
-#include "pgEmbed.h"
-#include "pgscrap.h"
+#include "PAIGE.H"
+#include "DEFPROCS.H"
+#include "PGTRAPS.H"
+#include "MACHINE.H"
+#include "PGUTILS.H"
+#include "PGEMBED.H"
+#include "PGSCRAP.H"
+
+#if defined(POSIX_PLATFORM) && defined(__cplusplus) && (defined(MACOS_PLATFORM) || defined(HAIKU_PLATFORM))
+#include "PGMODERNNATIVE.H"
+#define PAIGE_NATIVE_CLIPBOARD 1
+#endif
+
+#ifdef POSIX_PLATFORM
+#include <cstdlib>
+#endif
 
 static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_format,
       short PG_FAR *scrap_type, long PG_FAR *embed_type, size_t PG_FAR *raw_data_size,
@@ -17,7 +26,20 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
 #ifdef UNICODE
 static pg_handle convert_scrap_to_unicode (pg_handle the_scrap, size_t PG_FAR *bytesize);
 static void convert_unicode_to_scrap (memory_ref the_scrap, long charsize);
+#ifdef WINDOWS_PLATFORM
 static HGLOBAL process_cf_unicode (HGLOBAL data, size_t PG_FAR *text_size);
+#endif
+#endif
+
+#ifdef POSIX_PLATFORM
+struct posix_scrap_handle {
+   size_t size;
+   unsigned char data[1];
+};
+
+static memory_ref posix_native_scrap = MEM_NULL;
+static memory_ref posix_text_scrap = MEM_NULL;
+static memory_ref posix_unicode_scrap = MEM_NULL;
 #endif
 
 #ifdef WINDOWS_PLATFORM
@@ -65,9 +87,9 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
    long              embed_type;
    size_t            datasize, position;
    short             scrap_type;
-   
+
    raw_data = get_machine_scrap(globals, native_format, &scrap_type, &embed_type, &datasize, TRUE);
-   
+
    if (scrap_type) {
 
       result = pgNewShell(globals);
@@ -81,6 +103,10 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
             pgInitEmbedProcs(globals, def_embed_callback, NULL);
 
             converted_data = HandleToMemory(globals->mem_globals, raw_data, 1);
+#ifdef POSIX_PLATFORM
+            std::free(raw_data);
+            raw_data = (pg_handle)NULL;
+#endif
             pgReadDoc(result, &position, NULL, 0, pgScrapMemoryRead, (file_ref)converted_data);
             break;
 
@@ -95,13 +121,20 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
             HLock(raw_data);
             text_ptr = (pg_char_ptr)*raw_data;
          #endif
-         
+
          #ifdef WINDOWS_PLATFORM
             text_ptr = (pg_char_ptr) GlobalLock(raw_data);
          #endif
-         
+
+         #ifdef POSIX_PLATFORM
+            converted_data = HandleToMemory(globals->mem_globals, raw_data, sizeof(pg_char));
+            std::free(raw_data);
+            raw_data = (pg_handle)NULL;
+            text_ptr = (pg_char_ptr)UseMemory(converted_data);
+         #endif
+
             pgInsert(result, text_ptr, datasize, 0, data_insert_mode, 0, draw_none);
-         
+
          #ifdef MAC_PLATFORM
             DisposeHandle(raw_data);
          #endif
@@ -109,11 +142,14 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
             GlobalUnlock(raw_data);
             GlobalFree(raw_data);
          #endif
-         
+         #ifdef POSIX_PLATFORM
+            UnuseMemory(converted_data);
+         #endif
+
             break;
 
          case pg_embed_scrap:
-            
+
             pg_rec = (paige_rec_ptr) UseMemory(result);
             def_style = (style_info_ptr) UseMemory(pg_rec->t_formats);
             vert_pos = def_style->descent;
@@ -122,7 +158,7 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
             UnuseMemory(result);
 
             switch (embed_type) {
-               
+
                case embed_mac_pict:
 
                   embed = pgNewEmbedRef(globals->mem_globals, embed_mac_pict,
@@ -135,7 +171,7 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
                   METAFILEPICT PG_FAR     *src_meta;
                   metafile_struct         meta;
                   HDC                 hdc;
- 
+
                   pgFillBlock(&meta, sizeof(metafile_struct), 0);
 
                   src_meta = (METAFILEPICT *) GlobalLock(raw_data);
@@ -145,7 +181,7 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
               meta.y_ext = (short)src_meta->yExt;
 
           // Convert width and height to screen units
-               
+
                  hdc = (HDC)globals->machine_const;
                   meta.bounds.bot_right.h = pixel_convert(hdc, (short)src_meta->mm, (short)src_meta->xExt);
                   meta.bounds.bot_right.v = pixel_convert(hdc, (short)src_meta->mm, (short)src_meta->yExt);
@@ -154,16 +190,16 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
 
                   embed = pgNewEmbedRef(globals->mem_globals, embed_meta_file,
                         (void PG_FAR *)&meta, 0, 0, -vert_pos, 0, FALSE);
-                  
+
                }
          #endif
                   break;
-                  
+
                case embed_ole:
                   break;
 
             }
-            
+
             pgInsertEmbedRef(result, embed, 0, 0, def_embed_callback, 0, draw_none);
       }
    }
@@ -179,9 +215,9 @@ PG_PASCAL (pg_ref) pgGetScrap (pg_globals_ptr globals, pg_os_type native_format,
 PG_PASCAL (pg_boolean) pgScrapAvail (pg_os_type native_format)
 {
    short       the_type;
-   
+
     get_machine_scrap(NULL, native_format, &the_type, NULL, NULL, FALSE);
-   
+
     return  (pg_boolean)(the_type != 0);
 }
 
@@ -197,25 +233,25 @@ PG_PASCAL (void) pgPutScrap (pg_ref the_scrap, pg_os_type native_format, short s
 
    if (scrap_type == (short)pg_void_scrap || scrap_type == (short)pg_native_scrap)
       keep_scrap |= put_machine_scrap(the_scrap, (int)pg_native_scrap, native_format, (pg_boolean)!keep_scrap);
-   
+
    pg_rec = (paige_rec_ptr) UseMemory(the_scrap);
    full_range.begin = 0;
    full_range.end = pg_rec->t_length;
-   
+
    if (pg_rec->t_length == 2 && pgNumEmbeds(the_scrap, &full_range) == 1) {
-      
+
       if (scrap_type == (short)pg_void_scrap || scrap_type == (short)pg_embed_scrap)
          keep_scrap |= put_machine_scrap(the_scrap, (int)pg_embed_scrap, native_format, (pg_boolean)!keep_scrap);
    }
    else {
-      
+
       if (scrap_type == (short)pg_void_scrap || scrap_type == (short)pg_text_scrap || scrap_type == (short)pg_unicode_scrap) {
-       
+
 #ifdef UNICODE
-         keep_scrap |= put_machine_scrap(the_scrap, (int)pg_text_scrap, native_format, (pg_boolean)!keep_scrap);      
-       keep_scrap |= put_machine_scrap(the_scrap, (int)pg_unicode_scrap, native_format, (pg_boolean)!keep_scrap);     
+         keep_scrap |= put_machine_scrap(the_scrap, (int)pg_text_scrap, native_format, (pg_boolean)!keep_scrap);
+       keep_scrap |= put_machine_scrap(the_scrap, (int)pg_unicode_scrap, native_format, (pg_boolean)!keep_scrap);
 #else
-         keep_scrap |= put_machine_scrap(the_scrap, (int)pg_text_scrap, native_format, (pg_boolean)!keep_scrap);      
+         keep_scrap |= put_machine_scrap(the_scrap, (int)pg_text_scrap, native_format, (pg_boolean)!keep_scrap);
 #endif
      }
    }
@@ -238,9 +274,9 @@ static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_fo
 {
    pg_handle        data = (pg_handle)NULL;
    long             the_embed_type = 0;
-   size_t           datasize;
+   size_t           datasize = 0;
    short            the_type = pg_void_scrap;
-   
+
 #ifdef MAC_PLATFORM
    long        offset;
 
@@ -251,14 +287,14 @@ static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_fo
       the_type = pg_native_scrap;
    else
    if (GetScrap(data, PG_PICT_OSTYPE, &offset) >= 0) {
-   
+
       the_type = pg_embed_scrap;
       the_embed_type = embed_mac_pict;
    }
    else
    if (GetScrap(data, PG_TEXT_OSTYPE, &offset) >= 0)
       the_type = pg_text_scrap;
-   
+
    if (data)
       datasize = GetHandleSize(data);
 #endif
@@ -280,46 +316,46 @@ static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_fo
    formats[4] = CF_BITMAP;
    num_formats = 5;
 #else
-   
+
    formats[1] = CF_TEXT;
    formats[2] = CF_METAFILEPICT;
    formats[3] = CF_BITMAP;
    num_formats = 4;
 #endif
-   
+
    if ((found_type = GetPriorityClipboardFormat(formats, num_formats)) > 0) {
-      
+
       if (load_real_data) {
-      
+
          data = GetClipboardData(found_type);
          datasize = GlobalSize(data);
 
          if (raw_data_size)
             *raw_data_size = datasize;
         }
-        
+
       if (found_type == (pg_os_type)native_format) {
-      
+
          the_type = pg_native_scrap;
-         
+
          if (load_real_data)
             data = duplicate_data(data);
       }
       else {
-         
+
          switch (found_type) {
-            
+
             case CF_METAFILEPICT:
                the_type = pg_embed_scrap;
                the_embed_type = embed_meta_file;
-               
+
                if (!load_real_data)
                      break;
-                     
+
                data = duplicate_data(data);
                metarecord = (METAFILEPICT *) GlobalLock(data);
                metarecord->hMF = CopyMetaFile(metarecord->hMF, NULL);
-          
+
                GlobalUnlock(data);
                break;
 
@@ -327,12 +363,12 @@ static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_fo
 /* PDA:  Modified the mapping mode for the converted bitmap!  Extents in HIMETRIC.
                the_type = pg_embed_scrap;
                the_embed_type = embed_meta_file;
-               
+
                if(!load_real_data)
                   break;
 
                converted_meta = bitmap_to_metafile(globals, (HBITMAP)data, &bounds);
-               
+
                data = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
                metarecord = GlobalLock(data);
                metarecord->mm = MM_TEXT;
@@ -345,12 +381,12 @@ static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_fo
 */
                the_type = pg_embed_scrap;
                the_embed_type = embed_meta_file;
-               
+
                if (!load_real_data)
                   break;
 
                converted_meta = bitmap_to_metafile(globals, (HBITMAP)data, &bounds);
-               
+
                data = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
                metarecord = (METAFILEPICT *) GlobalLock(data);
                metarecord->mm = MM_ANISOTROPIC;
@@ -373,10 +409,10 @@ static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_fo
 
             case CF_TEXT:
                the_type = pg_text_scrap;
-               
+
                if (load_real_data)
                      data = process_cf_text(data, &datasize);
-      
+
 #ifdef UNICODE
          case CF_UNICODETEXT:
             the_type = pg_unicode_scrap;
@@ -390,7 +426,56 @@ static pg_handle get_machine_scrap (pg_globals_ptr globals, pg_os_type native_fo
    }
 
 #endif
-   
+
+#ifdef POSIX_PLATFORM
+   memory_ref found_ref = MEM_NULL;
+
+#ifdef PAIGE_NATIVE_CLIPBOARD
+   found_ref = pgNativeClipboardRead(globals ? globals->mem_globals : NULL, native_format,
+         &the_type, &the_embed_type, &datasize, load_real_data);
+
+   if (the_type != pg_void_scrap) {
+      if (load_real_data) {
+         if (found_ref) {
+            data = MemoryToHandle(found_ref);
+            DisposeMemory(found_ref);
+            found_ref = MEM_NULL;
+         }
+         else {
+            the_type = pg_void_scrap;
+            the_embed_type = 0;
+            datasize = 0;
+         }
+      }
+
+      if (the_type != pg_void_scrap)
+         goto get_scrap_done;
+   }
+#endif
+
+   if (posix_native_scrap && native_format) {
+      the_type = pg_native_scrap;
+      found_ref = posix_native_scrap;
+   }
+   else
+   if (posix_unicode_scrap) {
+      the_type = pg_unicode_scrap;
+      found_ref = posix_unicode_scrap;
+   }
+   else
+   if (posix_text_scrap) {
+      the_type = pg_text_scrap;
+      found_ref = posix_text_scrap;
+   }
+
+   if (found_ref) {
+      datasize = (the_type == pg_unicode_scrap) ? GetMemorySize(found_ref) : GetByteSize(found_ref);
+      if (load_real_data)
+         data = MemoryToHandle(found_ref);
+   }
+#endif
+
+get_scrap_done:
    if (scrap_type)
       *scrap_type = the_type;
    if (embed_type)
@@ -426,6 +511,27 @@ static pg_handle convert_scrap_to_unicode (pg_handle the_scrap, size_t PG_FAR *b
       text = (pg_bits8_ptr) GlobalLock(result);
 #endif
 
+#ifdef POSIX_PLATFORM
+   {
+      posix_scrap_handle *source = (posix_scrap_handle *)result;
+      const size_t source_bytes = source ? source->size : 0;
+      posix_scrap_handle *converted = (posix_scrap_handle *)std::malloc(sizeof(posix_scrap_handle) + (source_bytes + 1) * sizeof(pg_char));
+
+      if (!converted) {
+         *bytesize = 0;
+         return (pg_handle)NULL;
+      }
+
+      converted->size = (source_bytes + 1) * sizeof(pg_char);
+      text = (pg_bits8_ptr)converted->data;
+      *bytesize = pgBytesToUnicode(source ? source->data : NULL, (pg_short_t PG_FAR *)text, NULL, source_bytes);
+      ((pg_char_ptr)converted->data)[*bytesize] = 0;
+      converted->size = *bytesize * sizeof(pg_char);
+      std::free(source);
+      return (pg_handle)converted;
+   }
+#endif
+
    *bytesize = pgBytesToUnicode(text, (pg_short_t PG_FAR *)text, NULL, *bytesize);
 
 #ifdef MAC_PLATFORM
@@ -449,7 +555,7 @@ static void convert_unicode_to_scrap (memory_ref the_scrap, long charsize)
    characters = (pg_short_t *) UseMemory(the_scrap);
    bytesize = pgUnicodeToBytes(characters, (pg_bits8_ptr)characters, NULL, charsize);
    UnuseMemory(the_scrap);
-   
+
    SetMemoryRecSize(the_scrap, 1, 0);
    SetMemorySize(the_scrap, bytesize);
 }
@@ -462,6 +568,88 @@ text). If something went to the scrap, TRUE is returned. */
 
 static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_type native_format, pg_boolean clear_scrap)
 {
+#ifdef POSIX_PLATFORM
+   paige_rec_ptr     	pg_rec;
+   memory_ref       	dataref = MEM_NULL;
+   pgm_globals_ptr   	mem_globals;
+   select_pair       	full_range;
+   size_t          	 	position;
+   pg_boolean          saved_scrap = FALSE;
+
+   pg_rec = (paige_rec_ptr) UseMemory(the_scrap);
+   mem_globals = pg_rec->globals->mem_globals;
+   full_range.begin = 0;
+   full_range.end = pg_rec->t_length;
+   UnuseMemory(the_scrap);
+
+   if (clear_scrap) {
+      DisposeNonNilMemory(posix_native_scrap);
+      DisposeNonNilMemory(posix_text_scrap);
+      DisposeNonNilMemory(posix_unicode_scrap);
+      posix_native_scrap = posix_text_scrap = posix_unicode_scrap = MEM_NULL;
+#ifdef PAIGE_NATIVE_CLIPBOARD
+      pgNativeClipboardClear();
+#endif
+   }
+
+   switch (scrap_type) {
+
+      case pg_native_scrap:
+         dataref = MemoryAlloc(mem_globals, 1, 0, 128);
+         position = 0;
+         pgSaveDoc(the_scrap, &position, scrap_save_keys, NUM_SCRAP_KEYS, pgScrapMemoryWrite, dataref, 0);
+         pgSaveAllEmbedRefs(the_scrap, pgScrapMemoryWrite, pgScrapMemoryWrite, &position, dataref);
+         pgTerminateFile(the_scrap, &position, pgScrapMemoryWrite, dataref);
+
+#ifdef PAIGE_NATIVE_CLIPBOARD
+         saved_scrap |= pgNativeClipboardWrite(native_format, scrap_type, dataref, FALSE);
+#endif
+         DisposeNonNilMemory(posix_native_scrap);
+         posix_native_scrap = MemoryDuplicate(dataref);
+         saved_scrap |= (pg_boolean)(posix_native_scrap != MEM_NULL);
+         break;
+
+      case pg_text_scrap:
+      case pg_unicode_scrap:
+         dataref = pgCopyText(the_scrap, &full_range, all_data);
+
+         if (dataref) {
+            pg_char_ptr text_ptr = (pg_char_ptr) AppendMemory(dataref, 1, FALSE);
+            *text_ptr = 0;
+            UnuseMemory(dataref);
+
+#ifdef UNICODE
+            if (scrap_type == pg_text_scrap)
+               convert_unicode_to_scrap(dataref, (long)GetMemorySize(dataref));
+#endif
+
+#ifdef PAIGE_NATIVE_CLIPBOARD
+            saved_scrap |= pgNativeClipboardWrite(native_format, scrap_type, dataref, FALSE);
+#endif
+            if (scrap_type == pg_text_scrap) {
+               DisposeNonNilMemory(posix_text_scrap);
+               posix_text_scrap = MemoryDuplicate(dataref);
+               saved_scrap |= (pg_boolean)(posix_text_scrap != MEM_NULL);
+            }
+            else {
+               DisposeNonNilMemory(posix_unicode_scrap);
+               posix_unicode_scrap = MemoryDuplicate(dataref);
+               saved_scrap |= (pg_boolean)(posix_unicode_scrap != MEM_NULL);
+            }
+         }
+
+         break;
+
+      default:
+         break;
+   }
+
+   DisposeNonNilMemory(dataref);
+#ifndef PAIGE_NATIVE_CLIPBOARD
+   (void)native_format;
+#endif
+   return saved_scrap;
+#else
    paige_rec_ptr     	pg_rec;
    memory_ref       	dataref;
    embed_ref         	embed;
@@ -482,7 +670,7 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
    switch (scrap_type) {
 
       case pg_native_scrap:
-		       	 		
+
          dataref = MemoryAlloc(mem_globals, 1, 0, 128);
          position = 0;
          pgSaveDoc(the_scrap, &position, scrap_save_keys, NUM_SCRAP_KEYS, pgScrapMemoryWrite, dataref, 0);
@@ -496,9 +684,9 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
       case pg_text_scrap:
       case pg_unicode_scrap:
          dataref = pgCopyText(the_scrap, &full_range, all_data);
-         
+
          if (dataref) {
-         
+
             text_ptr = (pg_char_ptr) AppendMemory(dataref, 1, FALSE);
             *text_ptr = 0;
             UnuseMemory(dataref);
@@ -507,11 +695,11 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
             raw_data = process_text_out(dataref, (pg_boolean)(scrap_type == pg_text_scrap));
             DisposeMemory(dataref);
          #endif
-         
+
          #ifdef MAC_PLATFORM
             raw_data = MemoryToHandle(dataref);
          #endif
-         
+
          if (scrap_type == pg_text_scrap)
             os_type = PG_TEXT_OSTYPE;
          else
@@ -522,99 +710,100 @@ static pg_boolean put_machine_scrap (pg_ref the_scrap, int scrap_type, pg_os_typ
 
       case pg_embed_scrap:
          position = 0;
-         
+
          if ((embed = pgFindNextEmbed(the_scrap, &position, 0, 0)) != MEM_NULL) {
-            
+
             embed_ptr = (pg_embed_ptr) UseMemory(embed);
             embed_type = embed_ptr->type & EMBED_TYPE_MASK;
-            
+
             if (embed_type == embed_mac_pict) {
 
       #ifdef MAC_PLATFORM
-      
+
                raw_data = (pg_handle)embed_ptr->data;
                os_type = PG_PICT_OSTYPE;
       #endif
             }
             else
             if (embed_type == embed_meta_file) {
-      
+
       #ifdef WINDOWS_PLATFORM
                METAFILEPICT   PG_FAR   *metarecord;
                HDC                  hdc;
-               
+
                hdc = (HDC)pg_rec->globals->machine_const;
                raw_data = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
                metarecord = (METAFILEPICT *) GlobalLock(raw_data);
-               
+
                metarecord->mm = (int)embed_ptr->uu.pict_data.mapping_mode;
-               
+
                if (!metarecord->mm)
                      metarecord->mm = MM_TEXT;
-               
+
                if (metarecord->mm != MM_TEXT) {
-               
+
                      if (embed_ptr->uu.pict_data.meta_ext_x == 0)
                         metarecord->xExt = (int)pixels_to_himetric(hdc, (short)embed_ptr->width);
                      else
                         metarecord->xExt = (int)embed_ptr->uu.pict_data.meta_ext_x;
-               
+
                      if (embed_ptr->uu.pict_data.meta_ext_y == 0)
                         metarecord->yExt = (int)pixels_to_himetric(hdc, (short)embed_ptr->height);
                      else
                         metarecord->yExt = (int)embed_ptr->uu.pict_data.meta_ext_y;
                }
                else {
-                    
+
                     metarecord->xExt = (int)embed_ptr->width;
                     metarecord->yExt = (int)embed_ptr->height;
                }
-               
+
                metarecord->hMF = CopyMetaFile((HMETAFILE)embed_ptr->data, NULL);
                GlobalUnlock(raw_data);
-               
+
                os_type = CF_METAFILEPICT;
       #endif
 
             }
 
             UnuseMemory(embed);
-            
+
             if (raw_data)
                break;
          }
 
          break;
    }
-   
+
    if (raw_data) {
-   
+
 #ifdef MAC_PLATFORM
         long         data_size;
- 
+
       if (clear_scrap)
          ZeroScrap();
-      
+
       data_size = GetHandleSize(raw_data);
       HLock(raw_data);
       PutScrap(data_size, os_type, (void *)*raw_data);
-      
+
       if (embed_type != embed_mac_pict)
          DisposeHandle(raw_data);
 #endif
 
 #ifdef WINDOWS_PLATFORM
-      
+
       if (clear_scrap)
          EmptyClipboard();
-      
+
       SetClipboardData(os_type, raw_data);
 #endif
    }
 
    UnuseMemory(the_scrap);
-   
+
    return      (pg_boolean)(raw_data != (pg_handle)NULL);
+#endif
 }
 
 
@@ -625,16 +814,16 @@ static HANDLE bitmap_to_metafile (pg_globals_ptr globals, HBITMAP bitmap, RECT *
 {
    BITMAP         bitsInfo;
    HDC            dc, bitmapDC, metaDC;
-   
+
    GetObject(bitmap, sizeof(BITMAP), &bitsInfo);
    bounds->top = bounds->left = 0;
    bounds->right = bitsInfo.bmWidth;
    bounds->bottom = bitsInfo.bmHeight;
-   
+
    dc = (HDC)globals->machine_const;
    bitmapDC = CreateCompatibleDC(dc);
    SelectObject(bitmapDC, bitmap);
-   
+
    metaDC = CreateMetaFile(NULL);
    BitBlt(metaDC, 0, 0, bitsInfo.bmWidth, bitsInfo.bmHeight, bitmapDC, 0, 0, SRCCOPY);
    DeleteDC(bitmapDC);
@@ -655,7 +844,7 @@ static HANDLE bitmap_to_metafile (pg_globals_ptr globals, HBITMAP bitmap, RECT *
    dc = (HDC)globals->machine_const;
    bitmapDC = CreateCompatibleDC(dc);
    SelectObject(bitmapDC, bitmap);
-   
+
    metaDC = CreateMetaFile(NULL);
    // PDA:  Required to create a "Standard" clipboard metafile.
    SetMapMode(metaDC, MM_ANISOTROPIC);
@@ -684,7 +873,7 @@ PG_PASCAL (HMETAFILE) pgBitmapToMetafile(HBITMAP bitmap, LPRECT bounds)
    bitmapDC = CreateCompatibleDC(dc);
    ReleaseDC(hwnd, dc);
    SelectObject(bitmapDC, bitmap);
-   
+
    metaDC = CreateMetaFile(NULL);
    // PDA:  Required to create a "Standard" clipboard metafile.
    SetMapMode(metaDC, MM_ANISOTROPIC);
@@ -708,15 +897,15 @@ static short pixel_convert (HDC hdc, short map_mode, short value)
    if (!value)
       return   0;
    if ((use_value = value) < 0)
-      use_value = -value;                    
+      use_value = -value;
 
    dpi = (long)GetDeviceCaps(hdc, LOGPIXELSX);
    dpi <<= 16;
 
    if (map_mode == MM_ISOTROPIC || map_mode == MM_ANISOTROPIC) {
-   
+
       ratio = pgFixedRatio(use_value, 2540);  // = inches
-      
+
       pixels = pgMultiplyFixed(ratio, dpi);
       use_value = (short)HIWORD(pixels);
    }
@@ -743,12 +932,12 @@ static short pixels_to_himetric (HDC hdc, short value)
    if (!value)
       return   0;
    if ((use_value = value) < 0)
-      use_value = -value;                    
+      use_value = -value;
 
    dpi = (short)GetDeviceCaps(hdc, LOGPIXELSX);
 
    inches = pgFixedRatio(value, dpi);  // = inches
-   ratio = pgFixedRatio(2540, use_value);  // = himetric    
+   ratio = pgFixedRatio(2540, use_value);  // = himetric
    ratio = pgMultiplyFixed(ratio, inches);
    use_value = (short)HIWORD(ratio);
 
@@ -762,13 +951,13 @@ static HGLOBAL duplicate_data (HGLOBAL data)
 {
    HGLOBAL  new_data;
    size_t   datasize;
-   
+
    datasize = GlobalSize(data);
    new_data = GlobalAlloc(GMEM_MOVEABLE, datasize);
    pgBlockMove(GlobalLock(data), GlobalLock(new_data), datasize);
    GlobalUnlock(data);
    GlobalUnlock(new_data);
-   
+
    return   new_data;
 }
 
@@ -780,25 +969,25 @@ static HGLOBAL process_cf_text (HGLOBAL data, size_t PG_FAR *text_size)
    HGLOBAL      new_data;
    pg_bits8_ptr src, dest;
    size_t       datasize;
-   
+
    datasize = GlobalSize(data);
    new_data = GlobalAlloc(GMEM_MOVEABLE, datasize * sizeof(pg_char));
-   
+
    src = (pg_bits8_ptr) GlobalLock(data);
    dest = (pg_bits8_ptr) GlobalLock(new_data);
    datasize = 0;
-   
+
    while (*src != 0) {
-      
+
       if (*src != 0x0A) {
-      
+
          *dest++ = *src++;
          ++datasize;
       }
       else
          ++src;
    }
-   
+
    GlobalUnlock(data);
    GlobalUnlock(new_data);
 
@@ -806,7 +995,7 @@ static HGLOBAL process_cf_text (HGLOBAL data, size_t PG_FAR *text_size)
    dest = (pg_bits8_ptr) GlobalLock(new_data);
    datasize = pgBytesToUnicode(dest, (pg_short_t PG_FAR *)dest, NULL, datasize);
 #endif
-   
+
    *text_size = datasize;
 
    return   new_data;
@@ -823,30 +1012,30 @@ static HGLOBAL process_cf_unicode (HGLOBAL data, size_t PG_FAR *text_size)
    HGLOBAL      new_data;
    pg_char_ptr  src, dest, unicode_ptr;
    size_t       datasize;
-   
+
    datasize = GlobalSize(data);
    new_data = GlobalAlloc(GMEM_MOVEABLE, datasize * sizeof(pg_char));
-   
+
    src = (pg_char_ptr) GlobalLock(data);
    dest = unicode_ptr = (pg_char_ptr) GlobalLock(new_data);
    datasize = 0;
-   
+
    while (*src != 0) {
-      
+
       if (*src != 0x0A) {
-      
+
          *dest++ = *src++;
          ++datasize;
       }
       else
          ++src;
    }
-   
+
    datasize = pgUnicodeToUnicode((pg_short_t*) unicode_ptr, datasize, FALSE);
    unicode_ptr[datasize] = 0;
    GlobalUnlock(data);
    GlobalUnlock(new_data);
-   
+
    *text_size = datasize;
 
    return   new_data;
@@ -862,25 +1051,25 @@ static HGLOBAL process_text_out (memory_ref ref, pg_boolean convert_to_bits8)
    HGLOBAL        result;
    pg_char_ptr    text, first_text;
    size_t         src_text_size, cr_size;
-   
+
    src_text_size = GetMemorySize(ref);
    text = first_text = (pg_char_ptr) UseMemory(ref);
    cr_size = 0;
-   
+
    while (*text) {
-      
+
       if (*text++ == 0x0D)
          if (*text != 0x0A)
             cr_size += 1;
    }
-   
+
    result = GlobalAlloc(GMEM_MOVEABLE, (src_text_size + cr_size) * sizeof(pg_char));
    text = (pg_char_ptr) GlobalLock(result);
-   
+
    src_text_size = 0;
 
    while (*first_text) {
-      
+
       *text++ = *first_text;
       src_text_size += 1;
 
@@ -893,7 +1082,7 @@ static HGLOBAL process_text_out (memory_ref ref, pg_boolean convert_to_bits8)
 
       ++first_text;
    }
-   
+
    *text = 0;
 
    UnuseMemory(ref);
@@ -914,5 +1103,3 @@ static HGLOBAL process_text_out (memory_ref ref, pg_boolean convert_to_bits8)
 }
 
 #endif
-
-

@@ -5,15 +5,15 @@ This source file contains all the member functions for the native import/export 
 from the PaigeImportFilter and PaigeExportFilter classes. */
 
 
-#include "Paige.h"
-#include "defprocs.h"
-#include "pgExceps.h"
-#include "pgUtils.h"
-#include "pgTxrCPP.h"
-#include "pgErrors.h"
-#include "pgEmbed.h"
-#include "pgdeftbl.h"
-#include "pgFiles.h"
+#include "PAIGE.H"
+#include "DEFPROCS.H"
+#include "PGEXCEPS.H"
+#include "PGUTILS.H"
+#include "PGTXRCPP.H"
+#include "PGERRORS.H"
+#include "PGEMBED.H"
+#include "PGDEFTBL.H"
+#include "PGFILES.H"
 
 /* PaigeImportFilter constructor. This sets up the various members common to all filters.
 No error checking or file verification occurs just yet. */
@@ -83,7 +83,7 @@ pg_boolean PaigeNativeImportFilter::pgReadNextBlock (void)
          par_info_ptr   pars;
          style_info_ptr  styles;
          font_info_ptr  font;
-         pg_short_t     font_index;
+         short          font_index;
          long        qty, font_qty;
          
          if (GetMemorySize(import_pg_rec->par_formats) == 0) {
@@ -125,9 +125,9 @@ pg_boolean PaigeNativeImportFilter::pgReadNextBlock (void)
             if ((font_index = styles->font_index) == DEFAULT_FONT_INDEX)
                font_index = 0;
               else
-              if (font_index >= (pg_short_t)font_qty) {
+              if (font_index >= (short)font_qty) {
                   
-                  font_index = (pg_short_t)(font_qty - 1);
+                  font_index = (short)(font_qty - 1);
                styles->font_index = font_index;          
               }
       
@@ -239,6 +239,5 @@ pg_error PaigeNativeExportFilter::pgExportDone (void)
 
 
 /************************************* Local Functions *************************************/
-
 
 

@@ -5,7 +5,7 @@
 
 	by T. R. Shaw
 
-	Copyright © 1994-95 OITC - All rights reserved.
+	Copyright ï¿½ 1994-95 OITC - All rights reserved.
 	
 	This software has been privately developed and falls within 
 	DFARS 252.227-7013(c)(1) and associated regulations and it or its
@@ -22,7 +22,7 @@
 #ifndef PGLISTS_H
 #define PGLISTS_H
 
-#include	"Paige.h"
+#include	"PAIGE.H"
 
 struct pg_list_rec {
 	pg_ref		pg;				/* Paige ref */

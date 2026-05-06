@@ -5,7 +5,7 @@
 
 	by T. R. Shaw
 
-	Copyright © 1995 OITC, Inc.
+	Copyright ï¿½ 1995 OITC, Inc.
 	All rights reserved.
 		
 	pgIO.c - Universal I/O routines
@@ -22,9 +22,9 @@
 	03/18/96	1.4 GC - Moved pgScrapMemoryRead/Write
 */
 
-#include "pgIO.h"
-#include "pgosutl.h"
-#include "defprocs.h"
+#include "PGIO.H"
+#include "PGOSUTL.H"
+#include "DEFPROCS.H"
 
 
 /* Names indicate functions in this file */
@@ -284,6 +284,311 @@ PG_C (pg_error) pgWriteFileBytes(pg_file_unit ref_num, long PG_FAR *byte_size, v
 
 #endif
 
+#ifdef POSIX_PLATFORM
+
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+static size_t pg_posix_utf8_len(pg_char ch)
+{
+	unsigned long codepoint = (unsigned long)ch;
+
+	if (codepoint < 0x80)
+		return 1;
+	if (codepoint < 0x800)
+		return 2;
+	return 3;
+}
+
+static char *pg_posix_path_from_pg_chars(const pg_file_name_ptr file_name)
+{
+	size_t bytes = 0;
+	char *path;
+	char *out;
+	pg_char_ptr scan;
+
+	if (!file_name)
+		return NULL;
+
+	for (scan = file_name; *scan; ++scan)
+		bytes += pg_posix_utf8_len(*scan);
+
+	path = (char *)malloc(bytes + 1);
+	if (!path)
+		return NULL;
+
+	out = path;
+	for (scan = file_name; *scan; ++scan) {
+		unsigned long codepoint = (unsigned long)*scan;
+
+		if (codepoint < 0x80)
+			*out++ = (char)codepoint;
+		else
+		if (codepoint < 0x800) {
+			*out++ = (char)(0xC0 | (codepoint >> 6));
+			*out++ = (char)(0x80 | (codepoint & 0x3F));
+		}
+		else {
+			*out++ = (char)(0xE0 | (codepoint >> 12));
+			*out++ = (char)(0x80 | ((codepoint >> 6) & 0x3F));
+			*out++ = (char)(0x80 | (codepoint & 0x3F));
+		}
+	}
+
+	*out = 0;
+	return path;
+}
+
+static pg_file_desc_ref pg_posix_path_to_descriptor(const pgm_globals_ptr mem_globals, const char *path)
+{
+	pg_file_desc_ref ref;
+	size_t len;
+
+	if (!path)
+		return MEM_NULL;
+
+	len = strlen(path) + 1;
+	ref = MemoryAlloc(mem_globals, 1, len, 0);
+	pgBlockMove((void PG_FAR *)path, UseMemory(ref), len);
+	UnuseMemory(ref);
+
+	return ref;
+}
+
+static int pg_posix_open_flags(short perm)
+{
+	int flags;
+
+	switch (perm & PG_RDWR) {
+		case PG_WRONLY:
+			flags = O_WRONLY;
+			break;
+
+		case PG_RDWR:
+			flags = O_RDWR;
+			break;
+
+		case PG_RDONLY:
+		default:
+			flags = O_RDONLY;
+			break;
+	}
+
+	if (perm & PG_APPEND)
+		flags |= O_APPEND;
+	if (perm & PG_CREAT)
+		flags |= O_CREAT;
+	if (perm & PG_EXCL)
+		flags |= O_EXCL;
+	if (perm & PG_TRUNC)
+		flags |= O_TRUNC;
+
+	return flags;
+}
+
+PG_C (pg_file_desc_ref) pgFileSpec2FileDescriptor(const pgm_globals_ptr mem_globals, const pg_file_desc_ptr spec)
+{
+	return pg_posix_path_to_descriptor(mem_globals, spec);
+}
+
+PG_C (pg_file_desc_ref) pgCreateFileDescriptor(const pgm_globals_ptr mem_globals, const pg_file_name_ptr file_name)
+{
+	char *path = pg_posix_path_from_pg_chars(file_name);
+	pg_file_desc_ref ref = pg_posix_path_to_descriptor(mem_globals, path);
+
+	free(path);
+	return ref;
+}
+
+PG_C (void) pgDisposeFileDescriptor(pg_file_desc_ref ref)
+{
+	DisposeNonNilFailedMemory(ref);
+}
+
+PG_C (pg_error) pgCreateFile(pg_file_desc_ref ref, short perm, pg_file_unit_ptr ref_num)
+{
+	short create_perm = (short)(perm | PG_CREAT);
+
+	if (!(perm & PG_EXCL))
+		create_perm |= PG_TRUNC;
+
+	return pgOpenFile(ref, create_perm, ref_num);
+}
+
+PG_C (pg_error) pgOpenFile(pg_file_desc_ref ref, short perm, pg_file_unit_ptr ref_num)
+{
+	const char *path;
+	int fd;
+	int flags;
+	const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+
+	if (!ref || !ref_num)
+		return ACCESS_DENIED_ERR;
+
+	path = (const char *)UseMemory(ref);
+	flags = pg_posix_open_flags(perm);
+	fd = open(path, flags, mode);
+	UnuseMemory(ref);
+
+	if (fd < 0)
+		return (pg_error)errno;
+
+	*ref_num = fd;
+	return NO_ERROR;
+}
+
+PG_C (pg_error) pgCloseFile(pg_file_unit ref_num)
+{
+	return (close(ref_num) == 0) ? NO_ERROR : (pg_error)errno;
+}
+
+PG_C (pg_error) pgDeleteFile(pg_file_desc_ref ref)
+{
+	const char *path;
+	int result;
+
+	if (!ref)
+		return ACCESS_DENIED_ERR;
+
+	path = (const char *)UseMemory(ref);
+	result = unlink(path);
+	UnuseMemory(ref);
+
+	return (result == 0) ? NO_ERROR : (pg_error)errno;
+}
+
+PG_C (pg_error) pgRenameFile(pg_file_desc_ref ref, const pg_file_name_ptr new_file_name)
+{
+	const char *old_path;
+	char *new_path;
+	int result;
+
+	if (!ref || !new_file_name)
+		return ACCESS_DENIED_ERR;
+
+	old_path = (const char *)UseMemory(ref);
+	new_path = pg_posix_path_from_pg_chars(new_file_name);
+	result = new_path ? rename(old_path, new_path) : -1;
+	UnuseMemory(ref);
+	free(new_path);
+
+	return (result == 0) ? NO_ERROR : (pg_error)(new_path ? errno : NO_MEMORY_ERR);
+}
+
+PG_C (pg_file_desc_ref) pgOpenTempFile(const pgm_globals_ptr mem_globals, pg_file_unit_ptr temp_ref_num)
+{
+	const char *tmpdir = getenv("TMPDIR");
+	char path[1024];
+	int fd;
+
+	if (!tmpdir || !*tmpdir)
+		tmpdir = "/tmp";
+
+	snprintf(path, sizeof(path), "%s/paigeXXXXXX", tmpdir);
+	fd = mkstemp(path);
+	pgFailError(mem_globals, (fd < 0) ? (pg_error)errno : NO_ERROR);
+
+	if (temp_ref_num)
+		*temp_ref_num = fd;
+
+	return pg_posix_path_to_descriptor(mem_globals, path);
+}
+
+PG_C (pg_error) pgGetFileEOF(pg_file_unit ref_num, size_t PG_FAR *offset_result)
+{
+	off_t current = lseek(ref_num, 0, SEEK_CUR);
+	off_t end;
+
+	if (current < 0)
+		return (pg_error)errno;
+
+	end = lseek(ref_num, 0, SEEK_END);
+	if (end < 0)
+		return (pg_error)errno;
+
+	if (lseek(ref_num, current, SEEK_SET) < 0)
+		return (pg_error)errno;
+
+	if (offset_result)
+		*offset_result = (size_t)end;
+
+	return NO_ERROR;
+}
+
+PG_C (pg_error) pgSetFileEOF(pg_file_unit ref_num, size_t offset)
+{
+	return (ftruncate(ref_num, (off_t)offset) == 0) ? NO_ERROR : (pg_error)errno;
+}
+
+PG_C (pg_error) pgGetFilePos(pg_file_unit ref_num, size_t PG_FAR *offset_result)
+{
+	off_t offset = lseek(ref_num, 0, SEEK_CUR);
+
+	if (offset < 0)
+		return (pg_error)errno;
+
+	if (offset_result)
+		*offset_result = (size_t)offset;
+
+	return NO_ERROR;
+}
+
+PG_C (pg_error) pgSetFilePos(pg_file_unit ref_num, size_t offset)
+{
+	return (lseek(ref_num, (off_t)offset, SEEK_SET) >= 0) ? NO_ERROR : (pg_error)errno;
+}
+
+PG_C (pg_error) pgReadFileBytes(pg_file_unit ref_num, size_t PG_FAR *byte_size, void PG_FAR *buffer)
+{
+	ssize_t bytes_read;
+
+	if (!byte_size || !buffer)
+		return ACCESS_DENIED_ERR;
+	if (*byte_size == 0)
+		return NO_ERROR;
+
+	bytes_read = read(ref_num, buffer, *byte_size);
+	if (bytes_read < 0)
+		return (pg_error)errno;
+
+	*byte_size = (size_t)bytes_read;
+	return bytes_read == 0 ? EOF_ERR : NO_ERROR;
+}
+
+PG_C (pg_error) pgWriteFileBytes(pg_file_unit ref_num, size_t PG_FAR *byte_size, const void PG_FAR *buffer)
+{
+	size_t requested;
+	size_t written_total = 0;
+	const unsigned char *bytes = (const unsigned char *)buffer;
+
+	if (!byte_size || !buffer)
+		return ACCESS_DENIED_ERR;
+
+	requested = *byte_size;
+	while (written_total < requested) {
+		ssize_t written = write(ref_num, bytes + written_total, requested - written_total);
+
+		if (written < 0) {
+			*byte_size = written_total;
+			return (pg_error)errno;
+		}
+		if (written == 0)
+			break;
+
+		written_total += (size_t)written;
+	}
+
+	*byte_size = written_total;
+	return (written_total == requested) ? NO_ERROR : IO_ERR;
+}
+
+#endif
+
+
 #ifdef WINDOWS_PLATFORM
 
 #include <stdio.h>
@@ -400,7 +705,7 @@ PG_C (pg_file_desc_ref) pgOpenTempFile(const pgm_globals_ptr mem_globals, pg_fil
 	pg_file_desc_ref	temp_ref = MEM_NULL;
 	
 	p = (pg_file_name_ptr)tmpnam(NULL);
-	while ((*temp_ref_num = _lopen((LPCSTR)p, 0 /*¥¥¥¥*/)) == HFILE_ERROR)
+	while ((*temp_ref_num = _lopen((LPCSTR)p, 0 /*ï¿½ï¿½ï¿½ï¿½*/)) == HFILE_ERROR)
 	{
 		if (!--cnt)
 			break;
@@ -526,8 +831,8 @@ PG_C (void) pgSetTypeCreator(const pgm_globals_ptr mem_globals, long creator, lo
 /* This is a "fake" file I/O proc that sends the data to a memory_ref instead of
 a file.	*/
 
-PG_PASCAL (pg_error) pgScrapMemoryWrite (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap)
+PG_PASCAL (pg_error) pgScrapMemoryWrite (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap)
 {
 	pg_bits8_ptr		new_data, source_data;
 	size_t				ref_size;

@@ -2,7 +2,7 @@
 mapping tables,  can be shared by all importers. */
 
 #include "CPUDEFS.H"
-#include "pgdeftbl.h"
+#include "PGDEFTBL.H"
 
 #ifdef MAC_PLATFORM
 
@@ -341,8 +341,24 @@ pg_char PG_FAR cross_symbolfont_table[HIGH_CHARS_QTY] = {
 #endif
 // endif WINDOWS_PLATFORM
 
+#ifdef POSIX_PLATFORM
+
+pg_char PG_FAR cross_font_table[] = {(pg_char)'\f', (pg_char)'f', 0};
+pg_char PG_FAR font_type_table[] = {(pg_char)'\f', (pg_char)'f', 0};
+pg_char PG_FAR export_font_table[] = {(pg_char)'\f', (pg_char)'f', 0};
+pg_char PG_FAR untitled_title[] = {(pg_char)'U', (pg_char)'n', (pg_char)'t', (pg_char)'i', (pg_char)'t', (pg_char)'l', (pg_char)'e', (pg_char)'d', 0, 0};
+pg_char PG_FAR cross_character_table[HIGH_CHARS_QTY] = {};
+pg_char PG_FAR cross_symbolfont_table[HIGH_CHARS_QTY] = {};
+pg_short_t PG_FAR ascii_unicode_table[HIGH_CHARS_QTY] = {};
+
+#endif
+
 #ifdef UNICODE
+#ifdef POSIX_PLATFORM
+pg_char PG_FAR def_font_type[] = {(pg_char)'f', (pg_char)'n', (pg_char)'i', (pg_char)'l', 0, 0};
+#else
 pg_char PG_FAR def_font_type[] = {L"fnil\0"};
+#endif
 #else
 pg_char PG_FAR def_font_type[] = {"fnil\0"};
 #endif

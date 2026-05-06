@@ -3,7 +3,7 @@
 #ifndef PGPAR_H
 #define PGPAR_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef __cplusplus
 extern	"C" {

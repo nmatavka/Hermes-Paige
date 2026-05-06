@@ -5,8 +5,8 @@
 #define PGRTFDEF_H
 #endif
 
-#include "Paige.h"
-#include "pgTxr.h"
+#include "PAIGE.H"
+#include "PGTXR.H"
 
 #define RTF_VERSION				1
 #define MAX_NO_CR				128	/* Maximum chars before CR is forced */

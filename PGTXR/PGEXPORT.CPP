@@ -4,19 +4,19 @@ part of the total PAIGE library.
 This source file contains all the default member and non-member functions for the export class. */
 
 
-#include "Paige.h"
-#include "machine.h"
-#include "pgExceps.h"
-#include "pgTxrCPP.h"
-#include "defprocs.h"
-#include "pgDefStl.h"
-#include "pgSelect.h"
-#include "pgErrors.h"
-#include "pgUtils.h"
-#include "pgdeftbl.h"
-#include "pgText.h"
-#include "pgEmbed.h"
-#include "pgOSUtl.h"
+#include "PAIGE.H"
+#include "MACHINE.H"
+#include "PGEXCEPS.H"
+#include "PGTXRCPP.H"
+#include "DEFPROCS.H"
+#include "PGDEFSTL.H"
+#include "PGSELECT.H"
+#include "PGERRORS.H"
+#include "PGUTILS.H"
+#include "PGDEFTBL.H"
+#include "PGTEXT.H"
+#include "PGEMBED.H"
+#include "PGOSUTL.H"
 
 
 static pg_bits8_ptr unicode_to_bytes (pg_char_ptr chars, long PG_FAR *charsize, memory_ref buffer);
@@ -471,7 +471,7 @@ pg_boolean PaigeExportFilter::pgWriteNextBlock (void)
 		if (export_bits & EXPORT_UNICODE_FLAG) {
 			
 			if (filepos == file_begin) {
-				long		bom_size = sizeof(pg_char);
+				size_t		bom_size = sizeof(pg_char);
 				pg_char		bom;
 				
 				bom = PG_BOM;
@@ -479,20 +479,24 @@ pg_boolean PaigeExportFilter::pgWriteNextBlock (void)
 				result = io_proc((void PG_FAR *)&bom, io_data_direct, &filepos, &bom_size, filemap);
 			}
 
-			translator.bytes_transferred *= sizeof(pg_char);
+			size_t bytes_transferred = (size_t)translator.bytes_transferred * sizeof(pg_char);
 			result = io_proc((void PG_FAR *)text, io_data_direct, &filepos,
-					&translator.bytes_transferred, filemap);
-			translator.bytes_transferred /= sizeof(pg_char);
+					&bytes_transferred, filemap);
+			translator.bytes_transferred = (long)(bytes_transferred / sizeof(pg_char));
 		}
 		else {
 			pg_bits8_ptr		bytes;
 			
 			bytes = unicode_to_bytes(text, &translator.bytes_transferred, unicode_ref);
-			result = io_proc((void PG_FAR *)bytes, io_data_direct, &filepos, &translator.bytes_transferred, filemap);
+			size_t bytes_transferred = (size_t)translator.bytes_transferred;
+			result = io_proc((void PG_FAR *)bytes, io_data_direct, &filepos, &bytes_transferred, filemap);
+			translator.bytes_transferred = (long)bytes_transferred;
 			UnuseMemory(unicode_ref);
 		}
 	#else
-		result = io_proc((void PG_FAR *)text, io_data_direct, &filepos, &translator.bytes_transferred, filemap);
+		size_t bytes_transferred = (size_t)translator.bytes_transferred;
+		result = io_proc((void PG_FAR *)text, io_data_direct, &filepos, &bytes_transferred, filemap);
+		translator.bytes_transferred = (long)bytes_transferred;
 	#endif
 		
 		if (cr_lf_ref)
@@ -666,7 +670,7 @@ void PaigeExportFilter::pgWriteMemoryRef (memory_ref ref)
 	pg_bits8_ptr		byte_ptr;
 	long				size = GetByteSize(ref);
 	
-	byte_ptr = (pg_char_ptr)UseMemory(ref);
+	byte_ptr = (pg_bits8_ptr)UseMemory(ref);
 	
 	while (size) {
 		
@@ -830,26 +834,27 @@ void PaigeExportFilter::pgFlushOutputBuffer (void)
 	if (buffer_index) {
 
 #ifdef UNICODE
-		long			real_bytecount;
 		
 		if (half_char_pending)
 			pgWriteByte(0);
 
 		if (export_bits & EXPORT_UNICODE_FLAG) {
 			
-			real_bytecount = buffer_index * sizeof(pg_char);
+			size_t real_bytecount = (size_t)buffer_index * sizeof(pg_char);
 			io_result = io_proc((void PG_FAR *)io_buffer, io_data_direct, &filepos, &real_bytecount, filemap);
 		}
 		else {
 			pg_bits8_ptr		bytes;
 			
-			real_bytecount = buffer_index;
+			long real_bytecount = buffer_index;
 			bytes = unicode_to_bytes(io_buffer, &real_bytecount, unicode_ref);
-			io_result = io_proc((void PG_FAR *)bytes, io_data_direct, &filepos, &real_bytecount, filemap);
+			size_t bytes_to_write = (size_t)real_bytecount;
+			io_result = io_proc((void PG_FAR *)bytes, io_data_direct, &filepos, &bytes_to_write, filemap);
 			UnuseMemory(unicode_ref);
 		}
 #else
-		io_result = io_proc((void PG_FAR *)io_buffer, io_data_direct, &filepos, &buffer_index, filemap);
+		size_t bytes_to_write = (size_t)buffer_index;
+		io_result = io_proc((void PG_FAR *)io_buffer, io_data_direct, &filepos, &bytes_to_write, filemap);
 #endif
 		buffer_index = 0;
 		pgFailError(paige_globals->mem_globals, io_result);
@@ -1065,4 +1070,3 @@ static pg_bits8_ptr unicode_to_bytes (pg_char_ptr chars, long PG_FAR *charsize, 
 
 	return		bytes;
 }
-

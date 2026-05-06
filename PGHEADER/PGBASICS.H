@@ -4,7 +4,7 @@
 #define PGBASICS_H
 
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 
 #define EXTRA_STRUCT_RSRV	16

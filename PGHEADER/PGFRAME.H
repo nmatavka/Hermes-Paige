@@ -3,9 +3,9 @@
 #ifndef PGFRAME_H
 #define PGFRAME_H
 
-#include "Paige.h"
-#include "pgFiles.h"
-#include "pgEmbed.h"
+#include "PAIGE.H"
+#include "PGFILES.H"
+#include "PGEMBED.H"
 
 /* Frame data types (standard) */
 

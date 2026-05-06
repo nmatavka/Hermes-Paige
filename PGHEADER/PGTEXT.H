@@ -3,7 +3,7 @@
 #ifndef PGTXTBLK_H
 #define PGTXTBLK_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 /* smart_update_flags:  */
 

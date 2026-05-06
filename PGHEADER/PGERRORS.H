@@ -12,7 +12,7 @@ DataPak Software, Inc.  Copyright 1993-1994. 		*/
 #ifndef PGERRORS_H
 #define PGERRORS_H
 
-#include "CPUDefs.h"
+#include "CPUDEFS.H"
 
 #ifndef NO_ERROR
 #define NO_ERROR				0x0000		/* No error */
@@ -151,6 +151,55 @@ DataPak Software, Inc.  Copyright 1993-1994. 		*/
 #endif
 
 #define UNKNOWN_ERR				(pg_error)0x7FFF		/* Unknown error that Paige cannot understand */
+
+#endif
+
+#ifdef POSIX_PLATFORM
+
+#include <errno.h>
+#include <stdio.h>
+
+#define NO_MEMORY_ERR			(pg_error)0x0100
+#define NOT_ENOUGH_PURGED_ERR	(pg_error)0x0101
+#define NO_PURGE_FILE_ERR		(pg_error)0x0102
+#define LOCKED_BLOCK_ERR		(pg_error)0x0103
+#define NIL_ADDRESS_ERR			(pg_error)0x0104
+#define BAD_ADDRESS_ERR			(pg_error)0x0105
+#define BAD_LINK_ERR			(pg_error)0x0106
+
+#define CHECKSUM_ERR			(pg_error)0x0200
+#define ACCESS_ERR				(pg_error)0x0201
+#define BAD_REF_ERR				(pg_error)0x0202
+#define REF_DISPOSED_ERR		(pg_error)0x0203
+#define FILE_PURGE_ERR			(pg_error)0x0204
+#define FILE_UNPURGE_ERR		(pg_error)0x0205
+#define RANGE_ERR				(pg_error)0x0206
+#define PURGED_MEMORY_ERR		(pg_error)0x0207
+#define DEBUG_ZERO_ERR			(pg_error)0x0208
+#define DEBUG_NZ_ERR			(pg_error)0x0209
+#define NO_ERR_HANDLER_ERR		(pg_error)0x020A
+#define PG_PSTRING_TOO_BIG_ERR	(pg_error)0x020B
+#define BAD_PAIGE_VERSION_ERR	(pg_error)0x0210
+#define PROGRAM_BUG_ASSERT		(pg_error)0x0211
+
+#define NO_HANDLER_ERR			(pg_error)0x0300
+#define NO_SPACE_ERR			(pg_error)0x0301
+#define NOT_OPEN_ERR			(pg_error)0x0302
+#define FILE_LOCK_ERR			(pg_error)0x0303
+#define WRITE_PROTECT_ERR		(pg_error)0x0304
+#define ACCESS_DENIED_ERR		(pg_error)EACCES
+#define EOF_ERR					(pg_error)EOF
+#define IO_ERR					(pg_error)EIO
+#define BAD_TYPE_ERR			(pg_error)0x0308
+#define UNICODE_ERR				(pg_error)0x0309
+#define NO_FILE_ERR				(pg_error)0x03FE
+#define SOFT_EOF_ERR			(pg_error)0x03FF
+
+#define USER_CANCELLED_ERR		(pg_error)(-128)
+#define LLIST_ERR				(pg_error)0x03FC
+#define DUP_PG_REF_ERR			(pg_error)0x03FD
+#define RESOURCE_NOT_FOUND		(pg_error)0x0500
+#define UNKNOWN_ERR				(pg_error)0x7FFF
 
 #endif
 

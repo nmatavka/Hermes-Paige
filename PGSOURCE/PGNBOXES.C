@@ -1,20 +1,20 @@
 /* Paige utilities, miscellaneous "exclusion" and layout support functions.
 Copyright 1993 / 1994 DataPak Software, Inc. All rights reserved.  */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgboxes
 #endif
 
-#include "machine.h"
-#include "pgUtils.h"
-#include "pgText.h"
-#include "pgShapes.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
-#include "pgErrors.h"
-#include "pgFrame.h"
+#include "MACHINE.H"
+#include "PGUTILS.H"
+#include "PGTEXT.H"
+#include "PGSHAPES.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
+#include "PGERRORS.H"
+#include "PGFRAME.H"
 
 #define INVAL_SLOP_VALUE -16
 
@@ -640,7 +640,7 @@ static long inval_exclusion_change (paige_rec_ptr pg, rectangle_ptr exclusion)
 
 	pg->port.clip_info.change_flags |= CLIP_EXCLUDE_CHANGED;
 
-	if (block = find_first_block(pg, exclusion)) {
+	if ((block = find_first_block(pg, exclusion))) {
 		long		result;
 		
 		result = block->begin;

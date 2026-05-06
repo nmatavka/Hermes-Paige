@@ -3,10 +3,10 @@
 #ifndef PGWMF_H
 #define PGWMF_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 #include "stdlib.h"
 #include <QDOffscreen.h>
-#include <String.h>
+#include <string.h>
 #include <Math.h>
 
 #define WORD 		unsigned short

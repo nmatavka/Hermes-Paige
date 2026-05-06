@@ -3,9 +3,9 @@
 #ifndef PGSUBREF_H
 #define PGSUBREF_H
 
-#include "Paige.h"
-#include "pgEmbed.h"
-#include "pgFiles.h"
+#include "PAIGE.H"
+#include "PGEMBED.H"
+#include "PGFILES.H"
 
 /* Sub-structure "clone" record (used mainly in embed_refs): */
 

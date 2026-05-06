@@ -2,18 +2,18 @@
    Routines for decoding a metafile and displaying them on the screen.
  */
  
- #include "CPUDEFS.h"
+ #include "CPUDEFS.H"
  
  #ifdef MAC_PLATFORM
  
- #include "PGWMF.h"
+ #include "PGWMF.H"
  #include "utilities.h"
- #include "machine.h"
+ #include "MACHINE.H"
  #include <string.h>
  #include <Strings.h>
  #include "app.h"
- #include "pgtxr.h"
- #include "pgdeftbl.h"
+ #include "PGTXR.H"
+ #include "PGDEFTBL.H"
  
 
 static pgm_globals_ptr m_globals;

@@ -4,21 +4,21 @@ functions common to both pgRead and pgWrite are contained here.
 Changed 12 July 1994 pgFindHandlerFromKey to use memory size rather than struct size to allow the 
 reuse of this code for extensions that extend the structure - TRS OITC, Inc. Board Member */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgfiles
 #endif
 
-#include "machine.h"
-#include "defprocs.h"
-#include "pgText.h"
-#include "pgUtils.h"
-#include "pgSelect.h"
-#include "pgDefStl.h"
-#include "pgErrors.h"
-#include "PackDefs.h"
-#include "pgFiles.h"
+#include "MACHINE.H"
+#include "DEFPROCS.H"
+#include "PGTEXT.H"
+#include "PGUTILS.H"
+#include "PGSELECT.H"
+#include "PGDEFSTL.H"
+#include "PGERRORS.H"
+#include "PACKDEFS.H"
+#include "PGFILES.H"
 
 /* pgDummyReadHandler is a do-nothing read handler function that can be used to
 create a handler that does nothing for reading. */
@@ -254,8 +254,8 @@ PG_PASCAL (memory_ref) pgBuildHandlerList (pg_globals_ptr globals, pg_file_key_p
 		keys_to_use = keys;
 
 		for (key_qty = num_keys, keys_found = 0; key_qty; ++keys_to_use, --key_qty)
-			if (def_handlers = pgFindHandlerFromKey(globals->file_handlers,
-					*keys_to_use, NULL)) {
+			if ((def_handlers = pgFindHandlerFromKey(globals->file_handlers,
+					*keys_to_use, NULL))) {
 				
 				pgBlockMove(def_handlers, handlers, sizeof(pg_handler));
 				++handlers;
@@ -308,7 +308,7 @@ PG_PASCAL (pg_error) pgDoExceptionKey (paige_rec_ptr pg, memory_ref handlers,
 	
 	original_size = 0;
 
-	if (handler = pgFindHandlerFromKey(handlers_to_use, exception_key, NULL)) {
+	if ((handler = pgFindHandlerFromKey(handlers_to_use, exception_key, NULL))) {
 		
 		if (for_write)
 			proc_to_call = handler->write_handler;

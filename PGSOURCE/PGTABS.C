@@ -2,16 +2,16 @@
 if your app uses no specific tab functions in Paige.h. If you include this file
 you must also include paragraph style lib(s). */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgtabs
 #endif
 
-#include "pgDefStl.h"
-#include "pgPar.h"
-#include "pgDefPar.h"
-#include "pgUtils.h"
+#include "PGDEFSTL.H"
+#include "PGPAR.H"
+#include "PGDEFPAR.H"
+#include "PGUTILS.H"
 
 
 static void set_or_change_tabs (pg_ref pg, select_pair_ptr selection, tab_stop_ptr tab_ptr,
@@ -429,7 +429,7 @@ static void remove_tab (par_info_ptr par, pg_short_t element)
 	
 	ending_element = par->num_tabs - 1;
 
-	if (ending_qty = (ending_element - element))
+	if ((ending_qty = (ending_element - element)))
 		pgBlockMove(&par->tabs[element + 1], &par->tabs[element], ending_qty * sizeof(tab_stop));
 	
 	pgFillBlock(&par->tabs[ending_element], sizeof(tab_stop), 0);

@@ -1,19 +1,19 @@
 /* This file handles all the (complex?) "shape" stuff.  No machine-specific
 code is in here.  */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgbasic2
 #endif
 
-#include "machine.h"
-#include "pgShapes.h"
-#include "pgDefstl.h"
-#include "pgUtils.h"
-#include "pgText.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
+#include "MACHINE.H"
+#include "PGSHAPES.H"
+#include "PGDEFSTL.H"
+#include "PGUTILS.H"
+#include "PGTEXT.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
 
 
 struct shape_walk {
@@ -264,7 +264,7 @@ PG_PASCAL (void) pgMergeRectToShape (shape_ref the_shape, const rectangle_ptr re
 
 		UnuseMemory(the_shape);
 		
-		while (internal_sect = rects_sect_internally(&output_shape, &sect_rect)) {
+		while ((internal_sect = rects_sect_internally(&output_shape, &sect_rect))) {
 			
 			src_rects = output_shape.rects;
 			src_rects += (internal_sect - 1);
@@ -313,7 +313,7 @@ PG_PASCAL (pg_boolean) pgSectShape (shape_ref shape1, shape_ref shape2,
 	setup_shape(shape1, &src_walk);
 	setup_shape(shape2, &target_walk);
 	
-	if (result = pgSectRect(src_walk.bounds, target_walk.bounds, NULL)) {
+	if ((result = pgSectRect(src_walk.bounds, target_walk.bounds, NULL))) {
 
 		src_rects = src_walk.rects;
 		qty = src_walk.num_rects;
@@ -346,7 +346,7 @@ PG_PASCAL (pg_boolean) pgSectShape (shape_ref shape1, shape_ref shape2,
 				
 				next_scan = 0;
 				
-				if (result = any_secting_rect(src_rects, &target_walk, NULL, &next_scan))
+				if ((result = any_secting_rect(src_rects, &target_walk, NULL, &next_scan)))
 					break;
 				++src_rects;
 				--qty;
@@ -448,7 +448,7 @@ from shape2 that won't get completely elmininated by subtracting shape1:  */
 
 	for (qty = src_walk.num_rects, r_list = src_walk.rects;
 			qty;  ++r_list, --qty)
-		if (dead_rect_index = rect_will_nuke(r_list, temp_shape))
+		if ((dead_rect_index = rect_will_nuke(r_list, temp_shape)))
 			DeleteMemory(temp_shape, dead_rect_index, 1);
 
 	pgResetBounds(temp_shape);
@@ -468,8 +468,8 @@ from shape2 that won't get completely elmininated by subtracting shape1:  */
 		
 		complex_result = FALSE;
 		
-		while (pass_2_rec = rect_still_subtracts(&src_walk, &result_walk,
-				parts, &part_qty)) {
+		while ((pass_2_rec = rect_still_subtracts(&src_walk, &result_walk,
+				parts, &part_qty))) {
 			
 			complex_result = TRUE;
 	
@@ -575,7 +575,7 @@ PG_PASCAL (pg_boolean) pgRectInShape (shape_ref the_shape, const rectangle_ptr r
 		
 		++rect_ptr;
 
-		if (result = pgSectRect(rect_ptr, &test_rect, sect_rect))
+		if ((result = pgSectRect(rect_ptr, &test_rect, sect_rect)))
 			break;
 	}
 	
@@ -616,7 +616,7 @@ PG_PASCAL (pg_short_t) pgPtInShape (shape_ref the_shape, const co_ordinate_ptr p
 	
 	for (result = FALSE, r_num = 1, qty = shape_walker.num_rects; qty;
 					++rect_ptr, ++r_num, --qty)
-		if (result = pgPtInRectInset(&the_pt, rect_ptr, inset_extra, scaling)) {
+		if ((result = pgPtInRectInset(&the_pt, rect_ptr, inset_extra, scaling))) {
 			
 			result = r_num;
 			break;
@@ -771,8 +771,8 @@ PG_PASCAL (pg_short_t) pgExcludeRectInShape (paige_rec_ptr pg, rectangle_ptr rec
 			if ((input->bot_right.h - sect_rect.bot_right.h) < minimum_width)
 				input->bot_right.h = sect_rect.top_left.h;
 			
-			if (overlap_ptr = overlapping_exclude(result_ref, &sect_rect,
-					minimum_width))
+			if ((overlap_ptr = overlapping_exclude(result_ref, &sect_rect,
+					minimum_width)))
 				pgUnionRect(&sect_rect, overlap_ptr, overlap_ptr);
 			else {
 			
@@ -789,7 +789,7 @@ PG_PASCAL (pg_short_t) pgExcludeRectInShape (paige_rec_ptr pg, rectangle_ptr rec
 	UnuseMemory(exclude_shape);
 	UnuseMemory(result_ref);
 
-	while (output_ptr = rects_wrong_order(result_ref, (pg_short_t)(output_qty - 1))) {
+	while ((output_ptr = rects_wrong_order(result_ref, (pg_short_t)(output_qty - 1)))) {
 		rectangle			swap;
 		
 		swap = *output_ptr;
@@ -959,7 +959,7 @@ PG_PASCAL (pg_short_t) pgGetWrapRect (paige_rec_ptr pg, size_t r_num, co_ordinat
 		r_qty = (pg_short_t)GetMemorySize(pg->wrap_area) - 1;
 
 		result = (pg_short_t)(r_num % (long)r_qty);
-		if (repeat_qty = (pg_short_t)(r_num / (long)r_qty)) {
+		if ((repeat_qty = (pg_short_t)(r_num / (long)r_qty))) {
 			
 			GetMemoryRecord(pg->wrap_area, 0, &bounds);
 			repeat_size_v = bounds.bot_right.v - bounds.top_left.v + pg->doc_info.repeat_offset.v;
@@ -990,7 +990,7 @@ PG_PASCAL (pg_short_t) pgGetSectWrapRect (paige_rec_ptr pg, rectangle_ptr r_sect
 		
 		repeat_offset->h = repeat_offset->v = 0;
 
-		if (fake_r_num = pgSectRectInShape(pg->wrap_area, r_sect, NULL))
+		if ((fake_r_num = pgSectRectInShape(pg->wrap_area, r_sect, NULL)))
 			--fake_r_num;
 
 		if (r_num)
@@ -1286,7 +1286,7 @@ static void combine_new_rect (shape_walk_ptr shape_stuff, rectangle_ptr new_rect
 {
 	rectangle_ptr			matching_rect;
 
-	if (matching_rect = any_partial_rect_match(shape_stuff, new_rect, NULL))
+	if ((matching_rect = any_partial_rect_match(shape_stuff, new_rect, NULL)))
 		pgUnionRect(new_rect, matching_rect, matching_rect);
 	else {
 
@@ -1377,7 +1377,7 @@ static pg_short_t rect_still_subtracts (shape_walk_ptr input, shape_walk_ptr out
 		
 		while (out_qty) {
 			
-			if (*part_qty = subtract_rect(src, target, parts))
+			if ((*part_qty = subtract_rect(src, target, parts)))
 				return	out_rec_num;
 			
 			++target;
@@ -1470,7 +1470,7 @@ static void cleanup_shape (shape_walk_ptr shape_to_clean)
 	rectangle					swap_rect;
 	pg_short_t					delete_num;
 
-	while (delete_num = merge_two_rects(shape_to_clean)) {
+	while ((delete_num = merge_two_rects(shape_to_clean))) {
 		
 		UnuseMemory(shape_to_clean->mem_ref);
 		DeleteMemory(shape_to_clean->mem_ref, delete_num, 1);
@@ -1528,7 +1528,7 @@ static pg_short_t merge_two_rects (shape_walk_ptr merge_walk)
 		
 		--r_list;
 
-		if (match = any_partial_rect_match(merge_walk, r_list, &qty)) {
+		if ((match = any_partial_rect_match(merge_walk, r_list, &qty))) {
 			
 			pgUnionRect(r_list, match, match);
 			
@@ -1550,7 +1550,7 @@ static void dump_select_pair (select_pair_ptr the_pair, memory_ref selections)
 
 	if (the_pair->begin < the_pair->end) {
 		
-		if (num_selects = (pg_short_t)GetMemorySize(selections))
+		if ((num_selects = (pg_short_t)GetMemorySize(selections)))
 			GetMemoryRecord(selections, num_selects - 1, &last_select);
 		else
 			last_select.end = -1;

@@ -4,25 +4,25 @@ part of the total PAIGE library.
 This source file contains all the default member and non-member functions for the import class. */
 
 
-#include "Paige.h"
-#include "machine.h"
-#include "pgOSUtl.h"
-#include "pgTraps.h"
-#include "pgTxrCPP.h"
-#include "pgExceps.h"
-#include "defprocs.h"
-#include "pgDefStl.h"
-#include "pgSelect.h"
-#include "pgErrors.h"
-#include "pgUtils.h"
-#include "pgdeftbl.h"
-#include "pgHText.h"
-#include "pgFrame.h"
+#include "PAIGE.H"
+#include "MACHINE.H"
+#include "PGOSUTL.H"
+#include "PGTRAPS.H"
+#include "PGTXRCPP.H"
+#include "PGEXCEPS.H"
+#include "DEFPROCS.H"
+#include "PGDEFSTL.H"
+#include "PGSELECT.H"
+#include "PGERRORS.H"
+#include "PGUTILS.H"
+#include "PGDEFTBL.H"
+#include "PGHTEXT.H"
+#include "PGFRAME.H"
 
 #define TEST_UNICODE_FLAG     0x0001
 
-static pg_error read_buffer (pg_char_ptr buffer, long PG_FAR *bytesize, long PG_FAR *position,
-      long max_position, file_io_proc io_proc, file_ref filemap, pg_short_t PG_FAR *is_unicode);
+static pg_error read_buffer (pg_char_ptr buffer, long PG_FAR *bytesize, size_t PG_FAR *position,
+      size_t max_position, file_io_proc io_proc, file_ref filemap, pg_short_t PG_FAR *is_unicode);
 static pg_boolean find_font_in_list (paige_rec_ptr pg, font_info_ptr font);
 
 
@@ -840,7 +840,7 @@ pg_error PaigeImportFilter::pgGetImportMemoryRef (memory_ref ref, long byte_size
 
 pg_error PaigeImportFilter::pgGetImportNBytes (long PG_FAR *num_bytes, pg_bits8_ptr bytes)
 {
-   register pg_char_ptr    output;
+   register pg_bits8_ptr   output;
    register long           bytecount;
    pg_error             result = NO_ERROR;
    
@@ -1268,7 +1268,7 @@ PG_PASCAL (pg_error) pgImportFileFromC (pg_ref pg, pg_filetype filetype, long fe
          return   (pg_error)BAD_TYPE_ERR;
    }
 
-   if ((result = filter->pgInitImportFile(globals, f_ref, NULL, NULL, file_begin, UNKNOWN_POSITION)) == NO_ERROR)
+   if ((result = filter->pgInitImportFile(globals, f_ref, MEM_NULL, NULL, file_begin, UNKNOWN_POSITION)) == NO_ERROR)
       result = filter->pgImportFile(pg, CURRENT_POSITION, flags, TRUE, draw_none);
 
    delete filter;
@@ -1284,8 +1284,8 @@ is a BOM (Byte Order Mark) then we have read unicode characters.  Or,  if *is_un
 TEST_UNICODE_FLAG we test for Unicode and set the flag accordingly.  Or, if *is_inicode is FALSE
 then we just assume ASCII 8-bit bytes. */
 
-static pg_error read_buffer (pg_char_ptr buffer, long PG_FAR *bytesize, long PG_FAR *position,
-      long max_position, file_io_proc io_proc, file_ref filemap, pg_short_t PG_FAR *is_unicode)
+static pg_error read_buffer (pg_char_ptr buffer, long PG_FAR *bytesize, size_t PG_FAR *position,
+      size_t max_position, file_io_proc io_proc, file_ref filemap, pg_short_t PG_FAR *is_unicode)
 {
    long        distance_to_end;
    pg_bits8_ptr   trans_buffer;
@@ -1295,7 +1295,9 @@ static pg_error read_buffer (pg_char_ptr buffer, long PG_FAR *bytesize, long PG_
       *bytesize = distance_to_end;
    
    trans_buffer = (pg_bits8_ptr)buffer;
-   result = io_proc((void PG_FAR *)buffer, io_data_direct, position, bytesize, filemap);
+   size_t transfer_size = (size_t)*bytesize;
+   result = io_proc((void PG_FAR *)buffer, io_data_direct, position, &transfer_size, filemap);
+   *bytesize = (long)transfer_size;
 
    if (result == NO_ERROR) {
       
@@ -1335,4 +1337,3 @@ static pg_error read_buffer (pg_char_ptr buffer, long PG_FAR *bytesize, long PG_
 
    return      result;
 }
-

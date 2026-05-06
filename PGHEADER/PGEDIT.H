@@ -3,8 +3,8 @@
 #ifndef PGEDIT_H
 #define PGEDIT_H
 
-#include "Paige.h"
-#include "pgText.h"
+#include "PAIGE.H"
+#include "PGTEXT.H"
 
 #define DRAW_TO_END			-1
 #define CLR_SOME_LINE_GOOD	(~SOME_LINES_GOOD)			/* Clears "SOME_LINES_GOOD"  */

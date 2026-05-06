@@ -9,7 +9,7 @@ for true portability we cannot assume any of those libraries exist with this cod
 #define PGUTILS_H
 
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef C_LIBRARY
 #include <stdlib.h>

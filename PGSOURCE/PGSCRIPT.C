@@ -2,18 +2,18 @@
 Nothing in this source file should be machine-specific.
 Added July 25 96, multilingual language support. */
 
-#include "Paige.h"
-#include "defprocs.h"
-#include "machine.h"
-#include "pgUtils.h"
-#include "pgText.h"
-#include "pgDefStl.h"
-#include "pgSelect.h"
-#include "pgShapes.h"
-#include "pgScript.h"
-#include "pgSubRef.h"
-#include "pgTraps.h"
-#include "pgTables.h"
+#include "PAIGE.H"
+#include "DEFPROCS.H"
+#include "MACHINE.H"
+#include "PGUTILS.H"
+#include "PGTEXT.H"
+#include "PGDEFSTL.H"
+#include "PGSELECT.H"
+#include "PGSHAPES.H"
+#include "PGSCRIPT.H"
+#include "PGSUBREF.H"
+#include "PGTRAPS.H"
+#include "PGTABLES.H"
 
 static void sides_of_run (point_start_ptr first_start, pg_short_t num_starts,
 		long PG_FAR *left_side, long PG_FAR *right_side);

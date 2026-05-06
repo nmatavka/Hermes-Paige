@@ -3,7 +3,7 @@
 #ifndef PGSCRIPT_H
 #define PGSCRIPT_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 
 #ifdef __cplusplus

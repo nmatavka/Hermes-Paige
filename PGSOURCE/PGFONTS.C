@@ -1,21 +1,21 @@
 /* This file handler high-level font "get/set" functions. If you don't change fonts
 you can omit this file from your app.  */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgfonts
 #endif
 
-#include "machine.h"
-#include "defProcs.h"
-#include "pgText.h"
-#include "pgSelect.h"
-#include "pgEdit.h"
-#include "pgDefStl.h"
-#include "pgUtils.h"
-#include "pgStyles.h"
-#include "pgErrors.h"
+#include "MACHINE.H"
+#include "DEFPROCS.H"
+#include "PGTEXT.H"
+#include "PGSELECT.H"
+#include "PGEDIT.H"
+#include "PGDEFSTL.H"
+#include "PGUTILS.H"
+#include "PGSTYLES.H"
+#include "PGERRORS.H"
 
 
 static void get_font_info (change_info_ptr change, style_run_ptr style, pg_short_t record_ctr);
@@ -44,7 +44,7 @@ PG_PASCAL (long) pgGetFontInfo (pg_ref pg, const select_pair_ptr selection,
 		pgFillBlock(mask, sizeof(font_info), -1);
 	}
 
-	if (select_list = pgSetupOffsetRun(pg_rec, selection, FALSE, TRUE)) {
+	if ((select_list = pgSetupOffsetRun(pg_rec, selection, FALSE, TRUE))) {
 
 		pgFillBlock(&stuff_to_report, sizeof(change_info), 0);
 		

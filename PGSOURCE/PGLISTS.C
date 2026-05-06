@@ -5,7 +5,7 @@
 
 	by T. R. Shaw <tshaw@oitc.com>
 
-	Copyright © 1994-96 OITC - All rights reserved.
+	Copyright ï¿½ 1994-96 OITC - All rights reserved.
 	
 	This software has been privately developed and falls within 
 	DFARS 252.227-7013(c)(1) and associated regulations and it or its
@@ -22,14 +22,14 @@
 */
 
 #ifndef PGLISTS_H
-#include	"pgLists.h"
+#include	"PGLISTS.H"
 #endif
 
-#include	"DefProcs.h"
-#include	"pgShapes.h"
-#include	"pgUtils.h"
-#include	"pgText.h"
-#include	"machine.h"
+#include	"DEFPROCS.H"
+#include	"PGSHAPES.H"
+#include	"PGUTILS.H"
+#include	"PGTEXT.H"
+#include	"MACHINE.H"
 
 
 PG_PASCAL (long) pgPushToList(pg_list_ref list, void PG_FAR *data)

@@ -3,7 +3,7 @@
 #ifndef PGLBOX_H
 #define PGLBOX_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 extern PG_PASCAL (pg_ref) pgNewListbox (pg_globals_ptr globals, generic_var window, rectangle_ptr bounds);
 extern PG_PASCAL (void) pgSetListboxFont (pg_ref listbox, select_pair_ptr range,

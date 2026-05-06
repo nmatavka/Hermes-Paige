@@ -1,5 +1,5 @@
 // This file is used for source-level debugging with PG_DEBUG enabled.
-#include "pgMemMgr.h"
+#include "PGMEMMGR.H"
 
 /* pgSourceDebugBreak is used for PAIGE source code developers. Its purpose is to break into
 the high-level debugger of the development system. When MemMgr detects an error, it jumps

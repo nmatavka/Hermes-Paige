@@ -7,21 +7,21 @@ to remove this notice   */
 /* 12/07/94 Corrected and improved by board member, TR Shaw, OITC. Improvements and
 fixes are copyrighted 1994 OITC, Inc. */
 
-#include "Paige.h"  
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
-#pragma segment pgbasic4   
+#pragma segment pgbasic4
 #include <qdoffscreen.h>
 #endif
 
-#include "pgTraps.h"
-#include "pgRegion.h"
-#include "pgUtils.h"
-#include "machine.h"
-#include "pgExceps.h"
-#include "pgFiles.h"
-#include "pgGrafx.h"             
-#include "pgErrors.h"
+#include "PGTRAPS.H"
+#include "PGREGION.H"
+#include "PGUTILS.H"
+#include "MACHINE.H"
+#include "PGEXCEPS.H"
+#include "PGFILES.H"
+#include "PGGRAFX.H"
+#include "PGERRORS.H"
 
 
 #ifdef WINDOWS_PLATFORM
@@ -52,11 +52,11 @@ PG_PASCAL (void) pgTextOut (graf_device_ptr port, co_ordinate_ptr top_left_pt,
 
    if (port->poly_save)
       return;
-   
+
    GetPort(&current_port);
    draw_port = (GrafPtr)port->machine_var;
    SetPort(draw_port);
-   
+
    cur_textsize = draw_port->txSize;
 
    if (optional_point_size)
@@ -65,7 +65,7 @@ PG_PASCAL (void) pgTextOut (graf_device_ptr port, co_ordinate_ptr top_left_pt,
    GetFontInfo(&info);
    MoveTo(top_left_pt->h, top_left_pt->v + info.ascent);
    DrawText(text, 0, length);
-   
+
    draw_port->txSize = cur_textsize;
 
    SetPort(current_port);
@@ -102,9 +102,9 @@ PG_PASCAL (void) pgLineDraw (graf_device_ptr port, co_ordinate_ptr start_pt,
       co_ordinate_ptr end_pt, long color, short pen_size)
 {
    short       use_pensize;
-   
+
    if (port->poly_save) {
-      
+
       save_poly_points(port->poly_save, start_pt, end_pt);
       return;
    }
@@ -121,13 +121,13 @@ PG_PASCAL (void) pgLineDraw (graf_device_ptr port, co_ordinate_ptr start_pt,
       GetPort((GrafPtr *)&current_port);
 
       PenNormal();
-      
+
       old_color = current_port->rgbFgColor;
       pgLongToRGB(color, (color_value_ptr)&new_color);
       RGBForeColor(&new_color);
-      
+
       if (color & COLORPAT_DOTTED) {
-         
+
          pat.pat[0] = pat.pat[2] = pat.pat[4] = pat.pat[6] = 0x55;
          pat.pat[1] = pat.pat[3] = pat.pat[5] = pat.pat[7] = 0xAA;
          PenPat(&pat);
@@ -136,7 +136,7 @@ PG_PASCAL (void) pgLineDraw (graf_device_ptr port, co_ordinate_ptr start_pt,
       PenSize(use_pensize, use_pensize);
       MoveTo(pgLongToShort(start_pt->h), pgLongToShort(start_pt->v));
       LineTo(pgLongToShort(end_pt->h), pgLongToShort(end_pt->v));
-      
+
       RGBForeColor(&old_color);
    }
 
@@ -149,34 +149,34 @@ PG_PASCAL (void) pgLineDraw (graf_device_ptr port, co_ordinate_ptr start_pt,
       HBRUSH         brush, old_brush;
       HPEN           pen, old_pen;
       RECT        r;
-      
+
       if (end_pt->h > start_pt->h) {  // horizontal
 
          r.top = r.bottom = (int)start_pt->v;
          r.left = (int)start_pt->h;
          r.right = (int)end_pt->h;
-         
+
          if (r.left > r.right) {
 
             r.right = (int)start_pt->h;
             r.left = (int)end_pt->h;
          }
-         
+
       }
       else { // vertical
-         
+
          r.top = (int)start_pt->v;
          r.bottom = (int)end_pt->v;
-         
+
          if (r.top > r.bottom) {
 
             r.bottom = (int)start_pt->v;
             r.top = (int)end_pt->v;
          }
-         
+
          r.left = r.right = (int)start_pt->h;
       }
-      
+
       r.bottom += use_pensize;
       r.right += use_pensize;
 
@@ -214,15 +214,15 @@ PG_PASCAL (void) pgFrameObject (graf_device_ptr port, rectangle_ptr frame,
 
    if (port->poly_save) {
       co_ordinate    first_pt, second_pt;
-      
+
       if (object_verb == object_arc)
          return;
-      
+
       first_pt = frame->top_left;
       second_pt.v = first_pt.v;
       second_pt.h = frame->bot_right.h - pen_size;
       save_poly_points(port->poly_save, &first_pt, &second_pt);  // top-left to top-right
-      
+
       first_pt = second_pt;
       second_pt.v = frame->bot_right.v - pen_size;
       save_poly_points(port->poly_save, &first_pt, &second_pt);  // top-right to bottom-right
@@ -230,11 +230,11 @@ PG_PASCAL (void) pgFrameObject (graf_device_ptr port, rectangle_ptr frame,
       first_pt = second_pt;
       second_pt.h = frame->top_left.h;
       save_poly_points(port->poly_save, &first_pt, &second_pt);  // bottom-right to bottom-left
-      
+
       first_pt = second_pt;
       second_pt = frame->top_left;
       save_poly_points(port->poly_save, &first_pt, &second_pt);  // back to top-left
-   
+
       return;
    }
 
@@ -247,12 +247,12 @@ PG_PASCAL (void) pgFrameObject (graf_device_ptr port, rectangle_ptr frame,
 #endif
 
    RectangleToRect(frame, NULL, &r);
-   
+
    if (!(use_pensize = pen_size))
       use_pensize = 1;
 
 #ifdef MAC_PLATFORM
-   
+
    PenSize(use_pensize, use_pensize);
 
    switch (object_verb) {
@@ -260,15 +260,15 @@ PG_PASCAL (void) pgFrameObject (graf_device_ptr port, rectangle_ptr frame,
       case object_rect:
          FrameRect(&r);
          break;
-         
+
       case object_oval:
          FrameOval(&r);
          break;
-         
+
       case object_roundrect:
          FrameRoundRect(&r, low_modifier, low_modifier);
          break;
-      
+
       case object_arc:
          FrameArc(&r, low_modifier, hi_modifier);
          break;
@@ -286,17 +286,17 @@ PG_PASCAL (void) pgFrameObject (graf_device_ptr port, rectangle_ptr frame,
       case object_rect:
          FrameRect(hdc, &r, brush);
          break;
-         
+
       case object_oval:
          break;
-         
+
       case object_roundrect:
          break;
-      
+
       case object_arc:
          break;
    }
-   
+
    SelectObject(hdc, old_brush);
    DeleteObject(brush);
 #endif
@@ -331,26 +331,26 @@ PG_PASCAL (void) pgFrameRect (graf_device_ptr port, rectangle_ptr frame,
    SetPort(draw_port);
 
    if (draw_port->portBits.rowBytes & 0xC000) {
-   
+
    		color_port = (CGrafPtr)draw_port;
    		old_color = color_port->rgbFgColor;
    }
-   
+
    PenNormal();
    pgLongToRGB(color, (color_value_ptr)&new_color);
    RGBForeColor(&new_color);
 #endif
 
    RectangleToRect(frame, NULL, &r);
-   
+
    if (!(use_pensize = pen_size))
       use_pensize = 1;
 
 #ifdef MAC_PLATFORM
-   
+
    PenSize(use_pensize, use_pensize);
    FrameRect(&r);
-   
+
    if (color_port)
    		RGBForeColor(&old_color);
 
@@ -399,11 +399,11 @@ PG_PASCAL (void) pgPaintObject (graf_device_ptr port, rectangle_ptr frame,
 #endif
 
    RectangleToRect(frame, NULL, &r);
-   
+
 #ifdef MAC_PLATFORM
 
    PenNormal();
-   
+
    old_color = current_port->rgbFgColor;
    pgLongToRGB(color, (color_value_ptr)&new_color);
    RGBForeColor(&new_color);
@@ -413,11 +413,11 @@ PG_PASCAL (void) pgPaintObject (graf_device_ptr port, rectangle_ptr frame,
       case object_rect:
          PaintRect(&r);
          break;
-         
+
       case object_oval:
          PaintOval(&r);
          break;
-         
+
       case object_roundrect:
          PaintRoundRect(&r, low_modifier, hi_modifier);
          break;
@@ -441,17 +441,17 @@ PG_PASCAL (void) pgPaintObject (graf_device_ptr port, rectangle_ptr frame,
       case object_rect:
          FillRect(hdc, (LPRECT)&r, brush);
          break;
-         
+
       case object_oval:
          break;
-         
+
       case object_roundrect:
          break;
 
       case object_arc:
          break;
    }
-   
+
    DeleteObject(brush);
 #endif
 }
@@ -477,7 +477,7 @@ PG_PASCAL (void) pgFillPoly (graf_device_ptr port, poly_ref poly,
       rectangle_ptr target_frame)
 {
    pg_poly_ptr          poly_ptr;
-   
+
    poly_ptr = (pg_poly_ptr) UseMemory(poly);
 
 #ifdef MAC_PLATFORM
@@ -491,13 +491,13 @@ PG_PASCAL (void) pgFillPoly (graf_device_ptr port, poly_ref poly,
       poly_h = OpenPoly();
       pgFramePoly(port, poly, target_frame, 1);
       ClosePoly();
-      
+
       PaintPoly(poly_h);
       KillPoly(poly_h);
-      
+
       SetPort(current_port);
    }
-   
+
 #endif
 
    UnuseMemory(poly);
@@ -516,18 +516,18 @@ PG_PASCAL (void) pgCopyBits (graf_device_ptr port, pg_bitmap_ptr bitmap,
 #ifdef MAC_PLATFORM
    RgnHandle       clip_rgn;
    GrafPtr        bits_port;
-   
+
    if (port->poly_save)
       return;
 
    clip_rgn = pgCreateRgn();
    RectangleToRect(target_rect, NULL, &target_r);
-   
+
    if (source_rect)
       RectangleToRect(source_rect, NULL, &source_r);
    else
       SetRect(&source_r, 0, 0, bitmap->width, bitmap->height);
-   
+
    bits_port = (GrafPtr)port->machine_var;
 
    pgRectToRgn(clip_rgn, &target_r);
@@ -535,11 +535,11 @@ PG_PASCAL (void) pgCopyBits (graf_device_ptr port, pg_bitmap_ptr bitmap,
    pgSectRgn(bits_port->clipRgn, clip_rgn, clip_rgn);
 
    switch (draw_mode) {
-      
+
       case bits_copy:
          transfer_mode = srcCopy;
          break;
-         
+
       case bits_or:
          transfer_mode = srcOr;
          break;
@@ -552,7 +552,7 @@ PG_PASCAL (void) pgCopyBits (graf_device_ptr port, pg_bitmap_ptr bitmap,
          transfer_mode = srcCopy;
          break;
    }
-   
+
    if (bitmap->pixel_size == 1) {
       BitMap        bits;
 
@@ -562,7 +562,7 @@ PG_PASCAL (void) pgCopyBits (graf_device_ptr port, pg_bitmap_ptr bitmap,
       CopyBits(&bits, &bits_port->portBits, &source_r, &target_r, transfer_mode, clip_rgn);
    }
    else {
-      //¥ TRS/OITC
+      //ï¿½ TRS/OITC
       Rect        src_rect;
       char *         bits_p;
       GWorldPtr      off_g_world = NULL;
@@ -573,12 +573,12 @@ PG_PASCAL (void) pgCopyBits (graf_device_ptr port, pg_bitmap_ptr bitmap,
       char        mode;
 #else
       SInt8       mode;
-#endif   
+#endif
       SetRect(&src_rect, 0, 0, bitmap->width, bitmap->height);
       if( !NewGWorld( &off_g_world, bitmap->pixel_size, &src_rect, pgColorValues2CTab(bitmap->palette), NULL, keepLocal ) )
       {
          SysEnvRec   the_world;
-         
+
          SysEnvirons(curSysEnvVers, &the_world);
          if (the_world.systemVersion >= SYSTEM_7_VAL)
             pix_map_h = GetGWorldPixMap( off_g_world );     /*  7.0 only */
@@ -589,13 +589,13 @@ PG_PASCAL (void) pgCopyBits (graf_device_ptr port, pg_bitmap_ptr bitmap,
          LockPixels( pix_map_h );
 
          /* get baseAddr good in 32-bit mode */
-         bits_p = (char *) GetPixBaseAddr( pix_map_h );  
+         bits_p = (char *) GetPixBaseAddr( pix_map_h );
          row_bytes = (**pix_map_h).rowBytes & 0x3fff;
-   
+
          /* Go to 32-bit addressing mode to access pixels */
          mode = true32b;
          SwapMMUMode( &mode );
-         
+
          /* Copy the properly oriented bytes */
          if (bitmap->row_bytes == (**pix_map_h).rowBytes)
          {
@@ -605,7 +605,7 @@ PG_PASCAL (void) pgCopyBits (graf_device_ptr port, pg_bitmap_ptr bitmap,
          {
             long  i;
             char *   src_bits_p;
-            
+
             src_bits_p = (char *)&bitmap->bits[0];
             for (i = 0; i < bitmap->height; ++i)
             {
@@ -614,20 +614,20 @@ PG_PASCAL (void) pgCopyBits (graf_device_ptr port, pg_bitmap_ptr bitmap,
                bits_p += row_bytes;
             }
          }
-         
+
          /* Back to old addressing mode. */
-         SwapMMUMode( &mode );                              
-   
+         SwapMMUMode( &mode );
+
          /* Copy the bits. */
          CopyBits( (BitMap *)*pix_map_h, &bits_port->portBits, &source_r, &target_r, transfer_mode, clip_rgn);
          UnlockPixels( pix_map_h );
-   
+
          DisposeGWorld( off_g_world );
       }
-      //¥¥How do we report errors?
+      //ï¿½ï¿½How do we report errors?
       //else pgFailNIL(GetGlobalsFromRef(palette), off_g_world);
    }
-   
+
    pgDisposeRgn(clip_rgn);
 
 #endif
@@ -642,21 +642,21 @@ PG_PASCAL (void) pgCopyBits (graf_device_ptr port, pg_bitmap_ptr bitmap,
 
     RectangleToRect(target_rect, NULL, &target_r);
     source_r.left = source_r.top = 0;
-    
+
     if (source_rect)
        RectangleToRect(source_rect, NULL, &source_r);
     else  {
-    
+
       source_r.right = bitmap->width;
       source_r.bottom = bitmap->height;
     }
 
     switch (draw_mode) {
-      
+
      case bits_copy:
          transfer_mode = SRCCOPY;
          break;
-         
+
      case bits_or:
          transfer_mode = SRCPAINT;
          break;
@@ -674,12 +674,12 @@ PG_PASCAL (void) pgCopyBits (graf_device_ptr port, pg_bitmap_ptr bitmap,
    bitmap_dc = CreateCompatibleDC(target_dc);
    source_bitmap = CreateBitmap(bitmap->width, bitmap->height, 1,
          bitmap->pixel_size, (LPSTR)bitmap->bits);
-  
+
    source_width = (short)(source_r.right - source_r.left);
    source_height = (short)(source_r.bottom - source_r.top);
    target_width = (short)(target_r.right - target_r.left);
    target_height = (short)(target_r.bottom - target_r.top);
-   
+
    if ((source_width != target_width) || (source_height != target_height))
       StretchBlt(target_dc, target_r.left, target_r.top,
           source_width, source_height, bitmap_dc, 0, 0,
@@ -707,7 +707,7 @@ PG_PASCAL (void) pgOpenPoly (pgm_globals_ptr mem_globals, rectangle_ptr frame,
    drawing_device->poly_save = MemoryAllocClear(mem_globals, 1,
       sizeof(pg_poly_rec) - sizeof(co_ordinate), 32);
    new_poly = (pg_poly_ptr) UseMemory(drawing_device->poly_save);
-   
+
    new_poly->height = (short)(frame->bot_right.v - frame->top_left.v);
    new_poly->width = (short)(frame->bot_right.h - frame->top_left.h);
    UnuseMemory(drawing_device->poly_save);
@@ -720,10 +720,10 @@ a memory_ref filled with its data. */
 PG_PASCAL (poly_ref) pgClosePoly (graf_device_ptr drawing_device)
 {
    poly_ref       result;
-   
+
    result = drawing_device->poly_save;
    drawing_device->poly_save = MEM_NULL;
-   
+
    return   result;
 }
 
@@ -734,14 +734,14 @@ can be NULL if you do not want that value.  */
 PG_PASCAL (void) pgPolyBounds (poly_ref poly, long PG_FAR *width, long PG_FAR *height)
 {
    pg_poly_ptr       poly_ptr;
-   
+
    poly_ptr = (pg_poly_ptr) UseMemory(poly);
-   
+
    if (width)
       *width = (long)poly_ptr->width;
    if (height)
       *height = (long)poly_ptr->height;
-   
+
    UnuseMemory(poly);
 }
 
@@ -749,7 +749,7 @@ PG_PASCAL (void) pgPolyBounds (poly_ref poly, long PG_FAR *width, long PG_FAR *h
 /* pgOpenPicture begins a picture-save memory_ref in the graf_device, hence causing
 all subsequent drawings to be recorded as a "picture".  */
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 
 PG_PASCAL (void) pgOpenPicture (pgm_globals_ptr mem_globals, rectangle_ptr frame,
       graf_device_ptr drawing_device)
@@ -759,7 +759,7 @@ PG_PASCAL (void) pgOpenPicture (pgm_globals_ptr mem_globals, rectangle_ptr frame
    drawing_device->pict_save = MemoryAllocClear(mem_globals, 1,
       sizeof(picture_header), 32);
    new_pict = (picture_header_ptr) UseMemory(drawing_device->pict_save);
-   
+
    new_pict->height = (short)(frame->bot_right.v - frame->top_left.v);
    new_pict->width = (short)(frame->bot_right.h - frame->top_left.h);
    UnuseMemory(drawing_device->pict_save);
@@ -769,15 +769,15 @@ PG_PASCAL (void) pgOpenPicture (pgm_globals_ptr mem_globals, rectangle_ptr frame
 /* pgClosePicture removes the picture-save reference from drawing_device and returns
 a memory_ref filled with its data. */
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 
 PG_PASCAL (picture_ref) pgClosePicture (graf_device_ptr drawing_device)
 {
    picture_ref       result;
-   
+
    result = drawing_device->pict_save;
    drawing_device->pict_save = MEM_NULL;
-   
+
    return   result;
 }
 
@@ -788,14 +788,14 @@ can be NULL if you do not want that value.  */
 PG_PASCAL (void) pgPictureBounds (picture_ref picture, long PG_FAR *width, long PG_FAR *height)
 {
    picture_header_ptr         pict_ptr;
-   
+
    pict_ptr = (picture_header_ptr) UseMemory(picture);
-   
+
    if (width)
       *width = (long)pict_ptr->width;
    if (height)
       *height = (long)pict_ptr->height;
-   
+
    UnuseMemory(picture);
 }
 
@@ -819,7 +819,7 @@ extern PG_PASCAL (void) pgDrawPicture (graf_device_ptr drawing_device,
    generic_var                old_clip;
    long                    vertical_scale, horizontal_scale;
    short                   op_code_ctr, target_width, target_height;
-   
+
    if (clip_to_frame)
       old_clip = pgSetClipRect(drawing_device, pict_frame, NULL);
 
@@ -837,17 +837,17 @@ extern PG_PASCAL (void) pgDrawPicture (graf_device_ptr drawing_device,
    horizontal_scale |= (long)header->width;
 
    for (op_code_ctr = 0; op_code_ctr < header->num_ops; ++op_code_ctr) {
-      
+
       op_code_ptr = op_code_data = (picture_op_ptr)pict_byte_data;
       ++op_code_data;
       pict_byte_data += op_code_ptr->data_size; // Is set up for next.
       target_frame = op_code_ptr->frame;
       pgOffsetRect(&target_frame, pict_frame->top_left.h, pict_frame->top_left.v);
-      
+
       if (scale_h) {
-         
+
          if (!(op_code_ptr->opcode & SUPPRESS_SCALE_HORIZONTAL)) {
-         
+
             if (op_code_ptr->opcode & USE_LOCAL_ORIGIN)
                pgScaleLong(horizontal_scale, target_frame.top_left.h, &target_frame.bot_right.h);
             else {
@@ -855,7 +855,7 @@ extern PG_PASCAL (void) pgDrawPicture (graf_device_ptr drawing_device,
                pgScaleLong(horizontal_scale, pict_frame->top_left.h, &target_frame.bot_right.h);
             }
          }
-         
+
          if (op_code_ptr->opcode & FORCE_RIGHT_POINTS)
             target_frame.bot_right.h = pict_frame->bot_right.h;
          if (op_code_ptr->opcode & FORCE_LEFT_POINTS)
@@ -863,9 +863,9 @@ extern PG_PASCAL (void) pgDrawPicture (graf_device_ptr drawing_device,
       }
 
       if (scale_v) {
-         
+
          if (!(op_code_ptr->opcode & SUPPRESS_SCALE_VERTICAL)) {
-         
+
             if (op_code_ptr->opcode & USE_LOCAL_ORIGIN)
                pgScaleLong(vertical_scale, target_frame.top_left.v, &target_frame.bot_right.v);
             else {
@@ -907,7 +907,7 @@ extern PG_PASCAL (void) pgDrawPicture (graf_device_ptr drawing_device,
          case object_font:
          case object_pen_color:
             break;
-            
+
          case object_pensize:
             pen_size = target_frame.top_left;
             break;
@@ -921,7 +921,7 @@ extern PG_PASCAL (void) pgDrawPicture (graf_device_ptr drawing_device,
    }
 
    UnuseMemory(picture);
-   
+
    if (clip_to_frame)
       pgRestoreClipRgn(drawing_device, old_clip);
 }
@@ -940,11 +940,11 @@ PG_PASCAL (generic_var) pgSetClipRect (graf_device_ptr device,
    GrafPtr              port, old_port;
    RgnHandle            cur_rgn, new_rgn;
    Rect              	clip_rect;
-   
+
    GetPort(&old_port);
    port = (GrafPtr)device->machine_var;
    SetPort(port);
-   
+
    if (intersect_with)
    	   pgSectRect(intersect_with, rect, &intersect);
    else
@@ -968,7 +968,7 @@ PG_PASCAL (generic_var) pgSetClipRect (graf_device_ptr device,
    HDC					port;
 
    port = (HDC)device->machine_ref;
-   
+
    if (intersect_with)
    	   pgSectRect(intersect_with, rect, &intersect);
    else
@@ -992,7 +992,7 @@ PG_PASCAL (void) pgRestoreClipRgn (graf_device_ptr device, generic_var rgn)
 {
 #ifdef MAC_PLATFORM
    GrafPtr           old_port;
-   
+
    GetPort(&old_port);
    SetPort((GrafPtr)device->machine_var);
    SetClip((RgnHandle)rgn);
@@ -1001,7 +1001,7 @@ PG_PASCAL (void) pgRestoreClipRgn (graf_device_ptr device, generic_var rgn)
 #endif
 #ifdef WINDOWS_PLATFORM
    HRGN			old_rgn;
-   
+
    old_rgn = (HRGN) SelectObject((HDC)device->machine_ref, (HRGN)rgn);
    DeleteObject(old_rgn);
 #endif
@@ -1015,7 +1015,7 @@ PG_PASCAL (void) pgGetForeColor (graf_device_ptr device, color_value_ptr pg_colo
 
 #ifdef MAC_PLATFORM
 //CGrafPtr
-   if (((CGrafPtr)(device->machine_var))->portVersion & 0xC000) 
+   if (((CGrafPtr)(device->machine_var))->portVersion & 0xC000)
    {
       os_color = ((CGrafPtr)(device->machine_var))->rgbFgColor;
    }
@@ -1034,7 +1034,7 @@ PG_PASCAL (void) pgGetBackColor (graf_device_ptr device, color_value_ptr pg_colo
    pg_plat_color_value  os_color;
 
 #ifdef MAC_PLATFORM
-   if (((CGrafPtr)(device->machine_var))->portVersion & 0xC000) 
+   if (((CGrafPtr)(device->machine_var))->portVersion & 0xC000)
    {
       os_color = ((CGrafPtr)(device->machine_var))->rgbBkColor;
    }
@@ -1055,7 +1055,7 @@ PG_PASCAL (void) pgSetForeColor (graf_device_ptr device, const color_value_ptr p
    pgColorToOS (pg_color, &os_color);
 
 #ifdef MAC_PLATFORM
-   if (((CGrafPtr)(device->machine_var))->portVersion & 0xC000) 
+   if (((CGrafPtr)(device->machine_var))->portVersion & 0xC000)
    {
       ((CGrafPtr)(device->machine_var))->rgbFgColor = os_color;
    }
@@ -1074,7 +1074,7 @@ PG_PASCAL (void) pgSetBackColor (graf_device_ptr device, const color_value_ptr p
    pgColorToOS (pg_color, &os_color);
 
 #ifdef MAC_PLATFORM
-   if (((CGrafPtr)(device->machine_var))->portVersion & 0xC000) 
+   if (((CGrafPtr)(device->machine_var))->portVersion & 0xC000)
    {
       ((CGrafPtr)(device->machine_var))->rgbBkColor = os_color;
    }
@@ -1094,17 +1094,17 @@ PG_PASCAL (void) pgPackPoly (pack_walk_ptr walker, poly_ref poly)
 {
    pg_poly_ptr    poly_ptr;
    long        poly_size;
-   
+
    if (poly)
       poly_size = GetMemorySize(poly);
    else
       poly_size = 0;
-   
+
    pgPackNum(walker, long_data, poly_size);
-   
+
    if (!poly_size)
       return;
-   
+
    poly_ptr = (pg_poly_ptr) UseMemory(poly);
    pack_poly_rec(walker, poly_ptr);
    UnuseMemory(poly);
@@ -1115,21 +1115,21 @@ PG_PASCAL (void) pgPackPoly (pack_walk_ptr walker, poly_ref poly)
 palette can be MEM_NULL, in which case a zero-size record is STILL saved, resulting
 in (intentional) MEM_NULL later when pgUnpackBitMap is called. */
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 PG_PASCAL (void) pgPackBitMap (pack_walk_ptr walker, bitmap_ref b_map)
 {
    pg_bitmap_ptr  bmap_ptr;
    long        palette_size;
-   
+
    bmap_ptr = (pg_bitmap_ptr) UseMemory(b_map);
    if (bmap_ptr->palette)
       palette_size = GetMemorySize(bmap_ptr->palette);
    else
       palette_size = 0;
-   
+
    pgPackNum(walker, long_data, GetMemorySize((memory_ref)b_map));
    pgPackBytes(walker, (pg_bits8_ptr)bmap_ptr, GetByteSize((memory_ref)b_map));
-   
+
    pgPackNum(walker, long_data, palette_size);
 
    if (palette_size)
@@ -1137,7 +1137,7 @@ PG_PASCAL (void) pgPackBitMap (pack_walk_ptr walker, bitmap_ref b_map)
       pgPackBytes(walker, (pg_bits8_ptr) UseMemory(bmap_ptr->palette), palette_size);
       UnuseMemory((memory_ref)bmap_ptr->palette);
    }
-   
+
    UnuseMemory((memory_ref)b_map);
 }
 
@@ -1149,9 +1149,9 @@ PG_PASCAL (poly_ref) pgUnpackPoly (pack_walk_ptr walker)
    pg_poly_ptr    poly_ptr;
    poly_ref    new_poly = MEM_NULL;
    long        poly_size;
-   
-   if (poly_size = pgUnpackNum(walker)) {
-      
+
+   if ((poly_size = pgUnpackNum(walker))) {
+
       new_poly = MemoryAllocClear(GetGlobalsFromRef(walker->data_ref), 1, poly_size, 0);
       poly_ptr = (pg_poly_ptr) UseMemory(new_poly);
       unpack_poly_rec(walker, poly_ptr);
@@ -1169,7 +1169,7 @@ PG_PASCAL (picture_ref) pgUnpackBitMap (pack_walk_ptr walker)
 {
    pg_bitmap_ptr  bmap_ptr;
    poly_ref    new_bmap = MEM_NULL;
-      
+
    new_bmap = MemoryAlloc(GetGlobalsFromRef(walker->data_ref), 1, 0, 0);
    pgUnpackBytes(walker, new_bmap);
 
@@ -1178,12 +1178,12 @@ PG_PASCAL (picture_ref) pgUnpackBitMap (pack_walk_ptr walker)
 
    bmap_ptr->palette = MemoryAlloc(GetGlobalsFromRef(walker->data_ref), 1, 0, 0);
    pgUnpackBytes(walker, bmap_ptr->palette);
-   
+
    if (!GetMemorySize(bmap_ptr->palette)) {
       DisposeMemory(bmap_ptr->palette);
       bmap_ptr->palette = MEM_NULL;
    }
-   
+
    UnuseMemory(bmap_ptr->palette);
 
    return   new_bmap;
@@ -1191,7 +1191,7 @@ PG_PASCAL (picture_ref) pgUnpackBitMap (pack_walk_ptr walker)
 
 /* Initialize Paige's platform independant bit maps */
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 
 PG_PASCAL (void) pgInitBitMap(graf_device_ptr device, rectangle_ptr dest_rect, short pixel_size, memory_ref palette, long ref_con, short background, bitmap_ref bit_map)
 {
@@ -1200,18 +1200,18 @@ PG_PASCAL (void) pgInitBitMap(graf_device_ptr device, rectangle_ptr dest_rect, s
    short       width;
    short       height;
    pg_char        filler;
-   
+
    width = (short)(dest_rect->bot_right.h - dest_rect->top_left.h);
    height = (short)(dest_rect->bot_right.v - dest_rect->top_left.v);
 
    // Set size for bitmap & clear
    row_size = ((pixel_size * width + 31) >> 4) * 4;
    SetMemorySize (bit_map, row_size * height + sizeof(pg_bitmap_rec) - 2);
-   
+
    // Fill bit map header
    bitmap_p = (pg_bitmap_ptr)UseMemory(bit_map);
    pgFillBlock(bitmap_p, sizeof(pg_bitmap_rec), 0);
-   
+
    bitmap_p->origin = *dest_rect;
    bitmap_p->width = width;
    bitmap_p->height = height;
@@ -1220,9 +1220,9 @@ PG_PASCAL (void) pgInitBitMap(graf_device_ptr device, rectangle_ptr dest_rect, s
    if (pixel_size <= 8)
    {
       short background_val, i;
-      
+
       background_val = background & ((1 << pixel_size) - 1);
-      
+
       for (i = 0; i < 8 / pixel_size; i++)
       {
          filler <<= pixel_size;
@@ -1230,7 +1230,7 @@ PG_PASCAL (void) pgInitBitMap(graf_device_ptr device, rectangle_ptr dest_rect, s
       }
    }
    pgFillBlock(&bitmap_p->bits[0], row_size * height, filler);
-   
+
    bitmap_p->version = CUR_BIT_MAP_VERSION;
    bitmap_p->h_res = device->resolution << 16;
    bitmap_p->v_res = device->resolution & 0xFFFF0000;
@@ -1246,14 +1246,14 @@ PG_PASCAL (void) pgInitBitMap(graf_device_ptr device, rectangle_ptr dest_rect, s
       bitmap_p->palette = MEM_NULL;
 #endif
    else bitmap_p->palette = palette;
-   
+
    UseMemory(bit_map);
 }
 
 
 /******************************* Macintosh Support Functions ***************************/
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 
 #ifdef MAC_PLATFORM
 
@@ -1264,31 +1264,31 @@ PG_PASCAL (CTabHandle) pgColorValues2CTab(memory_ref palette)
    CTabHandle  cTab;
    long     size;
    long     i;
-   
+
    if (!palette || (size = GetMemorySize(palette)) == 0)
       return NULL;
-   
+
    cTab = (CTabHandle)NewHandleClear(sizeof(ColorTable) + sizeof(ColorSpec) * (--size));
    pgFailNIL(GetGlobalsFromRef(palette), cTab);
-   
+
    (**cTab).ctSize = size;
    (**cTab).ctSeed = GetCTSeed();
-   
+
    for (i = 0; i <= size; ++i)
    {
       color_value_ptr   color;
-      
+
       color = (color_value_ptr)UseMemoryRecord (palette, i, 1, i == 0);
-      
+
       (**cTab).ctTable[i].value = i;
       pgColorToOS(color, &(**cTab).ctTable[i].rgb);
    }
    CTabChanged(cTab);
-   
+
    UnuseMemory(palette);
-   
+
    return cTab;
-   
+
 }
 
 
@@ -1298,24 +1298,24 @@ PG_PASCAL (memory_ref) pgCTab2ColorValues(pgm_globals_ptr mem_globals, CTabHandl
 {
    memory_ref  palette;
    long     i;
-   
+
    if (!cTab)
       return MEM_NULL;
-   
+
    palette = MemoryAllocClear (mem_globals, sizeof(color_value), (**cTab).ctSize + 1, 0);
-   
+
    for (i = 0; i <= (**cTab).ctSize; ++i)
    {
       color_value_ptr   color;
-      
+
       color = (color_value_ptr)UseMemoryRecord (palette, (**cTab).ctTable[i].value, 1, i == 0);
       pgOSToPgColor(&(**cTab).ctTable[i].rgb, color);
    }
-   
+
    UnuseMemory(palette);
-   
+
    return palette;
-   
+
 }
 
 
@@ -1326,27 +1326,27 @@ PG_PASCAL (PaletteHandle) pgColorValues2Palette(memory_ref palette)
    PaletteHandle  aPalette;
    long        size;
    long        i;
-   
+
    if (!palette || (size = GetMemorySize(palette)) == 0)
       return NULL;
-   
+
    aPalette = NewPalette(size, NULL, pmTolerant, 0x0000);
    pgFailNIL(GetGlobalsFromRef(palette), aPalette);
-   
+
    for (i = 0; i < size; ++i)
    {
       color_value_ptr   color;
       RGBColor    rgb;
-      
+
       color = (color_value_ptr)UseMemoryRecord (palette, i, 1, i == 0);
-      
+
       pgColorToOS(color, &rgb);
       SetEntryColor(aPalette, i, &rgb);
-   }  
+   }
    UnuseMemory(palette);
-   
+
    return aPalette;
-   
+
 }
 
 
@@ -1356,26 +1356,26 @@ PG_PASCAL (memory_ref) pgPalette2ColorValues(pgm_globals_ptr mem_globals, Palett
 {
    memory_ref  palette;
    long     i;
-   
+
    if (!aPalette)
       return MEM_NULL;
-   
+
    palette = MemoryAllocClear (mem_globals, sizeof(color_value), (**aPalette).pmEntries + 1, 0);
-   
+
    for (i = 0; i <= (**aPalette).pmEntries; ++i)
    {
       color_value_ptr   color;
       RGBColor    rgb;
-      
+
       SetEntryColor(aPalette, i, &rgb);
       color = (color_value_ptr)UseMemoryRecord (palette, i, 1, i == 0);
       pgOSToPgColor(&rgb, color);
    }
-   
+
    UnuseMemory(palette);
-   
+
    return palette;
-   
+
 }
 
 #endif
@@ -1386,7 +1386,7 @@ PG_PASCAL (memory_ref) pgPalette2ColorValues(pgm_globals_ptr mem_globals, Palett
 extern PG_PASCAL (void) pgLongToRGB (long colorref, color_value_ptr color)
 {
    long     red, green, blue;
-   
+
    if ((blue = (colorref >> 8) & 0xFF00) != 0)
       blue |= (blue >> 8);
 
@@ -1395,7 +1395,7 @@ extern PG_PASCAL (void) pgLongToRGB (long colorref, color_value_ptr color)
 
    if ((red = (colorref << 8) & 0xFF00) != 0)
       red |= (red >> 8);
-   
+
    color->red = (unsigned short)red;
    color->green = (unsigned short)green;
    color->blue = (unsigned short)blue;
@@ -1406,11 +1406,11 @@ extern PG_PASCAL (void) pgLongToRGB (long colorref, color_value_ptr color)
 PG_PASCAL (long) pgRGBToLong (color_value_ptr color)
 {
    long     red, green, blue;
-   
+
    red = (long)color->red;
    green = (long)color->green;
    blue = (long)color->blue;
-   
+
    red &= 0x00FF00;
    green &= 0x00FF00;
    blue &= 0x00FF00;
@@ -1426,14 +1426,14 @@ two's complement). */
 PG_PASCAL (long) pgGetGrayScale (color_value_ptr bk_color, short percent)
 {
    long     red, green, blue, extra;
-   
+
    red = (long)bk_color->red >> 8;
    green = (long)bk_color->green >> 8;
    blue = (long)bk_color->blue >> 8;
    extra = 0;
 
    if (red < 32) {
-   
+
       extra = (32 - red);
       red += extra;
       green += extra;
@@ -1441,7 +1441,7 @@ PG_PASCAL (long) pgGetGrayScale (color_value_ptr bk_color, short percent)
    }
 
    if (green < 32) {
-   
+
       extra = (32 - green);
       red += extra;
       green += extra;
@@ -1449,7 +1449,7 @@ PG_PASCAL (long) pgGetGrayScale (color_value_ptr bk_color, short percent)
    }
 
    if (blue < 32) {
-   
+
       extra = (32 - blue);
       red += extra;
       green += extra;
@@ -1457,7 +1457,7 @@ PG_PASCAL (long) pgGetGrayScale (color_value_ptr bk_color, short percent)
    }
 
    if (percent < 0) {
-      
+
       red = (red * (-percent)) / 100;
       green = (green * (-percent)) / 100;
       blue = (blue * (-percent)) / 100;
@@ -1468,14 +1468,14 @@ PG_PASCAL (long) pgGetGrayScale (color_value_ptr bk_color, short percent)
       green = (green * (percent + 100)) / 100;
       blue = (blue * (percent + 100)) / 100;
    }
-   
+
    if (red > 255)
       red = 255;
    if (green > 255)
       green = 255;
    if (blue > 255)
       blue = 255;
-   
+
    return   ((blue << 16) | (green << 8) | red);
 }
 
@@ -1495,7 +1495,7 @@ static void save_poly_points (poly_ref poly, co_ordinate_ptr first_pt, co_ordina
    new_points = (co_ordinate_ptr) AppendMemory(poly, sizeof(co_ordinate) * 2, FALSE);
    new_points[0] = *first_pt;
    new_points[1] = *second_pt;
-   
+
    UnuseMemory(poly);
 }
 
@@ -1513,39 +1513,39 @@ static void frame_poly (graf_device_ptr port, pg_poly_ptr poly_ptr,
    short                   num_points;
 
    if (poly_ptr->width && poly_ptr->height && poly_ptr->num_points > 1) {
-   
+
       target_width = target_frame->bot_right.h - target_frame->top_left.h;
       target_height = target_frame->bot_right.v - target_frame->top_left.v;
       source_width = poly_ptr->width;
       source_height = poly_ptr->height;
-   
+
       scale_h = scale_v = 0;
-   
+
       if (source_width != target_width)
          scale_h = (pg_fixed)(target_width << 16) | source_width;
       if (source_height != target_height)
          scale_v = (pg_fixed)(target_height << 16) | source_height;
-   
+
       points = poly_ptr->points;
       num_points = poly_ptr->num_points;
-      
+
       if (num_points & 1)
          --num_points;
-   
+
       while (num_points) {
          draw_from = *points++;
          draw_to = *points++;
-   
+
          pgScaleLong(scale_h, 0, &draw_from.h);
          pgScaleLong(scale_v, 0, &draw_from.v);
          pgAddPt(&target_frame->top_left, &draw_from);
-         
+
          pgScaleLong(scale_h, 0, &draw_to.h);
          pgScaleLong(scale_v, 0, &draw_to.v);
          pgAddPt(&target_frame->top_left, &draw_to);
-         
+
          pgLineDraw(port, &draw_from, &draw_to, 0, pen_size);
-         
+
          num_points -= 2;
       }
    }
@@ -1558,7 +1558,7 @@ will be the first field in polygon. */
 static void unpack_poly_rec (pack_walk_ptr walker, pg_poly_ptr poly)
 {
    short       index_ctr;
-   
+
    poly->width = (short)pgUnpackNum(walker);
    poly->height = (short)pgUnpackNum(walker);
    poly->rsrv = (short)pgUnpackNum(walker);
@@ -1574,7 +1574,7 @@ static void unpack_poly_rec (pack_walk_ptr walker, pg_poly_ptr poly)
 static void pack_poly_rec (pack_walk_ptr walker, pg_poly_ptr poly)
 {
    short       index_ctr;
-   
+
    pgPackNum(walker, short_data, (long)poly->width);
    pgPackNum(walker, short_data, (long)poly->height);
    pgPackNum(walker, short_data, (long)poly->rsrv);

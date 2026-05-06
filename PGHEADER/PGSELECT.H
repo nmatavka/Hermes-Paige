@@ -4,7 +4,7 @@
 #ifndef PGSELECT_H
 #define PGSELECT_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 
 /* t_select flags: */

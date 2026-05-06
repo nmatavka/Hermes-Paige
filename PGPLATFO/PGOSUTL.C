@@ -6,18 +6,18 @@ no machine-specific functions except when mapped through macros). */
 /* String conversion routines, 7 Feb 95 OITC (oitc@iu.net) */
 /* I/O handling, Jun 95 OITC (oitc@iu.net) */
 
-#include "Paige.h"
-#include "defprocs.h"
-#include "machine.h"
-#include "pgRegion.h"
-#include "pgSelect.h"
-#include "pgUtils.h"
-#include "pgTxtWid.h"
-#include "pgText.h"
-#include "pgOSUtl.h"
-#include "pgIO.h"
-#include "pgErrors.h"
-#include "pgSubref.h"
+#include "PAIGE.H"
+#include "DEFPROCS.H"
+#include "MACHINE.H"
+#include "PGREGION.H"
+#include "PGSELECT.H"
+#include "PGUTILS.H"
+#include "PGTXTWID.H"
+#include "PGTEXT.H"
+#include "PGOSUTL.H"
+#include "PGIO.H"
+#include "PGERRORS.H"
+#include "PGSUBREF.H"
 
 
 static long find_next_word (paige_rec_ptr pg, style_walk_ptr walker,
@@ -350,7 +350,7 @@ count, not byte count. The function returns a byte count of valid chars. RELEASE
 function works correctly even for non-unicode libraries. */
 
 PG_PASCAL (size_t) pgUnicodeToBytes (pg_short_t PG_FAR *input_chars, pg_bits8_ptr output_bytes,
-		font_info_ptr font, long input_char_size)
+		font_info_ptr font, size_t input_char_size)
 {
 	register		pg_short_t PG_FAR	*input;
 	register		pg_bits8_ptr		output;
@@ -440,8 +440,8 @@ PG_PASCAL (size_t) pgUnicodeToUnicode (pg_short_t PG_FAR *the_chars, size_t num_
 /* pgStandardReadProc is the default file-read function. The I/O functions are
 macros that need to be mapped to the machine (see pgMTraps.h).  */
 
-PG_PASCAL (pg_error) pgStandardReadProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap)
+PG_PASCAL (pg_error) pgStandardReadProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap)
 {
 	pg_file_unit	f_ref;
 	pg_error		error;
@@ -458,14 +458,14 @@ PG_PASCAL (pg_error) pgStandardReadProc (void PG_FAR *data, short verb, long PG_
 	else
 	if (verb == io_get_eof) {
 		
-		error = pgGetFileEOF(f_ref, (long PG_FAR *)data);	//¥¥ TRS/OITC
+		error = pgGetFileEOF(f_ref, (size_t PG_FAR *)data);	//ï¿½ï¿½ TRS/OITC
 
 		if (error)
 			return  pgProcessError(error);
 	}
 	else {
 		
-		error = pgSetFilePos(f_ref, *position);	//¥¥ TRS/OITC
+		error = pgSetFilePos(f_ref, *position);	//ï¿½ï¿½ TRS/OITC
 		
 		if (error)
 			return  pgProcessError(error);
@@ -480,7 +480,7 @@ PG_PASCAL (pg_error) pgStandardReadProc (void PG_FAR *data, short verb, long PG_
 			else
 				data_ptr = (pg_bits8_ptr) data;
 	
-			error = pgReadFileData(f_ref, *data_size, data_ptr);	//¥¥ TRS/OITC
+			error = pgReadFileData(f_ref, *data_size, data_ptr);	//ï¿½ï¿½ TRS/OITC
 			
 			if (verb == io_data_indirect)
 				UnuseMemory((memory_ref) data);
@@ -499,8 +499,8 @@ PG_PASCAL (pg_error) pgStandardReadProc (void PG_FAR *data, short verb, long PG_
 /* pgStandardWriteProc is the default file-write function. This is Mac-specific,
 but simply change it to match your device.   */
 
-PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap)
+PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap)
 {
 	pg_file_unit	   		f_ref;
 	pg_error				error;
@@ -517,7 +517,7 @@ PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, long PG
 	else
 	if (verb == io_get_eof) {
 
-		error = pgGetFileEOF(f_ref, (long PG_FAR *) data);	//¥¥ TRS/OITC
+		error = pgGetFileEOF(f_ref, (size_t PG_FAR *)data);	//ï¿½ï¿½ TRS/OITC
 
 		if (error)
 			return  pgProcessError(error);
@@ -527,7 +527,7 @@ PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, long PG
 		pgSetFileEOF(f_ref, *position);
 	else {
 	
-		error = pgSetFilePos(f_ref, *position);	//¥¥ TRS/OITC
+		error = pgSetFilePos(f_ref, *position);	//ï¿½ï¿½ TRS/OITC
 		
 		if (error)
 			return  pgProcessError(error);
@@ -539,7 +539,7 @@ PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, long PG
 			else
 				data_ptr = (pg_bits8_ptr) data;
 	
-			error = pgWriteFileData(f_ref, *data_size, data_ptr);	//¥¥ TRS/OITC
+			error = pgWriteFileData(f_ref, *data_size, data_ptr);	//ï¿½ï¿½ TRS/OITC
 			
 			if (verb == io_data_indirect)
 				UnuseMemory((memory_ref) data);
@@ -559,8 +559,8 @@ PG_PASCAL (pg_error) pgStandardWriteProc (void PG_FAR *data, short verb, long PG
 /* pgOSReadProc is the same as pgStandardReadProc except the filemap is not a memory_ref,
 rather it is a pg_file_unit.  */
 
-PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap)
+PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap)
 {
 	pg_file_unit	f_ref;
 	pg_error		error;
@@ -577,7 +577,7 @@ PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, long PG_FAR *p
 	else
 	if (verb == io_get_eof) {
 		
-		error = pgGetFileEOF(f_ref, (long PG_FAR *)data);	//¥¥ TRS/OITC
+		error = pgGetFileEOF(f_ref, (size_t PG_FAR *)data);	//ï¿½ï¿½ TRS/OITC
 
 		if (error)
 			return  pgProcessError(error);
@@ -585,7 +585,7 @@ PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, long PG_FAR *p
 	else
 	if (verb != io_set_eof) {
 		
-		error = pgSetFilePos(f_ref, *position);	//¥¥ TRS/OITC
+		error = pgSetFilePos(f_ref, *position);	//ï¿½ï¿½ TRS/OITC
 		
 		if (error)
 			return  pgProcessError(error);
@@ -600,7 +600,7 @@ PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, long PG_FAR *p
 			else
 				data_ptr = (pg_bits8_ptr) data;
 	
-			error = pgReadFileData(f_ref, *data_size, data_ptr);	//¥¥ TRS/OITC
+			error = pgReadFileData(f_ref, *data_size, data_ptr);	//ï¿½ï¿½ TRS/OITC
 			
 			if (verb == io_data_indirect)
 				UnuseMemory((memory_ref) data);
@@ -619,8 +619,8 @@ PG_PASCAL (pg_error) pgOSReadProc (void PG_FAR *data, short verb, long PG_FAR *p
 /* pgOSWriteProc is the same as pgStandardWriteProc except the filemap is not a memory_ref,
 rather it is a pg_file_unit.  */
 
-PG_PASCAL (pg_error) pgOSWriteProc (void PG_FAR *data, short verb, long PG_FAR *position,
-		long PG_FAR *data_size, file_ref filemap)
+PG_PASCAL (pg_error) pgOSWriteProc (void PG_FAR *data, short verb, size_t PG_FAR *position,
+		size_t PG_FAR *data_size, file_ref filemap)
 {
 	pg_file_unit	   			f_ref;
 	pg_error					error;
@@ -637,7 +637,7 @@ PG_PASCAL (pg_error) pgOSWriteProc (void PG_FAR *data, short verb, long PG_FAR *
 	else
 	if (verb == io_get_eof) {
 
-		error = pgGetFileEOF(f_ref, (long PG_FAR *) data);	//¥¥ TRS/OITC
+		error = pgGetFileEOF(f_ref, (size_t PG_FAR *)data);	//ï¿½ï¿½ TRS/OITC
 
 		if (error)
 			return  pgProcessError(error);
@@ -647,7 +647,7 @@ PG_PASCAL (pg_error) pgOSWriteProc (void PG_FAR *data, short verb, long PG_FAR *
 		error = pgSetFileEOF(f_ref, *position);
 	else {
 
-		error = pgSetFilePos(f_ref, *position);	//¥¥ TRS/OITC
+		error = pgSetFilePos(f_ref, *position);	//ï¿½ï¿½ TRS/OITC
 		
 		if (error)
 			return  pgProcessError(error);
@@ -659,7 +659,7 @@ PG_PASCAL (pg_error) pgOSWriteProc (void PG_FAR *data, short verb, long PG_FAR *
 			else
 				data_ptr = (pg_bits8_ptr) data;
 	
-			error = pgWriteFileData(f_ref, *data_size, data_ptr);	//¥¥ TRS/OITC
+			error = pgWriteFileData(f_ref, *data_size, data_ptr);	//ï¿½ï¿½ TRS/OITC
 			
 			if (verb == io_data_indirect)
 				UnuseMemory((memory_ref) data);
@@ -1147,7 +1147,7 @@ PG_PASCAL (pg_boolean) pgEqualColor (color_value_ptr color1, color_value_ptr col
 /* pgRoundFixed rounds the fixed number to the nearest whole (but is still a
 pg_fixed). For example, 0x00018000 will return as 0x00020000. */
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 
 PG_PASCAL (pg_fixed) pgRoundFixed (pg_fixed fix)
 {
@@ -1189,7 +1189,7 @@ PG_PASCAL (short) pgComputePointSize (paige_rec_ptr pg, style_info_ptr style)
 		if (style->styles[nested_subset_var]) {
 			short				nested_factor, subref_level;
 			
-			if (subref_level = (short)compute_subref_level(pg)) {
+			if ((subref_level = (short)compute_subref_level(pg))) {
 			
 				if (subref_level >= 3)
 					nested_factor = NESTED_POINT_LEVEL3;
@@ -1249,9 +1249,9 @@ PG_PASCAL (memory_ref) pgConvertTextCaps (paige_rec_ptr pg, style_info_ptr cur_s
 
 /* pgCStrLength returns the lenth of a cstring. */
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 
-#ifndef C_LIBRARY
+#if !defined(C_LIBRARY) || defined(POSIX_PLATFORM)
 PG_PASCAL (long) pgCStrLength (const pg_c_string_ptr str)
 {
 	register pg_c_string_ptr    str_ptr;
@@ -1267,7 +1267,7 @@ PG_PASCAL (long) pgCStrLength (const pg_c_string_ptr str)
 
 /* Converts a C string to a Pascal string */
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 
 PG_PASCAL (pg_p_string_ptr) pgCStr2PStr(pg_p_string_ptr p_str, const pg_c_string_ptr c_str)
 {
@@ -1282,7 +1282,7 @@ PG_PASCAL (pg_p_string_ptr) pgCStr2PStr(pg_p_string_ptr p_str, const pg_c_string
 
 /* Converts a Pascal string to a C string */
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 
 PG_PASCAL (pg_c_string_ptr) pgPStr2CStr(pg_c_string_ptr c_str, const pg_p_string_ptr p_str)
 {

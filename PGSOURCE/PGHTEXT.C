@@ -1,12 +1,12 @@
 /* This is the C interface code to C++ hypertext link objects. */
 
-#include "Paige.h"
-#include "pgOSUtl.h"
-#include "pgEdit.h"
-#include "pgUtils.h"
-#include "pgText.h"
-#include "PGHText.h"
-#include "machine.h"
+#include "PAIGE.H"
+#include "PGOSUTL.H"
+#include "PGEDIT.H"
+#include "PGUTILS.H"
+#include "PGTEXT.H"
+#include "PGHTEXT.H"
+#include "MACHINE.H"
 
 static void insert_hyperlink (paige_rec_ptr pg, memory_ref hyperlink_run, select_pair_ptr selection,
 			pg_hyperlink_ptr hyperlink, pg_char_ptr URL, pg_char_ptr insert_option, short draw_mode);
@@ -968,7 +968,7 @@ static void insert_hyperlink (paige_rec_ptr pg, memory_ref hyperlink_run, select
 	if (draw_mode) {
 		short		use_draw_mode = draw_mode;
 		
-		if (use_draw_mode = best_way)
+		if (use_draw_mode == best_way)
 			use_draw_mode = bits_copy;
 		
 		pgUpdateText(pg, NULL, 0, pg->t_length, MEM_NULL, NULL, use_draw_mode, TRUE);

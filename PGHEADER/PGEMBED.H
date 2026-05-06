@@ -9,8 +9,8 @@ Fixes and additions by Board Member TRS/OITC (oitc@iu.net). Additions, etc. by "
 #ifndef PGEMBED_H
 #define PGEMBED_H
 
-#include "Paige.h"
-#include "pgGrafx.h"
+#include "PAIGE.H"
+#include "PGGRAFX.H"
 
 #define CURRENT_EMBED_VERSION	5
 

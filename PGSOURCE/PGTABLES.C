@@ -1,21 +1,21 @@
 /* This file handles paragraph formatting. Your app can omit this library if no
 functions that set paragraph styles defined in Paige.h are called.    */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
-#include "defProcs.h"
-#include "machine.h"
-#include "pgText.h"
-#include "pgSelect.h"
-#include "pgEdit.h"
-#include "pgDefStl.h"
-#include "pgUtils.h"
-#include "pgDefPar.h"
-#include "pgPar.h"
-#include "pgShapes.h"
-#include "pgErrors.h"
-#include "pgTables.h"
-#include "pgTxtWid.h"
+#include "DEFPROCS.H"
+#include "MACHINE.H"
+#include "PGTEXT.H"
+#include "PGSELECT.H"
+#include "PGEDIT.H"
+#include "PGDEFSTL.H"
+#include "PGUTILS.H"
+#include "PGDEFPAR.H"
+#include "PGPAR.H"
+#include "PGSHAPES.H"
+#include "PGERRORS.H"
+#include "PGTABLES.H"
+#include "PGTXTWID.H"
 
 static par_info_ptr get_table_format (paige_rec_ptr pg, long position);
 static memory_ref build_column_widths (paige_rec_ptr pg, par_info_ptr par);

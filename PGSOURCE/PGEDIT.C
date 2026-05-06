@@ -1,29 +1,29 @@
 /* This file handles all display, insertions and deletions (basic editing) */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgbasic1
 #endif
 
-#include "machine.h"
-#include "pgUtils.h"
-#include "defprocs.h"
-#include "pgText.h"
-#include "pgPar.h"
-#include "pgSelect.h"
-#include "pgDefStl.h"
-#include "pgDefPar.h"
-#include "pgShapes.h"
-#include "pgEdit.h"
-#include "pgStyles.h"
-#include "pgScript.h"
-#include "pgErrors.h"
-#include "pgSubRef.h"
-#include "pgTxtWid.h"
-#include "pgHText.h"
-#include "pgTables.h"
-#include "pgGrafx.h"
+#include "MACHINE.H"
+#include "PGUTILS.H"
+#include "DEFPROCS.H"
+#include "PGTEXT.H"
+#include "PGPAR.H"
+#include "PGSELECT.H"
+#include "PGDEFSTL.H"
+#include "PGDEFPAR.H"
+#include "PGSHAPES.H"
+#include "PGEDIT.H"
+#include "PGSTYLES.H"
+#include "PGSCRIPT.H"
+#include "PGERRORS.H"
+#include "PGSUBREF.H"
+#include "PGTXTWID.H"
+#include "PGHTEXT.H"
+#include "PGTABLES.H"
+#include "PGGRAFX.H"
 
 
 struct glitter_info {
@@ -394,7 +394,7 @@ PG_PASCAL (void) pgDelete (pg_ref pg, const select_pair_ptr delete_range, short 
 	if ((use_draw_mode = draw_mode) == best_way)
 		use_draw_mode = bits_copy;
 
-	if (select_list = pgCellSelections(pg_rec, delete_range)) {
+	if ((select_list = pgCellSelections(pg_rec, delete_range))) {
 		
 		pgRemoveAllHilites(pg_rec, use_draw_mode);
 		SetMemorySize(pg_rec->select, MINIMUM_SELECT_MEMSIZE);
@@ -832,7 +832,7 @@ PG_PASCAL (long) pgInsertRawData (paige_rec_ptr pg, pg_char_ptr data, size_t len
 
 		advance_text_runs(pg, block, block_num, offset, length,
 				(pg_boolean)(offset < pg->t_length), advance_equal_pars, FALSE);
-		if (affected_position = offset)
+		if ((affected_position = offset))
 			--affected_position;
 	
 		if (use_insert_style && pg->insert_style != NULL_RUN) {
@@ -945,7 +945,7 @@ PG_PASCAL (void) pgDrawPages (paige_rec_ptr pg, graf_device_ptr device,
 	if ((used_mode = draw_mode_used) == best_way)
 		used_mode = bits_copy;
 
-	if (repeating = pg->doc_info.attributes & (V_REPEAT_BIT | H_REPEAT_BIT)) {
+	if ((repeating = pg->doc_info.attributes & (V_REPEAT_BIT | H_REPEAT_BIT))) {
 		co_ordinate		repeat_offset;
 
 		pgScaleLong(-pg->port.scale.scale, pg->port.scale.origin.v,
@@ -1033,7 +1033,7 @@ PG_PASCAL (pg_short_t) pgStripTrailingBlanks (paige_rec_ptr pg, point_start_ptr 
 	long						offset_begin, offset_end;
 	pg_boolean					strip_midline;
 	
-	if (result = text_length) {
+	if ((result = text_length)) {
 		
 		offset_end = (long)text_length;
 
@@ -1987,7 +1987,7 @@ static void insert_key_data (paige_rec_ptr pg, pg_char_ptr data, size_t length,
 	
 	current_position = pgCurrentInsertion(pg);
 	
-	if (uses_smart_quotes = ((pg->flags & SMART_QUOTES_BIT) != 0)) {
+	if ((uses_smart_quotes = ((pg->flags & SMART_QUOTES_BIT) != 0))) {
 
 		pgFillBlock(&fake_walker, sizeof(style_walk), 0);
 	
@@ -2084,7 +2084,7 @@ static void dump_key_data (paige_rec_ptr pg, style_info_ptr style,
 
 	++pg->change_ctr;
 
-	if (must_draw_all = pg->num_selects)
+	if ((must_draw_all = pg->num_selects))
 		pgDelete(pg->myself, NULL, draw_none);
 
 	insertion_spot = pgCurrentInsertion(pg);
@@ -3000,7 +3000,7 @@ function doesn't get called unless "draw_mode" is/has been active. */
 
 static void extend_visual_pages (paige_rec_ptr pg, short draw_mode)
 {
-	if (pg->doc_info.attributes & (V_REPEAT_BIT || H_REPEAT_BIT)) {
+	if (pg->doc_info.attributes & (V_REPEAT_BIT | H_REPEAT_BIT)) {
 		long			num_pages;
 		
 		num_pages = get_num_pages(pg);
@@ -3192,7 +3192,7 @@ static void set_fastest_drawing_path (paige_rec_ptr pg, text_block_ptr block,
 			style_or = TRUE;
 		else
 			for (style_ctr = style_or = 0; style_ctr < MAX_STYLES; ++style_ctr)
-				if (style_or = insert_style->styles[style_ctr])
+				if ((style_or = insert_style->styles[style_ctr]))
 					break;
 		
 		if (!style_or) {
@@ -3357,7 +3357,7 @@ static long draw_line (paige_rec_ptr pg, text_block_ptr block, pg_char_ptr text,
 	globals = pg->globals;
 	extra_top = extra_bot = DISPLAY_SLOP_EXTRA;
 
-	if (block_offset = block->begin) {
+	if ((block_offset = block->begin)) {
 		
 		--block;
 		previous_block_flags = block->flags;
@@ -3591,8 +3591,8 @@ static long draw_line (paige_rec_ptr pg, text_block_ptr block, pg_char_ptr text,
 				if (is_subref_char(block, text, text_offset, text_end))
 					pgDrawSubRef(pg, walker, &draw_position, text_offset, &draw_position.vis_offset);
 				else
-				if (draw_length = pgStripTrailingBlanks(pg, starts, walker, text,
-						text_offset, text_length, use_j_extra))
+				if ((draw_length = pgStripTrailingBlanks(pg, starts, walker, text,
+						text_offset, text_length, use_j_extra)))
 					walker->cur_style->procs.draw(pg, walker, text, text_offset,
 							draw_length, &draw_position, use_j_extra, display_mode_verb);
 				else
@@ -3797,4 +3797,3 @@ static pg_boolean is_subref_char (text_block_ptr block, pg_char_ptr text, pg_sho
 
 	return pgIsValidSubref(block, (long)offset);
 }
-

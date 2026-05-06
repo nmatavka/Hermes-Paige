@@ -9,16 +9,16 @@ file also #includes "pgMachineDefs."  */
 #ifndef PGMEMMGR_H
 #define PGMEMMGR_H
 
-#include "CPUDefs.h"
+#include "CPUDEFS.H"
 
 
 #ifdef C_LIBRARY
-#include <String.h>
+#include <string.h>
 #include <stdlib.h>
 #endif
 
-#include "pgMTraps.h"
-#include "pgSetJmp.h"
+#include "PGMTRAPS.H"
+#include "PGSETJMP.H"
 
 #ifdef PG_DEBUG
 #define PG_DEBUG_STATICS

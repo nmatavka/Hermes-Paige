@@ -5,18 +5,18 @@ This source file contains all the member functions for the RTF export class (der
 from the PaigeExportFilter class. */
 
 
-#include "Paige.h"
-#include "pgTraps.h"
-#include "pgExceps.h"
-#include "machine.h"
-#include "pgUtils.h"
-#include "pgTxrCPP.h"
-#include "defprocs.h"
-#include "pgErrors.h"
-#include "pgDefStl.h"
-#include "pgRTFDef.h"
-#include "pgEmbed.h"
-#include "pgdeftbl.h"
+#include "PAIGE.H"
+#include "PGTRAPS.H"
+#include "PGEXCEPS.H"
+#include "MACHINE.H"
+#include "PGUTILS.H"
+#include "PGTXRCPP.H"
+#include "DEFPROCS.H"
+#include "PGERRORS.H"
+#include "PGDEFSTL.H"
+#include "PGRTFDEF.H"
+#include "PGEMBED.H"
+#include "PGDEFTBL.H"
 
 /* PaigeRTFExportFilter constructor. This sets up the various members common to all filters.
 No error checking or file verification occurs just yet. */

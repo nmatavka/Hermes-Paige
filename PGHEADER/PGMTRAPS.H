@@ -11,8 +11,8 @@ platform.  */
 /* File I/O has moved to pgIO.h - TRS OITC */
 
 
-#include "CPUDefs.h"
-#include "pgMemMgr.h"
+#include "CPUDEFS.H"
+#include "PGMEMMGR.H"
 
 #define DEF_MASTER_QTY		256
 
@@ -95,6 +95,30 @@ platform.  */
 #define DebugStr OutputDebugString
 #define ExitToShell()  PostQuitMessage(1)
 #endif
+
+#endif
+
+#ifdef POSIX_PLATFORM
+
+#include <stdlib.h>
+
+#define MASTER_ENTRY_SIZE	sizeof(memory_ref)
+#define MASTER_ENTRY_NULL	MEM_NULL
+#define SPARE_TIRE_SIZE		0x00000400
+
+#define pgMemoryPtr(ref) UseMemory(ref)
+#define pgFreePtr(ref) UnuseMemory(ref)
+#define pgAllocMemory(bytesize) nullptr
+#define pgAllocMemoryClear(bytesize) nullptr
+#define pgLockMemory(ref) {}
+#define pgLockMemoryHi(ref) {}
+#define pgUnlockMemory(ref) {}
+#define pgResizeMemory(globals, ref, bytesize) SetMemorySize((ref), (bytesize))
+#define pgMemorySize(ref) GetByteSize(ref)
+#define pgFreeMemory(ref) DisposeMemory(ref)
+#define pgMemoryError(globals) ((globals)->last_error)
+#define pgRecoverMemory(ptr) MemoryRecover(ptr)
+#define ExitToShell() abort()
 
 #endif
 

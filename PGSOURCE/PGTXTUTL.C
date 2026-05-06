@@ -1,22 +1,22 @@
 /* This file contains miscellaneous utilities for text, styles and chars. If you
 don't call anything here you can omit this file from the app.  */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgtxtutls
 #endif
 
-#include "defprocs.h"
-#include "machine.h"
-#include "pgDefStl.h"
-#include "pgText.h"
-#include "pgSelect.h"
-#include "pgUtils.h"
-#include "pgEdit.h"
-#include "pgTxtWid.h"
-#include "pgSubref.h"
-#include "pgExceps.h"
+#include "DEFPROCS.H"
+#include "MACHINE.H"
+#include "PGDEFSTL.H"
+#include "PGTEXT.H"
+#include "PGSELECT.H"
+#include "PGUTILS.H"
+#include "PGEDIT.H"
+#include "PGTXTWID.H"
+#include "PGSUBREF.H"
+#include "PGEXCEPS.H"
 
 
 static pg_boolean compare_mask (style_info_ptr compare_from, long compare_to, long mask, pg_boolean exclude);

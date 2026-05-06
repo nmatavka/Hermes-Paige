@@ -1,17 +1,17 @@
 /* This file deals with printing support functions  */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgprint
 #endif
 
-#include "machine.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
-#include "pgUtils.h"
-#include "pgShapes.h"
-#include "pgText.h"
+#include "MACHINE.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
+#include "PGUTILS.H"
+#include "PGSHAPES.H"
+#include "PGTEXT.H"
 
 
 static long offset_to_line_top (paige_rec_ptr pg, long offset);
@@ -130,7 +130,7 @@ PG_PASCAL (short) pgNumPages (pg_ref pg, const rectangle_ptr page_rect)
 	print_offset = 0;
 	page_ctr = 1;
 	
-	while (print_offset = pgPrintToPage(pg, NULL, print_offset, page_rect, draw_none))
+	while ((print_offset = pgPrintToPage(pg, NULL, print_offset, page_rect, draw_none)))
 		++page_ctr;
 	
 	return	page_ctr;
@@ -150,7 +150,7 @@ PG_PASCAL (long) pgFindPage (pg_ref pg, short page_num, const rectangle_ptr page
 	page_ctr = 1;
 	
 	if (page_num > 1)
-		while (print_offset = pgPrintToPage(pg, NULL, print_offset, page_rect, draw_none)) {
+		while ((print_offset = pgPrintToPage(pg, NULL, print_offset, page_rect, draw_none))) {
 		
 			++page_ctr;
 			

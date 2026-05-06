@@ -5,8 +5,8 @@
 #define PGHTMDEF_H
 #endif
 
-#include "Paige.h"
-#include "pgTxr.h"
+#include "PAIGE.H"
+#include "PGTXR.H"
 
 #define HTML_VERSION			3
 
@@ -37,6 +37,30 @@
 #define PRETAG_DEF_FONT (pg_char_ptr)"Monaco\0"
 #define PRETAG_DEF_POINTSIZE 10
 #define CODETAG_DEF_FONT (pg_char_ptr)"Monaco\0"
+#define CODETAG_DEF_POINTSIZE 9
+
+#endif
+
+#ifdef POSIX_PLATFORM
+
+#ifdef __cplusplus
+inline pg_char PRETAG_DEF_FONT_VALUE[] = {
+	(pg_char)'C', (pg_char)'o', (pg_char)'u', (pg_char)'r',
+	(pg_char)'i', (pg_char)'e', (pg_char)'r', (pg_char)' ', (pg_char)'N',
+	(pg_char)'e', (pg_char)'w', 0, 0
+};
+inline pg_char CODETAG_DEF_FONT_VALUE[] = {
+	(pg_char)'C', (pg_char)'o', (pg_char)'u', (pg_char)'r',
+	(pg_char)'i', (pg_char)'e', (pg_char)'r', (pg_char)' ', (pg_char)'N',
+	(pg_char)'e', (pg_char)'w', 0, 0
+};
+#define PRETAG_DEF_FONT PRETAG_DEF_FONT_VALUE
+#define CODETAG_DEF_FONT CODETAG_DEF_FONT_VALUE
+#else
+#define PRETAG_DEF_FONT (pg_char_ptr)"Courier New\0"
+#define CODETAG_DEF_FONT (pg_char_ptr)"Courier New\0"
+#endif
+#define PRETAG_DEF_POINTSIZE 10
 #define CODETAG_DEF_POINTSIZE 9
 
 #endif
@@ -238,4 +262,3 @@ extern PG_PASCAL (void) CreateHTMLStyles (pg_ref pg, pg_char_ptr def_font, long 
 #ifdef __cplusplus
 	}
 #endif
-

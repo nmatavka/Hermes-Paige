@@ -1,26 +1,26 @@
 /* This file handles most actions for styles (including fonts and paragraph
 formats) */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgbasic3
 #endif
 
-#include "pgDefStl.h"
-#include "pgOSUtl.h"
-#include "pgText.h"
-#include "pgEmbed.h"
-#include "machine.h"
-#include "defprocs.h"
-#include "pgUtils.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
-#include "pgDefPar.h"
-#include "pgPar.h"
-#include "pgShapes.h"
-#include "pgSubref.h"
-#include "pgHText.h"
+#include "PGDEFSTL.H"
+#include "PGOSUTL.H"
+#include "PGTEXT.H"
+#include "PGEMBED.H"
+#include "MACHINE.H"
+#include "DEFPROCS.H"
+#include "PGUTILS.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
+#include "PGDEFPAR.H"
+#include "PGPAR.H"
+#include "PGSHAPES.H"
+#include "PGSUBREF.H"
+#include "PGHTEXT.H"
 
 
 static void setup_walk_styles (style_walk_ptr walker);
@@ -426,7 +426,7 @@ PG_PASCAL (pg_boolean) pgWalkPreviousStyle (style_walk_ptr walker)
 {
 	long			back_offset;
 	
-	if (back_offset = walker->prev_style_run->offset)
+	if ((back_offset = walker->prev_style_run->offset))
 		return	pgSetWalkStyle(walker, back_offset - 1);
 	
 	return	FALSE;
@@ -886,8 +886,8 @@ PG_PASCAL (pg_short_t) pgAddStyleInfo (paige_rec_ptr pg, paige_rec_ptr src_optio
 	style->procs.init(pg, style, the_font);
 	UnuseMemory(pg->fonts);
 
-	if (found_rec = pgFindMatchingStyle((memory_ref) pg->t_formats, style,
-			0, SIGNIFICANT_STYLE_SIZE))
+	if ((found_rec = pgFindMatchingStyle((memory_ref) pg->t_formats, style,
+			0, SIGNIFICANT_STYLE_SIZE)))
 		return	found_rec - 1;
 
 	if (style->styles[small_caps_var])
@@ -909,8 +909,8 @@ PG_PASCAL (pg_short_t) pgAddParInfo (paige_rec_ptr pg, paige_rec_ptr src_option,
 	pg_short_t			found_rec;
 	par_info_ptr		appended_ptr;
 
-	if (found_rec = pgFindMatchingStyle((memory_ref) pg->par_formats, style,
-			0, SIGNIFICANT_PAR_STYLE_SIZE))
+	if ((found_rec = pgFindMatchingStyle((memory_ref) pg->par_formats, style,
+			0, SIGNIFICANT_PAR_STYLE_SIZE)))
 		return	found_rec - 1;
 
 	found_rec = (pg_short_t)GetMemorySize(pg->par_formats);
@@ -1360,7 +1360,7 @@ PG_PASCAL (style_run_ptr) pgFindRunFromRef (style_ref ref, size_t offset, size_t
 	run = (style_run_ptr) UseMemory(ref);
 	record = 0;
 
-	if (abs_offset = offset) {
+	if ((abs_offset = offset)) {
 
 		while (num_records > BINARY_TABLE_MINIMUM) {
 			
@@ -1411,7 +1411,7 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 		
 		style_base = (style_info_ptr) UseMemory(pg->t_formats);
 		
-		while (bad_style = find_bad_style(pg, pg->t_style_run, &bad_index)) {
+		while ((bad_style = find_bad_style(pg, pg->t_style_run, &bad_index))) {
 
 			DeleteMemory(pg->t_style_run, bad_style, 1);
 			style_base[bad_index].used_ctr -= 1;
@@ -1499,7 +1499,7 @@ PG_PASCAL (void) pgFixAllStyleRuns (paige_rec_ptr pg, change_info_ptr change)
 
 		par_base = (par_info_ptr) UseMemory(pg->par_formats);
 		
-		while (bad_style = find_bad_style(pg, pg->par_style_run, &bad_index)) {
+		while ((bad_style = find_bad_style(pg, pg->par_style_run, &bad_index))) {
 			
 			DeleteMemory(pg->par_style_run, bad_style, 1);
 			par_base[bad_index].used_ctr -= 1;
@@ -1598,7 +1598,7 @@ PG_PASCAL (void) pgStyleSuperImpose (paige_rec_ptr pg, style_info_ptr style,
 	else
 		stylesheet_id = target_style->styles[super_impose_var];
 
-	if (stylesheet = pgLocateStyleSheet(pg, stylesheet_id, NULL)) {
+	if ((stylesheet = pgLocateStyleSheet(pg, stylesheet_id, NULL))) {
 		
 		if (stylesheet->font_index != 0)
 			target_style->font_index = stylesheet->font_index;
@@ -1622,7 +1622,7 @@ PG_PASCAL (void) pgStyleSuperImpose (paige_rec_ptr pg, style_info_ptr style,
 
 		if (!pgZeroStruct(&stylesheet->fg_color, sizeof(color_value)))
 			target_style->fg_color = stylesheet->fg_color;
-		if (!pgZeroStruct(&stylesheet->bk_color, sizeof(color_value)))	//¥ TRS/OITC
+		if (!pgZeroStruct(&stylesheet->bk_color, sizeof(color_value)))	//ï¿½ TRS/OITC
 			target_style->bk_color = stylesheet->bk_color;
 		
 		UnuseMemory(pg->t_formats);
@@ -1921,7 +1921,7 @@ static pg_short_t find_bad_style (paige_rec_ptr pg, style_ref ref,
 	
 	t_length += ZERO_TEXT_PAD;
 
-	if (num_runs = (pg_short_t)GetMemorySize(ref) - 2) {
+	if ((num_runs = (pg_short_t)GetMemorySize(ref) - 2)) {
 		
 		for (rec_num = 1, styles = (style_run_ptr) UseMemory(ref); num_runs; ++rec_num, ++styles, --num_runs) {
 			
@@ -2071,7 +2071,7 @@ static long trailing_text_blanks (paige_rec_ptr pg, size_t begin_select, size_t 
 	long				local_offset, global_offset, start_offset, info;
 	long				local_start, end_offset;
 
-	if (global_offset = end_select)
+	if ((global_offset = end_select))
 		global_offset -= 1;
 	
 	if (global_offset == begin_select)

@@ -23,8 +23,8 @@ and quality info (the element indexes defined in pgTraps.h).
 Copyright 1993 by DataPak Software, Inc.  All rights reserved. It is illegal
 to remove this notice   */
 
-#include "Paige.h"
-#include "pgRegion.h"
+#include "PAIGE.H"
+#include "PGREGION.H"
 
 #ifdef WINDOWS_PLATFORM
 
@@ -32,7 +32,7 @@ to remove this notice   */
 #include <windowsx.h>
 
 #ifdef WIN16_COMPILE
-#include "w16nls.h"
+#include "W16NLS.H"
 //include "olenls.h"
 
 /*
@@ -75,25 +75,25 @@ DWORD WINAPI x_GetFontLanguageInfo( HDC );
 #endif
 #endif
 
-#include "pgOSUtl.h"
-#include "pgUtils.h"
-#include "machine.h"
-#include "defprocs.h"
-#include "pgDefStl.h"
-#include "pgText.h"
-#include "pgTxtWid.h"
-#include "pgSelect.h"
-#include "pgShapes.h"
-#include "pgFiles.h"
-#include "pgErrors.h"
-#include "pgEdit.h"
+#include "PGOSUTL.H"
+#include "PGUTILS.H"
+#include "MACHINE.H"
+#include "DEFPROCS.H"
+#include "PGDEFSTL.H"
+#include "PGTEXT.H"
+#include "PGTXTWID.H"
+#include "PGSELECT.H"
+#include "PGSHAPES.H"
+#include "PGFILES.H"
+#include "PGERRORS.H"
+#include "PGEDIT.H"
 
-#include "pgScript.h"
-#include "pgUtils.h"
-#include "pgExceps.h"
-#include "pgGrafx.h"
-#include "pgLists.h"
-#include "pgSubRef.h"
+#include "PGSCRIPT.H"
+#include "PGUTILS.H"
+#include "PGEXCEPS.H"
+#include "PGGRAFX.H"
+#include "PGLISTS.H"
+#include "PGSUBREF.H"
 
 #include <string.h>
 
@@ -2026,14 +2026,14 @@ PG_PASCAL (void) pgInitFont (paige_rec_ptr pg, font_info_ptr info)
    info->environs &= (~FONT_USES_ALTERNATE);
 
    pgFixFontName(info);
-   //¥ TRS/OITC
+   //ï¿½ TRS/OITC
    if ((name_length = FONT_NAME_SIZE(info->name) + 1) > (FONT_SIZE)) {
    
       name_length = FONT_SIZE - 1;
       info->name[0] = (pg_char)name_length;
    }
    
-   //¥ TRS/OITC
+   //ï¿½ TRS/OITC
    pgFillBlock(&info->name[name_length], (FONT_SIZE - name_length) * sizeof(pg_char), 0);
 
    info->environs &= (~(FONT_NOT_AVAIL | FONT_BEST_GUESS));
@@ -2921,7 +2921,7 @@ PG_PASCAL (void)pgRectToRgn(pg_region rgn, RECT PG_FAR *r)
  
 /* Emulates a Mac Inset region */
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 
 PG_PASCAL (void) pgInsetRgn(pg_region rgn, short dh, short dv)
 {

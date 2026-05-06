@@ -948,7 +948,7 @@ PG_CATCH
 
 <p>The initial font and text format used by the <code>pg_ref</code> returned from <code>pgNew</code> will be taken from <code>pg_globals</code>. To change what font, style or paragraph format that a new <code>pg_ref</code> assumes, set the appropriate information in <code>pg_globals</code> after calling <code>pgNew</code>.</p>
 
-<p><img src="figs/fig1.jpg" alt=""></p>
+<p><img src="./FIGS/fig1.jpg" alt=""></p>
 
 <h4 id="toc_55">MEM_NULL Definition</h4>
 
@@ -1215,7 +1215,7 @@ void PGView::OnDestroy()
 <p>Unless you need to create a special or unusual effect, always pass <code>direct_or</code> or <code>bits_emulate_or</code> when responding to <code>WM_PAINT</code> (Windows) or an update
 event (Macintosh), and <code>best_way</code> for all other functions requiring a <code>draw_mode</code>.</p>
 
-<p><img src="figs/fig2.jpg" alt=""></p>
+<p><img src="./FIGS/fig2.jpg" alt=""></p>
 
 <p>Additional draw modes require the developer to use the custom draw hook and draw his own. See &quot;<code>text_draw_proc</code>&quot;<!-- on page 27-17--> for information on how to do custom drawing.</p>
 
@@ -2882,7 +2882,7 @@ select_pair, *select_pair_ptr;</code></pre></div>
 
 <p><strong>FIGURE 3 SELECTION BEGIN AND END EXPLAINED</strong></p>
 
-<p><img src="figs/fig3.jpg" alt=""></p>
+<p><img src="./FIGS/fig3.jpg" alt=""></p>
 
 <p><strong>NOTE:</strong> All offsets are byte counts. In the case of characters, they are each one byte.</p>
 
@@ -3935,10 +3935,10 @@ element in <code>tabs</code>. For every entry in <code>tab_mask</code> that is n
 
 <p>The following are some illustrations of different tab base values:</p>
 
-<p><img src="figs/fig4.jpg" alt="">
-<img src="figs/fig5.jpg" alt="">
-<img src="figs/fig6.jpg" alt="">
-<img src="figs/fig7.jpg" alt=""></p>
+<p><img src="./FIGS/fig4.jpg" alt="">
+<img src="./FIGS/fig5.jpg" alt="">
+<img src="./FIGS/fig6.jpg" alt="">
+<img src="./FIGS/fig7.jpg" alt=""></p>
 
 <h2 id="toc_254">9.4 Indentation Support</h2>
 
@@ -5124,11 +5124,11 @@ pgScroll();</code></pre></div>
 
 <p>If you are implementing any kind of exclusion shapes, see &quot;Exclusion Areas&quot;<!-- on page 15-1-->.</p>
 
-<p><img src="figs/fig8.jpg" alt=""></p>
+<p><img src="./FIGS/fig8.jpg" alt=""></p>
 
 <p>As stated, the simplest documents are rectangles; however, the <code>page_area</code> can be non-rectangular. A good example of this would be columns in which text must flow from one column to the other. In this case, the <code>page_area</code> would look similar to what is shown in Figure 9 <em>infra</em>.</p>
 
-<p><img src="figs/fig9.jpg" alt=""></p>
+<p><img src="./FIGS/fig9.jpg" alt=""></p>
 
 <h2 id="toc_312">12.3 Coordinates &amp; Graphic Structures</h2>
 
@@ -5178,8 +5178,8 @@ typedef rectangle_ptr shape_ptr;</code></pre></div>
 <li>If rectangle edges are not connected, they are considered separate &quot;containers;&quot; even if they overlap. (Overlapping would result in overlapping text if the shape definition was intended for the area where text is drawn).</li>
 </ol>
 
-<p><img src="figs/fig10.jpg" alt="">
-<img src="figs/fig11.jpg" alt=""></p>
+<p><img src="./FIGS/fig10.jpg" alt="">
+<img src="./FIGS/fig11.jpg" alt=""></p>
 
 <h2 id="toc_317">12.6 Building Shapes</h2>
 
@@ -5213,7 +5213,7 @@ typedef rectangle_ptr shape_ptr;</code></pre></div>
 
 <p>If <code>the_shape</code> is empty, <code>the_shape</code> gets set to the dimensions of rect (as if you had called <code>pgSetShapeRect</code> <em>supra</em>).</p>
 
-<p><img src="figs/fig12.jpg" alt=""></p>
+<p><img src="./FIGS/fig12.jpg" alt=""></p>
 
 <h3 id="toc_321">Disposing a Shape</h3>
 
@@ -5245,7 +5245,7 @@ typedef rectangle_ptr shape_ptr;</code></pre></div>
 
 <p>Offsets (moves) <code>*the_shape</code> by <code>h</code> (horizontal) and <code>v</code> (vertical) distances. These may be negative. Positive numbers move to the right horizontally and down vertically as appropriate.</p>
 
-<p><img src="figs/fig13.jpg" alt=""></p>
+<p><img src="./FIGS/fig13.jpg" alt=""></p>
 
 <h3 id="toc_325">Shrinking or expanding shape</h3>
 
@@ -5279,7 +5279,7 @@ typedef rectangle_ptr shape_ptr;</code></pre></div>
 
 <p>Returns the rectangle bounds of the outermost edges of the_shape. The bounds is placed in the rectangle pointed to by bounds (which cannot be null).</p>
 
-<p><img src="figs/fig14.jpg" alt=""></p>
+<p><img src="./FIGS/fig14.jpg" alt=""></p>
 
 <h3 id="toc_327">Comparing Shapes</h3>
 
@@ -5301,7 +5301,7 @@ typedef rectangle_ptr shape_ptr;</code></pre></div>
 
 <p><strong>FUNCTION RESULT:</strong> The function result will be TRUE if any part of <code>shape1</code> and <code>shape2</code> intersect (and <code>result_shape</code> gets set to the intersection if not <code>MEM_NULL</code>), otherwise FALSE is returned and <code>result_shape</code> gets set to an empty shape (if not <code>MEM_NULL</code>).</p>
 
-<p><img src="figs/fig15.jpg" alt=""></p>
+<p><img src="./FIGS/fig15.jpg" alt=""></p>
 
 <p><strong>FUNCTION RESULT:</strong> Neither <code>shape1</code> nor <code>shape2</code> are altered by this function.</p>
 
@@ -5313,8 +5313,8 @@ typedef rectangle_ptr shape_ptr;</code></pre></div>
 
 <p>The &quot;difference&quot; is computed by subtracting all portions of <code>shape1</code> from <code>shape2</code>, and the geometric difference(s) produce <code>result_shape</code>. If <code>shape1</code> is an empty shape, <code>result_shape</code> will be a mere copy of shape2; if <code>shape2</code> is empty, <code>result_shape</code> will be empty.</p>
 
-<p><img src="figs/fig16.jpg" alt="">
-<img src="figs/fig17.jpg" alt=""></p>
+<p><img src="./FIGS/fig16.jpg" alt="">
+<img src="./FIGS/fig17.jpg" alt=""></p>
 
 <h3 id="toc_329">Erase a Shape</h3>
 
@@ -5328,7 +5328,7 @@ typedef rectangle_ptr shape_ptr;</code></pre></div>
 
 <p>If <code>vis_bounds</code> is non-null, then only the parts of <code>the_shape</code> that intersect with <code>vis_bounds</code> get erased; otherwise, the whole shape is erased (see illustration <em>infra</em>).</p>
 
-<p><img src="figs/fig18.jpg" alt=""></p>
+<p><img src="./FIGS/fig18.jpg" alt=""></p>
 
 <h3 id="toc_330">Moving a Shape in a <code>pg_ref</code></h3>
 
@@ -5504,7 +5504,7 @@ pg_doc_info, PG_FAR *doc_ptr;</code></pre></div>
 
 <p>NOTE: Some of the fields in <code>pg_doc_info</code> are currently unsupported, some of them are defined in <code>Paige.h</code> but not included above (but exist for future enhancements and extensions).</p>
 
-<p><img src="figs/fig19.jpg" alt=""></p>
+<p><img src="./FIGS/fig19.jpg" alt=""></p>
 
 <p>The fields that are currently supported are as follows:</p>
 
@@ -5519,11 +5519,11 @@ pg_doc_info, PG_FAR *doc_ptr;</code></pre></div>
 #define WINDOW_CURSOR_BIT       0x00000400  // Keep cursor in window view
 #define COLOR_VIS_BIT           0x10000000  // Page colour covers whole vis_area</code></pre></div>
 
-<p><img src="figs/fig20.jpg" alt=""></p>
+<p><img src="./FIGS/fig20.jpg" alt=""></p>
 
 <p><code>V_REPEAT_BIT</code> or <code>H_REPEAT_BIT</code> — causes the page_area to &quot;repeat&quot; itself when text overflows the bottom (see &quot;Repeating Shapes&quot;<!-- on page 13-243-->).</p>
 
-<p><img src="figs/fig21.jpg" alt=""></p>
+<p><img src="./FIGS/fig21.jpg" alt=""></p>
 
 <p><code>BOTTOM_FIXED_BIT</code> — forces the <code>page_area</code>&#39;s bottom to remain the same (otherwise, the bottom is considered infinite or &quot;variable&quot; as text grows or shrinks).</p>
 
@@ -5730,17 +5730,17 @@ pg_doc_info, PG_FAR *doc_ptr;</code></pre></div>
 
 <p>In Figure 13<!-- on page 12-10-->, the initial <code>page_area</code> shape contains text which is within the bounds of the shape. Once text overflows the bottom, the shape is repeated and placed at <code>repeat_offset.v</code> pixels down and <code>repeat_offset.h</code> pixels across.</p>
 
-<p><img src="figs/fig22.jpg" alt=""></p>
+<p><img src="./FIGS/fig22.jpg" alt=""></p>
 
 <p>The next illustration shows what happens when <code>repeat_stop</code> is nonzero. In this example, <code>repeat_stop</code>&#39;s value is added to the bottom of the text and, if the result overflows the shape&#39;s bottom, the shape is repeated. This provides an &#39;extra page&#39; to get added before the text completely fills the page shape.</p>
 
 <h5 id="toc_353">Figure 23. The shape when text gets below the <code>repeat_stop</code> value.</h5>
 
-<p><img src="figs/fig23.jpg" alt=""></p>
+<p><img src="./FIGS/fig23.jpg" alt=""></p>
 
 <p>A repeating shape can actually be any shape and does not need to be a &quot;page&quot; rectangle. Figure 17<!-- on page 12-15--> shows an example of &quot;columns&quot; repeating for each &quot;page.&quot;</p>
 
-<p><img src="figs/fig24.jpg" alt=""></p>
+<p><img src="./FIGS/fig24.jpg" alt=""></p>
 
 <h2 id="toc_354">13.5 Shape Repeat Deletions</h2>
 
@@ -9507,7 +9507,7 @@ doc_width = bounds.bot_right.h - bounds.top_left.h;</code></pre></div>
 
 <p>It is often necessary to split a <code>long</code> into two <code>short</code>s. This is a cross-platform way of doing just that. The low word returns the least significant <code>short</code>, the high word returns the most significant.</p>
 
-<p><img src="figs/fig25.jpg" alt=""></p>
+<p><img src="./FIGS/fig25.jpg" alt=""></p>
 
 <h2 id="toc_646">24.16 Maths</h2>
 
@@ -9671,7 +9671,7 @@ doc_width = bounds.bot_right.h - bounds.top_left.h;</code></pre></div>
 
 <p><strong>NOTE:</strong> The <code>extend_size</code> indicates a number of <em>records</em> (each of size <code>rec_size</code> bytes), not bytes.</p>
 
-<p><img src="figs/fig26.jpg" alt=""></p>
+<p><img src="./FIGS/fig26.jpg" alt=""></p>
 
 <h3 id="toc_658">Deällocation</h3>
 
@@ -9729,7 +9729,7 @@ then keep copying different <code>memory_ref</code>s into it.</p>
 
 <p><code>UseMemory</code> and <code>UseForLongTime</code> calls can be nested, but each must be eventually balanced with <code>UnuseMemory</code> or else the block will remain in a locked state, which in turn can cause memory difficulties such as fragmentation and the inability to change the allocation size.</p>
 
-<p><img src="figs/fig27.jpg" alt=""></p>
+<p><img src="./FIGS/fig27.jpg" alt=""></p>
 
 <h3 id="toc_662">Unuse memory</h3>
 
@@ -9741,7 +9741,7 @@ then keep copying different <code>memory_ref</code>s into it.</p>
 
 <p>It is therefore important that all <code>UseMemory</code> and <code>UseForLongTime</code> calls get eventually <em>balanced</em> with UnuseMemory, otherwise unwanted locked memory fragments will result.</p>
 
-<p><img src="figs/fig28.jpg" alt=""></p>
+<p><img src="./FIGS/fig28.jpg" alt=""></p>
 
 <h2 id="toc_663">25.11 &quot;Random-Access&quot; Pointers</h2>
 

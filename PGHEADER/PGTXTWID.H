@@ -3,7 +3,7 @@
 #ifndef PGTXTWID_H
 #define PGTXTWID_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #define TEXT_PARTITION_SIZE		4096	/* Max text size for parsing char widths */
 #define MAX_ACCUMULATED_WIDTHS	32500	/* Maximum accumulated widths */

@@ -1,18 +1,18 @@
 /* This file handles "style sheets."  */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgstlsht
 #endif
 
-#include "pgEdit.h"
-#include "pgDefStl.h"
-#include "pgStyles.h"
-#include "pgPar.h"
-#include "pgUtils.h"
-#include "pgOSUtl.h"
-#include "pgtxr.h"
+#include "PGEDIT.H"
+#include "PGDEFSTL.H"
+#include "PGSTYLES.H"
+#include "PGPAR.H"
+#include "PGUTILS.H"
+#include "PGOSUTL.H"
+#include "PGTXR.H"
 
 static short count_style_sheets (paige_rec_ptr pg, short PG_FAR *highest_id);
 static short count_par_style_sheets (paige_rec_ptr pg, short PG_FAR *highest_id);
@@ -74,7 +74,7 @@ PG_PASCAL (void) pgRemoveStyle (pg_ref pg, short style_id)
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
-	if (the_style = pgLocateStyleSheet(pg_rec, style_id, NULL)) {
+	if ((the_style = pgLocateStyleSheet(pg_rec, style_id, NULL))) {
 		
 		--the_style->used_ctr;
 		the_style->style_sheet_id = 0;
@@ -130,7 +130,7 @@ PG_PASCAL (pg_boolean) pgGetStyle (pg_ref pg, short style_id, style_info_ptr sty
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
-	if (the_style = pgLocateStyleSheet(pg_rec, style_id, NULL)) {
+	if ((the_style = pgLocateStyleSheet(pg_rec, style_id, NULL))) {
 		
 		result = TRUE;
 		pgBlockMove(the_style, style, sizeof(style_info));
@@ -163,7 +163,7 @@ PG_PASCAL (void) pgChangeStyle (pg_ref pg, short style_id, const style_info_ptr 
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
-	if (the_style = pgLocateStyleSheet(pg_rec, style_id, NULL)) {
+	if ((the_style = pgLocateStyleSheet(pg_rec, style_id, NULL))) {
 		
 		pgBlockMove(the_style, &old_style, SIGNIFICANT_STYLE_SIZE);
 		pgBlockMove(style, the_style, SIGNIFICANT_STYLE_SIZE);
@@ -273,7 +273,7 @@ original stylesheet. If found, I need to change original fields. */
 
 			pgInvalSelect(pg, range_affected.begin, range_affected.end);
 
-			if (use_draw_mode = draw_mode) {
+			if ((use_draw_mode = draw_mode)) {
 				
 				if (draw_mode == best_way)
 					use_draw_mode = bits_copy;
@@ -299,7 +299,7 @@ PG_PASCAL (void) pgSetStyleSheet (pg_ref pg, const select_pair_ptr selection,
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
-	if (style_sheet = pgLocateStyleSheet(pg_rec, style_id, NULL)) {
+	if ((style_sheet = pgLocateStyleSheet(pg_rec, style_id, NULL))) {
 
 		pgBlockMove(style_sheet, &info, sizeof(style_info));
 		UnuseMemory(pg_rec->t_formats);
@@ -355,7 +355,7 @@ PG_PASCAL (short) pgFindStyleSheet (pg_ref pg, const style_info_ptr compare_styl
 	compare_mask.style_sheet_id = 0;
 	compare_mask.ascent = compare_mask.descent = compare_mask.leading = 0;
 	compare_mask.machine_var = compare_mask.machine_var2 = 0;
-	compare_mask.future[0] = compare_mask.future[1] = compare_mask.future[2] = 0;
+	compare_mask.future[0] = compare_mask.future[1] = 0;
 
 	target = (style_info_ptr) UseMemory(pg_rec->t_formats);
 	
@@ -448,7 +448,7 @@ PG_PASCAL (void) pgRemoveParStyle (pg_ref pg, short style_id)
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
-	if (the_style = pgLocateParStyleSheet(pg_rec, style_id)) {
+	if ((the_style = pgLocateParStyleSheet(pg_rec, style_id))) {
 		
 		--the_style->used_ctr;
 		the_style->style_sheet_id = 0;
@@ -501,7 +501,7 @@ PG_PASCAL (pg_boolean) pgGetParStyle (pg_ref pg, short style_id, par_info_ptr st
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
-	if (the_style = pgLocateParStyleSheet(pg_rec, style_id)) {
+	if ((the_style = pgLocateParStyleSheet(pg_rec, style_id))) {
 		
 		result = TRUE;
 		pgBlockMove(the_style, style, sizeof(par_info));
@@ -530,7 +530,7 @@ PG_PASCAL (void) pgChangeParStyle (pg_ref pg, short style_id, const par_info_ptr
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
-	if (the_style = pgLocateParStyleSheet(pg_rec, style_id)) {
+	if ((the_style = pgLocateParStyleSheet(pg_rec, style_id))) {
 		
 		pgBlockMove(the_style, &old_style, SIGNIFICANT_PAR_STYLE_SIZE);
 		pgBlockMove(style, the_style, SIGNIFICANT_PAR_STYLE_SIZE);
@@ -563,7 +563,7 @@ original stylesheet. If found, I need to change original fields. */
 
 			pgInvalSelect(pg, range_affected.begin, range_affected.end);
 
-			if (use_draw_mode = draw_mode) {
+			if ((use_draw_mode = draw_mode)) {
 				
 				if (draw_mode == best_way)
 					use_draw_mode = bits_copy;
@@ -588,7 +588,7 @@ PG_PASCAL (void) pgSetParStyleSheet (pg_ref pg, const select_pair_ptr selection,
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	
-	if (style_sheet = pgLocateParStyleSheet(pg_rec, style_id)) {
+	if ((style_sheet = pgLocateParStyleSheet(pg_rec, style_id))) {
 
 		pgBlockMove(style_sheet, &info, sizeof(par_info));
 		UnuseMemory(pg_rec->par_formats);
@@ -811,14 +811,14 @@ PG_PASCAL (long) pgAddNamedStyle (pg_ref pg, pg_c_string_ptr stylename, const sh
 		named_style = (named_stylesheet_ptr) UseMemoryRecord(pg_rec->named_styles, style_index - 1, 0, TRUE);
 
 		if (named_style->stylesheet_id)
-			if (old_style = pgLocateStyleSheet(pg_rec, named_style->stylesheet_id, NULL)) {
+			if ((old_style = pgLocateStyleSheet(pg_rec, named_style->stylesheet_id, NULL))) {
 
 				old_style->used_ctr -= 1;
 				UnuseMemory(pg_rec->t_formats);
 		}
 		
 		if (named_style->par_stylesheet_id)
-			if (old_par = pgLocateParStyleSheet(pg_rec, named_style->par_stylesheet_id)) {
+			if ((old_par = pgLocateParStyleSheet(pg_rec, named_style->par_stylesheet_id))) {
 
 				old_par->used_ctr -= 1;
 				UnuseMemory(pg_rec->par_formats);
@@ -1717,7 +1717,7 @@ static void affected_text_range (paige_rec_ptr pg, short compare_type,
 			
 			index = run->style_item;
 
-			if (style_id = (short)base[index].style_sheet_id)
+			if ((style_id = (short)base[index].style_sheet_id))
 				if ((style_id == stylesheet_id) || (style_id == negative_id)) {
 				
 				if (run->offset < result->begin)
@@ -1740,7 +1740,7 @@ static void affected_text_range (paige_rec_ptr pg, short compare_type,
 			
 			index = run->style_item;
 
-			if (style_id = (short)base[index].style_sheet_id)
+			if ((style_id = (short)base[index].style_sheet_id))
 				if ((style_id == stylesheet_id) || (style_id == negative_id)) {
 				
 				if (run->offset < result->begin)
@@ -1935,13 +1935,13 @@ static void change_stylesheet_id (paige_rec_ptr pg_rec, short style_id, short ne
 	long					qty, change_index, old_caps_index, new_caps_index;
 	short					negative_style_id, font_index;
 	
-	if (the_style = pgLocateStyleSheet(pg_rec, style_id, NULL)) {
+	if ((the_style = pgLocateStyleSheet(pg_rec, style_id, NULL))) {
 	
 		pgBlockMove(the_style, &old_style, SIGNIFICANT_STYLE_SIZE);
 		UnuseMemory(pg_rec->t_formats);
 	}
 	
-	if (the_style = pgLocateStyleSheet(pg_rec, new_style_id, NULL)) {
+	if ((the_style = pgLocateStyleSheet(pg_rec, new_style_id, NULL))) {
 			
 /* Now walk through all style_info's and locate any "offspring" from this
 original stylesheet. If found, I need to change original fields. */
@@ -2022,13 +2022,13 @@ static void change_par_stylesheet_id (paige_rec_ptr pg_rec, short style_id, shor
 	long					qty, change_index;
 	short					negative_style_id;
 	
-	if (the_style = pgLocateParStyleSheet(pg_rec, style_id)) {
+	if ((the_style = pgLocateParStyleSheet(pg_rec, style_id))) {
 	
 		pgBlockMove(the_style, &old_style, SIGNIFICANT_PAR_STYLE_SIZE);
 		UnuseMemory(pg_rec->par_formats);
 	}
 	
-	if (the_style = pgLocateParStyleSheet(pg_rec, new_style_id)) {
+	if ((the_style = pgLocateParStyleSheet(pg_rec, new_style_id))) {
 			
 /* Now walk through all style_info's and locate any "offspring" from this
 original stylesheet. If found, I need to change original fields. */
@@ -2062,4 +2062,3 @@ original stylesheet. If found, I need to change original fields. */
 			pgInvalSelect(pg_rec->myself, range_affected.begin, range_affected.end);
 	}
 }
-

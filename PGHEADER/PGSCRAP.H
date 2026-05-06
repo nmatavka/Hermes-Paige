@@ -4,8 +4,8 @@ scrap operations. However, the basic API is portable. */
 #ifndef PGSCRAP_H
 #define PGSCRAP_H
 
-#include "Paige.h"
-#include "pgEmbed.h"
+#include "PAIGE.H"
+#include "PGEMBED.H"
 
 // Extern scrap types:
 
@@ -43,6 +43,16 @@ typedef WORD         pg_os_type;
 #else
 typedef UINT         pg_os_type;
 #endif
+#endif
+
+#ifdef POSIX_PLATFORM
+
+#define PG_TEXT_OSTYPE     1
+#define PG_UNICODE_OSTYPE  2
+#define PG_PICT_OSTYPE     3
+
+typedef uint32_t     pg_os_type;
+
 #endif
 
 #define SCRAP_KEY_QTY	(PLATFORM_SPECIFIC_KEY - 2)

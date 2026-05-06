@@ -3,8 +3,8 @@
 #ifndef PGHTEXT_H
 #define PGHTEXT_H
 
-#include "Paige.h"
-#include "pgFiles.h"
+#include "PAIGE.H"
+#include "PGFILES.H"
 
 /* Callback verbs: */
 

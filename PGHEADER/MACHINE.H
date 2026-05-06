@@ -13,7 +13,7 @@ and/or OS. */
 #ifndef MACHINE_H
 #define MACHINE_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #define OFFSCREEN_SUCCESSFUL	1			/* Offscreen enable was successful */
 #define OFFSCREEN_UNSUCCESSFUL	-1			/* Offscreen enable was not successful */
@@ -72,6 +72,10 @@ extern PG_PASCAL (GrafPtr) pgGetPlatformDevice (graf_device_ptr the_device);
 #endif
 #ifdef WINDOWS_PLATFORM
 extern PG_PASCAL (HDC) pgGetPlatformDevice (graf_device_ptr the_device);
+extern PG_PASCAL (void) pgReleasePlatformDevice (graf_device_ptr the_device);
+#endif
+#ifdef POSIX_PLATFORM
+extern PG_PASCAL (generic_var) pgGetPlatformDevice (graf_device_ptr the_device);
 extern PG_PASCAL (void) pgReleasePlatformDevice (graf_device_ptr the_device);
 #endif
 extern PG_PASCAL (void) pgClipGrafDevice (paige_rec_ptr pg, short clip_verb, shape_ref alternate_vis);

@@ -3,7 +3,7 @@
 #ifndef PGFILES_H
 #define PGFILES_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 
 #define PAIGE_HEADER_SIG	0x77AA		/* Signature for file header */

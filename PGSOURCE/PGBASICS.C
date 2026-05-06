@@ -3,30 +3,30 @@ cannot omit this file from your app!   */
 
 /* Modified Dec 22 1994 for the use of volatile in PG_TRY-PG_CATCH by TR Shaw, OITC */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgbasic3
 #endif
 
-#include "pgExceps.h"
-#include "pgText.h"
-#include "pgDefStl.h"
-#include "pgDefPar.h"
-#include "pgSelect.h"
-#include "pgEdit.h"
-#include "pgShapes.h"
-#include "pgUtils.h"
-#include "machine.h"
-#include "defprocs.h"
-#include "pgBasics.h"
-#include "pgTxtWid.h"
-#include "pgSubref.h"
-#include "pgLists.h"
-#include "pgHText.h"
-#include "pgTables.h"
-#include "pgGrafx.h"
-#include "pgFrame.h"
+#include "PGEXCEPS.H"
+#include "PGTEXT.H"
+#include "PGDEFSTL.H"
+#include "PGDEFPAR.H"
+#include "PGSELECT.H"
+#include "PGEDIT.H"
+#include "PGSHAPES.H"
+#include "PGUTILS.H"
+#include "MACHINE.H"
+#include "DEFPROCS.H"
+#include "PGBASICS.H"
+#include "PGTXTWID.H"
+#include "PGSUBREF.H"
+#include "PGLISTS.H"
+#include "PGHTEXT.H"
+#include "PGTABLES.H"
+#include "PGGRAFX.H"
+#include "PGFRAME.H"
 
 /* Values for borders. */
 
@@ -904,7 +904,7 @@ PG_PASCAL (void) pgDispose (pg_ref pg)
 		pg_rec->cache_file = MEM_NULL;
 	}
 
-	if (old_sublist = pgGetSubrefState(pg_rec, FALSE, TRUE))
+	if ((old_sublist = pgGetSubrefState(pg_rec, FALSE, TRUE)))
 		DisposeMemory(old_sublist);
 		
 	//Dispose of headers and footers
@@ -959,7 +959,7 @@ PG_PASCAL (void) pgFailureDispose (pg_ref pg)
 	if (!pg)
 		return;
 
-	if (globals = pgGetGlobals(pg))
+	if ((globals = pgGetGlobals(pg)))
 		globals->pg_extend((void PG_FAR*) pg, pg_dispose);
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
@@ -1235,7 +1235,7 @@ PG_PASCAL (pg_boolean) pgSetAttributes (pg_ref pg, long attributes)
 			if (pg_rec->num_selects) {
 				pg_short_t			rec_to_delete, delete_qty;
 				
-				while (delete_qty = pgFindEmptyHilite(pg_rec, &rec_to_delete))
+				while ((delete_qty = pgFindEmptyHilite(pg_rec, &rec_to_delete)))
 					DeleteMemory(pg_rec->select, rec_to_delete, delete_qty);
 			}
 

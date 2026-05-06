@@ -5,7 +5,7 @@
 #ifndef PGTABLES_H
 #define PGTABLES_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #define TABLE_CR_CHAR		0x0A;	/* "Linefeed" char within a cell */
 #define TAB_POS_MASK		0x0000FFFF	/* Part of tab.position that holds cell width */

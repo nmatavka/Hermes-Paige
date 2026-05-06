@@ -1,20 +1,20 @@
 /* This file handles "mail merge" features. If you don't use this stuff it
 can be omitted from your app.  */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgmerge
 #endif
 
-#include "defprocs.h"
-#include "machine.h"
-#include "pgBasics.h"
-#include "pgDefStl.h"
-#include "pgText.h"
-#include "pgSelect.h"
-#include "pgUtils.h"
-#include "pgEdit.h"
+#include "DEFPROCS.H"
+#include "MACHINE.H"
+#include "PGBASICS.H"
+#include "PGDEFSTL.H"
+#include "PGTEXT.H"
+#include "PGSELECT.H"
+#include "PGUTILS.H"
+#include "PGEDIT.H"
 
 
 #define CLR_PG_MERGE		(~MERGE_MODE_BIT)			/* Clears merge mode bit in pg */
@@ -90,8 +90,8 @@ PG_PASCAL (pg_boolean) pgMergeText (pg_ref pg, const style_info_ptr matching_sty
 		merged_pairs = MemoryAlloc(pg_rec->globals->mem_globals,
 				sizeof(select_pair), 0, 16);
 		
-		if (merge_result = walk_merge_styles(pg_rec, matching_style, mask, AND_mask,
-				MEM_NULL, merged_pairs, ref_con)) {
+		if ((merge_result = walk_merge_styles(pg_rec, matching_style, mask, AND_mask,
+				MEM_NULL, merged_pairs, ref_con))) {
 
 			pgSetSelectionList(pg, merged_pairs, 0, FALSE);
 			pg_rec->merge_save = pgCopy(pg, NULL);
@@ -237,7 +237,7 @@ static pg_boolean walk_merge_styles (paige_rec_ptr pg, style_info_ptr matching_s
 					pgPrepareStyleWalk(pg, 0, NULL, FALSE);
 					pgDelete(pg->myself, &merge_range, draw_none);
 					
-					if (merge_length = GetMemorySize(merged_text)) {
+					if ((merge_length = GetMemorySize(merged_text))) {
 						
 						pgInsert(pg->myself, (const pg_char_ptr) UseMemory(merged_text), merge_length,
 								merge_range.begin, data_insert_mode, 0, draw_none);

@@ -1,19 +1,19 @@
 /* Paige utilities, miscellaneous pagination and container support functions.
 Copyright 1993 / 1994 DataPak Software, Inc. All rights reserved.  */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgboxes
 #endif
 
-#include "machine.h"
-#include "pgUtils.h"
-#include "pgText.h"
-#include "pgShapes.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
-#include "pgErrors.h"
+#include "MACHINE.H"
+#include "PGUTILS.H"
+#include "PGTEXT.H"
+#include "PGSHAPES.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
+#include "PGERRORS.H"
 
 
 static void validate_container_refcons (paige_rec_ptr pg);
@@ -459,7 +459,7 @@ static long inval_container_change (paige_rec_ptr pg, pg_short_t position)
 		return	0;
 	}
 	else
-	if (block = find_first_block(pg, (pg_short_t)(position - 1))) {
+	if ((block = find_first_block(pg, (pg_short_t)(position - 1)))) {
 		long		result;
 		
 		result = block->begin;

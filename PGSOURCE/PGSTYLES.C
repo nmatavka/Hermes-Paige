@@ -1,24 +1,24 @@
 /* This file handles all optional style functions. If your app doesn't use
 any of the "set/get" style functions in Paige.h it can omit this library. */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgstyles
 #endif
 
-#include "pgText.h"
-#include "pgDefStl.h"
-#include "machine.h"
-#include "defprocs.h"
-#include "pgUtils.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
-#include "pgPar.h"
-#include "pgShapes.h"
-#include "pgStyles.h"
-#include "pgErrors.h"
-#include "pgSubref.h"
+#include "PGTEXT.H"
+#include "PGDEFSTL.H"
+#include "MACHINE.H"
+#include "DEFPROCS.H"
+#include "PGUTILS.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
+#include "PGPAR.H"
+#include "PGSHAPES.H"
+#include "PGSTYLES.H"
+#include "PGERRORS.H"
+#include "PGSUBREF.H"
 
 static void get_style_info (change_info_ptr change, style_run_ptr style, pg_short_t record_ctr);
 static pg_short_t change_style_info (change_info_ptr change, style_run_ptr style);
@@ -53,7 +53,7 @@ PG_PASCAL (long) pgGetStyleInfo (pg_ref pg, const select_pair_ptr selection,
 		pgFillBlock(mask, sizeof(style_info), -1);
 	}
 
-	if (select_list = pgSetupOffsetRun(pg_rec, selection, FALSE, TRUE)) {
+	if ((select_list = pgSetupOffsetRun(pg_rec, selection, FALSE, TRUE))) {
 
 		pgFillBlock(&stuff_to_report, sizeof(change_info), 0);
 		
@@ -148,7 +148,7 @@ PG_PASCAL (void) pgSetStyleClassInfo (pg_ref pg, const select_pair_ptr range, lo
 
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 
-	if (select_list = pgSetupOffsetRun(pg_rec, range, FALSE, TRUE)) {
+	if ((select_list = pgSetupOffsetRun(pg_rec, range, FALSE, TRUE))) {
 
 		pgFillBlock(&stuff_to_change, sizeof(change_info), 0);
 		stuff_to_change.pg = pg_rec;
@@ -229,8 +229,8 @@ PG_PASCAL (pg_boolean) pgFindStyleInfo (pg_ref pg, size_t PG_FAR *begin_position
 		
 		for (;;) {
 			
-			if (result = pgStyleMatchesCriteria(walker.cur_style, match_style,
-					mask, AND_mask, SIGNIFICANT_STYLE_SIZE))
+			if ((result = pgStyleMatchesCriteria(walker.cur_style, match_style,
+					mask, AND_mask, SIGNIFICANT_STYLE_SIZE)))
 				break;
 			
 			if (!pgWalkNextStyle(&walker))
@@ -384,7 +384,7 @@ PG_PASCAL (void) pgChangeStyleInfo (paige_rec_ptr pg_rec, select_pair_ptr select
 		pgFailure(pg_rec->globals->mem_globals, LOCKED_PG_ERROR, 1);
 #endif
 
-	if (select_list = pgSetupOffsetRun(pg_rec, selection, FALSE, TRUE)) {
+	if ((select_list = pgSetupOffsetRun(pg_rec, selection, FALSE, TRUE))) {
 
 		pgFillBlock(&stuff_to_change, sizeof(change_info), 0);
 		stuff_to_change.pg = pg_rec;
@@ -567,7 +567,7 @@ static pg_short_t change_style_info (change_info_ptr change, style_run_ptr style
 		if ((pg->flags2 & STYLESHEET_CHANGE) && (old_style.style_sheet_id < 0)) {
 			style_info_ptr		old_stylesheet;
 			
-			if (old_stylesheet = pgLocateStyleSheet(pg, (short)(-old_style.style_sheet_id), NULL)) {
+			if ((old_stylesheet = pgLocateStyleSheet(pg, (short)(-old_style.style_sheet_id), NULL))) {
 
 				pgFillBlock(&special_mask, sizeof(style_info), 0);
 				pgSetMaskFromFlds(old_stylesheet, &old_style, &special_mask, style_compare, TRUE, FALSE);

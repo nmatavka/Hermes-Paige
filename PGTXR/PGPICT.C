@@ -13,9 +13,9 @@
 
 #ifdef WINDOWS_COMPILE
 
-#include "Paige.h"
-#include "pgCtlUtl.h"
-#include "pgPict.h"
+#include "PAIGE.H"
+#include "PGCTLUTL.H"
+#include "PGPICT.H"
 #include <math.h>
 
 int	PICT_Is_Version_One = FALSE;

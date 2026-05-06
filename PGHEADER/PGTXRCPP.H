@@ -5,10 +5,10 @@ and/or .c programs with Activate C++ Compiler option set. */
 #ifndef PGTXRCPP_H
 #define PGTXRCPP_H
 
-#include "Paige.h"
-#include "pgEmbed.h"
-#include "pgTxr.h"
-#include "pgFrame.h"
+#include "PAIGE.H"
+#include "PGEMBED.H"
+#include "PGTXR.H"
+#include "PGFRAME.H"
 
 /* The file import class for C++ers: */
 
@@ -79,9 +79,9 @@ class PaigeImportFilter {
 		memory_ref			buffer_ref;		// Memory_ref that created buffer
 		long				buffer_index;	// Index into buffer
 		long				logical_pos;	// Logical file position (if importing serial stream)
-		long				filepos;		// Current real file position
-		long				file_begin;		// Beginning of file
-		long				file_eof;		// End-of-file position
+		size_t				filepos;		// Current real file position
+		size_t				file_begin;		// Beginning of file
+		size_t				file_eof;		// End-of-file position
 		pg_short_t			unicode_flag;	// Byte Order Mark if Unicode, otherwise zero
 
 	// Translator information (can be mucked with):
@@ -422,7 +422,7 @@ class PaigeExportFilter {
 		long				feature_bits;		// What and how we are capable of exporting
 		long				export_bits;		// Data type(s) we are exporting
 		long				max_buffer;			// Maximum holding buffer, in bytes
-		long				filepos;			// Current real file position
+		size_t				filepos;			// Current real file position
 		long				error_refcon;		// This goes into the error log's refcon
 		pg_error			io_result;			// Error result of last operation
 
@@ -441,7 +441,7 @@ class PaigeExportFilter {
 		memory_ref			unicode_ref;	// Memory_ref to convert from Unicode
 		memory_ref			cr_lf_ref;		// Memory_ref to add LFs for Windows
 		long				buffer_index;	// Index into buffer
-		long				file_begin;		// Beginning of file
+		size_t				file_begin;		// Beginning of file
 		long				total_out;		// Total bytes out (written to file or not)
 		pg_short_t			last_char_out;	// Last character type out
 		pg_short_t			half_char_pending; // If Unicode, 1/2 the char is pending as a byte
@@ -676,4 +676,3 @@ typedef PaigeExportFilter PG_FAR *PaigeExportObject;
 
 
 #endif
-

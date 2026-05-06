@@ -5,7 +5,7 @@ code is in here.  */
 #ifndef PGSHAPES_H
 #define PGSHAPES_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #define BOUNDS_OFFSET		0		/* Offset from start of shape to bounds */
 

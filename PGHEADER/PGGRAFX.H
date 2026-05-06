@@ -4,9 +4,9 @@ drawing. The functions are mapped to code in pgGrafx.c.  */
 #ifndef PGGRAFX_H
 #define PGGRAFX_H
 
-#include "Paige.h"
-#include "pgFiles.h"
-#include "pgEmbed.h"
+#include "PAIGE.H"
+#include "PGFILES.H"
+#include "PGEMBED.H"
 
 #ifdef MAC_PLATFORM
 #include <Palettes.h>

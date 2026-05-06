@@ -5,7 +5,7 @@ Inc.  Software by Gar. */
 #define PGDEFTBL_H
 
 #include "CPUDEFS.H"
-#include "pgtxr.h"
+#include "PGTXR.H"
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,5 +71,28 @@ extern pg_short_t PG_FAR ascii_unicode_table[HIGH_CHARS_QTY];
 #endif
 #endif
 
+#ifdef POSIX_PLATFORM
+
+#define BULLET_CROSS_CHAR			0xA5
+#define LEFTQUOTE_CROSS_CHAR		0xD4
+#define RIGHTQUOTE_CROSS_CHAR		0xD5
+#define LEFTDBLQUOTE_CROSS_CHAR	0xD2
+#define RIGHTDBLQUOTE_CROSS_CHAR	0xD3
+
+#define FILETYPE_STR_SIZE	3
+
+#ifdef __cplusplus
+inline constexpr pg_char FILETYPE_TEXT[] = {(pg_char)'T', (pg_char)'X', (pg_char)'T', 0};
+inline constexpr pg_char FILETYPE_RTF[] = {(pg_char)'R', (pg_char)'T', (pg_char)'F', 0};
+inline constexpr pg_char FILETYPE_HTML[] = {(pg_char)'H', (pg_char)'T', (pg_char)'M', 0};
+inline constexpr pg_char FILETYPE_PAIGE[] = {(pg_char)'P', (pg_char)'G', (pg_char)'F', 0};
+#else
+#define FILETYPE_TEXT	"TXT"
+#define FILETYPE_RTF	"RTF"
+#define FILETYPE_HTML	"HTM"
+#define FILETYPE_PAIGE	"PGF"
 #endif
 
+#endif
+
+#endif

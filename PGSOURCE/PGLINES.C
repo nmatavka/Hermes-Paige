@@ -2,10 +2,10 @@
 for PAIGE-based documents. Note, these generally work only if the "count lines"
 attribute is set in the pg_ref. */
 
-#include "Paige.h"
-#include "pgText.h"
-#include "pgEdit.h"
-#include "pgUtils.h"
+#include "PAIGE.H"
+#include "PGTEXT.H"
+#include "PGEDIT.H"
+#include "PGUTILS.H"
 
 
 /* pgNumLines returns the number of lines in pg. This always returns zero

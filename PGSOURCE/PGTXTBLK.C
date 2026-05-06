@@ -1,25 +1,25 @@
 /* This file handles text_block records in a Paige struct. */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgtblocks
 #endif
 
-#include "machine.h"
-#include "pgOSUtl.h"
-#include "pgText.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
-#include "pgDefStl.h"
-#include "defprocs.h"
-#include "pgUtils.h"
-#include "pgShapes.h"
-#include "pgScript.h"
-#include "pgTxtWid.h"
-#include "pgtxr.h"
-#include "pgSubRef.h"
-#include "pgTables.h"
+#include "MACHINE.H"
+#include "PGOSUTL.H"
+#include "PGTEXT.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
+#include "PGDEFSTL.H"
+#include "DEFPROCS.H"
+#include "PGUTILS.H"
+#include "PGSHAPES.H"
+#include "PGSCRIPT.H"
+#include "PGTXTWID.H"
+#include "PGTXR.H"
+#include "PGSUBREF.H"
+#include "PGTABLES.H"
 
 static void split_subref_list (text_block_ptr block1, text_block_ptr block2);
 static void inval_selections (paige_rec_ptr pg);
@@ -31,7 +31,7 @@ static long find_breaking_char (paige_rec_ptr pg, text_block_ptr block,
 /* pgInitTextblock initializes a new text_block. Offset_begin is the
 absolute offset beginning while the_text is the text (or NULL if none). */
 
-PG_PASCAL (void) pgInitTextblock (paige_rec_ptr pg_rec, long offset_begin,
+PG_PASCAL (void) pgInitTextblock (paige_rec_ptr pg_rec, size_t offset_begin,
 			text_ref the_text, text_block_ptr block, pg_boolean cache_text)
 {
 	point_start_ptr			starts;
@@ -501,7 +501,7 @@ if block_num is non-NULL, the block number is returned (0 to n).
 If want_build is TRUE, the block is recalculated if necessary. The will_access_text
 param is passed to  (if called).  */
 
-PG_PASCAL (text_block_ptr) pgFindTextBlock (paige_rec_ptr pg_rec, long offset,
+PG_PASCAL (text_block_ptr) pgFindTextBlock (paige_rec_ptr pg_rec, size_t offset,
 			pg_short_t PG_FAR *block_num, pg_boolean want_build,
 			pg_boolean will_access_text)
 {
@@ -654,7 +654,7 @@ PG_PASCAL (short) pgFixBadBlocks (paige_rec_ptr pg)
 				pg->procs.load_proc(pg, block);
 				block->cache_flags |= CACHE_CHANGED_FLAG;
 
-				if (split_offset = pg->procs.break_proc(pg, block)) {
+				if ((split_offset = pg->procs.break_proc(pg, block))) {
 
 					pgPushMemoryID(pg);
 	
@@ -718,8 +718,8 @@ The memory_ref for the text is returned in the_ref;  the maximum size of text --
 which is the offset to end of text block -- is returned in max_length. The
 max_length param can be NULL if you just want the pointer. */
 
-PG_PASCAL (pg_char_ptr) pgTextFromOffset (paige_rec_ptr pg, long offset,
-		text_ref PG_FAR *the_ref, long PG_FAR *max_length)
+PG_PASCAL (pg_char_ptr) pgTextFromOffset (paige_rec_ptr pg, size_t offset,
+		text_ref PG_FAR *the_ref, size_t PG_FAR *max_length)
 {
 	register text_block_ptr		block;
 	register pg_char_ptr		text_result;
@@ -880,8 +880,8 @@ static long find_breaking_char (paige_rec_ptr pg, text_block_ptr block,
 
 	while (remaining_bytes) {
 
-		if (c_info = walker->cur_style->procs.char_info(pg, walker, text, block->begin,
-				begin_offset, max_offset, offset_ctr, desired_flags))
+		if ((c_info = walker->cur_style->procs.char_info(pg, walker, text, block->begin,
+				begin_offset, max_offset, offset_ctr, desired_flags)))
 			break;
 		
 		pgWalkStyle(walker, 1);
@@ -923,7 +923,7 @@ static void split_subref_list (text_block_ptr block1, text_block_ptr block2)
 	pg_subref_ptr				subref_list;
 	long						num_subs, split_refs, text_size, list1_size;
 	
-	if (num_subs = GetMemorySize(block1->subref_list)) {
+	if ((num_subs = GetMemorySize(block1->subref_list))) {
 		
 		text_size = GetMemorySize(block2->text);
 		text = (pg_char_ptr) UseMemory(block2->text);

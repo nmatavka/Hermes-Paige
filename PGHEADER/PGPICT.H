@@ -1,7 +1,7 @@
 #ifndef PGPICT_H
 #define PGPICT_H
 
-#include "CPUDEFS.h"
+#include "CPUDEFS.H"
 
 #ifdef WINDOWS_PLATFORM
 

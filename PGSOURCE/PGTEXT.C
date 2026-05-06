@@ -1,25 +1,25 @@
 /* This file handles text_block records in a Paige struct. */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgbasic2
 #endif
 
-#include "machine.h"
-#include "pgOSUtl.h"
-#include "pgText.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
-#include "pgDefStl.h"
-#include "defprocs.h"
-#include "pgUtils.h"
-#include "pgShapes.h"
-#include "pgScript.h"
-#include "pgTxtWid.h"
-#include "pgDefPar.h"
-#include "pgSubRef.h"
-#include "pgTables.h"
+#include "MACHINE.H"
+#include "PGOSUTL.H"
+#include "PGTEXT.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
+#include "PGDEFSTL.H"
+#include "DEFPROCS.H"
+#include "PGUTILS.H"
+#include "PGSHAPES.H"
+#include "PGSCRIPT.H"
+#include "PGTXTWID.H"
+#include "PGDEFPAR.H"
+#include "PGSUBREF.H"
+#include "PGTABLES.H"
 
 
 #define START_APPEND_SIZE	18			/* Amount I append to line_starts */
@@ -1022,7 +1022,7 @@ PG_PASCAL (void) pgPaginateBlock (paige_rec_ptr pg, text_block_ptr block,
 	if (original_bounds.bot_right.v != block->end_start.bounds.bot_right.v
 		|| original_bounds.top_left.h != block->end_start.bounds.top_left.h) {
 
-		if (bounds_diff = block->end_start.bounds.bot_right.v - original_bounds.bot_right.v)
+		if ((bounds_diff = block->end_start.bounds.bot_right.v - original_bounds.bot_right.v))
 			if (update_info) {
 			
 				update_info->suggest_end = pg->t_length;
@@ -1067,7 +1067,7 @@ determine any line widths, rather, the lines are simply moved vertically. Note
 the only time we can get away with this is for wrap shapes that have a consistent
 width throughout.  */
 
-PG_PASCAL (void) pgPaginateStarts (paige_rec_ptr pg, text_block_ptr block, long initial_offset,
+PG_PASCAL (void) pgPaginateStarts (paige_rec_ptr pg, text_block_ptr block, size_t initial_offset,
 		smart_update_ptr update_info)
 {
 	register point_start_ptr		starts;
@@ -1087,7 +1087,7 @@ PG_PASCAL (void) pgPaginateStarts (paige_rec_ptr pg, text_block_ptr block, long 
 		paginate_multi_rect_shape(pg, block, (pg_short_t)(initial_offset - block->begin),
 				&shift_begin, &shift_end, &line_info);
 	else
-	if (paginate_amt = (line_info.fit_rect.top_left.v - starts->bounds.top_left.v)) {
+	if ((paginate_amt = (line_info.fit_rect.top_left.v - starts->bounds.top_left.v))) {
 		
 		shift_end = block->end;
 
@@ -1747,13 +1747,13 @@ static void update_vertical_line (paige_rec_ptr pg, pg_measure_ptr line_info,
 		if ((descent += (short)style->bot_extra) < 0)
 			descent = 0;
 	
-	if (super_extra = style->styles[superscript_var]) {
+	if ((super_extra = style->styles[superscript_var])) {
 		
 		if (style->shift_verb == percent_of_style)
 			super_extra = ((ascent + descent) * super_extra) / 100;
 	}
 
-	if (sub_extra = style->styles[subscript_var]) {
+	if ((sub_extra = style->styles[subscript_var])) {
 		
 		if (style->shift_verb == percent_of_style)
 			sub_extra = ((ascent + descent) * sub_extra) / 100;
@@ -1813,7 +1813,7 @@ static void update_vertical_line (paige_rec_ptr pg, pg_measure_ptr line_info,
 
 	new_line_height = ascent + descent + leading;
 	
-	//¥¥ TRS/OITC Variable line spacing
+	//ï¿½ï¿½ TRS/OITC Variable line spacing
 	if (par_style->leading_variable > new_line_height) {
 		new_line_height = (short)par_style->leading_variable;
 		leading = 0;
@@ -2634,7 +2634,7 @@ static void do_partial_rebuild (paige_rec_ptr pg, pg_measure_ptr line_stuff,
 /* For good measure, back up one line in case newly inserted text has a breaking
 char and forces previous line to re-wrap. */
 
-	if (original_starting_offset = starts->offset) {
+	if ((original_starting_offset = starts->offset)) {
 		
 		while (starts->offset) {
 		

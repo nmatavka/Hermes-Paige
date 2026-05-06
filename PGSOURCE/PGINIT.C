@@ -4,12 +4,12 @@ any PAIGE segment. This is because all addresses will be taken from A5(function)
 instead of using <some> function defined within the same segment.
 Copyright 1994 by DataPak Software, Inc.  All rights reserved. Software by GAR. */
 
-#include "Paige.h"
-#include "machine.h"   
-#include "DefProcs.h"
-#include "pgFiles.h"
-#include "pgSubRef.h"
-#include "pgExceps.h"
+#include "PAIGE.H"
+#include "MACHINE.H"
+#include "DEFPROCS.H"
+#include "PGFILES.H"
+#include "PGSUBREF.H"
+#include "PGEXCEPS.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment initpg
@@ -25,19 +25,19 @@ extern PG_PASCAL (void) pgInit (pg_globals_ptr globals, const pgm_globals_ptr me
 	short		table_index;
 
 	pgFillBlock(globals, sizeof(pg_globals), 0);
-	
-	globals->mem_globals = mem_globals;	
+
+	globals->mem_globals = mem_globals;
 	globals->pg_extend = pgExtendProc;
 	pgSetStandardProcs(globals);
 	mem_globals->free_memory = pgCacheFree;
 	pgMachineInit(globals);
 
 /* 2.0 feature, initialize width tables: */
-	
+
 	PG_TRY (mem_globals) {
-	
+
 		for (table_index = 0; table_index < WIDTH_QTY; ++table_index) {
-			
+
 			globals->width_tables[table_index].positions = MemoryAlloc(mem_globals, sizeof(long), 0, 16);
 			globals->width_tables[table_index].types = MemoryAlloc(mem_globals, sizeof(short), 0, 0);
 			SetMemoryPurge(globals->width_tables[table_index].positions, 0x00E0, FALSE);
@@ -47,11 +47,11 @@ extern PG_PASCAL (void) pgInit (pg_globals_ptr globals, const pgm_globals_ptr me
 			globals->width_tables[table_index].used_ctr = 0;
 		}
 	};
-	
+
 	PG_CATCH {
 		pgFailure(mem_globals, mem_globals->last_error, 0);
 	};
-	
+
 	PG_ENDTRY;
 }
 
@@ -70,7 +70,7 @@ sets during pgInit. Only specialized features will need to call this. */
 PG_PASCAL (void) pgSetStandardProcs (pg_globals_ptr globals)
 {
 	register pg_globals_ptr	global_vars;
-	
+
 	global_vars = globals;		/* "register" forces much less code! */
 
 	global_vars->def_hooks.line_init = pgInitLineProc;
@@ -149,10 +149,10 @@ PG_PASCAL (void) pgSetStandardProcs (pg_globals_ptr globals)
 
 /* pgInitStandardHandlers sets all the default pg_handler's for file read/write.
 If handlers currently exist, only the "defaults" are replaced (i.e., handlers >=
-CUSTOM_HANDLER_KEY are not affected). 
+CUSTOM_HANDLER_KEY are not affected).
 Update 12/13/93, no longer use "line_key" as a standard to save memory space
 (which is why we set handler array to PLATFORM_SPECIFIC_KEY - 1).  */
-/* 6 jan 95 - embedded_item_key is not standard and made so as not 
+/* 6 jan 95 - embedded_item_key is not standard and made so as not
 to be so memory compute dependant. Also this is safer - TRS/OITC */
 
 PG_PASCAL (void) pgInitStandardHandlers (pg_globals_ptr globals)
@@ -165,15 +165,15 @@ PG_PASCAL (void) pgInitStandardHandlers (pg_globals_ptr globals)
 			0, PLATFORM_SPECIFIC_KEY - UNUSED_KEY_QTY);
 	else
 		SetMemorySize(globals->file_handlers, 0);
-	
+
 	for (key_ctr = paige_key; key_ctr < PLATFORM_SPECIFIC_KEY; ++key_ctr) {
-		
+
 		if (key_ctr != line_key && key_ctr != embedded_item_key && key_ctr != format_init_key) {
-		
+
 			handlers = (pg_handler_ptr) AppendMemory (globals->file_handlers, 1, FALSE);
-		
+
 			pgInitOneHandler(handlers, key_ctr);
-			
+
 			UnuseMemory(globals->file_handlers);
 		}
 	}

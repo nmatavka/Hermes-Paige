@@ -4,23 +4,23 @@ text, style run and page rectangle. Usually the page rectangle is dynamic, i.e. 
 drawing boundaries which are usually the boundaries of an embed_ref character, or table, etc.
 The subset pg_ref is identical in every other respect. */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
-#include "defprocs.h"
-#include "pgTraps.h"
-#include "pgEmbed.h"
-#include "pgSubref.h"
-#include "pgExceps.h"
-#include "pgUtils.h"
-#include "pgText.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
-#include "pgTxtWid.h"
-#include "pgDefStl.h"
-#include "pgStyles.h"
-#include "machine.h"
-#include "pgTables.h"
-#include "pgHText.h"
+#include "DEFPROCS.H"
+#include "PGTRAPS.H"
+#include "PGEMBED.H"
+#include "PGSUBREF.H"
+#include "PGEXCEPS.H"
+#include "PGUTILS.H"
+#include "PGTEXT.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
+#include "PGTXTWID.H"
+#include "PGDEFSTL.H"
+#include "PGSTYLES.H"
+#include "MACHINE.H"
+#include "PGTABLES.H"
+#include "PGHTEXT.H"
 
 struct subref_matrix_info {
 	embed_ref			ref;
@@ -426,7 +426,7 @@ PG_PASCAL (pg_subref) pgUnuseSubRef (paige_rec_ptr pg)
 	
 	previous = pg->active_subset;
 
-	if (stack_size = GetMemorySize(pg->subref_stack)) {
+	if ((stack_size = GetMemorySize(pg->subref_stack))) {
 		
 		sub_ptr = (paige_sub_ptr) UseMemory(pg->active_subset);
 
@@ -530,7 +530,7 @@ PG_PASCAL (void) pgRestoreSubRefs (paige_rec_ptr pg, memory_ref old_subrefs)
 		if (pg->active_subset) {
 			memory_ref			dummy_list;
 			
-			if (dummy_list = pgGetSubrefState(pg, FALSE, TRUE))
+			if ((dummy_list = pgGetSubrefState(pg, FALSE, TRUE)))
 				DisposeMemory(dummy_list);
 		}
 
@@ -581,7 +581,7 @@ PG_PASCAL (pg_boolean) pgClickSelectSubRef (pg_ref pg, co_ordinate_ptr mouse_poi
 	pg_rec->procs.set_device(pg_rec, unset_pg_device, &pg_rec->port, NULL);
 	uneditable_ctr = 0;
 
-	while (clicked_ref = pgPtInSubRef(pg_rec, mouse_point)) {
+	while ((clicked_ref = pgPtInSubRef(pg_rec, mouse_point))) {
 
 		pgUseSubRef(pg_rec, clicked_ref, 0, NULL, NULL);
 		sub_ptr = (paige_sub_ptr) UseMemory(clicked_ref);
@@ -2224,7 +2224,7 @@ static void pin_bounds_to_rect (paige_rec_ptr pg, pg_subref subref, rectangle_pt
 	if (sub_ptr->t_length == 0)
 		offset_h += (sub_ptr->empty_width / 2);
 
-	if (alignment_flags = sub_ptr->alignment_flags) {
+	if ((alignment_flags = sub_ptr->alignment_flags)) {
 		pg_subref					adjacent_sub;
 		paige_sub_ptr				adjacent_ptr;
 		
@@ -2244,8 +2244,8 @@ static void pin_bounds_to_rect (paige_rec_ptr pg, pg_subref subref, rectangle_pt
 		if (alignment_flags & (SUBREF_ALIGNTOP | SUBREF_ALIGNTOPRIGHT | SUBREF_ALIGNMIDDLE)) {
 			long		adjacent_height, this_height, amount_offset;
 
-			if (adjacent_sub = get_adjacent_subref(draw_position->block, subref,
-						(pg_boolean)((alignment_flags & (SUBREF_ALIGNTOP | SUBREF_ALIGNMIDDLE)) != 0))) {
+			if ((adjacent_sub = get_adjacent_subref(draw_position->block, subref,
+						(pg_boolean)((alignment_flags & (SUBREF_ALIGNTOP | SUBREF_ALIGNMIDDLE)) != 0)))) {
 				
 				adjacent_ptr = (paige_sub_ptr) UseMemory(adjacent_sub);
 				resulting_bounds = initial_bounds;
@@ -2773,7 +2773,7 @@ static void transfer_style_indexes (paige_rec_ptr source_pg, paige_rec_ptr targe
 
 		if ((stylesheet = new_style.styles[super_impose_var]) != 0) {
 			
-			if (home_style = pgLocateStyleSheet(source_pg, stylesheet, NULL)) {
+			if ((home_style = pgLocateStyleSheet(source_pg, stylesheet, NULL))) {
 				
 				new_stylesheet = *home_style;
 				GetMemoryRecord(source_pg->fonts, (long)home_style->font_index, &new_font);

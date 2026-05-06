@@ -3,7 +3,7 @@
 #ifndef PGDEFPAR_H
 #define PGDEFPAR_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #define MINIMUM_TAB_SPACE			1		/* Lowest I can go for a tab   */
 

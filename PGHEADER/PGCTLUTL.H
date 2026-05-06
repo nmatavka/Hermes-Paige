@@ -5,10 +5,10 @@ know all about the lower-level PAIGE functions and structs. */
 #ifndef PGCTLUTL_H
 #define PGCTLUTL_H
 
-#include "Paige.h"
-#include "pgEmbed.h"
-#include "pgCntl.h"
-#include "pgScrap.h"
+#include "PAIGE.H"
+#include "PGEMBED.H"
+#include "PGCNTL.H"
+#include "PGSCRAP.H"
 
 // Default settings for doc_info:
 

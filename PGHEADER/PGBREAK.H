@@ -5,7 +5,7 @@
 
 	by T. R. Shaw
 
-	Copyright © 1995 OITC, Inc.
+	Copyright ï¿½ 1995 OITC, Inc.
 	All rights reserved.
 	
 	pgBreak.h - Word break support for Windows.
@@ -39,9 +39,9 @@
 #ifndef PBGREAK_H
 #define PBGREAK_H
 
-#include "Paige.h"
-#include "pgRsrc.h"
-#include "pgTraps.h"
+#include "PAIGE.H"
+#include "PGRSRC.H"
+#include "PGTRAPS.H"
 
 #ifdef MAC_PLATFORM
 #define LANG_BREAK_NAME			'LBrk'

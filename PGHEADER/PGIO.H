@@ -5,7 +5,7 @@
 
 	by T. R. Shaw
 
-	Copyright © 1995 OITC, Inc.
+	Copyright ï¿½ 1995 OITC, Inc.
 	All rights reserved.
 		
 	pgIO.c - Universal I/O routines
@@ -26,8 +26,8 @@
 #ifndef PGIO_H
 #define PGIO_H
 
-#include "CPUDefs.h"
-#include "pgMemMgr.h"
+#include "CPUDEFS.H"
+#include "PGMEMMGR.H"
 
 #ifdef MAC_PLATFORM
 
@@ -70,7 +70,7 @@ typedef memory_ref		pg_file_desc_ref;	/* Reference to file descriptor */
 #include <string.h>
 
 #if 0
-//¥¥¥¥
+//ï¿½ï¿½ï¿½ï¿½
 #define PG_RDWR			O_RDWR		/* open the file in read/write mode */
 #define PG_RDONLY		O_RDONLY	/* open the file in read only mode */
 #define PG_WRONLY		O_WRONLY	/* open the file in write only mode */
@@ -99,6 +99,25 @@ typedef memory_ref		pg_file_desc_ref;	/* Reference to file descriptor */
 
 typedef char PG_FAR *	pg_file_desc_ptr;	/* Pointer to file descriptor */
 typedef memory_ref		pg_file_desc_ref;	/* Reference to file descriptor */
+
+#endif
+
+#ifdef POSIX_PLATFORM
+
+#include <stdio.h>
+
+#define PG_RDWR         0x0003
+#define PG_RDONLY       0x0001
+#define PG_WRONLY       0x0002
+#define PG_APPEND       0x0004
+#define PG_CREAT        0x0008
+#define PG_EXCL         0x0010
+#define PG_TRUNC        0x0020
+#define PG_BINARY       0x0040
+#define PG_TEXT         0x0000
+
+typedef char PG_FAR *   pg_file_desc_ptr;
+typedef memory_ref      pg_file_desc_ref;
 
 #endif
 
@@ -159,6 +178,26 @@ extern PG_C (pg_error) pgWriteFileBytes(pg_file_unit ref_num, size_t PG_FAR *byt
 #define pgReadFileBytes(ref_num,byte_size,buffer)		FSRead(ref_num, byte_size, buffer)
 #define pgWriteFileBytes(ref_num,byte_size,buffer)		FSWrite(ref_num, byte_size, buffer)
 
+#endif
+
+#endif
+
+#ifdef POSIX_PLATFORM
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern PG_C (void) pgDisposeFileDescriptor(pg_file_desc_ref ref);
+extern PG_C (pg_error) pgGetFileEOF(pg_file_unit ref_num, size_t PG_FAR *offset_result);
+extern PG_C (pg_error) pgSetFileEOF(pg_file_unit ref_num, size_t offset);
+extern PG_C (pg_error) pgGetFilePos(pg_file_unit ref_num, size_t PG_FAR *offset_result);
+extern PG_C (pg_error) pgSetFilePos(pg_file_unit ref_num, size_t offset);
+extern PG_C (pg_error) pgReadFileBytes(pg_file_unit ref_num, size_t PG_FAR *byte_size, void PG_FAR *buffer);
+extern PG_C (pg_error) pgWriteFileBytes(pg_file_unit ref_num, size_t PG_FAR *byte_size, const void PG_FAR *buffer);
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

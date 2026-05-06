@@ -5,21 +5,21 @@ This source file contains all the member functions for the HTML import class (de
 from the PaigeImportFilter class. */
 
 
-#include "Paige.h"
-#include "pgTraps.h"
-#include "pgOSUtl.h"
-#include "pgUtils.h"
-#include "pgTxrCPP.h"
-#include "defprocs.h"
-#include "pgErrors.h"
-#include "pgDefStl.h"
-#include "pgHTMDef.h"
-#include "pgEmbed.h"
-#include "pgdeftbl.h"
-#include "machine.h"
-#include "pgTables.h"
-#include "pgHText.h"
-#include "pgFrame.h"
+#include "PAIGE.H"
+#include "PGTRAPS.H"
+#include "PGOSUTL.H"
+#include "PGUTILS.H"
+#include "PGTXRCPP.H"
+#include "DEFPROCS.H"
+#include "PGERRORS.H"
+#include "PGDEFSTL.H"
+#include "PGHTMDEF.H"
+#include "PGEMBED.H"
+#include "PGDEFTBL.H"
+#include "MACHINE.H"
+#include "PGTABLES.H"
+#include "PGHTEXT.H"
+#include "PGFRAME.H"
 
 static pg_boolean equal_string (pg_char_ptr str1, pg_char_ptr str2);
 static pg_boolean all_hex (pg_char_ptr hex_str, short str_size);
@@ -2045,10 +2045,11 @@ long PaigeHTMLImportFilter::TranslateAlignment (pg_char_ptr param)
 /* TranslateColor takes a color string param and sets a color_value. If color is null then
 a long-color ref is returned (RBG). */
 
-long PaigeHTMLImportFilter::TranslateColor (pg_char_ptr param, color_value_ptr color)
+long PaigeHTMLImportFilter::TranslateColor (pg_char_ptr param, color_value_ptr color, pg_boolean black_OK)
 {
    long        value, red, green, blue;
    
+   (void)black_OK;
    value = 0;
 
    if (*param == '#') 
@@ -2270,8 +2271,10 @@ void PaigeHTMLImportFilter::ProcessEmbed (void)
 // Zero-out embed_ref stuff from possible previous embedded insertion.
 
    current_style.procs = paige_globals->def_style.procs;
-   current_style.embed_entry = current_style.embed_style_refcon
-         = current_style.embed_refcon = current_style.embed_id = 0;
+   current_style.embed_entry = NULL;
+   current_style.embed_style_refcon = 0;
+   current_style.embed_refcon = 0;
+   current_style.embed_id = 0;
    current_style.embed_object = MEM_NULL;
    current_style.char_bytes = 0;
    current_style.class_bits = 0;
@@ -2460,8 +2463,9 @@ void PaigeHTMLImportFilter::InsertFontError (pg_char_ptr fontface, long offset)
 
 /* GetStylesheet set up the current style, font and par per the style ID. */
 
-void PaigeHTMLImportFilter::GetStylesheet (long style_id)
+void PaigeHTMLImportFilter::GetStylesheet (long style_id, pg_boolean set_whole_style)
 {
+	(void)set_whole_style;
 	pgGetNamedStyleInfo(import_pg, style_id, &current_style, &current_font, NULL);
 }
 

@@ -1,7 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
-project(paige)
+project(paige LANGUAGES CXX)
 
-set(SOURCES
+if(CMAKE_SYSTEM_NAME STREQUAL "Haiku")
+	set(HAIKU TRUE)
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+option(PAIGE_BUILD_SMOKE_DEMOS "Build Paige native smoke demos" ON)
+
+set(PAIGE_CORE_SOURCES
     PGSOURCE/PGBASICS.C
     PGSOURCE/PGBOXES.C
 	PGSOURCE/PGCLIPBD.C
@@ -12,6 +22,7 @@ set(SOURCES
 	PGSOURCE/PGEXCEPS.C
 	PGSOURCE/PGFILES.C
 	PGSOURCE/PGFONTS.C
+	PGSOURCE/PGFRAME.C
 	PGSOURCE/PGGRAFX.C
 	PGSOURCE/PGHTEXT.C
 	PGSOURCE/PGINIT.C
@@ -38,24 +49,128 @@ set(SOURCES
 	PGSOURCE/PGTXTWID.C
 	PGSOURCE/PGUTILS.C
 	PGSOURCE/PGWRITE.C
-
-	PGPLATFO/PGWIN.C
+	PGHLEVEL/PGHLEVEL.C
+	PGHLEVEL/PGHOOKS.C
+	PGTXR/PGDEFTBL.C
+	PGTXR/PGEXPORT.CPP
+	PGTXR/PGHTMDEF.C
+	PGTXR/PGHTMEXP.CPP
+	PGTXR/PGHTMIMP.CPP
+	PGTXR/PGIMPORT.CPP
+	PGTXR/PGNATIVE.CPP
+	PGTXR/PGPICT.C
+	PGTXR/PGPICT2.C
+	PGTXR/PGRTFDEF.C
+	PGTXR/PGRTFEXP.CPP
+	PGTXR/PGRTFIMP.CPP
+	PGTXR/PGWMF.C
 	PGPLATFO/PGSCRAP.C
-    PGPLATFO/PGOSUTL.C
-    PGPLATFO/PGMEMMGR.C
+	PGPLATFO/PGOSUTL.C
 	PGPLATFO/PGIO.C
-    PGPLATFO/PGDLL32.C
 	PGDEBUG/PGDEBUG.C
-    )
+)
 
-add_library(paige ${SOURCES})
+set(PAIGE_WINDOWS_SOURCES
+	PGPLATFO/PGWIN.C
+	PGPLATFO/PGMEMMGR.C
+	PGPLATFO/PGDLL32.C
+)
+
+set(PAIGE_MODERN_SOURCES
+	PGPLATFO/PGMODERN.CPP
+	PGPLATFO/PGMEMMGR_MODERN.CPP
+)
+
+set(PAIGE_MACOS_SOURCES
+	PGPLATFO/PGMACOS.MM
+)
+
+set(PAIGE_HAIKU_SOURCES
+	PGPLATFO/PGHAIKU.CPP
+)
+
+if(APPLE AND NOT WIN32)
+	set_source_files_properties(${PAIGE_MACOS_SOURCES}
+		PROPERTIES
+			LANGUAGE OBJCXX)
+endif()
+
+if(WIN32)
+	add_library(paige ${PAIGE_CORE_SOURCES} ${PAIGE_WINDOWS_SOURCES})
+elseif(HAIKU)
+	add_library(paige ${PAIGE_CORE_SOURCES} ${PAIGE_MODERN_SOURCES} ${PAIGE_HAIKU_SOURCES})
+else()
+	enable_language(OBJCXX)
+	add_library(paige ${PAIGE_CORE_SOURCES} ${PAIGE_MODERN_SOURCES} ${PAIGE_MACOS_SOURCES})
+endif()
+
 target_include_directories(paige
     PUBLIC
-        PGHEADER)
+        PGHEADER
+	PRIVATE
+		PGPLATFO)
+if(NOT MSVC)
+	target_compile_options(paige
+		PRIVATE
+			-Wno-register
+			-Wno-deprecated-register)
+endif()
 if(WIN32)
     target_compile_definitions(paige
         PUBLIC
 			WIN32_COMPILE
 			_CRT_SECURE_NO_WARNINGS=1
 			UNICODE=1)
+elseif(HAIKU)
+	target_compile_definitions(paige
+		PUBLIC
+			HAIKU_COMPILE
+			UNICODE=1)
+else()
+	target_compile_definitions(paige
+		PUBLIC
+			MACOS_COMPILE
+			UNICODE=1)
+endif()
+
+if(APPLE AND NOT WIN32)
+	target_link_libraries(paige
+		PUBLIC
+			"-framework CoreGraphics"
+			"-framework CoreText"
+			"-framework Foundation"
+			"-framework AppKit")
+endif()
+
+if(HAIKU)
+	target_link_libraries(paige
+		PUBLIC
+			be
+			translation)
+endif()
+
+if(PAIGE_BUILD_SMOKE_DEMOS)
+	enable_testing()
+
+	if(APPLE AND NOT WIN32)
+		add_executable(paige_macos_smoke
+			DEMOS/SMOKE/PaigeMacSmoke.mm)
+		target_link_libraries(paige_macos_smoke
+			PRIVATE
+				paige
+				"-framework CoreGraphics"
+				"-framework CoreText"
+				"-framework Foundation"
+				"-framework AppKit")
+		add_test(NAME paige_macos_smoke COMMAND paige_macos_smoke)
+	elseif(HAIKU)
+		add_executable(paige_haiku_smoke
+			DEMOS/SMOKE/PaigeHaikuSmoke.cpp)
+		target_link_libraries(paige_haiku_smoke
+			PRIVATE
+				paige
+				be
+				translation)
+		add_test(NAME paige_haiku_smoke COMMAND paige_haiku_smoke)
+	endif()
 endif()

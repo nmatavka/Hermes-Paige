@@ -22,8 +22,8 @@ All other code (hopefully) is universal and does not need to be changed. */
 #ifndef PAIGE_H
 #define PAIGE_H
 
-#include "pgMemMgr.h"
-#include "Userdefs.h"
+#include "PGMEMMGR.H"
+#include "USERDEFS.H"
 
 /* Fixed tab stop array size in paragraph info records: */
 
@@ -771,13 +771,13 @@ enum {
 	pg_picture_key,										/* PAIGE portable picture */
 	ruler_format_key,									/* - reserved for Aurbach - */
 	layout_object_key,									/* - reserved for Aurbach - */
-	extension_key,										/* Extension Manager's key */	//¥¥ TRS/OITC
-	author_key,											/* Author references key */	//¥¥ TRS/OITC
-	bookmark_key,										/* Bookmark references key */	//¥¥ TRS/OITC
-	annotations_key,									/* Annotations references key */	//¥¥ TRS/OITC
-	document_ref_key,									/* Document file references key */	//¥¥ TRS/OITC
-	document_info_key,									/* Document information references key */	//¥¥ TRS/OITC
-	html_info_key,										/* HTML/SGML information references key */	//¥¥ TRS/OITC
+	extension_key,										/* Extension Manager's key */	//ï¿½ï¿½ TRS/OITC
+	author_key,											/* Author references key */	//ï¿½ï¿½ TRS/OITC
+	bookmark_key,										/* Bookmark references key */	//ï¿½ï¿½ TRS/OITC
+	annotations_key,									/* Annotations references key */	//ï¿½ï¿½ TRS/OITC
+	document_ref_key,									/* Document file references key */	//ï¿½ï¿½ TRS/OITC
+	document_info_key,									/* Document information references key */	//ï¿½ï¿½ TRS/OITC
+	html_info_key,										/* HTML/SGML information references key */	//ï¿½ï¿½ TRS/OITC
 	spcl_idle_list_key,									/* For special idle list */
 	section_info_key,									/* For sections */
 	hyperlink_key,							/* For hypertext links */
@@ -1622,7 +1622,7 @@ typedef PG_FN_PASCAL(pg_boolean, pg_handler_proc) (paige_rec_ptr pg, pg_file_key
 		memory_ref key_data, long PG_FAR *element_info, void PG_FAR *aux_data,
 		size_t PG_FAR *unpacked_size);
 typedef PG_FN_PASCAL(void, extend_proc) (void PG_FAR *param, short verb);
-typedef PG_FN_PASCAL(void, app_init_read) (paige_rec_ptr pg, memory_ref ref, short type);	//¥ TRS/OITC
+typedef PG_FN_PASCAL(void, app_init_read) (paige_rec_ptr pg, memory_ref ref, short type);	//ï¿½ TRS/OITC
 typedef PG_FN_PASCAL(void, subset_glitter_proc) (paige_rec_ptr pg, draw_points_ptr draw_position,
 		rectangle_ptr draw_bounds, co_ordinate_ptr offset_extra, style_walk_ptr walker);
 typedef PG_FN_PASCAL (long, ht_callback) (paige_rec_ptr pg, pg_hyperlink_ptr hypertext,
@@ -1743,7 +1743,7 @@ struct style_info {
 	short		rtf_reserved;		/* Reserved RTF */
 	color_value	fg_color;			/* Foreground color */
 	color_value	bk_color;			/* Background color (white = transparent) */
-	long		class_bits;			/* Defines selection & behavior */	//¥ TRS/OITC
+	long		class_bits;			/* Defines selection & behavior */	//ï¿½ TRS/OITC
 	long		style_sheet_id;		/* Used for style sheet features */
 	long		named_style_index;	/* Index to named stylesheet */
 	long		small_caps_index;	/* Style_info index for small caps point size */
@@ -2020,7 +2020,7 @@ struct paige_rec {
 	long				platform;			/* Platform ID created on */
 	long				author;				/* Application signature */
 	long				flags;				/* Attributes (set in pgNew) */
-	long				flags2;				/* Extra attributes */ //¥¥ TRS/OITC
+	long				flags2;				/* Extra attributes */ //ï¿½ï¿½ TRS/OITC
 	long				shared_flags;		/* Shared structure flags (version 2.0) */
 	long				pg_type;			/* Paige type (RTF enhancement) */
 	long				io_mask_bits;		/* Bit(s) to mask individual file keys */
@@ -2123,13 +2123,13 @@ struct paige_rec {
 	memory_ref			extra_stuff;		/* Used by apps and add-ons */
 	memory_ref			buf_special;		/* Used for drawing invis spaces, SMALL CAPS, etc. */
 	memory_ref			subref_stack;		/* Preserves original pg_ref when subset selection made */
-	memory_ref			extn_mgr;			/* Used by the extensions manager */ //¥¥ TRS/OITC
-	memory_ref			authors;			/* Contains list of authors */ //¥¥ TRS/OITC
-	memory_ref			bookmarks;			/* Contains list of bookmarks */ //¥¥ TRS/OITC
-	memory_ref			annotations;		/* Contains list of annotations */ //¥¥ TRS/OITC
-	memory_ref			document_refs;		/* Contains list of document references */ //¥¥ TRS/OITC
-	memory_ref			document_info;		/* Contains list of document information */ //¥¥ TRS/OITC
-	memory_ref			html_info;			/* Contains list of HTML/SGML information */ //¥¥ TRS/OITC
+	memory_ref			extn_mgr;			/* Used by the extensions manager */ //ï¿½ï¿½ TRS/OITC
+	memory_ref			authors;			/* Contains list of authors */ //ï¿½ï¿½ TRS/OITC
+	memory_ref			bookmarks;			/* Contains list of bookmarks */ //ï¿½ï¿½ TRS/OITC
+	memory_ref			annotations;		/* Contains list of annotations */ //ï¿½ï¿½ TRS/OITC
+	memory_ref			document_refs;		/* Contains list of document references */ //ï¿½ï¿½ TRS/OITC
+	memory_ref			document_info;		/* Contains list of document information */ //ï¿½ï¿½ TRS/OITC
+	memory_ref			html_info;			/* Contains list of HTML/SGML information */ //ï¿½ï¿½ TRS/OITC
 	pg_list_ref			idle_list;			/* List of all active special idle records */
 	file_ref			cache_file;			/* Open file ref for disk cache (2.0) */
 	file_ref			cache_target_file;	/* File we are writing to (if save-doc) 2.0 */

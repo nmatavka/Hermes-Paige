@@ -1,20 +1,20 @@
 /* This section handles scrolling and related items   */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgscroll
 #endif
 
-#include "machine.h"
-#include "pgRegion.h"
-#include "defprocs.h"
-#include "pgShapes.h"
-#include "pgUtils.h"
-#include "pgText.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
-#include "pgSubref.h"
+#include "MACHINE.H"
+#include "PGREGION.H"
+#include "DEFPROCS.H"
+#include "PGSHAPES.H"
+#include "PGUTILS.H"
+#include "PGTEXT.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
+#include "PGSUBREF.H"
 
 
 #define MAX_LONG_VALUE	16367		/* Maximum "long" I want to scroll  */
@@ -925,7 +925,7 @@ static void do_physical_scroll (paige_rec_ptr pg, pg_boolean final_call, short d
 
 		pgInsetRect(&scroll_rect, pg->doc_info.scroll_inset, pg->doc_info.scroll_inset);
 
-		if (actual_move = move_v) {
+		if ((actual_move = move_v)) {
 	
 			//pgScaleLong(pg->port.scale.scale, 0, &actual_move);
 			
@@ -939,7 +939,7 @@ static void do_physical_scroll (paige_rec_ptr pg, pg_boolean final_call, short d
 				pg->procs.adjust_scroll(pg, 0, 0, draw_mode);
 		}
 	
-		if (actual_move = move_h) {
+		if ((actual_move = move_h)) {
 	
 			//pgScaleLong(pg->port.scale.scale, 0, &actual_move);
 
@@ -1177,7 +1177,7 @@ static long top_line_distance (paige_rec_ptr pg)
 
 	GetMemoryRecord(pg->vis_area, 0, &vis_rect);
 
-	if (result = closest_start_sect(pg, &vis_rect, vis_rect.top_left.v, FALSE))
+	if ((result = closest_start_sect(pg, &vis_rect, vis_rect.top_left.v, FALSE)))
 		return	result;
 	
 	return	DEF_UNIT_SCROLL;
@@ -1195,7 +1195,7 @@ static long bottom_line_distance (paige_rec_ptr pg, pg_boolean best_guess)
 
 	GetMemoryRecord(pg->vis_area, 0, &vis_rect);
 	
-	if (result = closest_start_sect(pg, &vis_rect, vis_rect.bot_right.v, FALSE))
+	if ((result = closest_start_sect(pg, &vis_rect, vis_rect.bot_right.v, FALSE)))
 		return	result;
 	
 	if (best_guess)
@@ -1232,7 +1232,7 @@ static long closest_start_sect (paige_rec_ptr pg, rectangle_ptr vis, long side_t
 	block = (text_block_ptr) UseMemory(pg->t_blocks);
 	one_eighth = (vis->bot_right.v - vis->top_left.v) / 8;
 	
-	if (use_bottom = (vis->bot_right.v == side_to_use)) {
+	if ((use_bottom = (vis->bot_right.v == side_to_use))) {
 		
 		edge_compare = scrolled_r.bot_right.v;
 		scrolled_r.top_left.v = scrolled_r.bot_right.v - 1;

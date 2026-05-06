@@ -19,7 +19,7 @@ Copyright 1994 by DataPak Software, Inc.  PAIGE is a DataPak trademark.  */
 #ifndef PGHLEVEL_H
 #define PGHLEVEL_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef applec
 #include	<Quickdraw.h>
@@ -27,7 +27,7 @@ Copyright 1994 by DataPak Software, Inc.  PAIGE is a DataPak trademark.  */
 #include	<Memory.h>
 #include	<Desk.h>
 #include	<Packages.h>
-#include	<String.h>
+#include <string.h>
 #include	<OSUtils.h>
 #include	<ToolUtils.h>
 #endif

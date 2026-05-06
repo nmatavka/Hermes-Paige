@@ -1,0 +1,109 @@
+@font-face {
+    font-family: "Monaspace Argon Var";
+    src: url(./FONTS/ARGON.TTF);
+}
+@font-face {
+    font-family: "Monaspace Krypton Var";
+    src: url(./FONTS/KRYPTON.TTF);
+}
+
+@font-face {
+    font-family: "Monaspace Neon Var";
+    src: url(./FONTS/NEON.TTF);
+}
+
+@font-face {
+    font-family: "Monaspace Radon Var";
+    src: url(./FONTS/RADON.TTF);
+}
+
+@font-face {
+    font-family: "Monaspace Xenon Var";
+    src: url(./FONTS/XENON.TTF);
+}
+b, strong {
+    font-family: 'Monaspace Neon Var', sans-serif;
+    font-weight: 350;
+}
+i, em {
+    font-family: 'Monaspace Radon Var';
+    font-weight: 200;
+    font-style: normal;
+}
+a {
+    font-family: 'Monaspace Radon Var';
+    font-weight: 275;
+    font-style: normal;
+    text-decoration: underline;
+}
+html {
+    font-family: 'Monaspace Xenon Var', sans-serif;
+    font-weight: 200;
+    font-feature-settings: 'calt', 'ss01', 'ss02', 'ss03', 'ss04', 'ss05', 'ss06', 'ss07', 'ss08', 'ss09', 'liga' on;
+}
+pre,
+code {
+    font-family: 'Monaspace Krypton Var', sans-serif;
+    font-weight: 200;
+    font-feature-settings: 'calt', 'ss01', 'ss02', 'ss03', 'ss04', 'ss05', 'ss06', 'ss07', 'ss08', 'ss09', 'liga' on;
+}
+h1,
+h2,
+h3 {
+    font-family: 'Monaspace Radon Var', sans-serif;
+    font-weight: 500;
+    margin:0;
+    padding:0;
+    text-align:center;
+}
+h4,
+h5,
+h6 {
+    font-family: 'Monaspace Neon Var', sans-serif;
+    font-weight: 500;
+    margin:0;
+    padding:0;
+    text-align:center;
+}
+h1 {
+    page-break-before: always;
+    font-size: 48pt;
+    line-height: 72pt;
+}
+h2 {
+    font-size: 42pt;
+    line-height: 63pt;
+}
+h3 {
+    font-size: 36pt;
+    line-height: 54pt;
+}
+h4 {
+    font-size: 30pt;
+    line-height: 45pt;
+}
+h5 {
+    font-size: 24pt;
+    line-height: 36pt;
+}
+h6 {
+    font-size: 18pt;
+    line-height: 27pt;
+}
+img {
+    width: 100%;
+}
+pre {
+    border-style: dotted;
+    border-width: 1pt;
+    padding-top: 6pt;
+    padding-right: 6pt;
+    padding-left: 6pt;
+    padding-right: 6pt;
+    tab-size: 2;
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}

@@ -8,6 +8,10 @@ and created the emulating code in your platform-specific code. */
 
 #include "CPUDEFS.H"
 
+#ifdef POSIX_PLATFORM
+#include "PGTRAPS.H"
+#endif
+
 #ifdef MAC_PLATFORM
 #define pgCreateRgn()  NewRgn()
 #define pgSectRgn(rgn1, rgn2, rgn3) SectRgn(rgn1, rgn2, rgn3)
@@ -20,6 +24,31 @@ and created the emulating code in your platform-specific code. */
 #define pgRectToRgn(rgn, r) RectRgn(rgn, r)
 #define pgOffsetRgn(rgn, h, v) OffsetRgn(rgn, h, v)
 #define pgInsetRgn(rgn, h, v) InsetRgn(rgn, h, v)
+
+#endif
+
+
+#ifdef POSIX_PLATFORM
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern PG_PASCAL (pg_region) pgCreateRgn(void);
+extern PG_PASCAL (void) pgSectRgn(pg_region rgn1, pg_region rgn2, pg_region rgn3);
+extern PG_PASCAL (void) pgUnionRgn(pg_region rgn1, pg_region rgn2, pg_region rgn3);
+extern PG_PASCAL (void) pgSubRgn(pg_region rgn1, pg_region rgn2, pg_region rgn3);
+extern PG_PASCAL (void) pgDisposeRgn(pg_region rgn);
+extern PG_PASCAL (pg_boolean) pgEmptyRgn(pg_region rgn);
+extern PG_PASCAL (void) pgSetEmptyRgn(pg_region rgn);
+extern PG_PASCAL (void) pgCopyRgn(pg_region rgn1, pg_region rgn2);
+extern PG_PASCAL (void) pgRectToRgn(pg_region rgn, Rect PG_FAR *r);
+extern PG_PASCAL (void) pgOffsetRgn(pg_region rgn, short h, short v);
+extern PG_PASCAL (void) pgInsetRgn(pg_region rgn, short dh, short dv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
@@ -49,4 +78,3 @@ extern PG_PASCAL (pg_boolean) pgEmptyRgn(pg_region rgn);
 
 #endif
 #endif
-

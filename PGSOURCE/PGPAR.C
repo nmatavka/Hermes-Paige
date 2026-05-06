@@ -1,24 +1,24 @@
 /* This file handles paragraph formatting. Your app can omit this library if no
 functions that set paragraph styles defined in Paige.h are called.    */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgpars
 #endif
 
-#include "defProcs.h"
-#include "machine.h"
-#include "pgText.h"
-#include "pgSelect.h"
-#include "pgEdit.h"
-#include "pgDefStl.h"
-#include "pgUtils.h"
-#include "pgDefPar.h"
-#include "pgPar.h"
-#include "pgShapes.h"
-#include "pgErrors.h"
-#include "pgTables.h"
+#include "DEFPROCS.H"
+#include "MACHINE.H"
+#include "PGTEXT.H"
+#include "PGSELECT.H"
+#include "PGEDIT.H"
+#include "PGDEFSTL.H"
+#include "PGUTILS.H"
+#include "PGDEFPAR.H"
+#include "PGPAR.H"
+#include "PGSHAPES.H"
+#include "PGERRORS.H"
+#include "PGTABLES.H"
 
 static void get_par_info_proc (change_info_ptr change, style_run_ptr style, pg_short_t record_ctr);
 static pg_short_t change_par_info (change_info_ptr change, style_run_ptr style);
@@ -345,7 +345,7 @@ PG_PASCAL (void) pgSetSpecialTabFlags (pg_ref pg, const select_pair_ptr selectio
 	
 	for (;;) {
 		
-		if (num_out = walker.cur_par_style->num_tabs) {
+		if ((num_out = walker.cur_par_style->num_tabs)) {
 			
 			tabs_out = walker.cur_par_style->tabs;
 			
@@ -398,7 +398,7 @@ PG_PASCAL (void) pgClearSpecialTabFlags (pg_ref pg, const select_pair_ptr select
 	
 	for (;;) {
 		
-		if (num_out = walker.cur_par_style->num_tabs) {
+		if ((num_out = walker.cur_par_style->num_tabs)) {
 			
 			tabs_out = walker.cur_par_style->tabs;
 			

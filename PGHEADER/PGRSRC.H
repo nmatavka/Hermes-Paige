@@ -5,7 +5,7 @@
 
 	by T. R. Shaw
 
-	Copyright © 1995 OITC, Inc.
+	Copyright ï¿½ 1995 OITC, Inc.
 	All rights reserved.
 	
 	pgRsrc.h - Routines for cross platform resource management.
@@ -27,8 +27,8 @@
 #ifndef PGRSRC_H
 #define PGRSRC_H
 
-#include "Paige.h"
-#include "pgIO.h"
+#include "PAIGE.H"
+#include "PGIO.H"
 
 #ifdef MAC_PLATFORM
 

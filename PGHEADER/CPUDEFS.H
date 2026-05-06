@@ -62,11 +62,25 @@ some each compiler seems to interpret differently.  */
 //#define WIN95_COMPILE				/* If defined then source is for Windows 95 */
 //#define UNIX_COMPILE				/* If defined then source is for Unix */
 //#define OS2_COMPILE				/* If defined then source is for OS/2 */
+//#define MACOS_COMPILE				/* If defined then source is for modern macOS */
+//#define HAIKU_COMPILE				/* If defined then source is for Haiku OS */
 //#define WINDOWS_EMULATE_COMPILE   /* Fakes Windows environment on Mac */
 //#define MAC2WIN_COMPILE			/* Fakes Mac environment in Windows (for Altura) */
 //#define ACCESS_MS_DLL				/* if using Paige as a DLL,this is defined in the make file */
 //#define CREATE_MS_DLL				/* if making a Paige DLL,this is defined in the make file */
 //#define WIN32S					/* OBSOLETE; PDA: */
+
+#if defined(_WIN32) && !defined(WIN32_COMPILE) && !defined(WIN16_COMPILE) && !defined(WIN95_COMPILE)
+#define WIN32_COMPILE
+#endif
+
+#if defined(__HAIKU__) && !defined(HAIKU_COMPILE)
+#define HAIKU_COMPILE
+#endif
+
+#if defined(__APPLE__) && defined(__MACH__) && !defined(MACOS_COMPILE) && !defined(MAC_COMPILE) && !defined(PPC_COMPILE)
+#define MACOS_COMPILE
+#endif
 
 //Auto configure for Metrowerks
 #ifdef __MWERKS__
@@ -201,6 +215,15 @@ some each compiler seems to interpret differently.  */
 #endif
 #endif
 
+#if defined(MACOS_COMPILE) || defined(HAIKU_COMPILE)
+#define POSIX_COMPILE
+#define POSIX_PLATFORM
+#define C_LIBRARY
+#ifndef NO_OS_INLINE
+#define NO_OS_INLINE
+#endif
+#endif
+
 #ifdef ASLMBUILD						/* Required for ASLM */
 #ifdef C_LIBRARY
 #undef C_LIBRARY						/* Some C Libs don't work in ALSM!  Remove with caution. */
@@ -298,6 +321,12 @@ some each compiler seems to interpret differently.  */
 #define OS2_WARP			0x01000001	/* Generic OS/2 Warp */
 #define MAX_OS2_OS			OS2_WARP
 
+#define MACOS_X				0x02000001	/* Modern macOS */
+#define MAX_MACOS_OS		MACOS_X
+
+#define HAIKU_1				0x03000001	/* Haiku OS */
+#define MAX_HAIKU_OS		HAIKU_1
+
 /* Graphic Configurations */
 
 #define ORIGINAL_QUICKDRAW	0x00000001	/* Macintosh, original QuickDraw or greater */
@@ -322,10 +351,15 @@ some each compiler seems to interpret differently.  */
 #define OS2_EGA				0x01000002	/* OS/2 EGA  or greater */
 #define MAX_OS2_GRAPHICS	OS2_EGA
 
+#define COREGRAPHICS_QUARTZ	0x02000001	/* macOS Core Graphics/Core Text */
+#define HAIKU_INTERFACE_KIT	0x03000001	/* Haiku Interface Kit */
+
 #define MACINTOSH_OS		1
 #define WINDOWS_OS			2
 #define UNIX_OS				3
 #define OS2_OS				4
+#define MACOS_OS			5
+#define HAIKU_OS			6
 
 /* Paige configuration constants */
 
@@ -372,6 +406,20 @@ some each compiler seems to interpret differently.  */
 #define PAIGE_GRAPHICS		ORIGINAL_QUICKDRAW
 #endif
 
+#ifdef MACOS_COMPILE
+#define PAIGE_PLATFORM		OTHER_RISC
+#define PAIGE_OS			MACOS_X
+#define PAIGE_GRAPHICS		COREGRAPHICS_QUARTZ
+#define CURRENT_OS			MACOS_OS
+#endif
+
+#ifdef HAIKU_COMPILE
+#define PAIGE_PLATFORM		OTHER_RISC
+#define PAIGE_OS			HAIKU_1
+#define PAIGE_GRAPHICS		HAIKU_INTERFACE_KIT
+#define CURRENT_OS			HAIKU_OS
+#endif
+
 
 /* General platform identifications for character set mapping: */
 
@@ -380,6 +428,8 @@ some each compiler seems to interpret differently.  */
 #define GENERAL_WINDOWS			0x00000100	/* Windows, all versions */
 #define GENERAL_UNIX			0x00100000	/* Unix, all versions */
 #define GENERAL_OS2				0x01000000	/* OS/2, all versions */
+#define GENERAL_MACOS			0x02000000	/* Modern macOS */
+#define GENERAL_HAIKU			0x03000000	/* Haiku OS */
 
 /* Which platform */
 #ifdef MAC_COMPILE
@@ -400,19 +450,29 @@ some each compiler seems to interpret differently.  */
 #ifdef WINDOWS_EMULATE_COMPILE
 #define GENERAL_PLATFORM		GENERAL_WINDOWS
 #endif
+#ifdef MACOS_COMPILE
+#define GENERAL_PLATFORM		GENERAL_MACOS
+#endif
+#ifdef HAIKU_COMPILE
+#define GENERAL_PLATFORM		GENERAL_HAIKU
+#endif
 
 #define pgFromThisPlatform(platform)	((platform & GENERAL_PLATFORM_MASK) == GENERAL_PLATFORM)
 
 /* Automatic Configurations */
 
-#if (PAIGE_OS <= MAX_MAC_OS)
-#define MAC_PLATFORM					/* This version is for Macintosh */
-#elif (PAIGE_OS <= MAX_WINDOWS_OS)
+#if defined(MAC_COMPILE) || defined(PPC_COMPILE)
+#define MAC_PLATFORM					/* This version is for Classic Macintosh */
+#elif defined(WINDOWS_COMPILE)
 #define WINDOWS_PLATFORM				/* This version is for Windows */
-#elif (PAIGE_OS <= MAX_UNIX_OS)
+#elif defined(UNIX_COMPILE)
 #define UNIX_PLATFORM					/* This version is for Unix */
-#elif (PAIGE_OS <= MAX_OS2_OS)
+#elif defined(OS2_COMPILE)
 #define OS2_PLATFORM					/* This version is for OS/2 */
+#elif defined(MACOS_COMPILE)
+#define MACOS_PLATFORM				/* This version is for modern macOS */
+#elif defined(HAIKU_COMPILE)
+#define HAIKU_PLATFORM				/* This version is for Haiku OS */
 #endif
 
 
@@ -541,6 +601,83 @@ typedef unsigned long			pg_time_t;
 typedef	DateTimeRec				pg_datetime;
 typedef pg_time_t PG_FAR *		pg_time_ptr;
 typedef pg_datetime PG_FAR *	pg_datetime_ptr;
+
+#endif
+
+
+#ifdef POSIX_PLATFORM
+
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+
+#define PG_FAR
+#define REGISTER_PREFIX
+#define ADDRESS_2
+#define PG_CDECL
+
+#define PG_PASCAL(return_type) return_type
+#define PG_C(return_type) return_type
+#define PG_DLL_IMPORT(return_type) return_type
+#define PG_DLL_EXPORT(return_type) return_type
+#define PG_DLL(return_type) return_type
+#define PG_FN_PASCAL(returnType,functionName) returnType (*functionName)
+#define PG_FN_C(returnType,functionName) returnType (*functionName)
+#define STATIC_PASCAL(return_type) static return_type
+#define STATIC_C(return_type) static return_type
+
+typedef uint16_t pg_word;
+typedef int32_t pg_text_int;
+typedef uint16_t pg_short_t;
+
+#define PG_BOM 0xFFFE
+#define PG_REVERSE_BOM 0xFEFF
+
+#ifdef UNICODE
+typedef uint16_t pg_char;
+typedef pg_char *pg_char_ptr;
+#ifndef _UNICODE
+#define _UNICODE
+#endif
+#else
+typedef unsigned char pg_char;
+typedef pg_char *pg_char_ptr;
+#endif
+
+typedef pg_char_ptr PGSTR;
+typedef pg_char pg_byte;
+typedef pg_byte *pg_byte_ptr;
+typedef unsigned char pg_bits8;
+typedef pg_bits8 *pg_bits8_ptr;
+
+typedef pg_short_t pg_error;
+typedef short pg_boolean;
+typedef long pg_fixed;
+typedef pg_char_ptr pg_file_name_ptr;
+typedef pg_char_ptr pg_font_name_ptr;
+typedef int pg_file_unit;
+typedef pg_file_unit *pg_file_unit_ptr;
+typedef pg_char_ptr pg_c_string_ptr;
+typedef unsigned long pg_filetype;
+typedef pg_filetype *pg_filetype_ptr;
+typedef pg_char_ptr pg_p_string_ptr;
+typedef uint32_t pg_plat_color_value;
+typedef uint32_t pg_font_script;
+
+typedef void *void_ptr;
+typedef void *generic_var;
+typedef void *pg_handle;
+struct pg_modern_region;
+typedef struct pg_modern_region *pg_region;
+
+#define REGION_NULL ((pg_region)NULL)
+#define PG_LONGWORD(cast) (cast)
+
+#define PLATFORM_DELTA_TIME 0
+typedef time_t pg_time_t;
+typedef struct tm pg_datetime;
+typedef pg_time_t *pg_time_ptr;
+typedef pg_datetime *pg_datetime_ptr;
 
 #endif
 

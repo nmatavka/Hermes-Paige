@@ -7,14 +7,14 @@ conventions.   Copyright 1993-1994    			*/
 /* July 19, 1994 Changed to add support calls to aid in interfacing Paige and Paige's
 	failure mechanisms with C++, SOM and other languages failure mechanisms by Tom Shaw, OITC  */
 
-#include "pgMemMgr.h"
+#include "PGMEMMGR.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgbasic4
 #endif
 
-#include "pgExceps.h"
-#include "pgErrors.h"
+#include "PGEXCEPS.H"
+#include "PGERRORS.H"
 
 #ifdef MAC_PLATFORM
 #include <Segload.h>
@@ -61,7 +61,11 @@ PG_PASCAL (void) pgFailure (pgm_globals_ptr globals, pg_error error, long messag
 		globals->last_message = message;
 		handler = globals->top_fail_info;
 		globals->top_fail_info = handler->next;
+#if defined(POSIX_PLATFORM) && defined(__cplusplus)
+		throw pg_cpp_failure{globals, error, message};
+#else
 		longjmp(handler->regs, error);
+#endif
 	}
 	else {
 
@@ -210,7 +214,26 @@ PG_PASCAL (void) pgReRaise (pgm_globals_ptr globals)
 
 PG_PASCAL (pg_error) pgProcessError (pg_error error)
 {
-#ifdef WINDOWS_PLATFORM
+#ifdef POSIX_PLATFORM
+	if (!error)
+		return NO_ERROR;
+
+	switch (error) {
+		case ENOSPC:
+			return NO_SPACE_ERR;
+		case EBADF:
+			return NOT_OPEN_ERR;
+		case EIO:
+			return IO_ERR;
+		case EACCES:
+		case EPERM:
+			return ACCESS_DENIED_ERR;
+		case ENOENT:
+			return NO_FILE_ERR;
+		default:
+			return error;
+	}
+#elif defined(WINDOWS_PLATFORM)
 	
 	if (error)
 		return	error;
@@ -483,4 +506,3 @@ static void no_handler (pgm_globals_ptr globals)
 	else
 		globals->debug_proc(NO_ERR_HANDLER_ERR, MEM_NULL);
 }
-

@@ -2,20 +2,20 @@
 /* Import/Export functions for PAIGE library.  This file contains miscellaneious utility functions
 that can be called from both C and C++. */
 
-#include "Paige.h"
-#include "defprocs.h"
-#include "pgText.h"
-#include "pgDefStl.h"
-#include "pgOSUtl.h"
-#include "pgSelect.h"
-#include "pgTxr.h"
-#include "pgEdit.h"
-#include "pgEmbed.h"
-#include "pgTxtWid.h"
-#include "machine.h"
-#include "pgHText.h"
-#include "pgTables.h"
-#include "pgFrame.h"
+#include "PAIGE.H"
+#include "DEFPROCS.H"
+#include "PGTEXT.H"
+#include "PGDEFSTL.H"
+#include "PGOSUTL.H"
+#include "PGSELECT.H"
+#include "PGTXR.H"
+#include "PGEDIT.H"
+#include "PGEMBED.H"
+#include "PGTXTWID.H"
+#include "MACHINE.H"
+#include "PGHTEXT.H"
+#include "PGTABLES.H"
+#include "PGFRAME.H"
 
 static long make_style (pg_ref import_pg, pg_char_ptr name, long stylebits, short pointsize,
 				pg_char_ptr fontname, par_info_ptr par);
@@ -110,7 +110,7 @@ PG_PASCAL (void) pgEndImport (pg_ref pg, pg_boolean keep_selection, short draw_m
 		num_blocks = GetMemorySize(import_ptr->t_blocks);
 		target_pos = import_ptr->target_pos;
 
-		if (result = (pg_boolean)(import_ptr->t_length) != 0) {
+		if ((result = (pg_boolean)(import_ptr->t_length) != 0)) {
 			
 			import_block = (text_block_ptr) UseMemory(import_ptr->t_blocks);
 			
@@ -305,7 +305,7 @@ PG_PASCAL (pg_boolean) pgInsertText (pg_ref pg, pg_char_ptr data, long length,
 
 		if (initial_block_size >= threefourths_of_max) {
 		
-			if (cr_break = find_breaking_char(source_text, source_size, (pg_char)pg_rec->globals->line_wrap_char)) {
+			if ((cr_break = find_breaking_char(source_text, source_size, (pg_char)pg_rec->globals->line_wrap_char))) {
 				long				end_pos;
 				
 				if (!cached_file) {

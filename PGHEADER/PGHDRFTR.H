@@ -5,7 +5,7 @@
 
 	by T. R. Shaw
 
-	Copyright © 1994-1995 OITC, Inc.
+	Copyright ï¿½ 1994-1995 OITC, Inc.
 	All rights reserved.
 	
 	pgHdrFtr.h - Header/footer routines for translation of RTF files to Paige.
@@ -25,7 +25,7 @@
 #ifndef PGHDRFTR_H
 #define PGHDRFTR_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #define MAX_SUB_DOC			0x00007FFF			// The document's maximum subdocument (RTF enhancement) 
 #define SPCL_SECTION_MASK	0xFFFF0000			// Special section mask (RTF enhancement) 

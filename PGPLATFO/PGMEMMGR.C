@@ -12,13 +12,13 @@ single "PG_CATCH". */
 
 /* Updated by TR Shaw, OITC, Inc. 30 Apr 1995 for cross platform I/O */
 
-#include "pgMemMgr.h"
-#include "pgMTraps.h"
-#include "pgExceps.h"
-#include "pgErrors.h"
-#include "pgIO.h"
-#include "pgUtils.h"
-#include "pgOSUtl.h"
+#include "PGMEMMGR.H"
+#include "PGMTRAPS.H"
+#include "PGEXCEPS.H"
+#include "PGERRORS.H"
+#include "PGIO.H"
+#include "PGUTILS.H"
+#include "PGOSUTL.H"
 
 #ifdef MAC_PLATFORM
 
@@ -2110,7 +2110,7 @@ I have saved the data to a file.	*/
 				if (!(purge_flags & NO_DATA_SAVE_FLAG) && (data_size > 0)) {
 				
 					starting_offset = find_available_space(mem_globals, mem_globals->purge_info, data_size);
-					error = pgSetFilePos(ref_num, starting_offset);	//¥¥ TRS/OITC
+					error = pgSetFilePos(ref_num, starting_offset);	//ï¿½ï¿½ TRS/OITC
 
 					pgFailError(mem_globals, pgProcessError(error));
 		
@@ -2256,7 +2256,7 @@ PG_PASCAL (long) pgStandardFreeProc (pgm_globals_ptr mem_globals, memory_ref don
 }
 
 
-//¥ TRS/OITC
+//ï¿½ TRS/OITC
 
 /* MemoryToCStr converts a normal memory ref to a C string memory ref. */
 

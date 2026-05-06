@@ -1,10 +1,10 @@
 
 #include "PGHLEVEL.H"
-#include "defprocs.h"
-#include "pgText.h"
-#include "pgEdit.h"
-#include "pgShapes.h"
-#include "pgUtils.h"
+#include "DEFPROCS.H"
+#include "PGTEXT.H"
+#include "PGEDIT.H"
+#include "PGSHAPES.H"
+#include "PGUTILS.H"
 
 
 /* TO "SET" HOOK YOU NEED TO MODIFY THE DEFAULT BOUNDARY_PROC IN PAIGE GLOBALS.
@@ -37,7 +37,7 @@ PG_PASCAL (pg_boolean) pgContainerParProc (paige_rec_ptr pg, select_pair_ptr bou
 		
 		block = starting_block = pgFindTextBlock(pg, offset, NULL, FALSE, TRUE);
 		local_offset = starting_offset = offset - block->begin;
-		text = UseMemory(block->text);
+		text = (pg_char_ptr)UseMemory(block->text);
 		text += local_offset;
 	
 	/* Locate beginning of paragraph */
@@ -48,7 +48,7 @@ PG_PASCAL (pg_boolean) pgContainerParProc (paige_rec_ptr pg, select_pair_ptr bou
 			
 			while (local_offset) {
 				
-				if (valid_cr = (pg_boolean)(*(--text) == cr_char))
+				if ((valid_cr = (pg_boolean)(*(--text) == cr_char)))
 					break;
 	
 				--local_offset;
@@ -68,7 +68,7 @@ PG_PASCAL (pg_boolean) pgContainerParProc (paige_rec_ptr pg, select_pair_ptr bou
 				pg->procs.load_proc(pg, block);
 
 				local_offset = block->end - block->begin;
-				text = UseMemory(block->text);
+				text = (pg_char_ptr)UseMemory(block->text);
 				text += local_offset;
 			}
 			else
@@ -85,7 +85,7 @@ PG_PASCAL (pg_boolean) pgContainerParProc (paige_rec_ptr pg, select_pair_ptr bou
 		block = starting_block;
 		pg->procs.load_proc(pg, block);
 
-		text = UseMemory(block->text);
+		text = (pg_char_ptr)UseMemory(block->text);
 		text += starting_offset;
 		
 		valid_cr = FALSE;
@@ -95,7 +95,7 @@ PG_PASCAL (pg_boolean) pgContainerParProc (paige_rec_ptr pg, select_pair_ptr bou
 			while (offset < block->end) {
 				
 				++offset;
-				if (valid_cr = (*text++ == cr_char))
+				if ((valid_cr = (*text++ == cr_char)))
 					break;
 			}
 	
@@ -110,7 +110,7 @@ PG_PASCAL (pg_boolean) pgContainerParProc (paige_rec_ptr pg, select_pair_ptr bou
 				UnuseMemory(block->text);
 				++block;
 				pg->procs.load_proc(pg, block);
-				text = UseMemory(block->text);
+				text = (pg_char_ptr)UseMemory(block->text);
 			}
 		}
 	
@@ -129,7 +129,7 @@ PG_PASCAL (pg_boolean) pgContainerParProc (paige_rec_ptr pg, select_pair_ptr bou
 			offset -= 1;
 			block = pgFindTextBlock(pg, offset, NULL, FALSE, TRUE);
 			local_offset = offset - block->begin;
-			text = UseMemory(block->text);
+			text = (pg_char_ptr)UseMemory(block->text);
 			
 			if (text[local_offset] != cr_char)
 				starts_on_par = FALSE;
@@ -175,7 +175,7 @@ PG_PASCAL (void) PageLines (paige_rec_ptr pg, style_walk_ptr walker,
 		shape_qty = GetMemorySize(pg->wrap_area) - 1;
 
 		current_page = first_line->r_num / shape_qty;
-		textblock = UseMemory(pg->t_blocks);
+		textblock = (text_block_ptr)UseMemory(pg->t_blocks);
 	
 	// Locate text block that contains current page
 

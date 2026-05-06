@@ -1,26 +1,26 @@
 /* This file contains mandatory functions for default paragraph handling. This
 library cannot be omitted from the basic Paige package. */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgbasic3
 #endif
 
-#include "defProcs.h"
-#include "machine.h"
-#include "pgText.h"
-#include "pgSelect.h"
-#include "pgEdit.h"
-#include "pgDefStl.h"
-#include "pgUtils.h"
-#include "pgShapes.h"
-#include "pgScript.h"
-#include "pgDefPar.h"
-#include "pgSubRef.h"
-#include "pgErrors.h"
-#include "pgGrafx.h"
-#include "pgTables.h"
+#include "DEFPROCS.H"
+#include "MACHINE.H"
+#include "PGTEXT.H"
+#include "PGSELECT.H"
+#include "PGEDIT.H"
+#include "PGDEFSTL.H"
+#include "PGUTILS.H"
+#include "PGSHAPES.H"
+#include "PGSCRIPT.H"
+#include "PGDEFPAR.H"
+#include "PGSUBREF.H"
+#include "PGERRORS.H"
+#include "PGGRAFX.H"
+#include "PGTABLES.H"
 
 
 static void find_word_boundary (paige_rec_ptr pg, size_t offset, long info_mask,
@@ -347,7 +347,7 @@ PG_PASCAL (pg_boolean) pgParBoundaryProc (paige_rec_ptr pg, select_pair_ptr boun
 			
 			while (local_offset) {
 				
-				if (valid_cr = (pg_boolean)(*(--text) == cr_char))
+				if ((valid_cr = (pg_boolean)(*(--text) == cr_char)))
 					break;
 	
 				--local_offset;
@@ -396,7 +396,7 @@ PG_PASCAL (pg_boolean) pgParBoundaryProc (paige_rec_ptr pg, select_pair_ptr boun
 			while (offset < block->end) {
 				
 				++offset;
-				if (valid_cr = (*text++ == cr_char))
+				if ((valid_cr = (*text++ == cr_char)))
 					break;
 			}
 	
@@ -680,7 +680,7 @@ PG_PASCAL (void) pgLineAdjustProc (paige_rec_ptr pg, pg_measure_ptr measure_info
 								starts->bounds.bot_right.h += (long) extra_pix;
 								has_soft_hifen = starts->flags & SOFT_BREAK_BIT;
 								
-								if (start_width = starts->bounds.bot_right.h - starts->bounds.top_left.h) {
+								if ((start_width = starts->bounds.bot_right.h - starts->bounds.top_left.h)) {
 									
 									percent_of_width = pgFixedRatio((short)start_width, (short)line_width);
 									percent_extra = pgMultiplyFixed(percent_of_width, slop_fixed);
@@ -1232,7 +1232,7 @@ PG_PASCAL (long) pgGetJExtra (point_start_ptr line_start)
 	if ((pg_short_t)(line_start->extra & EXTRA_NOT_EXTRA))
 		return	0;
 
-	if (extra = (long) line_start->extra & J_EXTRA_MASK)
+	if ((extra = (long) line_start->extra & J_EXTRA_MASK))
 		if (line_start->extra & J_EXTRA_NEGATIVE)
 			extra = -extra;
 
@@ -1450,7 +1450,7 @@ static pg_short_t locate_closest_tab (style_walk_ptr walker, long left_base, lon
 	if ((first_indent = walker->cur_par_style->indents.first_indent) > 0)
 		fake_indent_tab += first_indent;
 
-	if (num_tabs = par_stuff->num_tabs) {
+	if ((num_tabs = par_stuff->num_tabs)) {
 		long			closest_h, match_h;
 
 		closest_h = -1;

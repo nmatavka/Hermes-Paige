@@ -1,20 +1,20 @@
 /* This file handles a high-level "frame" which can be an image, subref, embed, etc.  */
 
-#include "Paige.h"
-#include "pgExceps.h"
-#include "pgFrame.h"
-#include "machine.h"
-#include "pgUtils.h"
-#include "pgText.h"
-#include "pgShapes.h"
-#include "pgEdit.h"
-#include "pgSelect.h"
-#include "pgErrors.h"
-#include "pgEmbed.h"
-#include "pgGrafx.h"
-#include "pgBasics.h"
-#include "pgOSUtl.h"
-#include "pgDefstl.h"
+#include "PAIGE.H"
+#include "PGEXCEPS.H"
+#include "PGFRAME.H"
+#include "MACHINE.H"
+#include "PGUTILS.H"
+#include "PGTEXT.H"
+#include "PGSHAPES.H"
+#include "PGEDIT.H"
+#include "PGSELECT.H"
+#include "PGERRORS.H"
+#include "PGEMBED.H"
+#include "PGGRAFX.H"
+#include "PGBASICS.H"
+#include "PGOSUTL.H"
+#include "PGDEFSTL.H"
 
 static void draw_selection_rect (paige_rec_ptr pg, long color, rectangle_ptr target, pg_frame_ptr frame);
 static void make_display_rects (paige_rec_ptr pg, pg_frame_ptr frame, rectangle_ptr target,
@@ -33,9 +33,9 @@ PG_PASCAL(void) pgInsertFrame (pg_ref pg, pg_frame_ptr frame, embed_callback emb
 	long				attached_to_par;
 	short				use_draw_mode;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr)UseMemory(pg);
 	frame_ref = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(pg_frame), 1, 0);
-	the_frame = UseMemory(frame_ref);
+	the_frame = (pg_frame_ptr)UseMemory(frame_ref);
 	*the_frame = *frame;
 	align_frame(pg_rec, the_frame);
 	attached_to_par = frame->flags & FRAME_ATTACHED_TO_PAR;
@@ -49,20 +49,20 @@ PG_PASCAL(void) pgInsertFrame (pg_ref pg, pg_frame_ptr frame, embed_callback emb
 		pg_embed_ptr		embed_ptr;
 		pg_short_t			style_item;
 
-		embed_ptr = UseMemory((memory_ref)the_frame->data);
+		embed_ptr = (pg_embed_ptr)UseMemory((memory_ref)the_frame->data);
 		embed_ptr->used_ctr += 1;
 		UnuseMemory((memory_ref)the_frame->data);
 		
 		new_style = pg_rec->globals->def_style;
 
-		new_style.embed_object = (long)the_frame->data;
+		new_style.embed_object = (memory_ref)the_frame->data;
 		
-		if ((new_style.embed_entry = (long)embed_callback) == 0)
-			new_style.embed_entry = (long)pgDefaultEmbedCallback;
+		if ((new_style.embed_entry = (void *)embed_callback) == 0)
+			new_style.embed_entry = (void *)pgDefaultEmbedCallback;
 		
 		new_style.class_bits |= EMBED_FRAME_BIT;
 		style_item = pgAddStyleInfo(pg_rec, NULL, internal_clone_reason, &new_style);
-		appended_style = UseMemoryRecord(pg_rec->t_formats, (long)style_item, 0, TRUE);
+		appended_style = (style_info_ptr)UseMemoryRecord(pg_rec->t_formats, (long)style_item, 0, TRUE);
 		appended_style->used_ctr += 1;
 		UnuseMemory(pg_rec->t_formats);
 	}
@@ -79,7 +79,7 @@ PG_PASCAL(void) pgInsertFrame (pg_ref pg, pg_frame_ptr frame, embed_callback emb
 	
 	if (attached_to_par) {
 		
-		the_frame = UseMemory(frame_ref);
+		the_frame = (pg_frame_ptr)UseMemory(frame_ref);
 		the_frame->position = pgAttachParExclusion(pg, frame->position, 1, draw_none);
 		UnuseMemory(frame_ref);
 	}
@@ -111,7 +111,7 @@ PG_PASCAL (long) pgStandardFrameCallback (paige_rec_ptr pg, pg_frame_ptr frame,
 
 			if (frame->type == frame_embed) {
 
-				embed_ptr = UseMemory((memory_ref)frame->data);
+				embed_ptr = (pg_embed_ptr)UseMemory((memory_ref)frame->data);
 				
 				bounds.top_left.h = bounds.top_left.v = 0;
 				bounds.bot_right.h = embed_ptr->width;
@@ -128,7 +128,7 @@ PG_PASCAL (long) pgStandardFrameCallback (paige_rec_ptr pg, pg_frame_ptr frame,
 				pgPaintObject(&pg->port, &erase_bounds, 0, object_rect, fill_color);
 				
 				pgDefaultEmbedCallback(pg, embed_ptr, embed_ptr->type & EMBED_TYPE_MASK,
-							EMBED_DRAW, 0, (long)&bounds, 0);
+							EMBED_DRAW, 0, (void *)&bounds, NULL);
 
 				if (frame->border_info) {
 					
@@ -160,7 +160,7 @@ PG_PASCAL (long) pgStandardFrameCallback (paige_rec_ptr pg, pg_frame_ptr frame,
 				style_info_ptr		styles;
 				long				used_ctr, num_styles;
 				
-				embed_ptr = UseMemory((memory_ref)frame->data);
+				embed_ptr = (pg_embed_ptr)UseMemory((memory_ref)frame->data);
 				embed_ptr->used_ctr -= 1;
 				used_ctr = embed_ptr->used_ctr;
 				UnuseMemory((memory_ref)frame->data);
@@ -168,7 +168,7 @@ PG_PASCAL (long) pgStandardFrameCallback (paige_rec_ptr pg, pg_frame_ptr frame,
 				if (used_ctr <= 0)
 					pgEmbedDispose((memory_ref)frame->data);
 				
-				styles = UseMemory(pg->t_formats);
+				styles = (style_info_ptr)UseMemory(pg->t_formats);
 				num_styles = GetMemorySize(pg->t_formats);
 				
 				while (num_styles) {
@@ -207,7 +207,7 @@ extern PG_PASCAL (void) pgGetFrame (pg_ref pg, pg_short_t frame_num, pg_frame_pt
 	long			diff_h, diff_v;
 	memory_ref		frame_ref;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr)UseMemory(pg);
 	GetMemoryRecord(pg_rec->exclusions, (long)(frame_num - 1), &frame_ref);
 	pgBlockMove(UseMemory(frame_ref), frame, sizeof(pg_frame));
 	
@@ -232,10 +232,10 @@ extern PG_PASCAL (void) pgSetFrame (pg_ref pg, pg_short_t frame_num, pg_frame_pt
 	long			par_offset, old_attach, new_attach;
 	long			old_align, new_align;
 
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr)UseMemory(pg);
 
 	GetMemoryRecord(pg_rec->exclusions, (long)(frame_num - 1), &frame_ref);
-	the_frame = UseMemory(frame_ref);
+	the_frame = (pg_frame_ptr)UseMemory(frame_ref);
 	old_attach = the_frame->flags & FRAME_ATTACHED_TO_PAR;
 	new_attach = frame->flags & FRAME_ATTACHED_TO_PAR;
 	old_align = the_frame->flags & FRAME_ANY_ALIGNMENT;
@@ -265,7 +265,7 @@ extern PG_PASCAL (void) pgSetFrame (pg_ref pg, pg_short_t frame_num, pg_frame_pt
 		if ((par_offset = frame->position) == CURRENT_POSITION)
 			par_offset = pgPtToChar(pg, &frame->wrap.top_left, &scroll);
 		
-		the_frame = UseMemory(frame_ref);
+		the_frame = (pg_frame_ptr)UseMemory(frame_ref);
 		the_frame->position = pgAttachParExclusion(pg, par_offset, frame_num, draw_none);
 		UnuseMemory(frame_ref);
 	}
@@ -286,7 +286,7 @@ PG_PASCAL (void) pgDeleteFrames (pg_ref pg, short draw_mode)
 		long			num_frames;
 		
 		num_frames = GetMemorySize(framelist);
-		list = UseMemory(framelist);
+		list = (pg_short_t PG_FAR *)UseMemory(framelist);
 		
 		while (num_frames) {
 			
@@ -317,14 +317,14 @@ PG_PASCAL (void) pgDisposeFrames (paige_rec_ptr pg)
 		return;
 	
 	num_frames = GetMemorySize(pg->exclusions);
-	frames = UseMemory(pg->exclusions);
-	real_target = UseMemory(pg->exclude_area);
+	frames = (memory_ref PG_FAR *)UseMemory(pg->exclusions);
+	real_target = (rectangle_ptr)UseMemory(pg->exclude_area);
 	scroll = pg->scroll_pos;
 	pgNegatePt(&scroll);
 
 	while (num_frames) {
 		
-		frame = UseMemory(*frames);
+		frame = (pg_frame_ptr)UseMemory(*frames);
 		++real_target;
 		callback = (frame_callback)frame->callback;
 		callback(pg, frame, real_target, &scroll, FRAME_DESTROY_VERB);
@@ -345,7 +345,7 @@ PG_PASCAL (void) pgSelectFrame (pg_ref pg, pg_short_t frame_num, pg_boolean show
 {
 	paige_rec_ptr			pg_rec;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr)UseMemory(pg);
 
 	if (pg_rec->flags2 & HAS_PG_FRAMES_BIT) {
 		
@@ -355,7 +355,7 @@ PG_PASCAL (void) pgSelectFrame (pg_ref pg, pg_short_t frame_num, pg_boolean show
 			long			old_flags;
 
 			GetMemoryRecord(pg_rec->exclusions, (long)(frame_num - 1), &frame_ref);
-			frame = UseMemory(frame_ref);
+			frame = (pg_frame_ptr)UseMemory(frame_ref);
 			old_flags = frame->flags;
 			frame->flags |= FRAME_SELECTED;
 			UnuseMemory(frame_ref);
@@ -378,16 +378,16 @@ PG_PASCAL (void) pgDeselectFrames (pg_ref pg, pg_boolean draw_hilite)
 	pg_boolean				selection_changed = FALSE;
 	long					num_frames;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr)UseMemory(pg);
 
 	if (pg_rec->flags2 & HAS_PG_FRAMES_BIT) {
 
 		num_frames = GetMemorySize(pg_rec->exclusions);
-		frames = UseMemory(pg_rec->exclusions);
+		frames = (memory_ref PG_FAR *)UseMemory(pg_rec->exclusions);
 		
 		while (num_frames) {
 			
-			frame = UseMemory(*frames);
+			frame = (pg_frame_ptr)UseMemory(*frames);
 			
 			if (frame->flags & FRAME_SELECTED) {
 			
@@ -423,17 +423,17 @@ PG_PASCAL (long) pgGetSelectedFrames (pg_ref pg, memory_ref PG_FAR *selectlist)
 	pg_frame_ptr			frame;
 	long					num_frames, frame_index, num_selected;
 	
-	pg_rec = UseMemory(pg);
+	pg_rec = (paige_rec_ptr)UseMemory(pg);
 	num_selected = 0;
 	
 	if (pg_rec->flags2 & HAS_PG_FRAMES_BIT) {
 	
 		num_frames = GetMemorySize(pg_rec->exclusions);
-		frames = UseMemory(pg_rec->exclusions);
+		frames = (memory_ref PG_FAR *)UseMemory(pg_rec->exclusions);
 		
 		for (frame_index = 1; frame_index <= num_frames; ++frame_index, ++frames) {
 			
-			frame = UseMemory(*frames);
+			frame = (pg_frame_ptr)UseMemory(*frames);
 			
 			if (frame->flags & FRAME_SELECTED) {
 			
@@ -446,7 +446,7 @@ PG_PASCAL (long) pgGetSelectedFrames (pg_ref pg, memory_ref PG_FAR *selectlist)
 					if (!result)
 						result = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(pg_short_t), 0, 4);
 					
-					list = AppendMemory(result, 1, FALSE);
+					list = (pg_short_t PG_FAR *)AppendMemory(result, 1, FALSE);
 					*list = (pg_short_t)frame_index;
 					UnuseMemory(result);
 				}
@@ -474,13 +474,13 @@ PG_PASCAL (void) pgPackFrame (paige_rec_ptr pg, pack_walk_ptr walker, memory_ref
 	pg_frame_ptr			frame;
 	long					name_size;
 	
-	frame = UseMemory(frameref);
+	frame = (pg_frame_ptr)UseMemory(frameref);
 
 	name_size = pgCStrLength(frame->name);
 	pgPackNum(walker, short_data, name_size);
 	
 	if (name_size)
-		pgPackBytes (walker, frame->name, name_size);
+		pgPackBytes (walker, (pg_bits8_ptr)frame->name, name_size * sizeof(pg_char));
 
 	pgPackNum(walker, long_data, frame->type);
 	pgPackNum(walker, long_data, frame->flags);
@@ -502,13 +502,13 @@ PG_PASCAL (memory_ref) pgUnpackFrame (paige_rec_ptr pg, pack_walk_ptr walker)
 	long				name_size;
 
 	ref = MemoryAllocClear(pg->globals->mem_globals, sizeof(pg_frame), 1, 0);
-	frame = UseMemory(ref);
+	frame = (pg_frame_ptr)UseMemory(ref);
 	frame->callback = (long)pgStandardFrameCallback;
 	
 	name_size = pgUnpackNum(walker);
 	
 	if (name_size)
-		pgUnpackPtrBytes(walker, frame->name);
+		pgUnpackPtrBytes(walker, (pg_bits8_ptr)frame->name);
 
 	frame->type = pgUnpackNum(walker);
 	frame->flags = pgUnpackNum(walker);
@@ -538,14 +538,14 @@ PG_PASCAL (void) pgDrawAllFrames (paige_rec_ptr pg, short verb)
 		pgSetupGrafDevice(pg, &pg->port, MEM_NULL, clip_with_none_verb);
 
 		num_exclusions = GetMemorySize(pg->exclusions);
-		frames = UseMemory(pg->exclusions);
-		real_target = UseMemory(pg->exclude_area);
+		frames = (long PG_FAR *)UseMemory(pg->exclusions);
+		real_target = (rectangle_ptr)UseMemory(pg->exclude_area);
 		scroll_offset = pg->scroll_pos;
 		pgNegatePt(&scroll_offset);
 
 		while (num_exclusions) {
 			
-			frame = UseMemory((memory_ref)*frames);
+			frame = (pg_frame_ptr)UseMemory((memory_ref)*frames);
 			callback = (frame_callback)frame->callback;
 			++real_target;
 			callback(pg, frame, real_target, &scroll_offset, verb);
@@ -571,8 +571,8 @@ PG_PASCAL (void) pgGetFrameDisplay (pg_ref pg, pg_short_t frame_num, rectangle_p
 	
 	pgGetFrame(pg, frame_num, &frame);
 	
-	pg_rec = UseMemory(pg);
-	target = UseMemoryRecord(pg_rec->exclude_area, (long)frame_num, 0, TRUE);
+	pg_rec = (paige_rec_ptr)UseMemory(pg);
+	target = (rectangle_ptr)UseMemoryRecord(pg_rec->exclude_area, (long)frame_num, 0, TRUE);
 	make_display_rects(pg_rec, &frame, target, bounds, wrap);
 	UnuseMemory(pg_rec->exclude_area);
 	UnuseMemory(pg);
@@ -663,7 +663,7 @@ static void low_level_update (pg_ref pg, short draw_mode)
 		if ((use_draw_mode = draw_mode) == best_way)
 			use_draw_mode = bits_copy;
 
-		pg_rec = UseMemory(pg);
+		pg_rec = (paige_rec_ptr)UseMemory(pg);
 		pgUpdateText(pg_rec, NULL, 0, pg_rec->t_length, MEM_NULL, NULL, use_draw_mode, TRUE);
 		pgDrawAllFrames(pg_rec, FRAME_DRAW_VERB);
 		UnuseMemory(pg);

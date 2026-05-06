@@ -5,19 +5,19 @@ any of those libraries exist with this code.   */
 
 /* Updated by TR Shaw, OITC, Inc. 20 Apr for C/C++/Pascal linkage and for inlines */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgbasic3
 #endif
 
-#include "machine.h"
-#include "pgUtils.h"
-#include "pgDefStl.h"
-#include "pgDefPar.h"
-#include "pgText.h"
-#include "pgShapes.h"
-#include "pgEdit.h"
+#include "MACHINE.H"
+#include "PGUTILS.H"
+#include "PGDEFSTL.H"
+#include "PGDEFPAR.H"
+#include "PGTEXT.H"
+#include "PGSHAPES.H"
+#include "PGEDIT.H"
 
 
 /* pgUniqueID returns an ID number unique to pg (won't be used anywhere else). */
@@ -49,7 +49,7 @@ PG_PASCAL (paige_rec_ptr) pgUseSharedPg (pg_ref PG_FAR *pg)
 
 	pg_rec = (paige_rec_ptr) UseMemory(*pg);
 	
-	while (shared_pg = pg_rec->shared_pg) {
+	while ((shared_pg = pg_rec->shared_pg)) {
 		
 		UnuseMemory(*pg);
 		*pg = shared_pg;
@@ -298,12 +298,12 @@ PG_PASCAL (void) pgOffsetRect (rectangle_ptr rect, long h, long v)
 	register long				shift_value;
 
 	rect_ptr = rect;
-	if (shift_value = h) {
+	if ((shift_value = h)) {
 		rect_ptr->top_left.h += shift_value;
 		rect_ptr->bot_right.h += shift_value;
 	}
 	
-	if (shift_value = v) {
+	if ((shift_value = v)) {
 		rect_ptr->top_left.v += shift_value;
 		rect_ptr->bot_right.v += shift_value;
 	}
@@ -320,12 +320,12 @@ PG_PASCAL (void) pgInsetRect (rectangle_ptr rect, long h, long v)
 
 	rect_ptr = rect;
 
-	if (inset_value = h) {
+	if ((inset_value = h)) {
 		rect_ptr->top_left.h += inset_value;
 		rect_ptr->bot_right.h -= inset_value;
 	}
 	
-	if (inset_value = v) {
+	if ((inset_value = v)) {
 		rect_ptr->top_left.v += inset_value;
 		rect_ptr->bot_right.v -= inset_value;
 	}
@@ -372,7 +372,7 @@ PG_PASCAL (pg_boolean) pgSectRect (rectangle_ptr r1, rectangle_ptr r2, rectangle
 	if (target->top_left.h >= src->bot_right.h)
 		return	FALSE;
 		
-	if (output = r3) {
+	if ((output = r3)) {
 		
 		output->top_left.h = pgMax(src->top_left.h, target->top_left.h);
 		output->top_left.v = pgMax(src->top_left.v, target->top_left.v);
@@ -478,7 +478,7 @@ PG_PASCAL (pg_boolean) pgSectOrTouchRect (rectangle_ptr r1, rectangle_ptr r2, re
 	if (target->top_left.h > src->bot_right.h)
 		return	FALSE;
 		
-	if (output = r3) {
+	if ((output = r3)) {
 
 		output->top_left.v = pgMax(src->top_left.v, target->top_left.v);
 		output->bot_right.v = pgMin(src->bot_right.v, target->bot_right.v);
@@ -1056,14 +1056,14 @@ PG_PASCAL (void) pgWillDeleteFormats (paige_rec_ptr pg, pg_globals_ptr globals,
 	register par_info_ptr		pars;
 	register pg_short_t			qty;
 
-	if (qty = (pg_short_t)GetMemorySize(text_formats)) {
+	if ((qty = (pg_short_t)GetMemorySize(text_formats))) {
 	
 		for (styles = (style_info_ptr) UseMemory(text_formats); qty; ++styles, --qty)
 			styles->procs.delete_style(pg, globals, reason_verb, text_formats, styles);
 		UnuseMemory(text_formats);
 	}
 
-	if (qty = (pg_short_t)GetMemorySize(par_formats)) {
+	if ((qty = (pg_short_t)GetMemorySize(par_formats))) {
 	
 		for (pars = (par_info_ptr) UseMemory(par_formats); qty; ++pars, --qty)
 			pars->procs.delete_par(pg, reason_verb, par_formats, pars);

@@ -4,10 +4,10 @@ for the currently defined platform. */
 #ifndef PGTRAPS_H
 #define PGTRAPS_H
 
-#include "CPUDefs.h"
+#include "CPUDEFS.H"
 
 #ifndef PAIGE_H
-#include "Paige.h"
+#include "PAIGE.H"
 #endif
 
 #define RIGHT_FONT_FLAG			0x8000		/* Font is right-to-left */
@@ -384,6 +384,134 @@ extern PG_PASCAL (void) SetFontCharWidths (pg_ref pg, style_info_ptr style, int 
 
 #endif  /* WINDOWS_PLATFORM */
 
+#ifdef POSIX_PLATFORM
+/*******************************************************************************/
+/*                              MODERN POSIX                                   */
+/*******************************************************************************/
+
+#include <stdint.h>
+
+#ifndef SHIFTJIS_CHARSET
+#define SHIFTJIS_CHARSET        128
+#endif
+
+#ifndef HANGEUL_CHARSET
+#define HANGEUL_CHARSET         129
+#endif
+
+#ifndef GB2312_CHARSET
+#define GB2312_CHARSET          134
+#endif
+
+#ifndef CHINESEBIG5_CHARSET
+#define CHINESEBIG5_CHARSET     136
+#endif
+
+#define DEF_POINT_SIZE     (long) 0x000C
+#define DEF_CHAR_WIDTH     (long) 0
+
+#define DOTTED_PAT              0x8888
+#define SPECIAL_SYMBOL_TXSIZE   12
+
+#define MAX_RGN                 32700
+#define MAX_SCROLLABLE_RGN      8192
+
+#define CR_CHAR             0x0D
+#define SOFT_CR_CHAR        0x0A
+#define TEXT_BRK_CHAR       0x1B
+#define TAB_CHAR            0x09
+#define SOFT_HYPHEN         0x1F
+#define PC_SOFT_HYPHEN      0xAD
+#define FF_CHAR             0x0C
+#define CONTAINER_BRK_CHAR  0x0E
+#define DELETE_CHAR         0x08
+#define LEFT_ARROW          0x1C
+#define RIGHT_ARROW         0x1D
+#define UP_ARROW            0x1E
+#define DOWN_ARROW          0x1F
+#define FWD_DELETE_CHAR     0x7F
+#define DECIMAL_CHAR        0x2E
+#define HYPHEN_CHAR         0x2D
+#define ELIPSE_SYMBOL       0x85
+#define INVIS_CR            0xB6
+#define INVIS_LF            0xB5
+#define INVIS_SPACE         0x2E
+#define INVIS_BREAK         0xA5
+#define INVIS_PBREAK        0xA5
+#define INVIS_END           0xB5
+#define INVIS_UNKNOWN       0xC9
+#define APOSTROPHE          0x27
+#define FLAT_QUOTE_CHAR     0x22
+#define UNSUPPORTED_CHAR    0x83
+
+#ifdef UNICODE
+    #define INVIS_TAB           0x2022
+    #define LEFT_SINGLE_QUOTE   0x2018
+    #define RIGHT_SINGLE_QUOTE  0x2019
+    #define LEFT_DOUBLE_QUOTE   0x201C
+    #define RIGHT_DOUBLE_QUOTE  0x201D
+    #define BULLET_CHAR         0x2022
+#else
+    #define INVIS_TAB           0x95
+    #define LEFT_SINGLE_QUOTE   0x91
+    #define RIGHT_SINGLE_QUOTE  0x92
+    #define LEFT_DOUBLE_QUOTE   0x93
+    #define RIGHT_DOUBLE_QUOTE  0x94
+    #define BULLET_CHAR         0x95
+#endif
+
+#define MAX_OFFSCREEN       48000
+#define MAX_TEXTBLOCK       4096
+#define DEF_TAB_SPACE       24
+#define DEF_MIN_WIDTH       16
+
+struct Rect {
+    long left;
+    long top;
+    long right;
+    long bottom;
+};
+typedef struct Rect Rect;
+
+struct Point {
+    short v;
+    short h;
+};
+typedef struct Point Point;
+
+typedef void *GrafPtr;
+typedef pg_region RgnHandle;
+
+struct port_preserve {
+    graf_device_ptr last_device;
+    pg_region clip_rgn;
+};
+typedef struct port_preserve port_preserve;
+
+#define PREVIOUS_FONT       0
+#define PREVIOUS_PALETTE    1
+#define PREVIOUS_BITMAP     2
+
+#ifdef GLOBALS_ARE_PSTRINGS
+#define MEASURE_SYMBOL(the_str) ((short)pgTextWidth(pg->globals->current_port, (pg_char_ptr)&the_str[1], global_char_size(the_str)))
+#else
+#define MEASURE_SYMBOL(the_str) ((short)pgTextWidth(pg->globals->current_port, (pg_char_ptr)the_str, global_char_size(the_str)))
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern PG_PASCAL (memory_ref) HandleToMemory (pgm_globals_ptr mem_globals, pg_handle h, pg_short_t rec_size);
+extern PG_PASCAL (pg_handle) MemoryToHandle (memory_ref ref);
+extern PG_PASCAL (void) SetFontCharWidths (pg_ref pg, style_info_ptr style, int PG_FAR *charwidths);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* POSIX_PLATFORM */
+
 
 /********************** Generic Multi-platform Utilities ********************/
 
@@ -417,4 +545,3 @@ extern PG_PASCAL (void) ScaleRect (pg_scale_ptr scale_factor, Rect PG_FAR *r);
 
 
 #endif  /* PGTRAPS_H */
-

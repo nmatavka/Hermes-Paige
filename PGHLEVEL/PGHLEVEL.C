@@ -4,14 +4,14 @@ Inc. Software created by "Gar," alias Gary Crandall.  */
 
 /* Updated May 1995 for ease of use with opendoc by TR Shaw OITC */
 
-#include "Paige.h"
-#include "pgTraps.h"
-#include "pgUtils.h"
-#include "machine.h"
-#include "pgHLevel.h"
-#include "pgOSUtl.h"
-#include "pgTables.h"
-#include "pgEdit.h"
+#include "PAIGE.H"
+#include "PGTRAPS.H"
+#include "PGUTILS.H"
+#include "MACHINE.H"
+#include "PGHLEVEL.H"
+#include "PGOSUTL.H"
+#include "PGTABLES.H"
+#include "PGEDIT.H"
 
 /* pgSetFontByName applies font_name font to the current selection range (or to
 the text range presented in selection_range if that parameter is non-NULL).
@@ -20,12 +20,14 @@ ATTENTION WINDOWS USERS: THIS FUNCTION ONLY WORKS CORRECTLY FOR "STANDARD"
 TRUETYPE FONTS AND FONTS THAT USE ANSI CHARACTER SET. To set other fonts,
 see pgSetFontByLog. */
 
-#ifdef WINDOWS_PLATFORM
+#if defined(WINDOWS_PLATFORM) || defined(POSIX_PLATFORM)
   
+#ifdef WINDOWS_PLATFORM
   #include <string.h>
   #define STRICT
   #include <windowsx.h>
   #include <windows.h>
+#endif
   
 PG_PASCAL (void) pgSetFontByName (pg_ref pg, const pg_font_name_ptr font_name,
 		const select_pair_ptr selection_range, pg_boolean redraw)
@@ -37,7 +39,11 @@ PG_PASCAL (void) pgSetFontByName (pg_ref pg, const pg_font_name_ptr font_name,
 	pgFillBlock(&font, sizeof(font_info), 0);
 	pgFillBlock(&mask, sizeof(font_info), SET_MASK_BITS);
 	
+	#ifdef POSIX_PLATFORM
+	font_name_size = (pg_short_t)pgCStrLength(font_name);
+#else
 	font_name_size = lstrlen(font_name);
+#endif
 	if (font_name_size  > (FONT_SIZE - 1))
 		font_name_size = FONT_SIZE - 1;
 	
@@ -46,11 +52,17 @@ PG_PASCAL (void) pgSetFontByName (pg_ref pg, const pg_font_name_ptr font_name,
 	else
 		draw_mode = draw_none;
 
+	#ifdef POSIX_PLATFORM
+	pgBlockMove(font_name, font.name, (font_name_size + 1) * sizeof(pg_char));
+#else
 	pgBlockMove(font_name, (LPSTR) font.name, (font_name_size + 1) * sizeof(pg_char));
+#endif
 	font.environs = NAME_IS_CSTR;
 	pgSetFontInfo(pg, selection_range, &font, &mask, draw_mode);
 }
 
+
+#ifdef WINDOWS_PLATFORM
 
 /* pgSetFontByLog sets the font that is defined in log_font (which you
 can get, for example, from a ChooseFont dialog). This is the one you must
@@ -144,6 +156,10 @@ PG_PASCAL (pg_boolean) pgGetFontByLog (pg_ref pg, LOGFONT PG_FAR *log_font)
 }
 
 
+#endif
+
+
+
 
 
 /* pgSetTextColor changes the color of text of the currently selected text or,
@@ -215,7 +231,7 @@ PG_PASCAL (pg_boolean) pgGetTextColor (pg_ref pg, pg_plat_color_value PG_FAR *co
 	style_info			style, mask;
 	
 	pgGetStyleInfo(pg, NULL, FALSE, &style, &mask);
-	pgColorToOS( &style.fg_color, (void PG_FAR *)color);
+	pgColorToOS( &style.fg_color, color);
 	
 	return	(mask.fg_color.red != 0
 			&& mask.fg_color.green != 0
@@ -231,7 +247,7 @@ PG_PASCAL (pg_boolean) pgGetTextBKColor (pg_ref pg,  pg_plat_color_value PG_FAR 
 	style_info			style, mask;
 	
 	pgGetStyleInfo(pg, NULL, FALSE, &style, &mask);
-	pgColorToOS( &style.bk_color, (void PG_FAR *)color);
+	pgColorToOS( &style.bk_color, color);
 	
 	return	(mask.bk_color.red != 0
 			&& mask.bk_color.green != 0
@@ -541,7 +557,7 @@ PG_PASCAL (void) pgApplyToSelectedCells(memory_ref pg, select_pair_ptr selection
 		
 	while (working_selection.begin <= working_selection.end)
 	{
-		// Find the row we need to work inÉ
+		// Find the row we need to work inï¿½
 		row = (short)pgPositionToRow (pg,working_selection.begin,&row_offsets);
 		if (row != -1)
 		{
@@ -572,7 +588,7 @@ PG_PASCAL (void) pgApplyToSelectedCells(memory_ref pg, select_pair_ptr selection
 	}
 	
 	{
-		paige_rec_ptr pg_ptr = UseMemory(pg);
+		paige_rec_ptr pg_ptr = (paige_rec_ptr)UseMemory(pg);
 		pgUpdateText(pg_ptr, NULL, 0, pg_ptr->t_length, MEM_NULL, NULL, bits_copy, TRUE);
 		UnuseMemory(pg);
 	}

@@ -3,7 +3,7 @@
 #ifndef PGDEFSTL_H
 #define PGDEFSTL_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #define ZERO_TEXT_PAD		2		/* What goes at end of zero-text run */
 #define IS_STYLE_SHEET		2		/* "flag" that define style_info as stylesheet */

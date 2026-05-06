@@ -1,26 +1,26 @@
 /* This section handles all selection and highlighting.  */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgbasic1
 #endif
 
-#include "pgEdit.h"
-#include "machine.h"
-#include "pgUtils.h"
-#include "defprocs.h"
-#include "pgText.h"
-#include "pgShapes.h"
-#include "pgSelect.h"
-#include "pgScript.h"
-#include "pgDefStl.h"
-#include "pgDefPar.h"
-#include "pgTxtWid.h"
-#include "pgSubref.h"
-#include "pgLists.h"
-#include "pgHText.h"
-#include "pgTables.h"
+#include "PGEDIT.H"
+#include "MACHINE.H"
+#include "PGUTILS.H"
+#include "DEFPROCS.H"
+#include "PGTEXT.H"
+#include "PGSHAPES.H"
+#include "PGSELECT.H"
+#include "PGSCRIPT.H"
+#include "PGDEFSTL.H"
+#include "PGDEFPAR.H"
+#include "PGTXTWID.H"
+#include "PGSUBREF.H"
+#include "PGLISTS.H"
+#include "PGHTEXT.H"
+#include "PGTABLES.H"
 
 
 static select_ref hilite_avoid_list (paige_rec_ptr pg, t_select_ptr cur_select,
@@ -84,7 +84,7 @@ PG_PASCAL (void) pgHiliteProc (paige_rec_ptr pg, t_select_ptr selections,
 
 		if (select_pairs->flags & VERTICAL_FLAG) {
 		
-			if (did_calc = (select_pairs->flags & SELECTION_DIRTY) )
+			if ((did_calc = (select_pairs->flags & SELECTION_DIRTY) ))
 				pgCalcSelect(pg, select_pairs);
 			
 			if (select_pairs[1].flags & SELECTION_DIRTY) {
@@ -410,7 +410,7 @@ PG_PASCAL (pg_boolean) pgIdle (pg_ref pg)
 	pg_rec = (paige_rec_ptr) UseMemory(pg);
 	starting_buffer_mode = pg_rec->key_buffer_mode;
 
-	if (caret_time = pgIsCaretTime(pg_rec))
+	if ((caret_time = pgIsCaretTime(pg_rec)))
 		verb = toggle_cursor;
 	else verb = toggle_cursor_idle;
 
@@ -497,7 +497,7 @@ PG_PASCAL (long) pgDragSelect (pg_ref pg, const co_ordinate_ptr location, short 
 		if (originally_in_ctl)
 		    ref_con_result = track_style_control(pg_rec, &new_select, track_refcon, use_modifiers, verb);
 
-		while (qty = pgFindEmptyHilite(pg_rec, &delete_rec))
+		while ((qty = pgFindEmptyHilite(pg_rec, &delete_rec)))
 			DeleteMemory(pg_rec->select, delete_rec, qty);
 		
 		if (pg_rec->num_selects) {
@@ -612,7 +612,7 @@ PG_PASCAL (long) pgDragSelect (pg_ref pg, const co_ordinate_ptr location, short 
 
 	selection = (t_select_ptr) UseMemory(pg_rec->select);
 
-	if (sel_rec = pg_rec->num_selects) {
+	if ((sel_rec = pg_rec->num_selects)) {
 		
 		sel_rec = (sel_rec * 2) - 2;
 		pg_rec->procs.click_proc(pg_rec, verb, use_modifiers, ref_con_result,
@@ -914,7 +914,7 @@ PG_PASCAL (void) pgSetSelection (pg_ref pg, size_t begin_sel, size_t end_sel,
 	first_select_flags = second_select_flags = SELECTION_DIRTY;
 	pg_rec->stable_caret.h = pg_rec->stable_caret.v = 0;
 
-	if (will_draw = show_hilite && (!(pg_rec->flags & DEACT_BITS))) {
+	if ((will_draw = show_hilite && (!(pg_rec->flags & DEACT_BITS)))) {
 	
 		pgSetupGrafDevice(pg_rec, &pg_rec->port, MEM_NULL, clip_standard_verb);
 		pgTurnOffHighlight(pg_rec, FALSE);
@@ -1243,7 +1243,7 @@ PG_PASCAL (void) pgCalcSelect (paige_rec_ptr pg, t_select_ptr selection)
 
 	selection->flags &= CLR_INIT_SELECT;
 	
-	if (local_offset = (pg_short_t)(selection->offset - block->begin)) {
+	if ((local_offset = (pg_short_t)(selection->offset - block->begin))) {
 	
 		while (local_offset >= starts->offset) {
 			
@@ -1652,7 +1652,7 @@ PG_PASCAL (short) pgTextRect (pg_ref pg, const select_pair_ptr range, pg_boolean
 
 	pgFillBlock(rect, sizeof(rectangle), 0);
 	
-	if (select_list = pgSetupOffsetRun(pg_rec, range, FALSE, FALSE)) {
+	if ((select_list = pgSetupOffsetRun(pg_rec, range, FALSE, FALSE))) {
 		
 		for (selections = (select_pair_ptr) UseMemory(select_list), num_selects = (pg_short_t)GetMemorySize(select_list);
 				num_selects; ++selections, --num_selects)
@@ -1700,7 +1700,7 @@ PG_PASCAL (void) pgBuildHiliteRgn (paige_rec_ptr pg, t_select_ptr selections,
 	
 		pg->procs.hilite_rgn(pg, selections, select_qty, rgn);
 		
-		if (no_hilite_ref = hilite_avoid_list(pg, selections, select_qty)) {
+		if ((no_hilite_ref = hilite_avoid_list(pg, selections, select_qty))) {
 			
 			copy_of_original = MemoryDuplicate(rgn);
 			avoid_shape = pgRectToShape(pg->globals->mem_globals, NULL);
@@ -2374,7 +2374,7 @@ static pg_boolean is_selection_dirty (paige_rec_ptr pg)
 		result = ( (selections->flags & SELECTION_DIRTY) != 0 );
 	else
 		for (num_selections *= 2; num_selections; ++selections, --num_selections)
-			if (result = ((selections->flags & SELECTION_DIRTY) != 0 ))
+			if ((result = ((selections->flags & SELECTION_DIRTY) != 0 )))
 				break;
 	
 	UnuseMemory(pg->select);
@@ -2400,13 +2400,13 @@ static void extend_selection (paige_rec_ptr pg, t_select_ptr new_select,
 	short				will_draw, word_verb;
 	t_select_ptr		current_select;
 
-	if (word_verb = modifiers & (WORD_MOD_BIT | PAR_MOD_BIT | LINE_MOD_BIT
-				| STYLE_MOD_BIT | WORD_CTL_MOD_BIT))
+	if ((word_verb = modifiers & (WORD_MOD_BIT | PAR_MOD_BIT | LINE_MOD_BIT
+				| STYLE_MOD_BIT | WORD_CTL_MOD_BIT)))
 		new_select->flags |= WORD_FLAG;
 	
 	new_select->word_offsets.begin = new_select->word_offsets.end = new_select->offset;
 
-	if (will_draw = (should_draw && (!(pg->flags & DEACT_BITS)))) {
+	if ((will_draw = (should_draw && (!(pg->flags & DEACT_BITS))))) {
 		
 		if (!pg->num_selects)
 			if ((pgCurrentInsertion(pg) != new_select->offset) || word_verb)
@@ -2470,8 +2470,8 @@ static void extend_selection (paige_rec_ptr pg, t_select_ptr new_select,
 
 			if ((modifiers & EXTEND_MOD_BIT) && pg->num_selects)
 				if (!(modifiers & VERTICAL_MOD_BIT))
-					if (pgAbsoluteValue(new_select->offset - current_select[1].offset)
-						> pgAbsoluteValue(new_select->offset - current_select->offset))
+					if (pgAbsoluteValue((long)new_select->offset - (long)current_select[1].offset)
+						> pgAbsoluteValue((long)new_select->offset - (long)current_select->offset))
 							reverse_selection(current_select);
 		}
 
@@ -3140,4 +3140,3 @@ static long hyperlink_callback (paige_rec_ptr pg, short verb, short modifiers, m
 	
 	return		result;
 }
-

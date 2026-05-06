@@ -3,7 +3,7 @@
 #ifndef PGCLIPBD_H
 #define PGCLIPBD_H
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef __cplusplus
 extern	"C" {

@@ -5,28 +5,29 @@ Copyright 1993 by DataPak Software, Inc.			*/
 
 /* Modified Dec 22 1994 for the use of volatile in PG_TRY-PG_CATCH by TR Shaw, OITC */
 
-#include "Paige.h"
+#include "PAIGE.H"
 
 #ifdef MAC_PLATFORM
 #pragma segment pgclipbd
 #endif
 
-#include "pgExceps.h"
-#include "pgText.h"
-#include "pgDefStl.h"
-#include "pgBasics.h"
-#include "pgSelect.h"
-#include "pgEdit.h"
-#include "pgShapes.h"
-#include "pgUtils.h"
-#include "machine.h"
-#include "defprocs.h"
-#include "pgClipBd.h"
-#include "pgTxtWid.h"
-#include "pgDefPar.h"
-#include "pgSubRef.h"
-#include "pgHText.h"
-#include "pgTables.h"
+#include "PGEXCEPS.H"
+#include "PGTEXT.H"
+#include "PGDEFSTL.H"
+#include "PGBASICS.H"
+#include "PGSELECT.H"
+#include "PGEDIT.H"
+#include "PGSHAPES.H"
+#include "PGUTILS.H"
+#include "PGOSUTL.H"
+#include "MACHINE.H"
+#include "DEFPROCS.H"
+#include "PGCLIPBD.H"
+#include "PGTXTWID.H"
+#include "PGDEFPAR.H"
+#include "PGSUBREF.H"
+#include "PGHTEXT.H"
+#include "PGTABLES.H"
 
 #define LARGE_COPY_SIZE			24000
 
@@ -144,7 +145,7 @@ PG_PASCAL (pg_ref) pgCopy (pg_ref pg, const select_pair_ptr selection)
 
 	PG_TRY(globals->mem_globals) {
 
-		if (apply_ref = pgSetupOffsetRun(pg_rec, selection, FALSE, FALSE)) {
+		if ((apply_ref = pgSetupOffsetRun(pg_rec, selection, FALSE, FALSE))) {
 			
 			num_selects = (pg_short_t)GetMemorySize(apply_ref);
 			selections = (select_pair_ptr) UseMemory(apply_ref);
@@ -286,7 +287,7 @@ PG_PASCAL (text_ref) pgCopyText (pg_ref pg, const select_pair_ptr selection, sho
 
 	PG_TRY(globals->mem_globals) {
 
-		if (select_list = pgSetupOffsetRun(pg_rec, selection, FALSE, FALSE)) {
+		if ((select_list = pgSetupOffsetRun(pg_rec, selection, FALSE, FALSE))) {
 		
 			copy_result = MemoryAlloc(pg_rec->globals->mem_globals, sizeof(pg_char), 0, 512);
 			num_selects = (pg_short_t)GetMemorySize(select_list);
@@ -404,7 +405,7 @@ PG_PASCAL (undo_ref) pgPrepareUndo (pg_ref pg, short verb, void PG_FAR *insert_r
 		
 		if ((verb == undo_typing) || (verb == undo_backspace) || (verb == undo_fwd_delete)) {
 		
-			if (result = prepare_keyboard_undo(pg_rec, verb, (undo_ref) insert_ref))
+			if ((result = prepare_keyboard_undo(pg_rec, verb, (undo_ref) insert_ref)))
 				undo_ptr = (pg_undo_ptr) UseMemory(result);
 		}
 		else {
@@ -1276,8 +1277,8 @@ static void execute_paste (pg_ref pg, pg_ref paste_ref, long position,
 			if (!text_only) {
 				pg_short_t			terminator_match;
 				
-			if (terminator_match = pgFindMatchingStyle((memory_ref) pg_rec->t_formats, &terminating_style,
-					0, SIGNIFICANT_STYLE_SIZE)) {
+			if ((terminator_match = pgFindMatchingStyle((memory_ref) pg_rec->t_formats, &terminating_style,
+					0, SIGNIFICANT_STYLE_SIZE))) {
 					
 					termination = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long)(terminator_match - 1), 0, TRUE);
 					termination->used_ctr -= 1;
@@ -1500,7 +1501,7 @@ static void apply_hyperlinks (const memory_ref source_links, memory_ref target_l
 				#ifdef _WINDOWS
 				string_length = wcslen(string);
 				#else
-				string_length = strlen(string);
+				string_length = pgCStrLength((pg_c_string_ptr)string);
 				#endif
 	
 				if (string_length) 
@@ -1581,7 +1582,7 @@ static pg_short_t insert_target_style (paige_rec_ptr pg, paige_rec_ptr source_pg
 
 	if ((stylesheet = new_style.styles[super_impose_var]) != 0) {
 		
-		if (home_style = pgLocateStyleSheet(source_pg, stylesheet, NULL)) {
+		if ((home_style = pgLocateStyleSheet(source_pg, stylesheet, NULL))) {
 			
 			new_stylesheet = *home_style;
 			GetMemoryRecord(source_pg->fonts, (long)home_style->font_index, &new_font);
@@ -1795,7 +1796,7 @@ static void perform_backspace_undo (paige_rec_ptr pg, pg_undo_ptr undo_ptr)
 	
 	action_verb = undo_ptr->verb;
 	
-	if (not_fwd_delete = (pg_boolean)(action_verb != undo_fwd_delete))
+	if ((not_fwd_delete = (pg_boolean)(action_verb != undo_fwd_delete)))
 		kb_ptr += key_qty;
 
 	undo_ptr->alt_range.end = undo_ptr->alt_range.begin;
@@ -2395,7 +2396,7 @@ static undo_ref prepare_keyboard_undo (paige_rec_ptr pg, short verb,
 		insertion += buffer_qty;
 	}
 
-	if (result_undo = previous_undo) {
+	if ((result_undo = previous_undo)) {
 		
 		undo_ptr = (pg_undo_ptr) UseMemory(result_undo);
 		if ((undo_ptr->real_verb != verb) || (undo_ptr->alt_range.end != insertion)
@@ -2553,5 +2554,3 @@ static void insert_undo_subref (paige_rec_ptr pg, pg_subref subref)
 	UnuseMemory(block->subref_list);
 	UnuseMemory(pg->t_blocks);
 }
-
-

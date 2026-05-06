@@ -9,9 +9,9 @@ Modified 6/28/95, include re-definitions for Macintosh version of the control. *
 #ifndef PGCNTL_H
 #define PGCNTL_H
 
-#include "CPUDefs.h"
-#include "pgMemMgr.h"
-#include "pgWinDef.h"
+#include "CPUDEFS.H"
+#include "PGMEMMGR.H"
+#include "PGWINDEF.H"
 
 #ifdef WINDOWS_PLATFORM
 #include <windows.h>

@@ -1,8 +1,8 @@
 #ifndef PGOSUTL_H
 #define PGOSUTL_H
 
-#include "Paige.h"
-#include "pgTraps.h"
+#include "PAIGE.H"
+#include "PGTRAPS.H"
 
 #ifdef __cplusplus
 extern	"C" {
@@ -41,7 +41,7 @@ extern PG_PASCAL (pg_time_t) pgGetPaigeTime(pg_time_t platform_secs);
 #define pgGetPaigeTime(platform_secs)	(pg_time_t)((platform_secs) + PLATFORM_DELTA_TIME)
 #endif
 
-#ifndef C_LIBRARY
+#if !defined(C_LIBRARY) || defined(POSIX_PLATFORM)
 extern PG_PASCAL (long) pgCStrLength (const pg_c_string_ptr str);
 #else
 #ifndef WINDOWS_PLATFORM
