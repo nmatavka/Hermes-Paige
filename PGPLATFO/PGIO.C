@@ -119,7 +119,7 @@ PG_C (pg_error) pgOpenFile(pg_file_desc_ref ref, short perm, pg_file_unit_ptr re
 	Boolean		wasAliased;
 	Boolean		targetIsFolder;
 		
-	spec = UseMemory(ref);
+	spec = (FSSpecPtr) UseMemory(ref);
 	
 	err = ResolveAliasFile(spec, TRUE, &targetIsFolder, &wasAliased);
 	if (targetIsFolder)
@@ -926,6 +926,5 @@ PG_PASCAL (pg_error) pgScrapMemoryRead (void PG_FAR *data, short verb, size_t PG
 	
 	return	NO_ERROR;
 }
-
 
 

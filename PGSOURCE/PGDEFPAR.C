@@ -69,10 +69,10 @@ PG_PASCAL (void) pgCheckRunIntegrity (paige_rec_ptr pg)
 	pg_short_t				index, style_qty;
 	pg_error				error = NO_ERROR;
 
-	style_base = UseMemory(pg->t_formats);
+	style_base = (style_info_ptr) UseMemory(pg->t_formats);
 	style_qty = (pg_short_t)GetMemorySize(pg->t_formats);
 	run_qty = GetMemorySize(pg->t_style_run) - 1;
-	run = UseMemory(pg->t_style_run);
+	run = (style_run_ptr) UseMemory(pg->t_style_run);
 	
 	bad_ref = pg->t_style_run;
 
@@ -101,10 +101,10 @@ PG_PASCAL (void) pgCheckRunIntegrity (paige_rec_ptr pg)
 	
 	if (!error) {
 
-		par_base = UseMemory(pg->par_formats);
+		par_base = (par_info_ptr) UseMemory(pg->par_formats);
 		style_qty = (pg_short_t)GetMemorySize(pg->par_formats);
 		run_qty = GetMemorySize(pg->par_style_run) - 1;
-		run = UseMemory(pg->par_style_run);
+		run = (style_run_ptr) UseMemory(pg->par_style_run);
 		
 		bad_ref = pg->par_style_run;
 	
@@ -1887,4 +1887,3 @@ static long get_cell_bottom (par_info_ptr par)
 	
 	return	pensize;
 }
-

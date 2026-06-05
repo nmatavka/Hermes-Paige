@@ -211,7 +211,7 @@ text_block arrays: */
 				long			real_num_recs, rec_ctr;
 
 				real_num_recs = 0;
-				block = UseMemory(pgr->t_blocks);
+				block = (text_block_ptr) UseMemory(pgr->t_blocks);
 				general_ctr = GetMemorySize(pgr->t_blocks);
 
 				for (rec_ctr = 0; rec_ctr < general_ctr; ++rec_ctr) {

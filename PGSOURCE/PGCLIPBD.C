@@ -1061,7 +1061,7 @@ PG_PASCAL (void) pgDisposeFailedUndo (undo_ref ref)
 	
 	if (ref) {
 	
-		undo_ptr = UseMemory(ref);
+		undo_ptr = (pg_undo_ptr) UseMemory(ref);
 		
 		if (undo_ptr->data)
 			pgFailureDispose(undo_ptr->data);

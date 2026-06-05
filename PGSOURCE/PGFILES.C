@@ -163,7 +163,7 @@ PG_PASCAL (pg_handler_ptr) pgFindHandlerFromKey (memory_ref handlers_list,
 	if (key < 0)
 		return	NULL;
 
-	result = UseMemory(handlers_list);
+	result = (pg_handler_ptr) UseMemory(handlers_list);
 	key_qty = GetMemorySize(handlers_list);
 	key_location = 0;
 
@@ -388,4 +388,3 @@ PG_PASCAL (pg_short_t) pgHexToByte (pg_bits8 hex_byte)
 	
 	return	result;
 }
-

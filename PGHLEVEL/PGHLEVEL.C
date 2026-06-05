@@ -147,7 +147,7 @@ PG_PASCAL (pg_boolean) pgGetFontByLog (pg_ref pg, LOGFONT PG_FAR *log_font)
 	
 	 	log_font->lfWidth = pgHiWord(pgRoundFixed(style.char_width));
 		
-		pg_rec = UseMemory(pg);
+		pg_rec = (paige_rec_ptr) UseMemory(pg);
 		log_font->lfHeight = -MulDiv((int)pgComputePointSize(pg_rec, &style), (int) pgHiWord(pg_rec->resolution), 72);
 		UnuseMemory(pg);
 	}
@@ -593,5 +593,4 @@ PG_PASCAL (void) pgApplyToSelectedCells(memory_ref pg, select_pair_ptr selection
 		UnuseMemory(pg);
 	}
 }
-
 

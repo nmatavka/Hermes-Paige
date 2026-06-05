@@ -176,7 +176,7 @@ PG_PASCAL (void) pgInsertSubRef (pg_ref pg, pg_subref subref, long position,
 		style_info			added_style;
 		
 		GetMemoryRecord(pg_rec->t_formats, (long)pg_rec->insert_style, &added_style);
-		def_style = UseMemoryRecord(pg_rec->t_formats, (long) run->style_item, 0, TRUE);
+		def_style = (style_info_ptr) UseMemoryRecord(pg_rec->t_formats, (long) run->style_item, 0, TRUE);
 		
 		added_style.styles[relative_point_var] = def_style->styles[relative_point_var];
 
@@ -2845,4 +2845,3 @@ static void clear_hilite (paige_rec_ptr pg)
 	UnuseMemory(pg->select);
 	pgSetSelection(pg->myself, current_select, current_select, 0, FALSE);
 }
-
